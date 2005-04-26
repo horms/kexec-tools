@@ -37,6 +37,12 @@
 #ifdef __x86_64__
 #define __NR_kexec_load		246
 #endif
+#ifdef __s390x__
+#define __NR_kexec_load		277
+#endif
+#ifdef __s390__
+#define __NR_kexec_load		277
+#endif
 #ifndef __NR_kexec_load
 #error Unknown processor architecture.  Needs a kexec_load syscall number.
 #endif
@@ -67,6 +73,7 @@ static inline long kexec_reboot(void)
 #define KEXEC_ARCH_PPC     (20 << 16)
 #define KEXEC_ARCH_PPC64   (21 << 16)
 #define KEXEC_ARCH_IA_64   (50 << 16)
+#define KEXEC_ARCH_S390    (22 << 16)
 
 #define KEXEC_MAX_SEGMENTS 8
 
