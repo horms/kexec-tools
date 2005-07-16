@@ -217,7 +217,6 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf = NULL;
 		ramdisk_length = 0;
 		if (ramdisk) {
-			unsigned char *ramdisk_buf;
 			ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
 		}
 
