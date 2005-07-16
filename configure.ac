@@ -25,12 +25,15 @@ case $host_cpu in
 	powerpc )
 		host_cpu="ppc"
 		;;
+	s390x )
+		host_cpu="s390"
+		;;
 	* ) 
 		host_cpu="$host_cpu"
 		;;
 esac
 case $host_cpu in
-	i386|ppc|x86_64|alpha|ppc64|ia64)
+	i386|ppc|x86_64|alpha|ppc64|ia64|s390)
 		;;
 	* )
 		AC_MSG_ERROR([ unsupported architecture $host_cpu])
