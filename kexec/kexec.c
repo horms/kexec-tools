@@ -508,6 +508,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	info.segment = NULL;
 	info.nr_segments = 0;
 	info.entry = NULL;
+	info.panic_kernel = !!(kexec_flags  & KEXEC_ON_CRASH);
 
 	result = 0;
 	if (argc - fileind <= 0) {
