@@ -237,7 +237,7 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 		elf_rel_set_symbol(&info->rhdr, "compat_x86_64_entry32",
 			&info->entry, sizeof(info->entry));
 		
-		info->entry = elf_rel_get_addr(&info->rhdr, "compat_x86_64");
+		info->entry = (void *)elf_rel_get_addr(&info->rhdr, "compat_x86_64");
 	}
 	else {
 		fprintf(stderr, "Unsupported machine type: %s\n",
