@@ -30,10 +30,11 @@
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
 #include "kexec-x86.h"
+#include "crashdump-x86.h"
 #include <arch/options.h>
 
-#define MAX_MEMORY_RANGES 64
 #define MAX_LINE 160
+
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of memory ranges. */
@@ -135,21 +136,18 @@ void arch_usage(void)
 		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
 		"     --console-vga             Enable the vga console\n"
 		"     --console-serial          Enable the serial console\n"
+		"     --elf32-core-headers      Prepare core headers in ELF32 format\n"
+		"     --elf64-core-headers      Prepare core headers in ELF64 format\n"
 		);
 }
 
-static struct {
-	uint8_t  reset_vga;
-	uint16_t serial_base;
-	uint32_t serial_baud;
-	uint8_t  console_vga;
-	uint8_t  console_serial;
-} arch_options = {
+struct arch_options_t arch_options = {
 	.reset_vga   = 0,
 	.serial_base = 0x3f8,
 	.serial_baud = 0,
 	.console_vga = 0,
 	.console_serial = 0,
+	.core_header_type = CORE_TYPE_ELF64,
 };
 
 int arch_process_options(int argc, char **argv)
@@ -212,6 +210,12 @@ int arch_process_options(int argc, char **argv)
 				
 			}
 			arch_options.serial_baud = value;
+			break;
+		case OPT_ELF32_CORE:
+			arch_options.core_header_type = CORE_TYPE_ELF32;
+			break;
+		case OPT_ELF64_CORE:
+			arch_options.core_header_type = CORE_TYPE_ELF64;
 			break;
 		}
 	}

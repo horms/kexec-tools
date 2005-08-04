@@ -88,7 +88,9 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 {
 	struct mem_ehdr ehdr;
 	const char *command_line;
+	char *modified_cmdline;
 	int command_line_len;
+	int modified_cmdline_len;
 	const char *ramdisk;
 	unsigned long entry, max_addr;
 	int arg_style;
@@ -121,6 +123,8 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	 */
 	arg_style = ARG_STYLE_ELF;
 	command_line = 0;
+	modified_cmdline = 0;
+	modified_cmdline_len = 0;
 	ramdisk = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch(opt) {
@@ -156,6 +160,20 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	command_line_len = 0;
 	if (command_line) {
 		command_line_len = strlen(command_line) +1;
+	}
+
+	/* Need to append some command line parameters internally in case of
+	 * taking crash dumps.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
+		memset((void *)modified_cmdline, 0, COMMAND_LINE_SIZE);
+		if (command_line) {
+			strncpy(modified_cmdline, command_line,
+						COMMAND_LINE_SIZE);
+			modified_cmdline[COMMAND_LINE_SIZE - 1] = '\0';
+		}
+		modified_cmdline_len = strlen(modified_cmdline);
 	}
 
 	/* Load the ELF executable */
@@ -205,6 +223,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 		const unsigned char *ramdisk_buf;
 		off_t ramdisk_length;
 		struct entry32_regs regs;
+		int rc = 0;
 
 		/* Get the linux parameter header */
 		hdr = xmalloc(sizeof(*hdr));
@@ -225,16 +244,13 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 		/* If panic kernel is being loaded, additional segments need
 		 * to be created. */
 		if (info->kexec_flags & KEXEC_ON_CRASH) {
-			void *tmp;
-			unsigned long sz;
-			int nr_ranges, align = 1024;
-			/* Create a backup region segment to store first 640K
-			 * memory*/
-			sz = (BACKUP_SIZE + align - 1) & ~(align - 1);
-			tmp = xmalloc(sz);
-			memset(tmp, 0, sz);
-			info->backup_start = add_buffer(info, tmp, sz, sz, 1024,
-						0, max_addr, 1);
+			rc = load_crashdump_segments(info, modified_cmdline,
+						max_addr, 0);
+			if (rc < 0)
+				return -1;
+			/* Use new command line. */
+			command_line = modified_cmdline;
+			command_line_len = strlen(modified_cmdline) + 1;
 		}
 
 		/* Tell the kernel what is going on */
