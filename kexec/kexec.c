@@ -324,11 +324,16 @@ unsigned long add_buffer(struct kexec_info *info,
 {
 	unsigned long base;
 	int result;
+	int pagesize;
 
 	result = sort_segments(info);
 	if (result < 0) {
 		die("sort_segments failed\n");
 	}
+
+	/* Round memsz up to a multiple of pagesize */
+	pagesize = getpagesize();
+	memsz = (memsz + (pagesize - 1)) & ~(pagesize - 1);
 
 	base = locate_hole(info, memsz, buf_align, buf_min, buf_max, buf_end);
 	if (base == ULONG_MAX) {
