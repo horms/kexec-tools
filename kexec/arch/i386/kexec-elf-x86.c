@@ -227,7 +227,16 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 
 		/* Get the linux parameter header */
 		hdr = xmalloc(sizeof(*hdr));
-		param_base = add_buffer(info, hdr, sizeof(*hdr), sizeof(*hdr),
+
+		/* Hack: With some ld versions, vmlinux program headers show
+		 * a gap of two pages between bss segment and data segment
+		 * but effectively kernel considers it as bss segment and
+		 * overwrites the any data placed there. Hence bloat the
+		 * memsz of parameter segment to 16K to avoid being placed
+		 * in such gaps.
+		 * This is a makeshift solution until it is fixed in kernel
+		 */
+		param_base = add_buffer(info, hdr, sizeof(*hdr), 16*1024,
 			16, 0, max_addr, 1);
 
 		/* Initialize the parameter header */

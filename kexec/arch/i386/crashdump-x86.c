@@ -705,7 +705,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		if (prepare_crash_memory_elf32_headers(info, tmp, sz) < 0)
 			return -1;
 	}
-	elfcorehdr = add_buffer(info, tmp, sz, sz, align, min_base,
+
+	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),
+	 * vmlinux program headers show a gap of two pages between bss segment
+	 * and data segment but effectively kernel considers it as bss segment
+	 * and overwrites the any data placed there. Hence bloat the memsz of
+	 * elf core header segment to 16K to avoid being placed in such gaps.
+	 * This is a makeshift solution until it is fixed in kernel.
+	 */
+	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
 							max_addr, 1);
 	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
 		return -1;
