@@ -94,7 +94,8 @@ void setup_linux_bootloader_parameters(
 	cmdline_ptr[cmdline_len - 1] = '\0';
 }
 
-void setup_linux_system_parameters(struct x86_linux_param_header *real_mode)
+void setup_linux_system_parameters(struct x86_linux_param_header *real_mode,
+					unsigned long kexec_flags)
 {
 	/* Fill in information the BIOS would usually provide */
 	struct memory_range *range;
@@ -135,7 +136,7 @@ void setup_linux_system_parameters(struct x86_linux_param_header *real_mode)
 	real_mode->aux_device_info = 0;
 
 	/* Fill in the memory info */
-	if ((get_memory_ranges(&range, &ranges) < 0) || ranges == 0) {
+	if ((get_memory_ranges(&range, &ranges, kexec_flags) < 0) || ranges == 0) {
 		die("Cannot get memory information\n");
 	}
 	if (ranges > E820MAX) {

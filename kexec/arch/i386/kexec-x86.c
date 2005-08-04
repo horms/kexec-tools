@@ -37,7 +37,8 @@
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of memory ranges. */
-int get_memory_ranges(struct memory_range **range, int *ranges)
+int get_memory_ranges(struct memory_range **range, int *ranges,
+				unsigned long kexec_flags)
 {
 	const char iomem[]= "/proc/iomem";
 	int memory_ranges = 0;
@@ -78,6 +79,20 @@ int get_memory_ranges(struct memory_range **range, int *ranges)
 		}
 		else if (memcmp(str, "ACPI Non-volatile Storage\n", 26) == 0) {
 			type = RANGE_ACPI_NVS;
+		}
+		else if (memcmp(str, "Crash kernel\n", 13) == 0) {
+		/* Redefine the memory region boundaries if kernel
+		 * exports the limits and if it is panic kernel.
+		 * Override user values only if kernel exported values are
+		 * subset of user defined values.
+		 */
+			if (kexec_flags & KEXEC_ON_CRASH) {
+				if (start > mem_min)
+					mem_min = start;
+				if (end < mem_max)
+					mem_max = end;
+			}
+			continue;
 		}
 		else {
 			continue;
@@ -206,7 +221,7 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
-int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
+int arch_compat_trampoline(struct kexec_info *info)
 {
 	int result;
 	struct utsname utsname;
@@ -224,11 +239,11 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 		/* For compatibility with older patches 
 		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_386 here.
 		 */
-		*flags |= KEXEC_ARCH_DEFAULT;
+		info->kexec_flags |= KEXEC_ARCH_DEFAULT;
 	}
 	else if (strcmp(utsname.machine, "x86_64") == 0)
 	{
-		*flags |= KEXEC_ARCH_X86_64;
+		info->kexec_flags |= KEXEC_ARCH_X86_64;
 		if (!info->rhdr.e_shdr) {
 			fprintf(stderr, 
 				"A trampoline is required for cross architecture support\n");
@@ -249,6 +264,8 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 
 void arch_update_purgatory(struct kexec_info *info)
 {
+	uint8_t panic_kernel = 0;
+
 	elf_rel_set_symbol(&info->rhdr, "reset_vga",
 		&arch_options.reset_vga, sizeof(arch_options.reset_vga));
 	elf_rel_set_symbol(&info->rhdr, "serial_base",
@@ -259,4 +276,11 @@ void arch_update_purgatory(struct kexec_info *info)
 		&arch_options.console_vga, sizeof(arch_options.console_vga));
 	elf_rel_set_symbol(&info->rhdr, "console_serial", 
 		&arch_options.console_serial, sizeof(arch_options.console_serial));
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		panic_kernel = 1;
+		elf_rel_set_symbol(&info->rhdr, "backup_start",
+				&info->backup_start, sizeof(info->backup_start));
+	}
+	elf_rel_set_symbol(&info->rhdr, "panic_kernel",
+		&panic_kernel, sizeof(panic_kernel));
 }

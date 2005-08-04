@@ -44,4 +44,5 @@ void purgatory(void)
 	printf("I'm in purgatory\n");
 	setup_arch();
 	verify_sha256_digest();
+	post_verification_setup_arch();
 }

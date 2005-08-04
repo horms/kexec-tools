@@ -12,3 +12,4 @@ PURGATORY_C_SRCS+= purgatory/arch/i386/purgatory-x86.c
 PURGATORY_C_SRCS+= purgatory/arch/i386/console-x86.c
 PURGATORY_C_SRCS+= purgatory/arch/i386/vga.c
 PURGATORY_C_SRCS+= purgatory/arch/i386/pic.c
+PURGATORY_C_SRCS+= purgatory/arch/i386/crashdump_backup.c

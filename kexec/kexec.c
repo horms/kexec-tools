@@ -39,8 +39,8 @@
 #include "kexec-sha256.h"
 #include <arch/options.h>
 
-static unsigned long long mem_min = 0;
-static unsigned long long mem_max = ULONG_MAX;
+unsigned long long mem_min = 0;
+unsigned long long mem_max = ULONG_MAX;
 
 void die(char *fmt, ...)
 {
@@ -508,6 +508,8 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	info.segment = NULL;
 	info.nr_segments = 0;
 	info.entry = NULL;
+	info.backup_start = 0;
+	info.kexec_flags = kexec_flags;
 
 	result = 0;
 	if (argc - fileind <= 0) {
@@ -523,7 +525,8 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		kernel_buf, kernel_size);
 #endif
 
-	if (get_memory_ranges(&memory_range, &memory_ranges) < 0) {
+	if (get_memory_ranges(&memory_range, &memory_ranges,
+		info.kexec_flags) < 0) {
 		fprintf(stderr, "Could not get memory layout\n");
 		return -1;
 	}
@@ -565,7 +568,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		return -1;
 	}
 	/* If we are not in native mode setup an appropriate trampoline */
-	if (arch_compat_trampoline(&info, &kexec_flags) < 0) {
+	if (arch_compat_trampoline(&info) < 0) {
 		return -1;
 	}
 	/* Verify all of the segments load to a valid location in memory */
@@ -586,17 +589,17 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	update_purgatory(&info);
 #if 0
 	fprintf(stderr, "kexec_load: entry = %p flags = %lx\n", 
-		info.entry, kexec_flags);
+		info.entry, info.kexec_flags);
 	print_segments(stderr, &info);
 #endif
 	result = kexec_load(
-		info.entry, info.nr_segments, info.segment, kexec_flags);
+		info.entry, info.nr_segments, info.segment, info.kexec_flags);
 	if (result != 0) {
 		/* The load failed, print some debugging information */
 		fprintf(stderr, "kexec_load failed: %s\n", 
 			strerror(errno));
 		fprintf(stderr, "entry       = %p flags = %lx\n", 
-			info.entry, kexec_flags);
+			info.entry, info.kexec_flags);
 		print_segments(stderr, &info);
 	}
 	return result;

@@ -32,10 +32,12 @@
 #include <elf.h>
 #include <x86/x86-linux.h>
 #include "../../kexec.h"
+#include "../../kexec-syscall.h"
 #include "../../kexec-elf.h"
 #include "../../kexec-elf-boot.h"
 #include "x86-linux-setup.h"
 #include "kexec-x86.h"
+#include "crashdump-x86.h"
 #include <arch/options.h>
 
 static const int probe_debug = 0;
@@ -220,6 +222,21 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 			ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
 		}
 
+		/* If panic kernel is being loaded, additional segments need
+		 * to be created. */
+		if (info->kexec_flags & KEXEC_ON_CRASH) {
+			void *tmp;
+			unsigned long sz;
+			int nr_ranges, align = 1024;
+			/* Create a backup region segment to store first 640K
+			 * memory*/
+			sz = (BACKUP_SIZE + align - 1) & ~(align - 1);
+			tmp = xmalloc(sz);
+			memset(tmp, 0, sz);
+			info->backup_start = add_buffer(info, tmp, sz, sz, 1024,
+						0, max_addr, 1);
+		}
+
 		/* Tell the kernel what is going on */
 		setup_linux_bootloader_parameters(info, &hdr->hdr, param_base, 
 			offsetof(struct x86_linux_faked_param_header, command_line),
@@ -227,7 +244,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 			ramdisk_buf, ramdisk_length);
 
 		/* Fill in the information bios calls would usually provide */
-		setup_linux_system_parameters(&hdr->hdr);
+		setup_linux_system_parameters(&hdr->hdr, info->kexec_flags);
 
 		/* Initialize the registers */
 		elf_rel_get_symbol(&info->rhdr, "entry32_regs", &regs, sizeof(regs));

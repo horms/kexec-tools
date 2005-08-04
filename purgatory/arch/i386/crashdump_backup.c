@@ -1,0 +1,44 @@
+/*
+ * kexec: Linux boots Linux
+ *
+ * Created by:  Vivek goyal (vgoyal@in.ibm.com)
+ * Copyright (C) IBM Corporation, 2005. All rights reserved
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation (version 2 of the License).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#include <stdint.h>
+#include <string.h>
+
+#define BACKUP_REGION_SOURCE 0x00000000
+#define BACKUP_REGION_SIZE 0xa0000
+
+/* Backup region start gets set after /proc/iomem has been parsed. */
+uint32_t backup_start = 0;
+
+/* Backup first 640K of memory to backup region as reserved by kexec.
+ * Assuming first 640K has to be present on i386 machines and no address
+ * validity checks have to be performed. */
+
+void crashdump_backup_memory(void)
+{
+	void *dest, *src;
+
+	src = (void *) BACKUP_REGION_SOURCE;
+
+	if (backup_start) {
+		dest = (void *)(backup_start);
+		memcpy(dest, src, BACKUP_REGION_SIZE);
+	}
+}

@@ -91,6 +91,8 @@ do { \
 } while(0)
 #endif
 
+extern unsigned long long mem_min, mem_max;
+
 struct kexec_segment {
 	const void *buf;
 	size_t bufsz;
@@ -112,10 +114,13 @@ struct kexec_info {
 	int nr_segments;
 	void *entry;
 	struct mem_ehdr rhdr;
+	unsigned long backup_start;
+	unsigned long kexec_flags;
 };
 
 void usage(void);
-int get_memory_ranges(struct memory_range **range, int *ranges);
+int get_memory_ranges(struct memory_range **range, int *ranges,
+						unsigned long kexec_flags);
 int valid_memory_range(unsigned long sstart, unsigned long send);
 int valid_memory_segment(struct kexec_segment *segment);
 void print_segments(FILE *file, struct kexec_info *info);
@@ -188,7 +193,7 @@ extern size_t purgatory_size;
 
 void arch_usage(void);
 int arch_process_options(int argc, char **argv);
-int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags);
+int arch_compat_trampoline(struct kexec_info *info);
 void arch_update_purgatory(struct kexec_info *info);
 
 #endif /* KEXEC_H */

@@ -38,7 +38,8 @@
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of available memory ranges. */
-int get_memory_ranges(struct memory_range **range, int *ranges)
+int get_memory_ranges(struct memory_range **range, int *ranges,
+				unsigned long kexec_flags)
 {
 	int memory_ranges;
 	/*
@@ -103,7 +104,7 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
-int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
+int arch_compat_trampoline(struct kexec_info *info)
 {
 	int result;
 	struct utsname utsname;
@@ -115,7 +116,7 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 	}
 	if (strcmp(utsname.machine, "ia64") == 0)
 	{
-		*flags |= KEXEC_ARCH_X86_64;
+		info->kexec_flags |= KEXEC_ARCH_X86_64;
 	}
 	else {
 		fprintf(stderr, "Unsupported machine type: %s\n",
@@ -125,7 +126,7 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 	return 0;
 }
 
-int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
+int arch_compat_trampoline(struct kexec_info *info)
 {
 	int result;
 	struct utsname utsname;
@@ -140,7 +141,7 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 		/* For compatibility with older patches 
 		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
 		 */
-		*flags |= KEXEC_ARCH_DEFAULT;
+		info->kexec_flags |= KEXEC_ARCH_DEFAULT;
 	}
 	else {
 		fprintf(stderr, "Unsupported machine type: %s\n",
