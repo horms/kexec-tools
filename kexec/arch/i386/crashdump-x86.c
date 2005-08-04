@@ -108,10 +108,22 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		/* First 640K already registered */
 		if (start >= 0x00000000 && end <= 0x0009ffff)
 			continue;
+
 		crash_memory_range[memory_ranges].start = start;
 		crash_memory_range[memory_ranges].end = end;
 		crash_memory_range[memory_ranges].type = type;
 		memory_ranges++;
+
+		/* Segregate linearly mapped region. */
+		if ((MAXMEM - 1) >= start && (MAXMEM - 1) <= end) {
+			crash_memory_range[memory_ranges-1].end = MAXMEM -1;
+
+			/* Add segregated region. */
+			crash_memory_range[memory_ranges].start = MAXMEM;
+			crash_memory_range[memory_ranges].end = end;
+			crash_memory_range[memory_ranges].type = type;
+			memory_ranges++;
+		}
 	}
 	fclose(fp);
 	if (exclude_crash_reserve_region(&memory_ranges) < 0)
@@ -523,7 +535,12 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 			phdr->p_offset	= info->backup_start;
 		else
 			phdr->p_offset	= mstart;
-		phdr->p_vaddr = phdr->p_paddr = mstart;
+		/* Handle linearly mapped region.*/
+		if (mend <= (MAXMEM - 1))
+			phdr->p_vaddr = mstart + PAGE_OFFSET;
+		else
+			phdr->p_vaddr = -1ULL;
+		phdr->p_paddr = mstart;
 		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
@@ -614,7 +631,12 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 			phdr->p_offset	= info->backup_start;
 		else
 			phdr->p_offset	= mstart;
-		phdr->p_vaddr = phdr->p_paddr = mstart;
+		/* Handle linearly mapped region.*/
+		if (mend <= (MAXMEM - 1))
+			phdr->p_vaddr = mstart + PAGE_OFFSET;
+		else
+			phdr->p_vaddr = ULONG_MAX;
+		phdr->p_paddr = mstart;
 		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;

@@ -7,6 +7,9 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 #define PAGE_OFFSET	0xc0000000
 #define __pa(x)		((unsigned long)(x)-PAGE_OFFSET)
 
+#define __VMALLOC_RESERVE       (128 << 20)
+#define MAXMEM                  (-PAGE_OFFSET-__VMALLOC_RESERVE)
+
 #define CRASH_MAX_MEMMAP_NR	(KEXEC_MAX_SEGMENTS + 1)
 #define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)
 
