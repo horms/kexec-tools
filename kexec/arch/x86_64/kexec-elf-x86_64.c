@@ -221,7 +221,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 			ramdisk_buf, ramdisk_length);
 
 		/* Fill in the information bios calls would usually provide */
-		setup_linux_system_parameters(&hdr->hdr);
+		setup_linux_system_parameters(&hdr->hdr, info->kexec_flags);
 
 		/* Initialize the registers */
 		elf_rel_get_symbol(&info->rhdr, "entry64_regs", &regs, sizeof(regs));

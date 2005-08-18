@@ -635,7 +635,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 		if (mend <= (MAXMEM - 1))
 			phdr->p_vaddr = mstart + PAGE_OFFSET;
 		else
-			phdr->p_vaddr = ULONG_MAX;
+			phdr->p_vaddr = UINT_MAX;
 		phdr->p_paddr = mstart;
 		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
 		/* Do we need any alignment of segments? */
