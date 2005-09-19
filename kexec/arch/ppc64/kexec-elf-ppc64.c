@@ -3,6 +3,7 @@
  *
  * Copyright (C) 2004  Adam Litke (agl@us.ibm.com)
  * Copyright (C) 2004  IBM Corp.
+ * Copyright (C) 2005  R Sharada (sharada@in.ibm.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -33,45 +34,15 @@
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include "kexec-ppc64.h"
+#include <arch/options.h>
 
 #define BOOTLOADER         "kexec"
 #define BOOTLOADER_VERSION VERSION
 #define MAX_COMMAND_LINE   256
 
-#define UPSZ(X) ((sizeof(X) + 3) & ~3)
-static struct boot_notes {
-	Elf_Bhdr hdr;
-	Elf_Nhdr bl_hdr;
-	unsigned char bl_desc[UPSZ(BOOTLOADER)];
-	Elf_Nhdr blv_hdr;
-	unsigned char blv_desc[UPSZ(BOOTLOADER_VERSION)];
-	Elf_Nhdr cmd_hdr;
-	unsigned char command_line[0];
-} elf_boot_notes = {
-	.hdr = {
-		.b_signature = 0x0E1FB007,
-		.b_size = sizeof(elf_boot_notes),
-		.b_checksum = 0,
-		.b_records = 3,
-	},
-	.bl_hdr = {
-		.n_namesz = 0,
-		.n_descsz = sizeof(BOOTLOADER),
-		.n_type = EBN_BOOTLOADER_NAME,
-	},
-	.bl_desc = BOOTLOADER,
-	.blv_hdr = {
-		.n_namesz = 0,
-		.n_descsz = sizeof(BOOTLOADER_VERSION),
-		.n_type = EBN_BOOTLOADER_VERSION,
-	},
-	.blv_desc = BOOTLOADER_VERSION,
-	.cmd_hdr = {
-		.n_namesz = 0,
-		.n_descsz = 0,
-		.n_type = EBN_COMMAND_LINE,
-	},
-};
+int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *);
+int parse_options(char *);
+int setup_memory_ranges(void);
 
 int elf_ppc64_probe(const char *buf, off_t len)
 {
@@ -94,12 +65,62 @@ int elf_ppc64_probe(const char *buf, off_t len)
 	return result;
 }
 
-int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len, 
+int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
+	const char *command_line;
+	const char *input_options;
+	int command_line_len;
+	const char *ramdisk;
+	unsigned long *lp;
+	int result;
+	int opt;
+#define OPT_APPEND     (OPT_ARCH_MAX+0)
+#define OPT_RAMDISK     (OPT_ARCH_MAX+1)
+
+	static const struct option options[] = {
+		KEXEC_ARCH_OPTIONS
+		{ "append",             1, NULL, OPT_APPEND },
+		{ "ramdisk",            1, NULL, OPT_RAMDISK },
+		{ 0,                    0, NULL, 0 },
+	};
+
+	static const char short_options[] = KEXEC_OPT_STR "";
 
 	/* Parse command line arguments */
+	initrd_base = 0;
+	initrd_size = 0;
+	command_line = 0;
+	input_options = 0;
+	ramdisk = 0;
+
+	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+		switch (opt) {
+		default:
+			/* Ignore core options */
+			if (opt < OPT_ARCH_MAX) {
+				break;
+			}
+		case '?':
+			usage();
+			return -1;
+		case OPT_APPEND:
+			input_options = optarg;
+			break;
+		case OPT_RAMDISK:
+			ramdisk = optarg;
+			break;
+		}
+	}
+
+	command_line_len = 0;
+	if (command_line) {
+		command_line_len = strlen(command_line) + 1;
+	}
+
+	if (input_options)
+		parse_options(input_options);
 
 	/* Parse the Elf file */
 	result = build_elf_exec_info(buf, len, &ehdr);
@@ -109,15 +130,162 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 
 	/* Load the Elf data */
+	setup_memory_ranges();
+	/* Load the Elf data. Physical load addresses in elf64 header do not
+	 * show up correctly. Use user supplied address for now to patch the
+	 * elf header
+	 */
+	unsigned long long base_addr;
+	struct mem_phdr *phdr;
+	size_t size;
+
+	phdr = &ehdr.e_phdr[0];
+	size = phdr->p_filesz;
+	if (size > phdr->p_memsz) {
+		size = phdr->p_memsz;
+	}
+
+	base_addr = (unsigned long)locate_hole(info, size, 0, 0,
+			0xFFFFFFFFFFFFFFFFUL, 1);
+	ehdr.e_phdr[0].p_paddr = base_addr;
 	result = elf_exec_load(&ehdr, info);
 	if (result < 0) {
 		free_elf_info(&ehdr);
 		return result;
 	}
-	return 1;
+
+	/* Add a ram-disk to the current image */
+	if (ramdisk) {
+		unsigned char *ramdisk_buf = NULL;
+		off_t ramdisk_size = 0;
+		unsigned long long ramdisk_addr;
+
+		ramdisk_buf = slurp_file(ramdisk, &ramdisk_size);
+		add_buffer(info, ramdisk_buf, ramdisk_size, ramdisk_size, 0, 0,
+				0xFFFFFFFFFFFFFFFFUL, 1);
+		ramdisk_addr = (unsigned long long)info->segment[info->nr_segments-1].mem;
+		initrd_base = ramdisk_addr;
+		initrd_size = ramdisk_size;
+	}
+
+	/* Add v2wrap to the current image */
+	unsigned char *v2wrap_buf = NULL;
+	off_t v2wrap_size = 0;
+	unsigned int off_len;
+	unsigned char *seg_buf;
+	unsigned int rsvmap_len;
+	unsigned long long *ptr;
+	struct bootblock *bb_ptr;
+	unsigned int devtree_size;
+
+	v2wrap_buf = (char *) malloc(purgatory_size);
+	if (v2wrap_buf == NULL) {
+		free_elf_info(&ehdr);
+		return -1;
+	}
+	memcpy(v2wrap_buf, purgatory, purgatory_size);
+	v2wrap_size = purgatory_size;
+	create_flatten_tree(info, &v2wrap_buf, &v2wrap_size);
+	add_buffer(info, v2wrap_buf, v2wrap_size, v2wrap_size, 0, 0,
+			0xFFFFFFFFFFFFFFFFUL, -1);
+
+	/* patch reserve map address for flattened device-tree */
+	base_addr = (unsigned long long)info->segment[(info->nr_segments)-1].mem;
+	seg_buf = (unsigned char *)info->segment[(info->nr_segments)-1].buf;
+	seg_buf = seg_buf + 0x100; /* offset to end of v2wrap */
+	bb_ptr = (struct bootblock *)seg_buf;
+	rsvmap_len = bb_ptr->off_dt_struct - bb_ptr->off_mem_rsvmap;
+	devtree_size = bb_ptr->totalsize;
+	off_len = sizeof(struct bootblock);
+	off_len += 7; off_len &= ~7;
+	seg_buf = seg_buf + off_len;
+	off_len = rsvmap_len / (2 * sizeof(unsigned long long));
+
+	ptr = (unsigned long long *)seg_buf;
+	ptr = ptr + 2*(off_len-2);
+	*ptr = base_addr + 0x100;
+	ptr++;
+	*ptr = (unsigned long long)devtree_size;
+
+	unsigned int nr_segments;
+	nr_segments = info->nr_segments;
+	lp = info->segment[nr_segments-1].buf + 0x100;
+	lp--;
+	*lp = info->segment[0].mem;
+	info->entry = info->segment[nr_segments-1].mem;
+
+	unsigned int i;
+	for (i = 0; i < nr_segments; i++)
+		printf("segment[i].mem:%lx\n", info->segment[i].mem);
+
+	return 0;
 }
 
 void elf_ppc64_usage(void)
 {
 	fprintf(stderr, "elf support is still broken\n");
+}
+
+struct param_struct {
+	const char *name;
+	void *val;
+};
+struct param_struct params;
+
+static char *next_arg(char *args, char **param, char **val)
+{
+	unsigned int i, equals = 0;
+	char *next;
+
+	/* Chew any extra spaces */
+	while (*args == ' ') args++;
+	for (i = 0; args[i]; i++) {
+		if (args[i] == ' ')
+			break;
+		if (equals == 0) {
+			if (args[i] == '=')
+				equals = i;
+		}
+	}
+	*param = args;
+	if (!equals)
+		*val = NULL;
+	else {
+		args[equals] = '\0';
+		*val = args + equals + 1;
+	}
+
+	if (args[i]) {
+		args[i] = '\0';
+		next = args + i + 1;
+	} else
+		next = args + i;
+	return next;
+}
+
+static int add_arg(char *param, char*val)
+{
+	int ret = 0;
+	if (strcmp(param, "initrd-base")==0)
+		initrd_base=strtoul(val, NULL, 0);
+	else if (strcmp(param, "initrd-size")==0)
+		initrd_size=strtoul(val, NULL, 0);
+	else {
+		printf("invalid option\n");
+		ret = 1;
+	}
+	return ret;
+}
+
+int parse_options(char *options)
+{
+	char *param, *val;
+	/* initrd-addr , initrd-size */
+	while (*options) {
+		int ret;
+		options = next_arg(options, &param, &val);
+		ret = add_arg(param, val);
+	}
+	/* All parsed OK */
+	return 0;
 }

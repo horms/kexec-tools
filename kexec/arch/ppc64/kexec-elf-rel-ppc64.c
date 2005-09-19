@@ -22,7 +22,7 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 	struct mem_shdr *shdr, *shdr_end;
 	unsigned char *strtab;
 	strtab = ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
-	shdr_end = &ehdr->e_shdr[ehdr->shnum];
+	shdr_end = &ehdr->e_shdr[ehdr->e_shnum];
 	for(shdr = ehdr->e_shdr; shdr != shdr_end; shdr++) {
 		if (strcmp(shdr->sh_name, ".toc") == 0) {
 			return shdr;

@@ -1387,6 +1387,9 @@ case $host_cpu in
 	s390x )
 		host_cpu="s390"
 		;;
+	powerpc64 )
+		host_cpu="ppc64"
+		;;
 	* )
 		host_cpu="$host_cpu"
 		;;
@@ -1424,6 +1427,10 @@ if test "${with_gamecube+set}" = set; then
    EXTRA_CFLAGS="$EXTRA_CFLAGS -DCONFIG_GAMECUBE=1"
 fi;
 
+# Check whether ppc64. Add -m64 for building 64-bit binary
+if test "$ARCH"=ppc64; then
+  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64"
+fi;
 
 # Check whether --with-zlib or --without-zlib was given.
 if test "${with_zlib+set}" = set; then

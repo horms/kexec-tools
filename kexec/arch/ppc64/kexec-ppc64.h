@@ -6,6 +6,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_ppc64_usage(void);
 
+unsigned long initrd_base;
+unsigned long initrd_size;
 /* boot block version 2 as defined by the linux kernel */
 struct bootblock {
 	unsigned magic,
