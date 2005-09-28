@@ -6,9 +6,9 @@
 #define OPT_SERIAL_BAUD    (OPT_MAX+2)
 #define OPT_CONSOLE_VGA    (OPT_MAX+3)
 #define OPT_CONSOLE_SERIAL (OPT_MAX+4)
-#define OPT_ARCH_MAX       (OPT_MAX+5)
-#define OPT_ELF32_CORE     (OPT_MAX+6)
-#define OPT_ELF64_CORE     (OPT_MAX+7)
+#define OPT_ELF32_CORE     (OPT_MAX+5)
+#define OPT_ELF64_CORE     (OPT_MAX+6)
+#define OPT_ARCH_MAX       (OPT_MAX+7)
 
 #define KEXEC_ARCH_OPTIONS \
 	KEXEC_OPTIONS \
