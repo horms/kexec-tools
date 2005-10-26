@@ -468,6 +468,7 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 void arch_usage(void)
 {
+	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
 }
 
 static struct {

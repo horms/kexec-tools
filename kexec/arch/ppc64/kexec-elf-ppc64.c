@@ -73,16 +73,19 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	const char *input_options;
 	int command_line_len;
 	const char *ramdisk;
+	const char *devicetreeblob;
 	unsigned long *lp;
 	int result;
 	int opt;
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
 #define OPT_RAMDISK     (OPT_ARCH_MAX+1)
+#define OPT_DEVICETREEBLOB     (OPT_ARCH_MAX+2)
 
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "append",             1, NULL, OPT_APPEND },
 		{ "ramdisk",            1, NULL, OPT_RAMDISK },
+		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
 		{ 0,                    0, NULL, 0 },
 	};
 
@@ -94,6 +97,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	command_line = 0;
 	input_options = 0;
 	ramdisk = 0;
+	devicetreeblob = 0;
 
 	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch (opt) {
@@ -110,6 +114,9 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
+			break;
+		case OPT_DEVICETREEBLOB:
+			devicetreeblob = optarg;
 			break;
 		}
 	}
@@ -156,6 +163,10 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 
 	/* Add a ram-disk to the current image */
 	if (ramdisk) {
+	  if (devicetreeblob) {
+	    fprintf(stderr, "Can't use ramdisk with device tree blob input\n");
+	    return -1;
+	  }
 		unsigned char *ramdisk_buf = NULL;
 		off_t ramdisk_size = 0;
 		unsigned long long ramdisk_addr;
@@ -182,7 +193,24 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 	memcpy(v2wrap_buf, purgatory, purgatory_size);
 	v2wrap_size = purgatory_size;
-	create_flatten_tree(info, &v2wrap_buf, &v2wrap_size);
+	if (devicetreeblob) {
+	  unsigned char *blob_buf = NULL;
+	  off_t blob_size = 0;
+	  unsigned char *tmp_buf = NULL;
+
+	  /* Grab device tree from buffer */
+	  blob_buf = slurp_file(devicetreeblob, &blob_size);
+
+	  /* Append to purgatory */
+	  tmp_buf = (unsigned char *) realloc(v2wrap_buf, v2wrap_size + blob_size);
+	  v2wrap_buf = tmp_buf;
+	  memcpy(v2wrap_buf+v2wrap_size, blob_buf, blob_size);
+	  v2wrap_size += blob_size;
+
+	} else {
+	  /* create from fs2dt */
+	  create_flatten_tree(info, &v2wrap_buf, &v2wrap_size);
+	}
 	add_buffer(info, v2wrap_buf, v2wrap_size, v2wrap_size, 0, 0,
 			0xFFFFFFFFFFFFFFFFUL, -1);
 
