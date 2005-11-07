@@ -171,10 +171,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	/* Add v2wrap to the current image */
 	unsigned char *v2wrap_buf = NULL;
 	off_t v2wrap_size = 0;
-	unsigned int off_len;
-	unsigned char *seg_buf;
-	unsigned int rsvmap_len;
-	unsigned long long *ptr;
+	unsigned long long *rsvmap_ptr;
 	struct bootblock *bb_ptr;
 	unsigned int devtree_size;
 
@@ -189,23 +186,23 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	add_buffer(info, v2wrap_buf, v2wrap_size, v2wrap_size, 0, 0,
 			0xFFFFFFFFFFFFFFFFUL, -1);
 
-	/* patch reserve map address for flattened device-tree */
-	base_addr = (unsigned long long)info->segment[(info->nr_segments)-1].mem;
-	seg_buf = (unsigned char *)info->segment[(info->nr_segments)-1].buf;
-	seg_buf = seg_buf + 0x100; /* offset to end of v2wrap */
-	bb_ptr = (struct bootblock *)seg_buf;
-	rsvmap_len = bb_ptr->off_dt_struct - bb_ptr->off_mem_rsvmap;
-	devtree_size = bb_ptr->totalsize;
-	off_len = sizeof(struct bootblock);
-	off_len += 7; off_len &= ~7;
-	seg_buf = seg_buf + off_len;
-	off_len = rsvmap_len / (2 * sizeof(unsigned long long));
-
-	ptr = (unsigned long long *)seg_buf;
-	ptr = ptr + 2*(off_len-2);
-	*ptr = base_addr + 0x100;
-	ptr++;
-	*ptr = (unsigned long long)devtree_size;
+	/* patch reserve map address for flattened device-tree
+	   find last entry (both 0) in the reserve mem list.  Assume DT
+	   entry is before this one */
+	bb_ptr = (struct bootblock *)(
+		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
+		0x100);
+	rsvmap_ptr = (long long *)(
+		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
+		bb_ptr->off_mem_rsvmap + 0x100);
+	while (*rsvmap_ptr || *(rsvmap_ptr+1)){
+		rsvmap_ptr += 2;
+	}
+	rsvmap_ptr -= 2;
+ 	*rsvmap_ptr = (unsigned long long)(
+		info->segment[(info->nr_segments)-1].mem + 0x100);
+ 	rsvmap_ptr++;
+ 	*rsvmap_ptr = (unsigned long long)bb_ptr->totalsize;
 
 	unsigned int nr_segments;
 	nr_segments = info->nr_segments;
