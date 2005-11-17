@@ -260,6 +260,8 @@ int arch_compat_trampoline(struct kexec_info *info)
 
 void arch_update_purgatory(struct kexec_info *info)
 {
+	uint8_t panic_kernel = 0;
+
 	elf_rel_set_symbol(&info->rhdr, "reset_vga",
 		&arch_options.reset_vga, sizeof(arch_options.reset_vga));
 	elf_rel_set_symbol(&info->rhdr, "serial_base", 
@@ -270,4 +272,12 @@ void arch_update_purgatory(struct kexec_info *info)
 		&arch_options.console_vga, sizeof(arch_options.console_vga));
 	elf_rel_set_symbol(&info->rhdr, "console_serial", 
 		&arch_options.console_serial, sizeof(arch_options.console_serial));
+
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		panic_kernel = 1;
+		elf_rel_set_symbol(&info->rhdr, "backup_start",
+					&info->backup_start, sizeof(info->backup_start));
+	}
+	elf_rel_set_symbol(&info->rhdr, "panic_kernel",
+				&panic_kernel, sizeof(panic_kernel));
 }

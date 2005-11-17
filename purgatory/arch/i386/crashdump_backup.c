@@ -25,7 +25,9 @@
 #define BACKUP_REGION_SIZE 0xa0000
 
 /* Backup region start gets set after /proc/iomem has been parsed. */
-uint32_t backup_start = 0;
+/* We reuse the same code for x86_64 also so changing backup_start to
+   unsigned long */
+unsigned long  backup_start = 0;
 
 /* Backup first 640K of memory to backup region as reserved by kexec.
  * Assuming first 640K has to be present on i386 machines and no address
