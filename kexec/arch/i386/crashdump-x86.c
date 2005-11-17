@@ -23,6 +23,9 @@
 #include <errno.h>
 #include <limits.h>
 #include <elf.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
@@ -426,30 +429,38 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	return 0;
 }
 
-/* Returns the virtual address of start of crash notes section. */
-static int get_crash_notes_section_addr(unsigned long *addr)
+/* Returns the virtual address of start of crash notes buffer for a cpu. */
+static int get_crash_notes_section_addr(int cpu, unsigned long long *addr)
 {
-	const char crash_notes[]= "/sys/kernel/crash_notes";
+#define MAX_SYSFS_PATH_LEN	70
+	char crash_notes[MAX_SYSFS_PATH_LEN];
 	char line[MAX_LINE];
 	FILE *fp;
+	struct stat cpu_stat;
 
+	sprintf(crash_notes, "/sys/devices/system/cpu");
+	if (stat(crash_notes, &cpu_stat)) {
+		die("Cannot stat %s: %s\nTry mounting sysfs\n",
+			crash_notes, strerror(errno));
+	}
+
+	sprintf(crash_notes, "/sys/devices/system/cpu/cpu%d/crash_notes", cpu);
 	fp = fopen(crash_notes, "r");
 	if (!fp) {
-		fprintf(stderr, "Cannot open %s: %s\n",
-			crash_notes, strerror(errno));
-		fprintf(stderr, "Try mounting sysfs\n");
+		/* CPU is not physically present.*/
+		*addr = 0;
 		return -1;
 	}
 
 	if (fgets(line, sizeof(line), fp) != 0) {
 		int count;
-		count = sscanf(line, "%lx", addr);
+		count = sscanf(line, "%Lx", addr);
 		if (count != 1) {
 			*addr = 0;
 			return -1;
 		}
 #if 0
-		printf("crash_notes addr = %lx\n", *addr);
+		printf("crash_notes addr = %Lx\n", *addr);
 #endif
 	}
 	return 0;
@@ -464,7 +475,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	unsigned long notes_addr, notes_offset;
+	unsigned long long notes_addr;
 
 	bufp = (char*) buf;
 
@@ -499,21 +510,21 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 
 	/* Need to find a better way to determine per cpu notes section size. */
 #define MAX_NOTE_BYTES	1024
-	if (get_crash_notes_section_addr (&notes_addr) < 0) {
-		return -1;
-	}
-	notes_offset = __pa(notes_addr);
+
 	for (i = 0; i < nr_cpus; i++) {
+		if (get_crash_notes_section_addr (i, &notes_addr) < 0) {
+			/* This cpu is not present. Skip it. */
+			continue;
+		}
 		phdr = (Elf64_Phdr *) bufp;
 		bufp += sizeof(Elf64_Phdr);
 		phdr->p_type	= PT_NOTE;
 		phdr->p_flags	= 0;
-		phdr->p_offset	= notes_offset;
-		phdr->p_vaddr	= phdr->p_paddr	= notes_offset;
+		phdr->p_offset	= phdr->p_paddr = notes_addr;
+		phdr->p_vaddr	= 0;
 		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
-		notes_offset 	+= MAX_NOTE_BYTES;
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
@@ -560,7 +571,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	unsigned long notes_addr, notes_offset;
+	unsigned long long notes_addr;
 
 	bufp = (char*) buf;
 
@@ -595,21 +606,20 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 
 	/* Need to find a better way to determine per cpu notes section size. */
 #define MAX_NOTE_BYTES	1024
-	if (get_crash_notes_section_addr (&notes_addr) < 0) {
-		return -1;
-	}
-	notes_offset = __pa(notes_addr);
 	for (i = 0; i < nr_cpus; i++) {
+		if (get_crash_notes_section_addr (i, &notes_addr) < 0) {
+			/* This cpu is not present. Skip it. */
+			return -1;
+		}
 		phdr = (Elf32_Phdr *) bufp;
 		bufp += sizeof(Elf32_Phdr);
 		phdr->p_type	= PT_NOTE;
 		phdr->p_flags	= 0;
-		phdr->p_offset	= notes_offset;
-		phdr->p_vaddr	= phdr->p_paddr	= notes_offset;
+		phdr->p_offset	= phdr->p_paddr = notes_addr;
+		phdr->p_vaddr	= 0;
 		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
-		notes_offset 	+= MAX_NOTE_BYTES;
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
