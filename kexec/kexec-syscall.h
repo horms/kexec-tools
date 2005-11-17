@@ -75,6 +75,6 @@ static inline long kexec_reboot(void)
 #define KEXEC_ARCH_IA_64   (50 << 16)
 #define KEXEC_ARCH_S390    (22 << 16)
 
-#define KEXEC_MAX_SEGMENTS 8
+#define KEXEC_MAX_SEGMENTS 16
 
 #endif /* KEXEC_SYSCALL_H */
