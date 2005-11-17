@@ -30,6 +30,7 @@
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
 #include "kexec-x86_64.h"
+#include "crashdump-x86_64.h"
 #include <arch/options.h>
 
 #define MAX_MEMORY_RANGES 64
@@ -136,6 +137,8 @@ void arch_usage(void)
 		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
 		"     --console-vga             Enable the vga console\n"
 		"     --console-serial          Enable the serial console\n"
+		"     --elf32-core-headers      Prepare core headers in ELF32 format\n"
+		"     --elf64-core-headers      Prepare core headers in ELF64 format\n"
 		);
 }
 
@@ -145,12 +148,14 @@ struct {
 	uint32_t serial_baud;
 	uint8_t  console_vga;
 	uint8_t  console_serial;
+	int core_header_type;
 } arch_options = {
 	.reset_vga   = 0,
 	.serial_base = 0x3f8,
 	.serial_baud = 0,
 	.console_vga = 0,
 	.console_serial = 0,
+	.core_header_type = CORE_TYPE_ELF64,
 };
 
 int arch_process_options(int argc, char **argv)
@@ -214,6 +219,12 @@ int arch_process_options(int argc, char **argv)
 			}
 			arch_options.serial_baud = value;
 			break;
+			case OPT_ELF32_CORE:
+				arch_options.core_header_type = CORE_TYPE_ELF32;
+				break;
+			case OPT_ELF64_CORE:
+				arch_options.core_header_type = CORE_TYPE_ELF64;
+				break;
 		}
 	}
 	/* Reset getopt for the next pass; called in other source modules */
