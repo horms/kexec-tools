@@ -80,6 +80,20 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		else if (memcmp(str, "ACPI Non-volatile Storage\n", 26) == 0) {
 			type = RANGE_ACPI_NVS;
 		}
+		else if (memcmp(str, "Crash kernel\n", 13) == 0) {
+			/* Redefine the memory region boundaries if kernel
+			 * exports the limits and if it is panic kernel.
+			 * Override user values only if kernel exported
+			 * values are subset of user defined values.
+			 */
+			if (kexec_flags & KEXEC_ON_CRASH) {
+				if (start > mem_min)
+					mem_min = start;
+				if (end < mem_max)
+					mem_max = end;
+			}
+			continue;
+		}
 		else {
 			continue;
 		}
