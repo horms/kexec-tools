@@ -676,3 +676,78 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 	return 0;
 }
 
+/* Loads additional segments in case of a panic kernel is being loaded.
+ * One segment for backup region, another segment for storing elf headers
+ * for crash memory image.
+ */
+int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
+				unsigned long max_addr, unsigned long min_base)
+{
+	void *tmp;
+	unsigned long sz, elfcorehdr;
+	int nr_ranges, align = 1024;
+	long int nr_cpus = 0;
+	struct memory_range *mem_range, *memmap_p;
+
+	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
+		return -1;
+
+	/* Memory regions which panic kernel can safely use to boot into */
+	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));
+	memmap_p = xmalloc(sz);
+	memset(memmap_p, 0, sz);
+	add_memmap(memmap_p, BACKUP_START, BACKUP_SIZE);
+	sz = crash_reserved_mem.end - crash_reserved_mem.start +1;
+	add_memmap(memmap_p, crash_reserved_mem.start, sz);
+
+	/* Create a backup region segment to store backup data*/
+	sz = (BACKUP_SIZE + align - 1) & ~(align - 1);
+	tmp = xmalloc(sz);
+	memset(tmp, 0, sz);
+	info->backup_start = add_buffer(info, tmp, sz, sz, align,
+				0, max_addr, 1);
+	if (delete_memmap(memmap_p, info->backup_start, sz) < 0)
+		return -1;
+
+	/* Create elf header segment and store crash image data. */
+	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
+	if (nr_cpus < 0) {
+		fprintf(stderr,"kexec_load (elf header segment)"
+			" failed: %s\n", strerror(errno));
+		return -1;
+	}
+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		sz = 	sizeof(Elf64_Ehdr) +
+			nr_cpus * sizeof(Elf64_Phdr) +
+			nr_ranges * sizeof(Elf64_Phdr);
+	} else {
+		sz = 	sizeof(Elf32_Ehdr) +
+			nr_cpus * sizeof(Elf32_Phdr) +
+			nr_ranges * sizeof(Elf32_Phdr);
+	}
+	sz = (sz + align - 1) & ~(align -1);
+	tmp = xmalloc(sz);
+	memset(tmp, 0, sz);
+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		if (prepare_crash_memory_elf64_headers(info, tmp, sz) < 0)
+			return -1;
+	} else {
+		if (prepare_crash_memory_elf32_headers(info, tmp, sz) < 0)
+			return -1;
+	}
+
+	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),
+	 * vmlinux program headers show a gap of two pages between bss segment
+	 * and data segment but effectively kernel considers it as bss segment
+	 * and overwrites the any data placed there. Hence bloat the memsz of
+	 * elf core header segment to 16K to avoid being placed in such gaps.
+	 * This is a makeshift solution until it is fixed in kernel.
+	 */
+	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
+							max_addr, 1);
+	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
+		return -1;
+	cmdline_add_memmap(mod_cmdline, memmap_p);
+	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
+	return 0;
+}

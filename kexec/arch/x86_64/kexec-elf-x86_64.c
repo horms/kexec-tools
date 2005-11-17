@@ -37,6 +37,7 @@
 #include "../../kexec-elf-boot.h"
 #include "../i386/x86-linux-setup.h"
 #include "kexec-x86_64.h"
+#include "crashdump-x86_64.h"
 #include <arch/options.h>
 
 static const int probe_debug = 0;
@@ -216,6 +217,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		const unsigned char *ramdisk_buf;
 		off_t ramdisk_length;
 		struct entry64_regs regs;
+		int rc=0;
 
 		/* Get the linux parameter header */
 		hdr = xmalloc(sizeof(*hdr));
@@ -231,6 +233,18 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_length = 0;
 		if (ramdisk) {
 			ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
+		}
+
+		/* If panic kernel is being loaded, additional segments need
+		 * to be created. */
+		if (info->kexec_flags & KEXEC_ON_CRASH) {
+			rc = load_crashdump_segments(info, modified_cmdline,
+							max_addr, 0);
+			if (rc < 0)
+				return -1;
+			/* Use new command line. */
+			command_line = modified_cmdline;
+			command_line_len = strlen(modified_cmdline) + 1;
 		}
 
 		/* Tell the kernel what is going on */
