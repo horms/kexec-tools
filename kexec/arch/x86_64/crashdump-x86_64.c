@@ -105,6 +105,15 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				crash_reserved_mem.end = end;
 				crash_reserved_mem.type = RANGE_RAM;
 				continue;
+		} else if (memcmp(str, "ACPI Tables\n", 12) == 0) {
+			/*
+			 * ACPI Tables area need to be passed to new
+			 * kernel with appropriate memmap= option. This
+			 * is needed so that x86_64 kernel creates linear
+			 * mapping for this region which is required for
+			 * initializing acpi tables in second kernel.
+			 */
+			type = RANGE_ACPI;
 		} else {
 			continue;
 		}
@@ -429,6 +438,39 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	return 0;
 }
 
+/* Appends memmap=X#Y commandline for ACPI to command line*/
+static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
+					unsigned long end)
+{
+	int cmdlen, len, align = 1024;
+	unsigned long startk, endk;
+	char str_mmap[256], str_tmp[20];
+
+	if (!(end - start))
+		return 0;
+
+	startk = start/1024;
+	endk = (end + align - 1)/1024;
+	strcpy (str_mmap, " memmap=");
+	ultoa((endk - startk), str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K#");
+	ultoa(startk, str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K");
+	len = strlen(str_mmap);
+	cmdlen = strlen(cmdline) + len;
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str_mmap);
+
+#if 0
+		printf("Command line after adding acpi memmap\n");
+		printf("%s\n", cmdline);
+#endif
+	return 0;
+}
+
 /* Returns the virtual address of start of crash notes buffer for a cpu. */
 static int get_crash_notes_section_addr(int cpu, unsigned long long *addr)
 {
@@ -685,7 +727,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 {
 	void *tmp;
 	unsigned long sz, elfcorehdr;
-	int nr_ranges, align = 1024;
+	int nr_ranges, align = 1024, i;
 	long int nr_cpus = 0;
 	struct memory_range *mem_range, *memmap_p;
 
@@ -749,5 +791,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
+
+	/* Inform second kernel about the presence of ACPI tables. */
+	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
+		unsigned long start, end;
+		if (mem_range[i].type != RANGE_ACPI)
+			continue;
+		start = mem_range[i].start;
+		end = mem_range[i].end;
+		cmdline_add_memmap_acpi(mod_cmdline, start, end);
+	}
 	return 0;
 }
