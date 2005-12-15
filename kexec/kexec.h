@@ -196,4 +196,5 @@ int arch_process_options(int argc, char **argv);
 int arch_compat_trampoline(struct kexec_info *info);
 void arch_update_purgatory(struct kexec_info *info);
 
+#define MAX_LINE	160
 #endif /* KEXEC_H */

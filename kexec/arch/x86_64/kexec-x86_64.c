@@ -34,7 +34,6 @@
 #include <arch/options.h>
 
 #define MAX_MEMORY_RANGES 64
-#define MAX_LINE 160
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of memory ranges. */

@@ -15,6 +15,7 @@ KEXEC_C_SRCS+= kexec/kexec-elf.c
 KEXEC_C_SRCS+= kexec/kexec-elf-exec.c 
 KEXEC_C_SRCS+= kexec/kexec-elf-rel.c 
 KEXEC_C_SRCS+= kexec/kexec-elf-boot.c 
+KEXEC_C_SRCS+= kexec/crashdump.c
 KEXEC_C_SRCS+= $(PURGATORY_HEX_C)
 KEXEC_S_SRCS:= 
 include kexec/arch/$(ARCH)/Makefile

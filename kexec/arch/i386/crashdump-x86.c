@@ -29,11 +29,10 @@
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
+#include "../../crashdump.h"
 #include "kexec-x86.h"
 #include "crashdump-x86.h"
 #include <x86/x86-linux.h>
-
-#define MAX_LINE	160
 
 extern struct arch_options_t arch_options;
 
@@ -429,41 +428,36 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	return 0;
 }
 
-/* Returns the virtual address of start of crash notes buffer for a cpu. */
-static int get_crash_notes_section_addr(int cpu, unsigned long long *addr)
+
+/*
+ * This routine is specific to i386 architecture to maintain the
+ * backward compatibility, other architectures can use the per
+ * cpu version get_crash_notes_per_cpu() directly.
+ */
+static int get_crash_notes(int cpu, uint64_t *addr)
 {
-#define MAX_SYSFS_PATH_LEN	70
-	char crash_notes[MAX_SYSFS_PATH_LEN];
+	char crash_notes[PATH_MAX];
 	char line[MAX_LINE];
 	FILE *fp;
-	struct stat cpu_stat;
+	unsigned long vaddr;
+	int count;
 
-	sprintf(crash_notes, "/sys/devices/system/cpu");
-	if (stat(crash_notes, &cpu_stat)) {
-		die("Cannot stat %s: %s\nTry mounting sysfs\n",
-			crash_notes, strerror(errno));
-	}
-
-	sprintf(crash_notes, "/sys/devices/system/cpu/cpu%d/crash_notes", cpu);
+	sprintf(crash_notes, "/sys/kernel/crash_notes");
 	fp = fopen(crash_notes, "r");
-	if (!fp) {
-		/* CPU is not physically present.*/
-		*addr = 0;
-		return -1;
-	}
-
-	if (fgets(line, sizeof(line), fp) != 0) {
-		int count;
-		count = sscanf(line, "%Lx", addr);
-		if (count != 1) {
-			*addr = 0;
-			return -1;
+	if (fp) {
+		if (fgets(line, sizeof(line), fp) != 0) {
+			count = sscanf(line, "%lx", &vaddr);
+			if (count != 1)
+				die("Cannot parse %s: %s\n", crash_notes,
+						strerror(errno));
 		}
+		*addr = __pa(vaddr + (cpu * MAX_NOTE_BYTES));
 #if 0
 		printf("crash_notes addr = %Lx\n", *addr);
 #endif
-	}
-	return 0;
+		return 0;
+	} else
+		return get_crash_notes_per_cpu(cpu, addr);
 }
 
 /* Prepares the crash memory elf64 headers and stores in supplied buffer. */
@@ -475,7 +469,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	unsigned long long notes_addr;
+	uint64_t notes_addr;
 
 	bufp = (char*) buf;
 
@@ -508,11 +502,8 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		return -1;
 	}
 
-	/* Need to find a better way to determine per cpu notes section size. */
-#define MAX_NOTE_BYTES	1024
-
 	for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes_section_addr (i, &notes_addr) < 0) {
+		if (get_crash_notes(i, &notes_addr) < 0) {
 			/* This cpu is not present. Skip it. */
 			continue;
 		}
@@ -571,7 +562,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	unsigned long long notes_addr;
+	uint64_t notes_addr;
 
 	bufp = (char*) buf;
 
@@ -607,7 +598,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 	/* Need to find a better way to determine per cpu notes section size. */
 #define MAX_NOTE_BYTES	1024
 	for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes_section_addr (i, &notes_addr) < 0) {
+		if (get_crash_notes(i, &notes_addr) < 0) {
 			/* This cpu is not present. Skip it. */
 			return -1;
 		}
