@@ -376,6 +376,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 				die("Undefined symbol: %s\n",
 					strtab + sym.st_name);
 			*/
+				continue;
 			}
 			sec_base = 0;
 			if (sym.st_shndx == SHN_COMMON) {
