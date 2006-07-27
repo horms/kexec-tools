@@ -1,7 +1,10 @@
 #ifndef CRASHDUMP_PPC64_H
 #define CRASHDUMP_PPC64_H
 
+int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
+				unsigned long max_addr, unsigned long min_base);
 void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
+void add_exclude_rgns(unsigned long long base, unsigned long long size);
 
 #define PAGE_OFFSET      0xC000000000000000
 #define KERNELBASE      PAGE_OFFSET
@@ -23,5 +26,8 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 #define _ALIGN_UP(addr,size)     (((addr)+((size)-1))&(~((size)-1)))
 #define _ALIGN_DOWN(addr,size)   ((addr)&(~((size)-1)))
 #define PAGE_SIZE      4096
+
+extern unsigned long long crash_base;
+extern unsigned long long crash_size;
 
 #endif /* CRASHDUMP_PPC64_H */

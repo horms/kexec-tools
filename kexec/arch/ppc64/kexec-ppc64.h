@@ -1,6 +1,12 @@
 #ifndef KEXEC_PPC64_H
 #define KEXEC_PPC64_H
 
+#define MAX_MEMORY_RANGES 256 /* TO FIX - needs to be dynamically set */
+#define MAXBYTES 128
+#define MAX_LINE 160
+
+int setup_memory_ranges(unsigned long kexec_flags);
+
 int elf_ppc64_probe(const char *buf, off_t len);
 int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
@@ -18,6 +24,10 @@ struct bootblock {
 		version,
 		last_comp_version,
 		boot_physid;
+};
+
+struct exclude_range {
+        unsigned long long start, end;
 };
 
 typedef struct mem_rgns {

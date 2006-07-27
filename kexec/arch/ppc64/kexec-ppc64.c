@@ -31,27 +31,23 @@
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-ppc64.h"
+#include "crashdump-ppc64.h"
 #include <arch/options.h>
 
-#define MAX_MEMORY_RANGES	64
-#define MAX_LINE	160
-#define MAXBYTES	128
 /* Platforms supported by kexec on PPC64 */
 #define PLATFORM_PSERIES	0x0100
 #define PLATFORM_PSERIES_LPAR	0x0101
 
-struct exclude_range {
-	unsigned long long start, end;
-};
 static struct exclude_range exclude_range[MAX_MEMORY_RANGES];
-
 static unsigned long long rmo_top;
 static unsigned int platform;
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 static struct memory_range base_memory_range[MAX_MEMORY_RANGES];
 unsigned long long memory_max = 0;
-static int nr_memory_ranges;
-static int nr_exclude_ranges;
+static int nr_memory_ranges, nr_exclude_ranges;
+unsigned long long crash_base, crash_size;
+
+static int sort_base_ranges();
 
 /* Get base memory ranges */
 static int get_base_ranges()
@@ -105,17 +101,44 @@ static int get_base_ranges()
 				((unsigned long long *)buf)[1];
 			base_memory_range[local_memory_ranges].type = RANGE_RAM;
 			local_memory_ranges++;
-#if 0
+#ifdef DEBUG
 			fprintf(stderr, "%016Lx-%016Lx : %x\n", memory_range[local_memory_ranges-1].start, memory_range[local_memory_ranges-1].end, memory_range[local_memory_ranges].type);
 #endif
 			fclose(file);
 		}
-		memory_max = base_memory_range[local_memory_ranges - 1].end;
 		closedir(dmem);
 	}
 	closedir(dir);
 	nr_memory_ranges = local_memory_ranges;
+	sort_base_ranges();
+	memory_max = base_memory_range[nr_memory_ranges - 1].end;
+#ifdef DEBUG
 	fprintf(stderr, "get base memory ranges:%d\n", nr_memory_ranges);
+#endif
+	return 0;
+}
+
+/* Sort the base ranges in memory - this is useful for ensuring that our
+ * ranges are in ascending order, even if device-tree read of memory nodes
+ * is done differently. Also, could be used for other range coalescing later
+ */
+static int sort_base_ranges()
+{
+	int i, j;
+	unsigned long long tstart, tend;
+
+	for (i = 0; i < nr_memory_ranges - 1; i++) {
+		for (j = 0; j < nr_memory_ranges - i - 1; j++) {
+			if (base_memory_range[j].start > base_memory_range[j+1].start) {
+				tstart = base_memory_range[j].start;
+				tend = base_memory_range[j].end;
+				base_memory_range[j].start = base_memory_range[j+1].start;
+				base_memory_range[j].end = base_memory_range[j+1].end;
+				base_memory_range[j+1].start = tstart;
+				base_memory_range[j+1].end = tend;
+			}
+		}
+	}
 	return 0;
 }
 
@@ -139,12 +162,17 @@ static int sort_ranges()
 	return 0;
 }
 
-/* Get devtree details and create exclude_range array */
-static int get_devtree_details()
+/* Get devtree details and create exclude_range array
+ * Also create usablemem_ranges for KEXEC_ON_CRASH
+ */
+static int get_devtree_details(unsigned long kexec_flags)
 {
 	unsigned long long rmo_base;
 	unsigned long long tce_base;
 	unsigned int tce_size;
+	unsigned int rtas_base, rtas_size;
+	unsigned long long htab_base, htab_size;
+	unsigned long long kernel_end;
 	char buf[MAXBYTES-1];
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
@@ -189,6 +217,7 @@ static int get_devtree_details()
 				return -1;
 			}
 			fclose(file);
+
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
@@ -199,7 +228,6 @@ static int get_devtree_details()
 				closedir(dir);
 				return -1;
 			}
-			unsigned long long kernel_end;
 			if (fread(&kernel_end, sizeof(unsigned long), 1, file) != 1) {
 				perror(fname);
 				fclose(file);
@@ -207,10 +235,62 @@ static int get_devtree_details()
 				closedir(dir);
 				return -1;
 			}
+			fclose(file);
+
 			/* Add kernel memory to exclude_range */
 			exclude_range[i].start = 0x0UL;
 			exclude_range[i].end = kernel_end;
 			i++;
+
+			if (kexec_flags & KEXEC_ON_CRASH) {
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,crashkernel-base");
+				if ((file = fopen(fname, "r")) == NULL) {
+					perror(fname);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				if (fread(&crash_base, sizeof(unsigned long), 1,
+						file) != 1) {
+					perror(fname);
+					fclose(file);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				fclose(file);
+
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,crashkernel-size");
+				if ((file = fopen(fname, "r")) == NULL) {
+					perror(fname);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				if (fread(&crash_size, sizeof(unsigned long), 1,
+						file) != 1) {
+					perror(fname);
+					fclose(file);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+
+				if (crash_base > mem_min)
+					mem_min = crash_base;
+				if (crash_base + crash_size < mem_max)
+					mem_max = crash_base + crash_size;
+
+				add_usable_mem_rgns(0, crash_base + crash_size);
+				reserve(KDUMP_BACKUP_LIMIT, crash_base-KDUMP_BACKUP_LIMIT);
+			}
+
 			/* if LPAR, no need to read any more from /chosen */
 			if (platform != PLATFORM_PSERIES) {
 				closedir(cdir);
@@ -226,7 +306,6 @@ static int get_devtree_details()
 				closedir(dir);
 				return -1;
 			}
-			unsigned long long htab_base, htab_size;
 			if (fread(&htab_base, sizeof(unsigned long), 1, file) != 1) {
 				perror(fname);
 				fclose(file);
@@ -265,7 +344,6 @@ static int get_devtree_details()
 				closedir(dir);
 				return -1;
 			}
-			unsigned int rtas_base, rtas_size;
 			if (fread(&rtas_base, sizeof(unsigned int), 1, file) != 1) {
 				perror(fname);
 				fclose(file);
@@ -295,6 +373,8 @@ static int get_devtree_details()
 			exclude_range[i].start = rtas_base;
 			exclude_range[i].end = rtas_base + rtas_size;
 			i++;
+			if (kexec_flags & KEXEC_ON_CRASH)
+				add_usable_mem_rgns(rtas_base, rtas_size);
 		} /* rtas */
 
 		if (strncmp(dentry->d_name, "memory@0", 8) == 0) {
@@ -314,8 +394,10 @@ static int get_devtree_details()
 			}
 			rmo_base = ((unsigned long long *)buf)[0];
 			rmo_top = rmo_base + ((unsigned long long *)buf)[1];
-			if (platform == PLATFORM_PSERIES)
-				if (memory_max > 0x40000000UL? (rmo_top = 0x40000000UL) : (rmo_top = memory_max));
+			if (platform == PLATFORM_PSERIES) {
+				if (rmo_top > 0x30000000UL)
+					rmo_top = 0x30000000UL;
+			}
 			fclose(file);
 			closedir(cdir);
 		} /* memory */
@@ -360,6 +442,8 @@ static int get_devtree_details()
 			exclude_range[i].start = tce_base;
 			exclude_range[i].end = tce_base + tce_size;
 			i++;
+			if (kexec_flags & KEXEC_ON_CRASH)
+				add_usable_mem_rgns(tce_base, tce_size);
 			closedir(cdir);
 		} /* pci */
 	}
@@ -368,7 +452,31 @@ static int get_devtree_details()
 	nr_exclude_ranges = i;
 
 	sort_ranges();
-#if 0
+
+	/* add crash_region and remove rtas range from exclude regions if it
+	 * lies within crash region
+	 */
+	if (kexec_flags & KEXEC_ON_CRASH) {
+		unsigned long new_crash_size;
+		if (crash_base < rtas_base &&
+			((crash_base + crash_size) > (rtas_base + rtas_size))){
+			new_crash_size = rtas_base - crash_base;
+			add_exclude_rgns(crash_base, new_crash_size);
+			new_crash_size = (crash_base + crash_size) - (rtas_base + rtas_size);
+			add_exclude_rgns(rtas_base + rtas_size, new_crash_size);
+		} else if (crash_base < rtas_base &&
+			((rtas_base + rtas_size) > (crash_base + crash_size))){
+			new_crash_size = rtas_base - crash_base;
+			add_exclude_rgns(crash_base, new_crash_size);
+		} else if (crash_base > rtas_base &&
+			((rtas_base + rtas_size) < (crash_base + crash_size))){
+			new_crash_size = (crash_base + crash_size) - (rtas_base + rtas_size);
+			add_exclude_rgns(rtas_base + rtas_size, new_crash_size);
+		} else
+			add_exclude_rgns(crash_base, crash_size);
+	}
+
+#ifdef DEBUG
 	int k;
 	for (k = 0; k < i; k++)
 		fprintf(stderr, "exclude_range sorted exclude_range[%d] start:%lx, end:%lx\n", k, exclude_range[k].start, exclude_range[k].end);
@@ -377,7 +485,7 @@ static int get_devtree_details()
 }
 
 /* Setup a sorted list of memory ranges. */
-int setup_memory_ranges(void)
+int setup_memory_ranges(unsigned long kexec_flags)
 {
 	int i, j = 0;
 
@@ -386,7 +494,7 @@ int setup_memory_ranges(void)
 	 */
 
 	get_base_ranges();
-	get_devtree_details();
+	get_devtree_details(kexec_flags);
 
 	for (i = 0; i < nr_exclude_ranges; i++) {
 		/* If first exclude range does not start with 0, include the
@@ -435,17 +543,18 @@ int setup_memory_ranges(void)
 			j--;
 			break;
 		}
-		if ((memory_range[j-1].start < rmo_top) && (memory_range[j-1].end >= rmo_top)) {
+		if ((memory_range[j-1].start < rmo_top) &&
+			(memory_range[j-1].end >= rmo_top)) {
 			memory_range[j-1].end = rmo_top;
 			break;
 		}
 	}
 	nr_memory_ranges = j;
 
-#if 0
+#ifdef DEBUG
 	int k;
 	for (k = 0; k < j; k++)
-		fprintf(stderr, "seup_memory_ranges memory_range[%d] start:%lx, end:%lx\n", k, memory_range[k].start, memory_range[k].end);
+		fprintf(stderr, "setup_memory_ranges memory_range[%d] start:%lx, end:%lx\n", k, memory_range[k].start, memory_range[k].end);
 #endif
 	return 0;
 }
@@ -454,7 +563,7 @@ int setup_memory_ranges(void)
 int get_memory_ranges(struct memory_range **range, int *ranges,
 			unsigned long kexec_flags)
 {
-	setup_memory_ranges();
+	setup_memory_ranges(kexec_flags);
 	*range = memory_range;
 	*ranges = nr_memory_ranges;
 	fprintf(stderr, "get memory ranges:%d\n", nr_memory_ranges);
