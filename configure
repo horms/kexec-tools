@@ -1428,7 +1428,7 @@ if test "${with_gamecube+set}" = set; then
 fi;
 
 # Check whether ppc64. Add -m64 for building 64-bit binary
-if test "$ARCH"=ppc64; then
+if test "$ARCH" = ppc64; then
   EXTRA_CFLAGS="$EXTRA_CFLAGS -m64"
 fi;
 
