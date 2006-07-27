@@ -192,12 +192,17 @@ void add_usable_mem_property(int fd, int len)
 }
 
 /* put all properties (files) in the property structure */
-void putprops(char *fn, DIR *dir)
+void putprops(char *fn, struct dirent **nlist, int numlist)
 {
 	struct dirent *dp;
+	int i = 0;
 
-	while ((dp = readdir(dir)) != NULL) {
+	for (i = 0; i < numlist; i++) {
+		dp = nlist[i];
 		strcpy(fn, dp->d_name);
+
+		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
+                        continue;
 
 		if (lstat(pathname, statbuf))
 			err(pathname, ERR_STAT);
@@ -239,6 +244,7 @@ void putprops(char *fn, DIR *dir)
 			fd = open(pathname, O_RDONLY);
 			if (fd == -1)
 				err(pathname, ERR_OPEN);
+
 			if (read(fd, dt, len) != len)
 				err(pathname, ERR_READ);
 
@@ -255,7 +261,6 @@ void putprops(char *fn, DIR *dir)
 							"crashkernel=");
 					if (param)
 						crash_param = 1;
-					param = NULL;
 					param = strstr(local_cmdline, "root=");
 				}
 				if (!param) {
@@ -293,15 +298,38 @@ void putprops(char *fn, DIR *dir)
 }
 
 /*
+ * Compare function used to sort the device-tree directories
+ * This function will be passed to scandir.
+ */
+int comparefunc(const void *dentry1, const void *dentry2)
+{
+	char *str1 = (*(struct dirent **)dentry1)->d_name;
+	char *str2 = (*(struct dirent **)dentry2)->d_name;
+
+	/*
+	 * strcmp scans from left to right and fails to idetify for some
+	 * strings such as memory@10000000 and memory@f000000.
+	 * Therefore, we get the wrong sorted order like memory@10000000 and
+	 * memory@f000000.
+	 */
+	if (strchr(str1, '@') && strchr(str2, '@') &&
+		(strlen(str1) > strlen(str2)))
+		return 1;
+
+	return strcmp(str1, str2);
+}
+
+/*
  * put a node (directory) in the property structure.  first properties
  * then children.
  */
 void putnode(void)
 {
-	DIR *dir;
 	char *dn;
 	struct dirent *dp;
 	char *basename;
+	struct dirent **namelist;
+	int numlist, i;
 
 	*dt++ = 1;
 	strcpy((void *)dt, *pathstart ? pathstart : "/");
@@ -310,9 +338,8 @@ void putnode(void)
 	if (dt[-1] & 0xff)
 		dt++;
 
-	dir = opendir(pathname);
-
-	if (!dir)
+	numlist = scandir(pathname, &namelist, 0, comparefunc);
+	if (numlist == 0)
 		err(pathname, ERR_OPENDIR);
 
 	basename = strrchr(pathname,'/');
@@ -320,7 +347,7 @@ void putnode(void)
 	strcat(pathname, "/");
 	dn = pathname + strlen(pathname);
 
-	putprops(dn, dir);
+	putprops(dn, namelist, numlist);
 
 	/* Add initrd entries to the second kernel if first kernel does not
 	 * have and second kernel needs.
@@ -353,10 +380,10 @@ void putnode(void)
 		reserve(initrd_base, initrd_size);
 	}
 
-	rewinddir(dir);
-
-	while ((dp = readdir(dir)) != NULL) {
+	for (i=0; i < numlist; i++) {
+		dp = namelist[i];
 		strcpy(dn, dp->d_name);
+		free(namelist[i]);
 
 		if (!strcmp(dn, ".") || !strcmp(dn, ".."))
 			continue;
@@ -371,8 +398,8 @@ void putnode(void)
 		err(pathname, ERR_READDIR);
 
 	*dt++ = 2;
-	closedir(dir);
 	dn[-1] = '\0';
+	free(namelist);
 }
 
 int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,

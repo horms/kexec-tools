@@ -144,6 +144,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	cmdline_len = 0;
 	if (cmdline)
 		cmdline_len = strlen(cmdline) + 1;
+	else
+		fprintf(stdout, "Warning: append= option is not passed. Using the first kernel root partition\n");
 
 	setup_memory_ranges(info->kexec_flags);
 
