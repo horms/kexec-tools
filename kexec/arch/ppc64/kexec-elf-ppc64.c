@@ -93,6 +93,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
 #define OPT_RAMDISK     (OPT_ARCH_MAX+1)
 #define OPT_DEVICETREEBLOB     (OPT_ARCH_MAX+2)
+#define OPT_ARGS_IGNORE		(OPT_ARCH_MAX+3)
 
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
@@ -100,6 +101,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		{ "append",             1, NULL, OPT_APPEND },
 		{ "ramdisk",            1, NULL, OPT_RAMDISK },
 		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
+		{ "args-linux",		0, NULL, OPT_ARGS_IGNORE },
 		{ 0,                    0, NULL, 0 },
 	};
 
@@ -132,6 +134,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_DEVICETREEBLOB:
 			devicetreeblob = optarg;
+			break;
+		case OPT_ARGS_IGNORE:
 			break;
 		}
 	}
