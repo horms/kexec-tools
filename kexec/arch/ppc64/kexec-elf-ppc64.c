@@ -33,18 +33,18 @@
 #include <linux/elf.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
+#include "../../kexec-syscall.h"
 #include "kexec-ppc64.h"
+#include "crashdump-ppc64.h"
 #include <arch/options.h>
 
 #define BOOTLOADER         "kexec"
 #define BOOTLOADER_VERSION VERSION
-#define MAX_COMMAND_LINE   256
 
 unsigned long initrd_base, initrd_size;
 
-int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *);
-int parse_options(char *);
-int setup_memory_ranges(void);
+int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
+			char *);
 
 int elf_ppc64_probe(const char *buf, off_t len)
 {
@@ -68,23 +68,29 @@ int elf_ppc64_probe(const char *buf, off_t len)
 }
 
 int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
-	struct kexec_info *info)
+			struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
-	const char *command_line;
-	const char *input_options;
-	int command_line_len;
-	const char *ramdisk;
-	const char *devicetreeblob;
-	unsigned long *lp;
-	int result;
-	int opt;
+	char *cmdline, *modified_cmdline;
+	const char *ramdisk, *devicetreeblob;
+	int cmdline_len, modified_cmdline_len;
+	unsigned long long max_addr, hole_addr;
+	unsigned char *seg_buf = NULL;
+	off_t seg_size = 0;
+	struct mem_phdr *phdr;
+	size_t size;
+	unsigned long long *rsvmap_ptr;
+	struct bootblock *bb_ptr;
+	unsigned int nr_segments, i;
+	int result, opt;
+
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
 #define OPT_RAMDISK     (OPT_ARCH_MAX+1)
 #define OPT_DEVICETREEBLOB     (OPT_ARCH_MAX+2)
 
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
+		{ "command-line",       1, NULL, OPT_APPEND },
 		{ "append",             1, NULL, OPT_APPEND },
 		{ "ramdisk",            1, NULL, OPT_RAMDISK },
 		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
@@ -96,23 +102,24 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	/* Parse command line arguments */
 	initrd_base = 0;
 	initrd_size = 0;
-	command_line = 0;
-	input_options = 0;
+	cmdline = 0;
 	ramdisk = 0;
 	devicetreeblob = 0;
+	max_addr = 0xFFFFFFFFFFFFFFFFUL;
+	hole_addr = 0;
 
-	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+	while ((opt = getopt_long(argc, argv, short_options,
+					options, 0)) != -1) {
 		switch (opt) {
 		default:
 			/* Ignore core options */
-			if (opt < OPT_ARCH_MAX) {
+			if (opt < OPT_ARCH_MAX)
 				break;
-			}
 		case '?':
 			usage();
 			return -1;
 		case OPT_APPEND:
-			input_options = optarg;
+			cmdline = optarg;
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -123,13 +130,24 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		}
 	}
 
-	command_line_len = 0;
-	if (command_line) {
-		command_line_len = strlen(command_line) + 1;
-	}
+	cmdline_len = 0;
+	if (cmdline)
+		cmdline_len = strlen(cmdline) + 1;
 
-	if (input_options)
-		parse_options(input_options);
+	setup_memory_ranges(info->kexec_flags);
+
+	/* Need to append some command line parameters internally in case of
+	 * taking crash dumps.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
+		memset((void *)modified_cmdline, 0, COMMAND_LINE_SIZE);
+		if (cmdline) {
+			strncpy(modified_cmdline, cmdline, COMMAND_LINE_SIZE);
+			modified_cmdline[COMMAND_LINE_SIZE - 1] = '\0';
+		}
+		modified_cmdline_len = strlen(modified_cmdline);
+	}
 
 	/* Parse the Elf file */
 	result = build_elf_exec_info(buf, len, &ehdr);
@@ -138,25 +156,19 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		return result;
 	}
 
-	/* Load the Elf data */
-	setup_memory_ranges();
 	/* Load the Elf data. Physical load addresses in elf64 header do not
 	 * show up correctly. Use user supplied address for now to patch the
 	 * elf header
 	 */
-	unsigned long long base_addr;
-	struct mem_phdr *phdr;
-	size_t size;
 
 	phdr = &ehdr.e_phdr[0];
 	size = phdr->p_filesz;
-	if (size > phdr->p_memsz) {
+	if (size > phdr->p_memsz)
 		size = phdr->p_memsz;
-	}
 
-	base_addr = (unsigned long)locate_hole(info, size, 0, 0,
+	hole_addr = (unsigned long)locate_hole(info, size, 0, 0,
 			0xFFFFFFFFFFFFFFFFUL, 1);
-	ehdr.e_phdr[0].p_paddr = base_addr;
+	ehdr.e_phdr[0].p_paddr = hole_addr;
 	result = elf_exec_load(&ehdr, info);
 	if (result < 0) {
 		free_elf_info(&ehdr);
@@ -165,10 +177,10 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 
 	/* Add a ram-disk to the current image */
 	if (ramdisk) {
-	  if (devicetreeblob) {
-	    fprintf(stderr, "Can't use ramdisk with device tree blob input\n");
-	    return -1;
-	  }
+		if (devicetreeblob) {
+			fprintf(stderr, "Can't use ramdisk with device tree blob input\n");
+			return -1;
+		}
 		unsigned char *ramdisk_buf = NULL;
 		off_t ramdisk_size = 0;
 		unsigned long long ramdisk_addr;
@@ -179,6 +191,19 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_addr = (unsigned long long)info->segment[info->nr_segments-1].mem;
 		initrd_base = ramdisk_addr;
 		initrd_size = ramdisk_size;
+	}
+
+	/* If panic kernel is being loaded, additional segments need
+	 * to be created.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		result = load_crashdump_segments(info, modified_cmdline,
+						max_addr, 0);
+		if (result < 0)
+			return -1;
+		/* Use new command line. */
+		cmdline = modified_cmdline;
+		cmdline_len = strlen(modified_cmdline) + 1;
 	}
 
 	/* Add v2wrap to the current image */
@@ -229,7 +254,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		rsvmap_ptr += 2;
 	}
 	rsvmap_ptr -= 2;
- 	*rsvmap_ptr = (unsigned long long)(
+	*rsvmap_ptr = (unsigned long long)(
 		info->segment[(info->nr_segments)-1].mem + 0x100);
  	rsvmap_ptr++;
  	*rsvmap_ptr = (unsigned long long)bb_ptr->totalsize;
@@ -251,68 +276,4 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 void elf_ppc64_usage(void)
 {
 	fprintf(stderr, "elf support is still broken\n");
-}
-
-struct param_struct {
-	const char *name;
-	void *val;
-};
-struct param_struct params;
-
-static char *next_arg(char *args, char **param, char **val)
-{
-	unsigned int i, equals = 0;
-	char *next;
-
-	/* Chew any extra spaces */
-	while (*args == ' ') args++;
-	for (i = 0; args[i]; i++) {
-		if (args[i] == ' ')
-			break;
-		if (equals == 0) {
-			if (args[i] == '=')
-				equals = i;
-		}
-	}
-	*param = args;
-	if (!equals)
-		*val = NULL;
-	else {
-		args[equals] = '\0';
-		*val = args + equals + 1;
-	}
-
-	if (args[i]) {
-		args[i] = '\0';
-		next = args + i + 1;
-	} else
-		next = args + i;
-	return next;
-}
-
-static int add_arg(char *param, char*val)
-{
-	int ret = 0;
-	if (strcmp(param, "initrd-base")==0)
-		initrd_base=strtoul(val, NULL, 0);
-	else if (strcmp(param, "initrd-size")==0)
-		initrd_size=strtoul(val, NULL, 0);
-	else {
-		printf("invalid option\n");
-		ret = 1;
-	}
-	return ret;
-}
-
-int parse_options(char *options)
-{
-	char *param, *val;
-	/* initrd-addr , initrd-size */
-	while (*options) {
-		int ret;
-		options = next_arg(options, &param, &val);
-		ret = add_arg(param, val);
-	}
-	/* All parsed OK */
-	return 0;
 }

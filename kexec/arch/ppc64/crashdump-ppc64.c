@@ -31,6 +31,8 @@
 #include "kexec-ppc64.h"
 #include "crashdump-ppc64.h"
 
+extern struct arch_options_t arch_options;
+
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region
  */
@@ -44,6 +46,17 @@ mem_rgns_t usablemem_rgns = {0, };
 
 /* array to store memory regions to be excluded from elf header creation */
 mem_rgns_t exclude_rgns = {0, };
+
+/*
+ * To store the memory size of the first kernel and this value will be
+ * passed to the second kernel as command line (savemaxmem=xM).
+ * The second kernel will be calculated saved_max_pfn based on this
+ * variable.
+ * Since we are creating/using usable-memory property, there is no way
+ * we can determine the RAM size unless parsing the device-tree/memoy@/reg
+ * property in the kernel.
+ */
+unsigned long saved_max_mem = 0;
 
 static int sort_regions(mem_rgns_t *rgn);
 
@@ -189,6 +202,116 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		fprintf(stderr, "%016Lx-%016Lx\n", start, end);
 	}
 #endif
+	return 0;
+}
+
+/* Converts unsigned long to ascii string. */
+static void ultoa(unsigned long i, char *str)
+{
+	int j = 0, k;
+	char tmp;
+
+	do {
+		str[j++] = i % 10 + '0';
+	} while ((i /=10) > 0);
+	str[j] = '\0';
+
+	/* Reverse the string. */
+	for (j = 0, k = strlen(str) - 1; j < k; j++, k--) {
+		tmp = str[k];
+		str[k] = str[j];
+		str[j] = tmp;
+	}
+}
+
+static int add_cmdline_param(char *cmdline, unsigned long addr,
+				char *cmdstr, char *byte)
+{
+	int cmdlen, len, align = 1024;
+	char str[COMMAND_LINE_SIZE], *ptr;
+
+	/* Passing in =xxxK / =xxxM format. Saves space required in cmdline.*/
+	switch (byte[0]) {
+		case 'K':
+			if (addr%align)
+				return -1;
+			addr = addr/align;
+			break;
+		case 'M':
+			addr = addr/(align *align);
+			break;
+	}
+	ptr = str;
+	strcpy(str, cmdstr);
+	ptr += strlen(str);
+	ultoa(addr, ptr);
+	strcat(str, byte);
+	len = strlen(str);
+	cmdlen = strlen(cmdline) + len;
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str);
+#if DEBUG
+	fprintf(stderr, "Command line after adding elfcorehdr: %s\n", cmdline);
+#endif
+	return 0;
+}
+
+/* Loads additional segments in case of a panic kernel is being loaded.
+ * One segment for backup region, another segment for storing elf headers
+ * for crash memory image.
+ */
+int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
+				unsigned long max_addr, unsigned long min_base)
+{
+	void *tmp;
+	unsigned long sz, elfcorehdr;
+	int nr_ranges, align = 1024;
+	long int nr_cpus = 0;
+	struct memory_range *mem_range;
+
+	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
+		return -1;
+
+	/* Create a backup region segment to store backup data*/
+	sz = (BACKUP_SIZE + align - 1) & ~(align - 1);
+	tmp = xmalloc(sz);
+	memset(tmp, 0, sz);
+	info->backup_start = add_buffer(info, tmp, sz, sz, align,
+					0, max_addr, 1);
+	reserve(info->backup_start, sz);
+	/* Create elf header segment and store crash image data. */
+	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
+	if (nr_cpus < 0) {
+		fprintf(stderr,"kexec_load (elf header segment)"
+			" failed: %s\n", strerror(errno));
+		return -1;
+	}
+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		sz =    sizeof(Elf64_Ehdr) +
+			nr_cpus * sizeof(Elf64_Phdr) +
+			nr_ranges * sizeof(Elf64_Phdr);
+	} else {
+		sz =    sizeof(Elf32_Ehdr) +
+			nr_cpus * sizeof(Elf32_Phdr) +
+			nr_ranges * sizeof(Elf32_Phdr);
+	}
+	sz = (sz + align - 1) & ~(align -1);
+	tmp = xmalloc(sz);
+	memset(tmp, 0, sz);
+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		if (prepare_crash_memory_elf64_headers(info, tmp, sz) < 0)
+			return -1;
+	}
+
+	elfcorehdr = add_buffer(info, tmp, sz, sz, align, min_base,
+				max_addr, 1);
+	reserve(elfcorehdr, sz);
+	/* modify and store the cmdline in a global array. This is later
+	 * read by flatten_device_tree and modified if required
+	 */
+	add_cmdline_param(mod_cmdline, elfcorehdr, " elfcorehdr=", "K");
+	add_cmdline_param(mod_cmdline, saved_max_mem, " savemaxmem=", "M");
 	return 0;
 }
 
