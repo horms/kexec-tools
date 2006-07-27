@@ -262,10 +262,12 @@ void putprops(char *fn, DIR *dir)
 					char *old_param;
 					memcpy(temp_cmdline, dt, len);
 					param = strstr(temp_cmdline, "root=");
-					old_param = strtok(param, " ");
-					if (cmd_len != 0)
-						strcat(local_cmdline, " ");
-					strcat(local_cmdline, old_param);
+					if (param) {
+						old_param = strtok(param, " ");
+						if (cmd_len != 0)
+							strcat(local_cmdline, " ");
+						strcat(local_cmdline, old_param);
+					}
 				}
 				strcat(local_cmdline, " ");
 				cmd_len = strlen(local_cmdline);
