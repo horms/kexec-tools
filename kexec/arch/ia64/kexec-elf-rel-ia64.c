@@ -1,3 +1,26 @@
+/*
+ * Copyright (C) 2005-2006  Zou Nan hai (nanhai.zou@intel.com)
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation (version 2 of the License).
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+/*  pugatory relocation code
+ *  Most of the code in this file is
+ *  based on arch/ia64/kernel/module.c in Linux kernel
+ */
+
+
 /*  Most of the code in this file is
  *  based on arch/ia64/kernel/module.c in Linux kernel
  */
@@ -41,6 +64,15 @@ ia64_patch (uint64_t insn_addr, uint64_t mask, uint64_t val)
                 b[0] = (b0 & ~m0) | (v0 & m0);
         }
         b[1] = (b1 & ~m1) | (v1 & m1);
+}
+
+static void
+put_unaligned64(unsigned long val, unsigned char *location)
+{
+	unsigned char *src = (unsigned char *)&val;
+	int i;
+	for (i = 0; i < sizeof(long); i++)
+		*location++ = *src++;
 }
 
 static inline uint64_t
@@ -102,6 +134,11 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 				 | ((value & 0x0fffffUL) << 13) /* bit  0 -> 13 */));
 		}
 		break;
+	case R_IA64_PCREL64LSB: {
+		value = value - address;
+		put_unaligned64(value, location);
+	} break;
+	case R_IA64_GPREL22:
 	case R_IA64_LTOFF22X:
 		if (value - gp_value + MAX_LTOFF/2 >= MAX_LTOFF)
 			die("value out of gp relative range");

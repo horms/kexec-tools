@@ -1,7 +1,7 @@
 /*
  * purgatory:  setup code
  *
- * Copyright (C) 2005  Zou Nan hai (nanhai.zou@intel.com)
+ * Copyright (C) 2005-2006  Zou Nan hai (nanhai.zou@intel.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,6 +16,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#define DECLARE_DATA8(name)	\
+.global name;	\
+.size	name, 8;	\
+name:	data8 0x0
 
 .global __dummy_efi_function
 .align  32
@@ -35,18 +39,10 @@ purgatory_start:
 	ld8 gp=[r2];;
 	br.call.sptk.many b0=purgatory
 	;;
-	alloc r2 = ar.pfs, 0, 0, 5, 0
+	alloc r2 = ar.pfs, 0, 0, 2, 0
 	;;
 	mov out0=r28
-
-	movl r2=__command_line;;
-	ld8 out1=[r2];;
-	movl r2=__command_line_len;;
-	ld8 out2=[r2];;
-	movl r2=__ramdisk_base;;
-	ld8 out3=[r2];;
-	movl r2=__ramdisk_size;;
-	ld8 out4=[r2];;
+	movl out1=__ramdisk_base;;
 	br.call.sptk.many b0=ia64_env_setup
 	movl r10=__kernel_entry;;
 	ld8 r14=[r10];;
@@ -58,28 +54,14 @@ purgatory_start:
 	br.call.sptk.many  b0=b6
 .endp   purgatory_start
 
-.align  32
-.global __kernel_entry
-.size	__kernel_entry, 8
-__kernel_entry:
-        data8 0x0
-.global __command_line
-.size	__command_line, 8
-__command_line:
-        data8 0x0
-.global __command_line_len
-.size	__command_line_len, 8
-__command_line_len:
-        data8 0x0
-.global __ramdisk_base
-.size	__ramdisk_base, 8
-__ramdisk_base:
-        data8 0x0
-.global __ramdisk_size
-.size	__ramdisk_size, 8
-__ramdisk_size:
-        data8 0x0
-.global __gp_value
-.size	__gp_value, 8
-__gp_value:
-        data8 0x0
+DECLARE_DATA8(__kernel_entry)
+DECLARE_DATA8(__ramdisk_base)
+DECLARE_DATA8(__ramdisk_size)
+DECLARE_DATA8(__command_line)
+DECLARE_DATA8(__command_line_len)
+DECLARE_DATA8(__efi_memmap_base)
+DECLARE_DATA8(__efi_memmap_size)
+DECLARE_DATA8(__loaded_segments)
+DECLARE_DATA8(__loaded_segments_num)
+
+DECLARE_DATA8(__gp_value)

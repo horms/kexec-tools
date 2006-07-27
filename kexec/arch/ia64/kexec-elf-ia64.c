@@ -40,7 +40,9 @@
 #include <boot/elf_boot.h>
 #include <ip_checksum.h>
 #include "../../kexec.h"
+#include "../../kexec-syscall.h"
 #include "../../kexec-elf.h"
+#include "crashdump-ia64.h"
 #include <arch/options.h>
 
 static const int probe_debug = 0;
@@ -80,6 +82,28 @@ void elf_ia64_usage(void)
 		"    --initrd=FILE       Use FILE as the kernel's initial ramdisk.\n");
 }
 
+/* Move the crash kerenl physical offset to reserved region
+ */
+static void move_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr)
+{
+	int i;
+	long offset;
+	struct mem_phdr *phdr;
+	for(i = 0; i < ehdr->e_phnum; i++) {
+		phdr = &ehdr->e_phdr[i];
+		if (phdr->p_type == PT_LOAD) {
+			offset = mem_min - phdr->p_paddr;
+			break;
+		}
+	}
+	ehdr->e_entry += offset;
+	for(i = 0; i < ehdr->e_phnum; i++) {
+		phdr = &ehdr->e_phdr[i];
+		if (phdr->p_type == PT_LOAD)
+			phdr->p_paddr += offset;
+	}
+}
+
 int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
@@ -89,9 +113,11 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	off_t ramdisk_size = 0;
 	unsigned long command_line_len;
 	unsigned long entry, max_addr, gp_value;
-	unsigned command_line_base, ramdisk_base;
+	unsigned long command_line_base, ramdisk_base;
+	unsigned long efi_memmap_base, efi_memmap_size;
 	int result;
 	int opt;
+	char *efi_memmap_buf;
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
 #define OPT_RAMDISK	(OPT_ARCH_MAX+1)
 	static const struct option options[] = {
@@ -135,6 +161,15 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 		free_elf_info(&ehdr);
 		return result;
 	}
+
+	if (info->kexec_flags & KEXEC_ON_CRASH ) {
+		if ((mem_min == 0x00) && (mem_max = ULONG_MAX)) {
+			fprintf(stderr, "Failed to find crash kernel region in /proc/iomem\n");
+		return -1;
+		}
+		move_loaded_segments(info, &ehdr);
+	}
+
 	entry = ehdr.e_entry;
 	max_addr = elf_max_addr(&ehdr);
 
@@ -149,17 +184,48 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 
 	/* Load the setup code */
 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-			0x80000, ULONG_MAX, 1);
+			0x0, ULONG_MAX, -1);
 
-	if (command_line_len) {
+
+	if (load_crashdump_segments(info, &ehdr, max_addr, 0,
+				&command_line) < 0)
+		return -1;
+
+	// reserve 8k for efi_memmap
+	efi_memmap_size = 1UL<<14;
+	efi_memmap_buf = xmalloc(efi_memmap_size);
+	efi_memmap_base = add_buffer(info, efi_memmap_buf,
+			efi_memmap_size, efi_memmap_size, 4096, 0,
+			max_addr, -1);
+
+	elf_rel_set_symbol(&info->rhdr, "__efi_memmap_base",
+			&efi_memmap_base, sizeof(long));
+
+	elf_rel_set_symbol(&info->rhdr, "__efi_memmap_size",
+			&efi_memmap_size, sizeof(long));
+	if (command_line) {
+		command_line_len = strlen(command_line) + 1;
+	}
+	if (command_line_len || (info->kexec_flags & KEXEC_ON_CRASH )) {
 		char *cmdline = xmalloc(command_line_len);
 		strcpy(cmdline, command_line);
+
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+			char buf[128];
+			sprintf(buf," max_addr=%lluM min_addr=%lluM",
+					mem_max>>20, mem_min>>20);
+			command_line_len = strlen(cmdline) + strlen(buf) + 1;
+			cmdline = xrealloc(cmdline, command_line_len);
+			strcat(cmdline, buf);
+		}
+
 		command_line_len = (command_line_len + 15)&(~15);
+		command_line_base = add_buffer(info, cmdline,
+				command_line_len, command_line_len,
+				getpagesize(), 0UL,
+				max_addr, -1);
 		elf_rel_set_symbol(&info->rhdr, "__command_line_len",
 				&command_line_len, sizeof(long));
-		command_line_base = add_buffer(info, cmdline,
-					command_line_len, command_line_len,
-					16, 0, max_addr, 1);
 		elf_rel_set_symbol(&info->rhdr, "__command_line",
 				&command_line_base, sizeof(long));
 	}
@@ -168,7 +234,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf = slurp_file(ramdisk, &ramdisk_size);
 		ramdisk_base = add_buffer(info, ramdisk_buf, ramdisk_size,
 				ramdisk_size,
-				getpagesize(), 0, max_addr, 1);
+				getpagesize(), 0, max_addr, -1);
 		elf_rel_set_symbol(&info->rhdr, "__ramdisk_base",
 				&ramdisk_base, sizeof(long));
 		elf_rel_set_symbol(&info->rhdr, "__ramdisk_size",

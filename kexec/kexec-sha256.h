@@ -6,6 +6,6 @@ struct sha256_region {
 	unsigned long len;
 };
 
-#define SHA256_REGIONS 8
+#define SHA256_REGIONS 16
 
 #endif /* KEXEC_SHA256_H */

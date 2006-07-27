@@ -97,6 +97,9 @@ int valid_memory_range(unsigned long sstart, unsigned long send)
 			continue;
 		mstart = memory_range[i].start;
 		mend = memory_range[i].end;
+		if (i < memory_ranges - 1 && mend == memory_range[i+1].start)
+			mend = memory_range[i+1].end;
+
 		/* Check to see if we are fully contained */
 		if ((mstart <= sstart) && (mend >= send)) {
 			return 1;
