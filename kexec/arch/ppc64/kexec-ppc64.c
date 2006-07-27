@@ -34,13 +34,8 @@
 #include "crashdump-ppc64.h"
 #include <arch/options.h>
 
-/* Platforms supported by kexec on PPC64 */
-#define PLATFORM_PSERIES	0x0100
-#define PLATFORM_PSERIES_LPAR	0x0101
-
 static struct exclude_range exclude_range[MAX_MEMORY_RANGES];
 static unsigned long long rmo_top;
-static unsigned int platform;
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 static struct memory_range base_memory_range[MAX_MEMORY_RANGES];
 unsigned long long memory_max = 0;
@@ -201,26 +196,6 @@ static int get_devtree_details(unsigned long kexec_flags)
 		}
 
 		if (strncmp(dentry->d_name, "chosen", 6) == 0) {
-			/* get platform details from /chosen node */
-			strcat(fname, "/linux,platform");
-			if ((file = fopen(fname, "r")) == NULL) {
-				perror(fname);
-				closedir(cdir);
-				closedir(dir);
-				return -1;
-			}
-			if (fread(&platform, sizeof(int), 1, file) != 1) {
-				perror(fname);
-				fclose(file);
-				closedir(cdir);
-				closedir(dir);
-				return -1;
-			}
-			fclose(file);
-
-			memset(fname, 0, sizeof(fname));
-			strcpy(fname, device_tree);
-			strcat(fname, dentry->d_name);
 			strcat(fname, "/linux,kernel-end");
 			if ((file = fopen(fname, "r")) == NULL) {
 				perror(fname);
@@ -291,18 +266,18 @@ static int get_devtree_details(unsigned long kexec_flags)
 				reserve(KDUMP_BACKUP_LIMIT, crash_base-KDUMP_BACKUP_LIMIT);
 			}
 
-			/* if LPAR, no need to read any more from /chosen */
-			if (platform != PLATFORM_PSERIES) {
-				closedir(cdir);
-				continue;
-			}
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
 			strcat(fname, "/linux,htab-base");
 			if ((file = fopen(fname, "r")) == NULL) {
-				perror(fname);
 				closedir(cdir);
+				if (errno == ENOENT) {
+					/* Non LPAR */
+					errno = 0;
+					continue;
+                                }
+				perror(fname);
 				closedir(dir);
 				return -1;
 			}
@@ -394,23 +369,23 @@ static int get_devtree_details(unsigned long kexec_flags)
 			}
 			rmo_base = ((unsigned long long *)buf)[0];
 			rmo_top = rmo_base + ((unsigned long long *)buf)[1];
-			if (platform == PLATFORM_PSERIES) {
-				if (rmo_top > 0x30000000UL)
-					rmo_top = 0x30000000UL;
-			}
+			if (rmo_top > 0x30000000UL)
+				rmo_top = 0x30000000UL;
+
 			fclose(file);
 			closedir(cdir);
 		} /* memory */
 
 		if (strncmp(dentry->d_name, "pci@", 4) == 0) {
-			if (platform != PLATFORM_PSERIES) {
-				closedir(cdir);
-				continue;
-			}
 			strcat(fname, "/linux,tce-base");
 			if ((file = fopen(fname, "r")) == NULL) {
-				perror(fname);
 				closedir(cdir);
+				if (errno == ENOENT) {
+					/* Non LPAR */
+					errno = 0;
+					continue;
+				}
+				perror(fname);
 				closedir(dir);
 				return -1;
 			}
