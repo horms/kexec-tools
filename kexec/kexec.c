@@ -194,8 +194,8 @@ unsigned long locate_hole(struct kexec_info *info,
 		
 	/* Perform a merge on the 2 sorted lists of memory ranges  */
 	for (j = 0, i = 0; i < memory_ranges; i++) {
-		unsigned long sstart, send;
-		unsigned long mstart, mend;
+		unsigned long long sstart, send;
+		unsigned long long mstart, mend;
 		mstart = memory_range[i].start;
 		mend = memory_range[i].end;
 		if (memory_range[i].type != RANGE_RAM)
@@ -233,7 +233,7 @@ unsigned long locate_hole(struct kexec_info *info,
 		if (start < hole_min) {
 			start = hole_min;
 		}
-		start = (start + hole_align - 1) & ~(hole_align - 1);
+		start = (start + hole_align - 1) & ~((unsigned long long)hole_align - 1);
 		if (end > mem_max) {
 			end = mem_max;
 		}
@@ -251,7 +251,7 @@ unsigned long locate_hole(struct kexec_info *info,
 				hole_base = start;
 				break;
 			} else {
-				hole_base = (end - hole_size) & ~(hole_align - 1);
+				hole_base = (end - hole_size) & ~((unsigned long long)hole_align - 1);
 			}
 		}
 	}
