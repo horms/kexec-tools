@@ -164,7 +164,7 @@ void setup_linux_system_parameters(struct x86_linux_param_header *real_mode)
 		if (range[i].type != RANGE_RAM)
 			continue;
 		if ((range[i].start <= 0x100000) && range[i].end > 0x100000) {
-			unsigned long long mem_k = (range[i].end >> 10) - 0x100000;
+			unsigned long long mem_k = (range[i].end >> 10) - (0x100000 >> 10);
 			real_mode->ext_mem_k = mem_k;
 			real_mode->alt_mem_k = mem_k;
 			if (mem_k > 0xfc00) {
