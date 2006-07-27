@@ -1,0 +1,11 @@
+- Restore enough state that DOS/arbitrary BIOS calls can be run on some
+  platforms.  Currently disk-related calls are quite likely to blow up.
+- x86 filling in other kernel parameters.
+- Merge reboot via kexec functionality into /sbin/reboot
+- In the kexec-on-panic case preserving memory the both kernels
+  must use.
+- Finish the kexec-on-panic case.
+- Improve the documentation 
+- Add support for loading a boot sector
+- Autobuilding of initramfs
+###

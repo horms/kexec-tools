@@ -1,0 +1,52 @@
+# Hey Emacs this is a -*- makefile-*-
+
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+bindir=@bindir@
+sbindir=@sbindir@
+libexecdir=@libexecdir@
+datadir=@datadir@
+sysconfdir=@sysconfdir@
+sharedstatedir=@sharedstatedir@
+localstatedir=@localstatedir@
+libdir=@libdir@
+infodir=@infodir@
+mandir=@mandir@
+includedir=@includedir@
+
+DEFS=@DEFS@
+LIBS=@LIBS@
+
+# The target architecture
+ARCH  =@ARCH@
+OBJDIR=@OBJDIR@
+
+# Compiler for building kexec
+CC          =@CC@
+CPP         =@CPP@
+LD          =@LD@
+AS          =@AS@
+OBJCOPY     =@OBJCOPY@
+AR          =@AR@
+CFLAGS      =@CFLAGS@
+EXTRA_CFLAGS=@EXTRA_CFLAGS@
+LDFLAGS     =@LDFLAGS@ 
+
+# Utilities called by the makefiles
+INSTALL=@INSTALL@
+MKDIR=@MKDIR@
+RM=@RM@
+CP=@CP@
+LN=@LN@
+TAR=@TAR@
+RPMBUILD=@RPMBUILD@
+SED=@SED@
+FIND=@FIND@
+XARGS=@XARGS@
+DIRNAME=@DIRNAME@
+
+# C compiler for building utilities to use
+# during the build
+BUILD_CC=@BUILD_CC@
+BUILD_CFLAGS=@BUILD_CFLAGS@  $(DEFS)
