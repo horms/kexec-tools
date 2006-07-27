@@ -53,8 +53,9 @@ fi
 EXTRA_CFLAGS=""
 
 # Check whether ppc64. Add -m64 for building 64-bit binary
+# Add -mcall-aixdesc to generate dot-symbols as in gcc 3.3.3
 if test "$ARCH" = ppc64; then
-  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64"
+  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64 -mcall-aixdesc"
 fi;
 
 AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
