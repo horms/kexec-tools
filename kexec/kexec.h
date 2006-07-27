@@ -112,7 +112,6 @@ struct kexec_info {
 	int nr_segments;
 	void *entry;
 	struct mem_ehdr rhdr;
-	int panic_kernel;
 };
 
 void usage(void);
