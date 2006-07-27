@@ -25,6 +25,9 @@ case $host_cpu in
 	powerpc )
 		host_cpu="ppc"
 		;;
+	powerpc64 )
+		host_cpu="ppc64"
+		;;
 	s390x )
 		host_cpu="s390"
 		;;
@@ -48,6 +51,12 @@ if test "${host_alias}" ; then
 	OBJDIR="$OBJDIR-${host_alias}"
 fi 
 EXTRA_CFLAGS=""
+
+# Check whether ppc64. Add -m64 for building 64-bit binary
+if test "$ARCH" = ppc64; then
+  EXTRA_CFLAGS="$EXTRA_CFLAGS -m64"
+fi;
+
 AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
 	[ OBJDIR="$withval" ], [ OBJDIR="$OBJDIR" ])
 
