@@ -20,9 +20,7 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#define BACKUP_REGION_SOURCE 0x00000000
-#define BACKUP_REGION_SIZE 0xa0000
+#include "../../../kexec/arch/i386/crashdump-x86.h"
 
 /* Backup region start gets set after /proc/iomem has been parsed. */
 /* We reuse the same code for x86_64 also so changing backup_start to
@@ -37,10 +35,10 @@ void crashdump_backup_memory(void)
 {
 	void *dest, *src;
 
-	src = (void *) BACKUP_REGION_SOURCE;
+	src = (void *) BACKUP_SRC_START;
 
 	if (backup_start) {
 		dest = (void *)(backup_start);
-		memcpy(dest, src, BACKUP_REGION_SIZE);
+		memcpy(dest, src, BACKUP_SRC_SIZE);
 	}
 }

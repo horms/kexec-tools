@@ -1,6 +1,7 @@
 #ifndef CRASHDUMP_X86_H
 #define CRASHDUMP_X86_H
 
+struct kexec_info;
 int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 				unsigned long max_addr, unsigned long min_base);
 
@@ -14,8 +15,8 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 #define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)
 
 /* Backup Region, First 640K of System RAM. */
-#define BACKUP_START	0x00000000
-#define BACKUP_END	0x0009ffff
-#define BACKUP_SIZE	(BACKUP_END - BACKUP_START + 1)
+#define BACKUP_SRC_START	0x00000000
+#define BACKUP_SRC_END		0x0009ffff
+#define BACKUP_SRC_SIZE	(BACKUP_SRC_END - BACKUP_SRC_START + 1)
 
 #endif /* CRASHDUMP_X86_H */
