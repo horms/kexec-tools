@@ -25,7 +25,9 @@ void add_exclude_rgns(unsigned long long base, unsigned long long size);
 #define KDUMP_BACKUP_LIMIT      0x8000
 #define _ALIGN_UP(addr,size)     (((addr)+((size)-1))&(~((size)-1)))
 #define _ALIGN_DOWN(addr,size)   ((addr)&(~((size)-1)))
+#ifndef PAGE_SIZE
 #define PAGE_SIZE      4096
+#endif
 
 extern unsigned long long crash_base;
 extern unsigned long long crash_size;

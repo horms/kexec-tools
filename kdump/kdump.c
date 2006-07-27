@@ -54,7 +54,7 @@ static void *xmalloc(size_t size)
 	result = malloc(size);
 	if (result == NULL) {
 		fprintf(stderr, "malloc of %u bytes failed: %s\n",
-			size, strerror(errno));
+			(unsigned int)size, strerror(errno));
 		exit(7);
 	}
 	return result;

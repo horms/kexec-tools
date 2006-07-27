@@ -26,7 +26,8 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 	shdr_end = &ehdr->e_shdr[ehdr->e_shnum];
 	for(shdr = ehdr->e_shdr; shdr != shdr_end; shdr++)
 		if ( shdr->sh_size &&
-			strcmp(&strtab[shdr->sh_name], ".toc") == 0)
+			strcmp((char *)&strtab[shdr->sh_name],
+						".toc") == 0)
 			return shdr;
 	return NULL;
 }

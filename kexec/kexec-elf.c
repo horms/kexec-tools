@@ -648,7 +648,7 @@ static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
 			return -1;
 		}
 		/* Remember where the section lives in the buffer */
-		shdr->sh_data = buf + shdr->sh_offset;
+		shdr->sh_data = (unsigned char *)(buf + shdr->sh_offset);
 	}
 	return 0;
 }
@@ -672,7 +672,7 @@ static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
 	for(i = 0; !note_start && (i < ehdr->e_phnum); i++) {
 		struct mem_phdr *phdr = &ehdr->e_phdr[i];
 		if (phdr->p_type == PT_NOTE) {
-			note_start = phdr->p_data;
+			note_start = (unsigned char *)phdr->p_data;
 			note_end = note_start + phdr->p_filesz;
 		}
 	}
@@ -713,7 +713,7 @@ static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
 			die("Note name is not null termiated");
 		}
 		ehdr->e_note[i].n_type = hdr.n_type;
-		ehdr->e_note[i].n_name = name;
+		ehdr->e_note[i].n_name = (char *)name;
 		ehdr->e_note[i].n_desc = desc;
 		ehdr->e_note[i].n_descsz = hdr.n_descsz;
 

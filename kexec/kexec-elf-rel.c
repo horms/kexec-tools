@@ -417,7 +417,7 @@ void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr,
 	int result;
 
 	/* Parse the Elf file */
-	result = build_elf_rel_info(purgatory, purgatory_size, ehdr);
+	result = build_elf_rel_info((char *)purgatory, purgatory_size, ehdr);
 	if (result < 0) {
 		die("ELF rel parse failed\n");
 	}
@@ -450,7 +450,7 @@ int elf_rel_find_symbol(struct mem_ehdr *ehdr,
 			/* Invalid strtab section number? */
 			continue;
 		}
-		strtab = ehdr->e_shdr[shdr->sh_link].sh_data;
+		strtab = (char *)ehdr->e_shdr[shdr->sh_link].sh_data;
 		/* Walk through the symbol table and find the symbol */
 		sym_size = elf_sym_size(ehdr);
 		sym_end = shdr->sh_data + shdr->sh_size;

@@ -198,15 +198,15 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	seg_buf = NULL;
 	seg_size = 0;
 
-	seg_buf = (char *) malloc(purgatory_size);
+	seg_buf = (unsigned char *) malloc(purgatory_size);
 	if (seg_buf == NULL) {
 		free_elf_info(&ehdr);
 		return -1;
 	}
 	memcpy(seg_buf, purgatory, purgatory_size);
 	seg_size = purgatory_size;
-	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-				0, max_addr, 1);
+	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
+				purgatory_size, 0, max_addr, 1);
 
 	/* Add a ram-disk to the current image
 	 * Note: Add the ramdisk after elf_rel_build_load
@@ -217,7 +217,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			"Can't use ramdisk with device tree blob input\n");
 			return -1;
 		}
-		seg_buf = slurp_file(ramdisk, &seg_size);
+		seg_buf = (unsigned char *)slurp_file(ramdisk, &seg_size);
 		add_buffer(info, seg_buf, seg_size, seg_size, 0, 0, max_addr, 1);
 		hole_addr = (unsigned long long)
 			info->segment[info->nr_segments-1].mem;
@@ -231,7 +231,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		off_t blob_size = 0;
 
 		/* Grab device tree from buffer */
-		blob_buf = slurp_file(devicetreeblob, &blob_size);
+		blob_buf =
+			(unsigned char *)slurp_file(devicetreeblob, &blob_size);
 		add_buffer(info, blob_buf, blob_size, blob_size, 0, 0,
 				max_addr, -1);
 
@@ -239,7 +240,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		/* create from fs2dt */
 		seg_buf = NULL;
 		seg_size = 0;
-		create_flatten_tree(info, &seg_buf, &seg_size, cmdline);
+		create_flatten_tree(info, (unsigned char **)&seg_buf,
+				(unsigned long *)&seg_size,cmdline);
 		add_buffer(info, seg_buf, seg_size, seg_size,
 				0, 0, max_addr, -1);
 	}
@@ -250,7 +252,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	 */
 	bb_ptr = (struct bootblock *)(
 		(unsigned char *)info->segment[(info->nr_segments)-1].buf);
-	rsvmap_ptr = (long long *)(
+	rsvmap_ptr = (unsigned long long *)(
 		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
 		bb_ptr->off_mem_rsvmap);
 	while (*rsvmap_ptr || *(rsvmap_ptr+1))
