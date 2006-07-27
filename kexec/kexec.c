@@ -699,7 +699,7 @@ void usage(void)
 	printf("\n");
 }
 
-int sys_kexec_loaded()
+static int kexec_loaded(void)
 {
 	int ret;
 	FILE *fp;
@@ -825,21 +825,19 @@ int main(int argc, char *argv[])
 	if (do_load && (result == 0)) {
 		result = my_load(type, fileind, argc, argv, kexec_flags);
 	}
+	/* Don't shutdown unless there is something to reboot to! */
+	if ((result == 0) && (do_shutdown || do_exec) && !kexec_loaded()) {
+		die("Nothing has been loaded!\n");
+	}
 	if ((result == 0) && do_shutdown) {
 		result = my_shutdown();
 	}
 	if ((result == 0) && do_sync) {
 		sync();
 	}
-        if ((result == 0) && do_ifdown) {
-		int ret;
+	if ((result == 0) && do_ifdown) {
 		extern int ifdown(void);
-		ret = sys_kexec_loaded();
-		if (!ret) {
-			fprintf(stderr,"kexec image is not loaded\n");
-			result = 1;
-		} else
-			(void)ifdown();
+		(void)ifdown();
 	}
 	if ((result == 0) && do_exec) {
 		result = my_exec();
