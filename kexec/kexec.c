@@ -699,6 +699,19 @@ void usage(void)
 	printf("\n");
 }
 
+int sys_kexec_loaded()
+{
+	int ret;
+	FILE *fp;
+
+	fp = fopen("/sys/kernel/kexec_loaded", "r");
+	if (fp == NULL)
+		return -1;
+	fscanf(fp, "%d", &ret);
+	fclose(fp);
+	return ret;
+}
+
 int main(int argc, char *argv[])
 {
 	int do_load = 1;
@@ -818,9 +831,15 @@ int main(int argc, char *argv[])
 	if ((result == 0) && do_sync) {
 		sync();
 	}
-	if ((result == 0) && do_ifdown) {
+        if ((result == 0) && do_ifdown) {
+		int ret;
 		extern int ifdown(void);
-		(void)ifdown();
+		ret = sys_kexec_loaded();
+		if (!ret) {
+			fprintf(stderr,"kexec image is not loaded\n");
+			result = 1;
+		} else
+			(void)ifdown();
 	}
 	if ((result == 0) && do_exec) {
 		result = my_exec();
