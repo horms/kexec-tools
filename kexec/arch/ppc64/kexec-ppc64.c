@@ -552,6 +552,10 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 void arch_usage(void)
 {
+	fprintf(stderr, "     --command-line=<Command line> command line to append.\n");
+	fprintf(stderr, "     --append=<Command line> same as --command-line.\n");
+	fprintf(stderr, "     --ramdisk=<filename> Initial RAM disk.\n");
+	fprintf(stderr, "     --initrd=<filename> same as --ramdisk.\n");
 	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
 	fprintf(stderr, "     --elf64-core-headers Prepare core headers in ELF64 format\n");
 }
