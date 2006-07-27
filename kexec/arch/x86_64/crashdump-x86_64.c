@@ -113,6 +113,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			 * initializing acpi tables in second kernel.
 			 */
 			type = RANGE_ACPI;
+		} else if(memcmp(str,"ACPI Non-volatile Storage\n",26) == 0 ) {
+			type = RANGE_ACPI_NVS;
 		} else {
 			continue;
 		}
@@ -760,7 +762,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	/* Inform second kernel about the presence of ACPI tables. */
 	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 		unsigned long start, end;
-		if (mem_range[i].type != RANGE_ACPI)
+		if ( !( mem_range[i].type == RANGE_ACPI
+			|| mem_range[i].type == RANGE_ACPI_NVS) )
 			continue;
 		start = mem_range[i].start;
 		end = mem_range[i].end;
