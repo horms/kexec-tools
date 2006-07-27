@@ -37,6 +37,7 @@
 #include "kexec-syscall.h"
 #include "kexec-elf.h"
 #include "kexec-sha256.h"
+#include <arch/options.h>
 
 static unsigned long long mem_min = 0;
 static unsigned long long mem_max = ULONG_MAX;
@@ -702,7 +703,7 @@ int main(int argc, char *argv[])
 	int result = 0;
 	int fileind;
 	static const struct option options[] = {
-		KEXEC_OPTIONS
+		KEXEC_ARCH_OPTIONS
 		{ 0, 0, 0, 0},
 	};
 	static const char short_options[] = KEXEC_OPT_STR;
@@ -783,6 +784,16 @@ int main(int argc, char *argv[])
 	optind = 1;
 
 	result = arch_process_options(argc, argv);
+
+	/* Check for bogus options */
+	if (!do_load) {
+		while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+			if ((opt == '?') || (opt >= OPT_ARCH_MAX)) {
+				usage();
+				return 1;
+			}
+		}
+	}
 
 	if (do_unload) {
 		result = k_unload(kexec_flags);
