@@ -35,8 +35,6 @@
 #include "crashdump-x86_64.h"
 #include <x86/x86-linux.h>
 
-extern struct arch_options_t arch_options;
-
 /* Forward Declaration. */
 static int exclude_crash_reserve_region(int *nr_ranges);
 

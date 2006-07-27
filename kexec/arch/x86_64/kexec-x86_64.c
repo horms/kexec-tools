@@ -141,7 +141,7 @@ void arch_usage(void)
 		);
 }
 
-struct {
+static struct {
 	uint8_t  reset_vga;
 	uint16_t serial_base;
 	uint32_t serial_baud;
