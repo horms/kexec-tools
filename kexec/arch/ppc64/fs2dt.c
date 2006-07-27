@@ -162,9 +162,9 @@ void putprops(char *fn, DIR *dir)
 		 * boot. So, ignore it.
 		 */
 		if (!strcmp(dp->d_name, "linux,pci-domain") ||
-			!strcmp(dp->d_name, "htab_base") ||
-			!strcmp(dp->d_name, "htab_size") ||
-			!strcmp(dp->d_name, "kernel_end"))
+			!strcmp(dp->d_name, "linux,htab-base") ||
+			!strcmp(dp->d_name, "linux,htab-size") ||
+			!strcmp(dp->d_name, "linux,kernel-end"))
 			continue;
 
 		if (S_ISREG(statbuf[0].st_mode)) {

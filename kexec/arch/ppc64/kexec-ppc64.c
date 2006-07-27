@@ -64,7 +64,6 @@ static int get_base_ranges()
 	FILE *file;
 	struct dirent *dentry, *mentry;
 	int n;
-	unsigned long long start, end;
 
 	if ((dir = opendir(device_tree)) == NULL) {
 		perror(device_tree);
@@ -193,7 +192,7 @@ static int get_devtree_details()
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
-			strcat(fname, "/kernel_end");
+			strcat(fname, "/linux,kernel-end");
 			if ((file = fopen(fname, "r")) == NULL) {
 				perror(fname);
 				closedir(cdir);
@@ -220,7 +219,7 @@ static int get_devtree_details()
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
-			strcat(fname, "/htab_base");
+			strcat(fname, "/linux,htab-base");
 			if ((file = fopen(fname, "r")) == NULL) {
 				perror(fname);
 				closedir(cdir);
@@ -238,7 +237,7 @@ static int get_devtree_details()
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
-			strcat(fname, "/htab_size");
+			strcat(fname, "/linux,htab-size");
 			if ((file = fopen(fname, "r")) == NULL) {
 				perror(fname);
 				closedir(cdir);
@@ -452,7 +451,8 @@ int setup_memory_ranges(void)
 }
 
 /* Return a list of valid memory ranges */
-int get_memory_ranges(struct memory_range **range, int *ranges)
+int get_memory_ranges(struct memory_range **range, int *ranges,
+			unsigned long kexec_flags)
 {
 	setup_memory_ranges();
 	*range = memory_range;
@@ -497,7 +497,7 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
-int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
+int arch_compat_trampoline(struct kexec_info *info)
 {
 	int result;
 	struct utsname utsname;
@@ -512,7 +512,7 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 		/* We are running a 32-bit kexec-tools on 64-bit ppc64.
 		 * So pass KEXEC_ARCH_PPC64 here
 		 */
-		*flags |= KEXEC_ARCH_PPC64;
+		info->kexec_flags |= KEXEC_ARCH_PPC64;
 	}
 	else {
 		fprintf(stderr, "Unsupported machine type: %s\n",
