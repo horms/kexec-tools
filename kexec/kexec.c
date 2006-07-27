@@ -188,7 +188,7 @@ unsigned long locate_hole(struct kexec_info *info,
 	}
 
 	/* Compute the free memory ranges */
-	max_mem_ranges = memory_ranges + (info->nr_segments -1);
+	max_mem_ranges = memory_ranges + info->nr_segments;
 	mem_range = malloc(max_mem_ranges *sizeof(struct memory_range));
 	mem_ranges = 0;
 		
