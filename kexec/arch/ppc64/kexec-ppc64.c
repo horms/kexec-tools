@@ -41,6 +41,7 @@ static struct memory_range base_memory_range[MAX_MEMORY_RANGES];
 unsigned long long memory_max = 0;
 static int nr_memory_ranges, nr_exclude_ranges;
 unsigned long long crash_base, crash_size;
+unsigned int rtas_base, rtas_size;
 
 static int sort_base_ranges();
 
@@ -87,8 +88,10 @@ static int get_base_ranges()
 				closedir(dir);
 				return -1;
 			}
-			if (local_memory_ranges >= MAX_MEMORY_RANGES)
+			if (local_memory_ranges >= MAX_MEMORY_RANGES) {
+				fclose(file);
 				break;
+			}
 			base_memory_range[local_memory_ranges].start =
 				((unsigned long long *)buf)[0];
 			base_memory_range[local_memory_ranges].end  =
@@ -165,7 +168,6 @@ static int get_devtree_details(unsigned long kexec_flags)
 	unsigned long long rmo_base;
 	unsigned long long tce_base;
 	unsigned int tce_size;
-	unsigned int rtas_base, rtas_size;
 	unsigned long long htab_base, htab_size;
 	unsigned long long kernel_end;
 	char buf[MAXBYTES-1];
@@ -427,29 +429,6 @@ static int get_devtree_details(unsigned long kexec_flags)
 	nr_exclude_ranges = i;
 
 	sort_ranges();
-
-	/* add crash_region and remove rtas range from exclude regions if it
-	 * lies within crash region
-	 */
-	if (kexec_flags & KEXEC_ON_CRASH) {
-		unsigned long new_crash_size;
-		if (crash_base < rtas_base &&
-			((crash_base + crash_size) > (rtas_base + rtas_size))){
-			new_crash_size = rtas_base - crash_base;
-			add_exclude_rgns(crash_base, new_crash_size);
-			new_crash_size = (crash_base + crash_size) - (rtas_base + rtas_size);
-			add_exclude_rgns(rtas_base + rtas_size, new_crash_size);
-		} else if (crash_base < rtas_base &&
-			((rtas_base + rtas_size) > (crash_base + crash_size))){
-			new_crash_size = rtas_base - crash_base;
-			add_exclude_rgns(crash_base, new_crash_size);
-		} else if (crash_base > rtas_base &&
-			((rtas_base + rtas_size) < (crash_base + crash_size))){
-			new_crash_size = (crash_base + crash_size) - (rtas_base + rtas_size);
-			add_exclude_rgns(rtas_base + rtas_size, new_crash_size);
-		} else
-			add_exclude_rgns(crash_base, crash_size);
-	}
 
 #ifdef DEBUG
 	int k;

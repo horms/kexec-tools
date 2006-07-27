@@ -44,9 +44,6 @@ static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
  */
 mem_rgns_t usablemem_rgns = {0, };
 
-/* array to store memory regions to be excluded from elf header creation */
-mem_rgns_t exclude_rgns = {0, };
-
 /*
  * To store the memory size of the first kernel and this value will be
  * passed to the second kernel as command line (savemaxmem=xM).
@@ -57,8 +54,6 @@ mem_rgns_t exclude_rgns = {0, };
  * property in the kernel.
  */
 unsigned long saved_max_mem = 0;
-
-static int sort_regions(mem_rgns_t *rgn);
 
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
@@ -81,7 +76,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	DIR *dir, *dmem;
 	FILE *file;
 	struct dirent *dentry, *mentry;
-	int i, n, match;
+	int i, n;
 	unsigned long long start, end, cstart, cend;
 
 	/* create a separate program header for the backup region */
@@ -121,68 +116,72 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				closedir(dir);
 				return -1;
 			}
-			if (memory_ranges >= MAX_MEMORY_RANGES)
-				break;
+			if (memory_ranges >= MAX_MEMORY_RANGES) {
+				/* No space to insert another element. */
+				fprintf(stderr,
+					"Error: Number of crash memory ranges"
+					" excedeed the max limit\n");
+				return -1;
+			}
+
 			start = ((unsigned long long *)buf)[0];
 			end = start + ((unsigned long long *)buf)[1];
 			if (start == 0 && end >= 0x8000)
 				start = 0x8000;
-			match = 0;
-			sort_regions(&exclude_rgns);
 
-			/* exclude crash reserved regions */
-			for (i = 0; i < exclude_rgns.size; i++) {
-				cstart = exclude_rgns.ranges[i].start;
-				cend = exclude_rgns.ranges[i].end;
-				if (cstart < end && cend > start) {
-					if ((cstart == start) && (cend == end)) {
-						match = 1;
-						continue;
-					}
-					if (start < cstart && end > cend) {
-						match = 1;
-						crash_memory_range[memory_ranges].start = start;
-						crash_memory_range[memory_ranges].end = cstart - 1;
-						crash_memory_range[memory_ranges].type = RANGE_RAM;
-						memory_ranges++;
-						crash_memory_range[memory_ranges].start = cend + 1;
-						crash_memory_range[memory_ranges].end = end;
-						crash_memory_range[memory_ranges].type = RANGE_RAM;
-						memory_ranges++;
-						break;
-					} else if (start < cstart) {
-						match = 1;
-						crash_memory_range[memory_ranges].start = start;
-						crash_memory_range[memory_ranges].end = cstart - 1;
-						crash_memory_range[memory_ranges].type = RANGE_RAM;
-						memory_ranges++;
-						end = cstart - 1;
-						continue;
-					} else if (end > cend){
-						match = 1;
-						crash_memory_range[memory_ranges].start = cend + 1;
-						crash_memory_range[memory_ranges].end = end;
-						crash_memory_range[memory_ranges].type = RANGE_RAM;
-						memory_ranges++;
-						start = cend + 1;
-						continue;
-					}
+			cstart = crash_base;
+			cend = crash_base + crash_size;
+			/*
+			 * Exclude the region that lies within crashkernel
+			 */
+			if (cstart < end && cend > start) {
+				if (start < cstart && end > cend) {
+					crash_memory_range[memory_ranges].start = start;
+					crash_memory_range[memory_ranges].end = cstart;
+					crash_memory_range[memory_ranges].type = RANGE_RAM;
+					memory_ranges++;
+					crash_memory_range[memory_ranges].start = cend;
+					crash_memory_range[memory_ranges].end = end;
+					crash_memory_range[memory_ranges].type = RANGE_RAM;
+					memory_ranges++;
+				} else if (start < cstart) {
+					crash_memory_range[memory_ranges].start = start;
+					crash_memory_range[memory_ranges].end = cstart;
+					crash_memory_range[memory_ranges].type = RANGE_RAM;
+					memory_ranges++;
+				} else if (end > cend){
+					crash_memory_range[memory_ranges].start = cend;
+					crash_memory_range[memory_ranges].end = end;
+					crash_memory_range[memory_ranges].type = RANGE_RAM;
+					memory_ranges++;
 				}
-
-			} /* end of for loop */
-			if (!match) {
+			} else {
 				crash_memory_range[memory_ranges].start = start;
 				crash_memory_range[memory_ranges].end  = end;
 				crash_memory_range[memory_ranges].type = RANGE_RAM;
 				memory_ranges++;
 			}
-
 			fclose(file);
 		}
 		closedir(dmem);
 	}
 	closedir(dir);
 
+	/*
+	 * If RTAS region is overlapped with crashkernel, need to create ELF
+	 * Program header for the overlapped memory.
+	 */
+	if (crash_base < rtas_base + rtas_size &&
+		rtas_base < crash_base + crash_size) {
+		cstart = rtas_base;
+		cend = rtas_base + rtas_size;
+		if (cstart < crash_base)
+			cstart = crash_base;
+		if (cend > crash_base + crash_size)
+			cend = crash_base + crash_size;
+		crash_memory_range[memory_ranges].start = cstart;
+		crash_memory_range[memory_ranges++].end = cend;
+	}
 	/*
 	 * Can not trust the memory regions order that we read from
 	 * device-tree. Hence, get the MAX end value.
@@ -450,45 +449,7 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 #endif
 }
 
-/*
- * Used to exclude various memory regions that do not need elf hdr generation
- */
-
-void add_exclude_rgns(unsigned long long base, unsigned long long size)
-{
-	int i;
-	unsigned long long end = base + size;
-	unsigned long long xstart, xend;
-
-	for (i=0; i < exclude_rgns.size; i++) {
-		xstart = exclude_rgns.ranges[i].start;
-		xend = exclude_rgns.ranges[i].end;
-		if (base < xend && end > xstart) {
-			if ((base >= xstart) && (end <= xend))
-				return;
-			if (base < xstart && end > xend) {
-				exclude_rgns.ranges[i].start = base;
-				exclude_rgns.ranges[i].end = end;
-				return;
-			} else if (base < xstart) {
-				exclude_rgns.ranges[i].start = base;
-				exclude_rgns.ranges[i].end = xend;
-				return;
-			} else if (end > xend){
-				exclude_rgns.ranges[i].start = xstart;
-				exclude_rgns.ranges[i].end = end;
-				return;
-			}
-		}
-	}
-	exclude_rgns.ranges[exclude_rgns.size].start = base;
-	exclude_rgns.ranges[exclude_rgns.size++].end = end;
-
-#ifdef DEBUG
-	fprintf(stderr, "exclude rgns size:%d base:%lx end:%lx size:%lx\n", exclude_rgns.size, base, end, size);
-#endif
-}
-
+#if 0
 static int sort_regions(mem_rgns_t *rgn)
 {
 	int i, j;
@@ -508,4 +469,5 @@ static int sort_regions(mem_rgns_t *rgn)
 	return 0;
 
 }
+#endif
 

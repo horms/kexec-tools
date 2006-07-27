@@ -1,7 +1,8 @@
 #ifndef KEXEC_PPC64_H
 #define KEXEC_PPC64_H
 
-#define MAX_MEMORY_RANGES 256 /* TO FIX - needs to be dynamically set */
+#define MAX_MEMORY_RANGES 1024 /* TO FIX - needs to be dynamically set */
+
 #define MAXBYTES 128
 #define MAX_LINE 160
 #define CORE_TYPE_ELF32 1
