@@ -34,36 +34,80 @@
 #include "kexec-ia64.h"
 #include <arch/options.h>
 
-#define MAX_MEMORY_RANGES 64
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of available memory ranges. */
 int get_memory_ranges(struct memory_range **range, int *ranges,
 				unsigned long kexec_flags)
 {
-	int memory_ranges;
-	/*
-	 * /proc/iomem on ia64 does not show where all memory is. If
-	 * that is fixed up, we can make use of that to validate
-	 * the memory range kernel will be loade din. Until then.....
-	 * -- Khalid Aziz
-	 */
-	
-	/* Note that the ia64 architecture mandates all systems will
-	 * have at least 64MB at 0-64M.  The SGI altix does not follow
-	 * that restriction, but a reasonable guess is better than nothing
-	 * at all.
-	 * -- Eric Biederman
-	 */
-	fprintf(stderr, "Warning assuming memory at 0-64MB is present\n");
-	memory_ranges = 0;
-	memory_range[memory_ranges].start = 0x00100000;
-	memory_range[memory_ranges].end   = 0x10000000;
-	memory_range[memory_ranges].type  = RANGE_RAM;
-	memory_ranges++;
-	*range = memory_range;
-	*ranges = memory_ranges;
-	return 0;
+	const char iomem[]= "/proc/iomem";
+	int memory_ranges = 0;
+	char line[MAX_LINE];
+	FILE *fp;
+	fp = fopen(iomem, "r");
+	if (!fp) {
+		fprintf(stderr, "Cannot open %s: %s\n",
+			iomem, strerror(errno));
+		return -1;
+	}
+
+	while(fgets(line, sizeof(line), fp) != 0) {
+		unsigned long start, end;
+		char *str;
+		int type;
+		int consumed;
+		int count;
+		if (memory_ranges >= MAX_MEMORY_RANGES)
+			break;
+		count = sscanf(line, "%lx-%lx : %n",
+				&start, &end, &consumed);
+		if (count != 2)
+			continue;
+		str = line + consumed;
+		end = end + 1;
+		if (memcmp(str, "System RAM\n", 11) == 0) {
+			type = RANGE_RAM;
+		}
+		else if (memcmp(str, "reserved\n", 9) == 0) {
+			type = RANGE_RESERVED;
+		}
+		else if (memcmp(str, "Crash kernel\n", 13) == 0) {
+			/* Redefine the memory region boundaries if kernel
+			 * exports the limits and if it is panic kernel.
+			 * Override user values only if kernel exported
+			 * values are subset of user defined values.
+			 */
+
+			if (kexec_flags & KEXEC_ON_CRASH) {
+				if (start > mem_min)
+					mem_min = start;
+				if (end < mem_max)
+					mem_max = end;
+			}
+			continue;
+		} else
+			continue;
+		/*
+		 * Check if this memory range can be coalesced with
+		 * the previous range
+		 */
+		if ((memory_ranges > 0) &&
+			(start == memory_range[memory_ranges-1].end) &&
+			(type == memory_range[memory_ranges-1].type)) {
+			memory_range[memory_ranges-1].end = end;
+		}
+		else {
+			memory_range[memory_ranges].start = start;
+			memory_range[memory_ranges].end = end;
+			memory_range[memory_ranges].type = type;
+			memory_ranges++;
+		}
+	}
+	fclose(fp);
+ 	*range = memory_range;
+ 	*ranges = memory_ranges;
+
+ 	return 0;
 }
 
 /* Supported file types and callbacks */
