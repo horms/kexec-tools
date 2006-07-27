@@ -4,6 +4,7 @@
  * Copyright (C) 2004  Adam Litke (agl@us.ibm.com)
  * Copyright (C) 2004  IBM Corp.
  * Copyright (C) 2005  R Sharada (sharada@in.ibm.com)
+ * Copyright (C) 2006  Mohan Kumar M (mohan@in.ibm.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -45,6 +46,7 @@ unsigned long initrd_base, initrd_size;
 
 int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
 			char *);
+int my_r2(struct mem_ehdr *ehdr);
 
 int elf_ppc64_probe(const char *buf, off_t len)
 {
@@ -83,6 +85,10 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	struct bootblock *bb_ptr;
 	unsigned int nr_segments, i;
 	int result, opt;
+	unsigned long my_kernel, my_dt_offset;
+	unsigned int my_panic_kernel;
+	unsigned long my_stack, my_backup_start;
+	unsigned long toc_addr;
 
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
 #define OPT_RAMDISK     (OPT_ARCH_MAX+1)
@@ -167,30 +173,12 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		size = phdr->p_memsz;
 
 	hole_addr = (unsigned long)locate_hole(info, size, 0, 0,
-			0xFFFFFFFFFFFFFFFFUL, 1);
+			max_addr, 1);
 	ehdr.e_phdr[0].p_paddr = hole_addr;
 	result = elf_exec_load(&ehdr, info);
 	if (result < 0) {
 		free_elf_info(&ehdr);
 		return result;
-	}
-
-	/* Add a ram-disk to the current image */
-	if (ramdisk) {
-		if (devicetreeblob) {
-			fprintf(stderr, "Can't use ramdisk with device tree blob input\n");
-			return -1;
-		}
-		unsigned char *ramdisk_buf = NULL;
-		off_t ramdisk_size = 0;
-		unsigned long long ramdisk_addr;
-
-		ramdisk_buf = slurp_file(ramdisk, &ramdisk_size);
-		add_buffer(info, ramdisk_buf, ramdisk_size, ramdisk_size, 0, 0,
-				0xFFFFFFFFFFFFFFFFUL, 1);
-		ramdisk_addr = (unsigned long long)info->segment[info->nr_segments-1].mem;
-		initrd_base = ramdisk_addr;
-		initrd_size = ramdisk_size;
 	}
 
 	/* If panic kernel is being loaded, additional segments need
@@ -207,68 +195,136 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 
 	/* Add v2wrap to the current image */
-	unsigned char *v2wrap_buf = NULL;
-	off_t v2wrap_size = 0;
-	unsigned long long *rsvmap_ptr;
-	struct bootblock *bb_ptr;
-	unsigned int devtree_size;
+	seg_buf = NULL;
+	seg_size = 0;
 
-	v2wrap_buf = (char *) malloc(purgatory_size);
-	if (v2wrap_buf == NULL) {
+	seg_buf = (char *) malloc(purgatory_size);
+	if (seg_buf == NULL) {
 		free_elf_info(&ehdr);
 		return -1;
 	}
-	memcpy(v2wrap_buf, purgatory, purgatory_size);
-	v2wrap_size = purgatory_size;
+	memcpy(seg_buf, purgatory, purgatory_size);
+	seg_size = purgatory_size;
+	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+				0, max_addr, 1);
+
+	/* Add a ram-disk to the current image
+	 * Note: Add the ramdisk after elf_rel_build_load
+	 */
+	if (ramdisk) {
+		if (devicetreeblob) {
+			fprintf(stderr,
+			"Can't use ramdisk with device tree blob input\n");
+			return -1;
+		}
+		seg_buf = slurp_file(ramdisk, &seg_size);
+		add_buffer(info, seg_buf, seg_size, seg_size, 0, 0, max_addr, 1);
+		hole_addr = (unsigned long long)
+			info->segment[info->nr_segments-1].mem;
+		initrd_base = hole_addr;
+		initrd_size = (unsigned long long)
+			info->segment[info->nr_segments-1].memsz;
+	} /* ramdisk */
+
 	if (devicetreeblob) {
-	  unsigned char *blob_buf = NULL;
-	  off_t blob_size = 0;
-	  unsigned char *tmp_buf = NULL;
+		unsigned char *blob_buf = NULL;
+		off_t blob_size = 0;
 
-	  /* Grab device tree from buffer */
-	  blob_buf = slurp_file(devicetreeblob, &blob_size);
-
-	  /* Append to purgatory */
-	  tmp_buf = (unsigned char *) realloc(v2wrap_buf, v2wrap_size + blob_size);
-	  v2wrap_buf = tmp_buf;
-	  memcpy(v2wrap_buf+v2wrap_size, blob_buf, blob_size);
-	  v2wrap_size += blob_size;
+		/* Grab device tree from buffer */
+		blob_buf = slurp_file(devicetreeblob, &blob_size);
+		add_buffer(info, blob_buf, blob_size, blob_size, 0, 0,
+				max_addr, -1);
 
 	} else {
-	  /* create from fs2dt */
-	  create_flatten_tree(info, &v2wrap_buf, &v2wrap_size);
+		/* create from fs2dt */
+		seg_buf = NULL;
+		seg_size = 0;
+		create_flatten_tree(info, &seg_buf, &seg_size, cmdline);
+		add_buffer(info, seg_buf, seg_size, seg_size,
+				0, 0, max_addr, -1);
 	}
-	add_buffer(info, v2wrap_buf, v2wrap_size, v2wrap_size, 0, 0,
-			0xFFFFFFFFFFFFFFFFUL, -1);
 
 	/* patch reserve map address for flattened device-tree
-	   find last entry (both 0) in the reserve mem list.  Assume DT
-	   entry is before this one */
+	 * find last entry (both 0) in the reserve mem list.  Assume DT
+	 * entry is before this one
+	 */
 	bb_ptr = (struct bootblock *)(
-		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
-		0x100);
+		(unsigned char *)info->segment[(info->nr_segments)-1].buf);
 	rsvmap_ptr = (long long *)(
 		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
-		bb_ptr->off_mem_rsvmap + 0x100);
-	while (*rsvmap_ptr || *(rsvmap_ptr+1)){
+		bb_ptr->off_mem_rsvmap);
+	while (*rsvmap_ptr || *(rsvmap_ptr+1))
 		rsvmap_ptr += 2;
-	}
 	rsvmap_ptr -= 2;
 	*rsvmap_ptr = (unsigned long long)(
-		info->segment[(info->nr_segments)-1].mem + 0x100);
- 	rsvmap_ptr++;
- 	*rsvmap_ptr = (unsigned long long)bb_ptr->totalsize;
+		info->segment[(info->nr_segments)-1].mem);
+	rsvmap_ptr++;
+	*rsvmap_ptr = (unsigned long long)bb_ptr->totalsize;
 
-	unsigned int nr_segments;
 	nr_segments = info->nr_segments;
-	lp = info->segment[nr_segments-1].buf + 0x100;
-	lp--;
-	*lp = info->segment[0].mem;
-	info->entry = info->segment[nr_segments-1].mem;
 
-	unsigned int i;
+	/* Set kernel */
+	my_kernel = (unsigned long )info->segment[0].mem;
+	elf_rel_set_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
+
+	/* Set dt_offset */
+	my_dt_offset = (unsigned long )info->segment[nr_segments-1].mem;
+	elf_rel_set_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
+				sizeof(my_dt_offset));
+
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		my_panic_kernel = 1;
+		/* Set panic flag */
+		elf_rel_set_symbol(&info->rhdr, "panic_kernel",
+				&my_panic_kernel, sizeof(my_panic_kernel));
+
+		/* Set backup address */
+		my_backup_start = info->backup_start;
+		elf_rel_set_symbol(&info->rhdr, "backup_start",
+				&my_backup_start, sizeof(my_backup_start));
+	}
+
+	/* Set stack address */
+	my_stack = locate_hole(info, 16*1024, 0, 0, max_addr, 1);
+	my_stack += 16*1024;
+	elf_rel_set_symbol(&info->rhdr, "stack", &my_stack, sizeof(my_stack));
+
+	/* Set toc */
+	toc_addr = (unsigned long) my_r2(&info->rhdr);
+	elf_rel_set_symbol(&info->rhdr, "my_toc", &toc_addr, sizeof(toc_addr));
+
+#ifdef DEBUG
+	my_kernel = 0;
+	my_dt_offset = 0;
+	my_panic_kernel = 0;
+	my_backup_start = 0;
+	my_stack = 0;
+	toc_addr = 0;
+
+	elf_rel_get_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
+	elf_rel_get_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
+				sizeof(my_dt_offset));
+	elf_rel_get_symbol(&info->rhdr, "panic_kernel", &my_panic_kernel,
+				sizeof(my_panic_kernel));
+	elf_rel_get_symbol(&info->rhdr, "backup_start", &my_backup_start,
+				sizeof(my_backup_start));
+	elf_rel_get_symbol(&info->rhdr, "stack", &my_stack, sizeof(my_stack));
+	elf_rel_get_symbol(&info->rhdr, "my_toc", &toc_addr,
+				sizeof(toc_addr));
+
+	fprintf(stderr, "info->entry is %p\n", info->entry);
+	fprintf(stderr, "kernel is %Lx\n", my_kernel);
+	fprintf(stderr, "dt_offset is %Lx\n", my_dt_offset);
+	fprintf(stderr, "panic_kernel is %x\n", my_panic_kernel);
+	fprintf(stderr, "backup_start is %Lx\n", my_backup_start);
+	fprintf(stderr, "stack is %Lx\n", my_stack);
+	fprintf(stderr, "toc_addr is %Lx\n", toc_addr);
+	fprintf(stderr, "purgatory size is %d\n", purgatory_size);
+#endif
+
 	for (i = 0; i < nr_segments; i++)
-		printf("segment[i].mem:%lx\n", info->segment[i].mem);
+		fprintf(stderr, "segment[%d].mem:%p memsz:%ld\n", i,
+			info->segment[i].mem, info->segment[i].memsz);
 
 	return 0;
 }

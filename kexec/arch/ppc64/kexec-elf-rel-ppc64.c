@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <elf.h>
+#include <string.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 
@@ -21,20 +22,19 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 {
 	struct mem_shdr *shdr, *shdr_end;
 	unsigned char *strtab;
-	strtab = ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
+	strtab = (unsigned char *)ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
 	shdr_end = &ehdr->e_shdr[ehdr->e_shnum];
-	for(shdr = ehdr->e_shdr; shdr != shdr_end; shdr++) {
-		if (strcmp(shdr->sh_name, ".toc") == 0) {
+	for(shdr = ehdr->e_shdr; shdr != shdr_end; shdr++)
+		if ( shdr->sh_size &&
+			strcmp(&strtab[shdr->sh_name], ".toc") == 0)
 			return shdr;
-		}
-	}
 	return NULL;
 }
 
 /* r2 is the TOC pointer: it actually points 0x8000 into the TOC (this
    gives the value maximum span in an instruction which uses a signed
    offset) */
-static unsigned long my_r2(const struct mem_ehdr *ehdr)
+unsigned long my_r2(const struct mem_ehdr *ehdr)
 {
 	struct mem_shdr *shdr;
 	shdr = toc_section(ehdr);
@@ -53,7 +53,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		/* Simply set it */
 		*(uint32_t *)location = value;
 		break;
-		
+
 	case R_PPC64_ADDR64:
 		/* Simply set it */
 		*(uint64_t *)location = value;
@@ -78,15 +78,34 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		/* Convert value to relative */
 		value -= address;
 		if (value + 0x2000000 > 0x3ffffff || (value & 3) != 0){
-			die("REL24 %li out of range!\n", 
+			die("REL24 %li out of range!\n",
 				(long int)value);
 		}
 
 		/* Only replace bits 2 through 26 */
-		*(uint32_t *)location 
-			= (*(uint32_t *)location & ~0x03fffffc)
-			| (value & 0x03fffffc);
+		*(uint32_t *)location = (*(uint32_t *)location & ~0x03fffffc)
+					| (value & 0x03fffffc);
 		break;
+
+	case R_PPC64_ADDR16_LO:
+		*(uint16_t *)location = value & 0xffff;
+		break;
+
+	case R_PPC64_ADDR16_HI:
+		*(uint16_t *)location = (value>>16) & 0xffff;
+		break;
+
+	case R_PPC64_ADDR16_HA:
+		*(uint16_t *)location = ((value>>16)  & 0xffff);
+		break;
+
+	case R_PPC64_ADDR16_HIGHEST:
+		*(uint16_t *)location = ((value>>48)  & 0xffff);
+		break;
+	case R_PPC64_ADDR16_HIGHER:
+		*(uint16_t *)location = ((value>>32)  & 0xffff);
+		break;
+
 	default:
 		die("Unknown rela relocation: %lu\n", r_type);
 		break;

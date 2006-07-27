@@ -155,7 +155,7 @@ int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
 		if (probe_debug) {
 			fprintf(stderr, "No ELF section headers\n");
 		}
-		return -1; 
+		return -1;
 	}
 	if (!machine_verify_elf_rel(ehdr)) {
 		/* It does not meant the native architecture constraints */
@@ -251,7 +251,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 
 	/* Allocate where we will put the relocated object */
 	buf = xmalloc(bufsz);
-	buf_addr = add_buffer(info, buf, bufsz, bufsz + bss_pad + bsssz, 
+	buf_addr = add_buffer(info, buf, bufsz, bufsz + bss_pad + bsssz,
 		buf_align, min, max, end);
 	ehdr->rel_addr = buf_addr;
 	ehdr->rel_size = bufsz + bss_pad + bsssz;
@@ -269,7 +269,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			unsigned long off;
 			/* Adjust the address */
 			data_addr = (data_addr + (align - 1)) & ~(align -1);
-			
+
 			/* Update the section */
 			off = data_addr - buf_addr;
 			memcpy(buf + off, shdr->sh_data, shdr->sh_size);
@@ -306,7 +306,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			continue;
 		}
 		if ((shdr->sh_info > ehdr->e_shnum) ||
-			(shdr->sh_link > ehdr->e_shnum)) 
+			(shdr->sh_link > ehdr->e_shnum))
 		{
 			die("Invalid section number\n");
 		}
@@ -350,12 +350,12 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 
 			/* The final address of that location */
 			address = section->sh_addr + rel.r_offset;
-			
+
 			/* The relevant symbol */
 			sym = elf_sym(ehdr, symtab->sh_data + (rel.r_sym * elf_sym_size(ehdr)));
-#if 0
+#ifdef DEBUG
 			fprintf(stderr, "sym: %10s info: %02x other: %02x shndx: %lx value: %lx size: %lx\n",
-				strtab + sym.st_name, 
+				strtab + sym.st_name,
 				sym.st_info,
 				sym.st_other,
 				sym.st_shndx,
@@ -364,8 +364,18 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 
 #endif
 			if (sym.st_shndx == STN_UNDEF) {
-				die("Undefined symbol: %s\n", 
+			/*
+			 * NOTE: ppc64 elf .ro shows up a  UNDEF section.
+			 * From Elf 1.2 Spec:
+			 * Relocation Entries: If the index is STN_UNDEF,
+			 * the undefined symbol index, the relocation uses 0
+			 * as the "symbol value".
+			 * So, is this really an error condition to flag die?
+			 */
+			/*
+				die("Undefined symbol: %s\n",
 					strtab + sym.st_name);
+			*/
 			}
 			sec_base = 0;
 			if (sym.st_shndx == SHN_COMMON) {
@@ -383,14 +393,14 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			else {
 				sec_base = ehdr->e_shdr[sym.st_shndx].sh_addr;
 			}
-#if 0
+#ifdef DEBUG
 			fprintf(stderr, "sym: %s value: %lx addr: %lx\n",
 				strtab + sym.st_name, value, address);
 #endif
 			value = sym.st_value;
 			value += sec_base;
 			value += rel.r_addend;
-			machine_apply_elf_rel(ehdr, rel.r_type, 
+			machine_apply_elf_rel(ehdr, rel.r_type,
 				(void *)location, address, value);
 		}
 	}
@@ -399,7 +409,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 	return result;
 }
 
-void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
+void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr,
 	const char *buf, off_t len, unsigned long min, unsigned long max,
 	int end)
 {
@@ -452,8 +462,8 @@ int elf_rel_find_symbol(struct mem_ehdr *ehdr,
 			if (strcmp(strtab + sym.st_name, name) != 0) {
 				continue;
 			}
-			if ((sym.st_shndx == STN_UNDEF) || 
-				(sym.st_shndx > ehdr->e_shnum)) 
+			if ((sym.st_shndx == STN_UNDEF) ||
+				(sym.st_shndx > ehdr->e_shnum))
 			{
 				die("Symbol: %s has Bad section index %d\n",
 					name, sym.st_shndx);
@@ -491,7 +501,7 @@ void elf_rel_set_symbol(struct mem_ehdr *ehdr,
 
 	result = elf_rel_find_symbol(ehdr, name, &sym);
 	if (result < 0) {
-		die("Symbol: %s not found cannot set\n", 
+		die("Symbol: %s not found cannot set\n",
 			name);
 	}
 	if (sym.st_size != size) {

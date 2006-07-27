@@ -374,7 +374,7 @@ void putnode(void)
 }
 
 int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
-			 unsigned long *sizep, char *cmdline)
+			unsigned long *sizep, char *cmdline)
 {
 	unsigned long len;
 	unsigned long tlen;
@@ -420,10 +420,10 @@ int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
 
 	reserve(me, bb->totalsize); /* patched later in kexec_load */
 
-	buf = (unsigned char *) realloc(*bufp, *sizep + bb->totalsize);
+	buf = (unsigned char *) malloc(bb->totalsize);
 	*bufp = buf;
-	memcpy(buf+(*sizep), bb, bb->off_mem_rsvmap);
-	tlen = *sizep + bb->off_mem_rsvmap;
+	memcpy(buf, bb, bb->off_mem_rsvmap);
+	tlen = bb->off_mem_rsvmap;
 	memcpy(buf+tlen, mem_rsrv, bb->off_dt_struct - bb->off_mem_rsvmap);
 	tlen = tlen + (bb->off_dt_struct - bb->off_mem_rsvmap);
 	memcpy(buf+tlen, dtstruct,  bb->off_dt_strings - bb->off_dt_struct);

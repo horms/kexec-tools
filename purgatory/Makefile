@@ -21,13 +21,11 @@ PCFLAGS += $(call cc-option, -fnobuiltin)
 PCFLAGS += $(call cc-option, -fnostdinc)
 PCFLAGS += $(call cc-option, -fno-zero-initialized-in-bss)
 
-PURGATORY_C_SRCS:= 
-ifneq ($(ARCH),ppc64)
+PURGATORY_C_SRCS:=
 PURGATORY_C_SRCS += purgatory/purgatory.c
 PURGATORY_C_SRCS += purgatory/printf.c
 PURGATORY_C_SRCS += purgatory/string.c
-endif
-PURGATORY_S_OBJS:= 
+PURGATORY_S_OBJS:=
 
 include purgatory/arch/$(ARCH)/Makefile
 
@@ -61,12 +59,7 @@ $(PURGATORY_S_OBJS): $(OBJDIR)/%.o: %.S $(OBJDIR)/%.d
 
 $(PURGATORY): $(PURGATORY_OBJS) $(UTIL_LIB)
 	$(MKDIR) -p $(@D)
-ifneq ($(ARCH),ppc64)
 	$(LD) $(LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
-else
-	$(LD) -Ttext=0 -e 0 -o $(OBJDIR)/purgatory/v2wrap.elf $(PURGATORY_OBJS)
-	objcopy -O binary $(OBJDIR)/purgatory/v2wrap.elf $@
-endif
 
 echo::
 	@echo "PURGATORY_C_SRCS $(PURGATORY_C_SRCS)"
