@@ -1,6 +1,6 @@
 # Hey Emacs this is a -*- makefile-*-
 include Makefile.conf
-VERSION=1.101
+VERSION=1.102
 DATE=15 February 2005
 PACKAGE=kexec-tools
 
