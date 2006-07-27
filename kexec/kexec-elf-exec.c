@@ -47,7 +47,7 @@ int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
 }
 
 
-int elf_exec_load(const struct mem_ehdr *ehdr, struct kexec_info *info)
+int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
 {
 	unsigned long base;
 	int result;
@@ -79,8 +79,8 @@ int elf_exec_load(const struct mem_ehdr *ehdr, struct kexec_info *info)
 			}
 			start = phdr->p_paddr;
 			stop  = start + phdr->p_memsz;
-			if (start > first) {
-				start = first;
+			if (first > start) {
+				first = start;
 			}
 			if (last < stop) {
 				last = stop;
@@ -126,6 +126,10 @@ int elf_exec_load(const struct mem_ehdr *ehdr, struct kexec_info *info)
 			phdr->p_data, size,
 			phdr->p_paddr + base, phdr->p_memsz);
 	}
+
+	/* Update entry point to reflect new load address*/
+	ehdr->e_entry += base;
+
 	result = 0;
  out:
 	return result;
