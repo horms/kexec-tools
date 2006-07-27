@@ -4,6 +4,8 @@
 #define MAX_MEMORY_RANGES 256 /* TO FIX - needs to be dynamically set */
 #define MAXBYTES 128
 #define MAX_LINE 160
+#define CORE_TYPE_ELF32 1
+#define CORE_TYPE_ELF64 2
 
 int setup_memory_ranges(unsigned long kexec_flags);
 
@@ -24,6 +26,10 @@ struct bootblock {
 		version,
 		last_comp_version,
 		boot_physid;
+};
+
+struct arch_options_t {
+	int core_header_type;
 };
 
 struct exclude_range {

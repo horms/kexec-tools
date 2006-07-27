@@ -578,17 +578,18 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 void arch_usage(void)
 {
 	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
+	fprintf(stderr, "     --elf64-core-headers Prepare core headers in ELF64 format\n");
 }
 
-static struct {
-} arch_options = {
+struct arch_options_t arch_options = {
+	.core_header_type = CORE_TYPE_ELF64,
 };
 
 int arch_process_options(int argc, char **argv)
 {
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
-		{ 0, 			0, NULL, 0 },
+		{ 0, 0, NULL, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR;
 	int opt;
@@ -597,6 +598,9 @@ int arch_process_options(int argc, char **argv)
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch(opt) {
 		default:
+			break;
+		case OPT_ELF64_CORE:
+			arch_options.core_header_type = CORE_TYPE_ELF64;
 			break;
 		}
 	}

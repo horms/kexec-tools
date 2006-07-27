@@ -257,6 +257,101 @@ static int add_cmdline_param(char *cmdline, unsigned long addr,
 	return 0;
 }
 
+/* Prepares the crash memory elf64 headers and stores in supplied buffer. */
+static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
+						void *buf, unsigned long size)
+{
+	Elf64_Ehdr *elf;
+	Elf64_Phdr *phdr;
+	int i;
+	char *bufp;
+	long int nr_cpus = 0;
+	unsigned long notes_addr;
+
+	bufp = (char*) buf;
+
+	/* Setup ELF Header*/
+	elf = (Elf64_Ehdr *) bufp;
+	bufp += sizeof(Elf64_Ehdr);
+	memcpy(elf->e_ident, ELFMAG, SELFMAG);
+	elf->e_ident[EI_CLASS]  = ELFCLASS64;
+	elf->e_ident[EI_DATA]   = ELFDATA2MSB;
+	elf->e_ident[EI_VERSION]= EV_CURRENT;
+	elf->e_ident[EI_OSABI] = ELFOSABI_NONE;
+	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
+	elf->e_type     = ET_CORE;
+	elf->e_machine  = EM_PPC64;
+	elf->e_version  = EV_CURRENT;
+	elf->e_entry    = 0;
+	elf->e_phoff    = sizeof(Elf64_Ehdr);
+	elf->e_shoff    = 0;
+	elf->e_flags    = 0;
+	elf->e_ehsize   = sizeof(Elf64_Ehdr);
+	elf->e_phentsize= sizeof(Elf64_Phdr);
+	elf->e_phnum    = 0;
+	elf->e_shentsize= 0;
+	elf->e_shnum    = 0;
+	elf->e_shstrndx = 0;
+
+	/* PT_NOTE program headers. One per cpu*/
+	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
+	if (nr_cpus < 0)
+		return -1;
+
+	/* Need to find a better way to determine per cpu notes section size. */
+#define MAX_NOTE_BYTES  1024
+	for (i = 0; i < nr_cpus; i++) {
+		if (get_crash_notes_per_cpu(i, &notes_addr) < 0) {
+			/* This cpu is not present. Skip it. */
+			continue;
+		}
+		phdr = (Elf64_Phdr *) bufp;
+		bufp += sizeof(Elf64_Phdr);
+		phdr->p_type    = PT_NOTE;
+		phdr->p_flags   = 0;
+		phdr->p_offset  = phdr->p_paddr =  notes_addr;
+		phdr->p_vaddr   = 0;
+		phdr->p_filesz  = phdr->p_memsz = MAX_NOTE_BYTES;
+		/* Do we need any alignment of segments? */
+		phdr->p_align   = 0;
+
+		/* Increment number of program headers. */
+		(elf->e_phnum)++;
+	}
+
+	/* Setup PT_LOAD type program header for every system RAM chunk.
+	 * A seprate program header for Backup Region
+	 */
+	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
+		unsigned long long mstart, mend;
+		mstart = crash_memory_range[i].start;
+		mend = crash_memory_range[i].end;
+		if (!mstart && !mend)
+			break;
+		phdr = (Elf64_Phdr *) bufp;
+		bufp += sizeof(Elf64_Phdr);
+		phdr->p_type    = PT_LOAD;
+		phdr->p_flags   = PF_R|PF_W|PF_X;
+		if (mstart == BACKUP_START && mend == BACKUP_END)
+			phdr->p_offset  = info->backup_start;
+		else
+			phdr->p_offset  = mstart;
+		/* Handle linearly mapped region.*/
+		if (mend <= (MAXMEM - 1))
+			phdr->p_vaddr = mstart + PAGE_OFFSET;
+		else
+			phdr->p_vaddr = -1ULL;
+		phdr->p_paddr = mstart;
+		phdr->p_filesz  = phdr->p_memsz = mend - mstart;
+		/* Do we need any alignment of segments? */
+		phdr->p_align   = 0;
+
+		/* Increment number of program headers. */
+		(elf->e_phnum)++;
+	}
+	return 0;
+}
+
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
