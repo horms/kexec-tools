@@ -40,6 +40,8 @@
 #define BOOTLOADER_VERSION VERSION
 #define MAX_COMMAND_LINE   256
 
+unsigned long initrd_base, initrd_size;
+
 int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *);
 int parse_options(char *);
 int setup_memory_ranges(void);

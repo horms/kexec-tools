@@ -28,7 +28,9 @@
 #include <string.h>
 #include <errno.h>
 #include <stdio.h>
+#include "../../kexec.h"
 #include "kexec-ppc64.h"
+#include "crashdump-ppc64.h"
 
 #define MAXPATH 1024		/* max path name length */
 #define NAMESPACE 16384		/* max bytes for property names */
@@ -62,9 +64,12 @@ char propnames[NAMESPACE];
 dvt dtstruct[TREEWORDS], *dt;
 unsigned long long mem_rsrv[2*MEMRESERVE];
 
-extern unsigned long initrd_base;
-extern unsigned long initrd_size;
 static int initrd_found = 0;
+static int crash_param = 0;
+char local_cmdline[COMMAND_LINE_SIZE] = { "" };
+dvt *dt_len; /* changed len of modified cmdline in flat device-tree */
+extern mem_rgns_t usablemem_rgns;
+struct bootblock bb[1];
 
 void reserve(unsigned long long where, unsigned long long length)
 {
@@ -88,26 +93,12 @@ void checkprop(char *name, dvt *data)
 			err((void *)data, ERR_RESERVE);
 	else if (!strcmp(name, "linux,rtas-base"))
 		base = *data;
-	else if (!strcmp(name, "linux,initrd-start")) {
-		if (initrd_base)
-			*(unsigned long long *) data = initrd_base;
-		base = *(unsigned long long *)data;
-		initrd_found = 1;
-	}
 	else if (!strcmp(name, "linux,tce-base"))
 		base = *(unsigned long long *) data;
 	else if (!strcmp(name, "rtas-size") ||
 			!strcmp(name, "linux,tce-size"))
 		size = *data;
-	else if (!strcmp(name, "linux,initrd-end")) {
-		if (initrd_size) {
-			*(unsigned long long *) data = initrd_base +
-							initrd_size;
-			size = initrd_size;
-		} else
-			end = *(unsigned long long *)data;
-		initrd_found = 1;
-	}
+
 	if (size && end)
 		err(name, ERR_RESERVE);
 	if (base && size) {
@@ -139,6 +130,67 @@ dvt propnum(const char *name)
 	return offset;
 }
 
+void add_usable_mem_property(int fd, int len)
+{
+	char fname[MAXPATH], *bname;
+	char buf[MAXBYTES +1];
+	unsigned long ranges[2*MAX_MEMORY_RANGES];
+	unsigned long long base, end, loc_base, loc_end;
+	int range, rlen = 0;
+
+	strcpy(fname, pathname);
+	bname = strrchr(fname,'/');
+	bname[0] = '\0';
+	bname = strrchr(fname,'/');
+	if (strncmp(bname, "/memory@", 8))
+		return;
+
+	lseek(fd, 0, SEEK_SET);
+	if (read(fd, buf, len) != len)
+		err(pathname, ERR_READ);
+
+	base = ((unsigned long long *)buf)[0];
+	end = base + ((unsigned long long *)buf)[1];
+
+	for (range = 0; range < usablemem_rgns.size; range++) {
+		loc_base = usablemem_rgns.ranges[range].start;
+		loc_end = usablemem_rgns.ranges[range].end;
+		if (loc_base >= base && loc_end <= end) {
+			ranges[rlen++] = loc_base;
+			ranges[rlen++] = loc_end - loc_base;
+		} else if (base < loc_end && end > loc_base) {
+			if (loc_base < base)
+				loc_base = base;
+			if (loc_end > end)
+				loc_end = end;
+			ranges[rlen++] = loc_base;
+			ranges[rlen++] = loc_end - loc_base;
+		}
+	}
+
+	if (!rlen) {
+		/*
+		 * User did not pass any ranges for thsi region. Hence, write
+		 * (0,0) duple in linux,usable-memory property such that
+		 * this region will be ignored.
+		 */
+		ranges[rlen++] = 0;
+		ranges[rlen++] = 0;
+	}
+
+	rlen = rlen * sizeof(unsigned long);
+	/*
+	 * No add linux,usable-memory property.
+	 */
+	*dt++ = 3;
+	*dt++ = rlen;
+	*dt++ = propnum("linux,usable-memory");
+	if ((rlen >= 8) && ((unsigned long)dt & 0x4))
+		dt++;
+	memcpy(dt,&ranges,rlen);
+	dt += (rlen + 3)/4;
+}
+
 /* put all properties (files) in the property structure */
 void putprops(char *fn, DIR *dir)
 {
@@ -150,11 +202,10 @@ void putprops(char *fn, DIR *dir)
 		if (lstat(pathname, statbuf))
 			err(pathname, ERR_STAT);
 
-		/* skip initrd entries if 2nd kernel does not need them */
-		if (!initrd_base && !strcmp(fn,"linux,initrd-end"))
+		if (!crash_param && !strcmp(fn,"linux,crashkernel-base"))
 			continue;
 
-		if (!initrd_base && !strcmp(fn,"linux,initrd-start"))
+		if (!crash_param && !strcmp(fn,"linux,crashkernel-size"))
 			continue;
 
 		/*
@@ -165,12 +216,20 @@ void putprops(char *fn, DIR *dir)
 			!strcmp(dp->d_name, "linux,htab-base") ||
 			!strcmp(dp->d_name, "linux,htab-size") ||
 			!strcmp(dp->d_name, "linux,kernel-end"))
-			continue;
+				continue;
+
+		/* This property will be created/modified later in putnode()
+		 * So ignore it.
+		 */
+		if (!strcmp(dp->d_name, "linux,initrd-start") ||
+			!strcmp(dp->d_name, "linux,initrd-end"))
+				continue;
 
 		if (S_ISREG(statbuf[0].st_mode)) {
 			int fd, len = statbuf[0].st_size;
 
 			*dt++ = 3;
+			dt_len = dt;
 			*dt++ = len;
 			*dt++ = propnum(fn);
 
@@ -182,11 +241,45 @@ void putprops(char *fn, DIR *dir)
 				err(pathname, ERR_OPEN);
 			if (read(fd, dt, len) != len)
 				err(pathname, ERR_READ);
-			close(fd);
 
 			checkprop(fn, dt);
 
+			/* Get the cmdline from the device-tree and modify it */
+			if (!strcmp(dp->d_name, "bootargs")) {
+				int cmd_len;
+				char temp_cmdline[COMMAND_LINE_SIZE] = { "" };
+				char *param = NULL;
+				cmd_len = strlen(local_cmdline);
+				if (cmd_len != 0) {
+					param = strstr(local_cmdline,
+							"crashkernel=");
+					if (param)
+						crash_param = 1;
+					param = NULL;
+					param = strstr(local_cmdline, "root=");
+				}
+				if (!param) {
+					char *old_param;
+					memcpy(temp_cmdline, dt, len);
+					param = strstr(temp_cmdline, "root=");
+					old_param = strtok(param, " ");
+					if (cmd_len != 0)
+						strcat(local_cmdline, " ");
+					strcat(local_cmdline, old_param);
+				}
+				strcat(local_cmdline, " ");
+				cmd_len = strlen(local_cmdline);
+				cmd_len = cmd_len + 1;
+				memcpy(dt,local_cmdline,cmd_len);
+				len = cmd_len;
+				*dt_len = cmd_len;
+				fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
+			}
+
 			dt += (len + 3)/4;
+			if (!strcmp(dp->d_name, "reg") && usablemem_rgns.size)
+				add_usable_mem_property(fd, len);
+			close(fd);
 		}
 	}
 	fn[0] = '\0';
@@ -252,7 +345,7 @@ void putnode(void)
 		if ((len >= 8) && ((unsigned long)dt & 0x4))
 			dt++;
 
-		memcpy(dt,&initrd_end,8);
+		memcpy(dt,&initrd_end,len);
 		dt += (len + 3)/4;
 
 		reserve(initrd_base, initrd_size);
@@ -280,9 +373,8 @@ void putnode(void)
 	dn[-1] = '\0';
 }
 
-struct bootblock bb[1];
-
-int create_flatten_tree(struct kexec_info *info, unsigned char **bufp, unsigned long *sizep)
+int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
+			 unsigned long *sizep, char *cmdline)
 {
 	unsigned long len;
 	unsigned long tlen;
@@ -295,6 +387,9 @@ int create_flatten_tree(struct kexec_info *info, unsigned char **bufp, unsigned 
 
 	pathstart = pathname + strlen(pathname);
 	dt = dtstruct;
+
+	if (cmdline)
+		strcpy(local_cmdline, cmdline);
 
 	putnode();
 	*dt++ = 9;
