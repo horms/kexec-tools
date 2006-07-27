@@ -43,6 +43,7 @@ PKGLIBDIR=$(LIBDIR)/$(PACKAGE)
 PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE)
 
 MAN_PAGES:= kexec/kexec.8
+MAN_PAGES+= kdump/kdump.8
 BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
 BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
 BINARIES:=$(SBINDIR)/kexec $(SBINDIR)/kdump $(BINARIES_$(ARCH)) 

@@ -28,6 +28,7 @@ KEXEC_SRCS:= $(KEXEC_C_SRCS) $(KEXEC_S_SRCS)
 KEXEC_OBJS:= $(KEXEC_C_OBJS) $(KEXEC_S_OBJS)
 KEXEC_DEPS:= $(KEXEC_C_DEPS) $(KEXEC_S_DEPS)
 KEXEC:= $(SBINDIR)/kexec
+KEXEC_MANPAGE:= $(MANDIR)/man8/kexec.8
 
 include $(KEXEC_DEPS)
 
@@ -51,6 +52,9 @@ $(KEXEC): $(KEXEC_OBJS) $(UTIL_LIB)
 	mkdir -p $(@D)
 	$(CC) $(KCFLAGS) -o $@ $(KEXEC_OBJS) $(UTIL_LIB) $(LIBS)
 
+$(KEXEC_MANPAGE): kexec/kexec.8
+	 $(MKDIR) -p     $(MANDIR)/man8
+	cp kexec/kexec.8 $(KEXEC_MANPAGE)
 echo::
 	@echo "KEXEC_C_SRCS $(KEXEC_C_SRCS)"
 	@echo "KEXEC_C_DEPS $(KEXEC_C_DEPS)"

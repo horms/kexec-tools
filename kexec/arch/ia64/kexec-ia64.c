@@ -27,6 +27,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <sched.h>
 #include <sys/utsname.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
@@ -56,7 +57,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	 */
 	fprintf(stderr, "Warning assuming memory at 0-64MB is present\n");
 	memory_ranges = 0;
-	memory_range[memory_ranges].start = 0x00010000;
+	memory_range[memory_ranges].start = 0x00100000;
 	memory_range[memory_ranges].end   = 0x10000000;
 	memory_range[memory_ranges].type  = RANGE_RAM;
 	memory_ranges++;
@@ -76,9 +77,6 @@ void arch_usage(void)
 {
 }
 
-static struct {
-} arch_options = {
-};
 int arch_process_options(int argc, char **argv)
 {
 	static const struct option options[] = {
@@ -87,8 +85,12 @@ int arch_process_options(int argc, char **argv)
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR;
 	int opt;
-	unsigned long value;
-	char *end;
+
+	/* execute from monarch processor */
+        cpu_set_t affinity;
+	CPU_ZERO(&affinity);
+	CPU_SET(0, &affinity);
+        sched_setaffinity(0, sizeof(affinity), &affinity);
 
 	opterr = 0; /* Don't complain about unrecognized options here */
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
@@ -115,32 +117,7 @@ int arch_compat_trampoline(struct kexec_info *info)
 	}
 	if (strcmp(utsname.machine, "ia64") == 0)
 	{
-		info->kexec_flags |= KEXEC_ARCH_X86_64;
-	}
-	else {
-		fprintf(stderr, "Unsupported machine type: %s\n",
-			utsname.machine);
-		return -1;
-	}
-	return 0;
-}
-
-int arch_compat_trampoline(struct kexec_info *info)
-{
-	int result;
-	struct utsname utsname;
-	result = uname(&utsname);
-	if (result < 0) {
-		fprintf(stderr, "uname failed: %s\n",
-			strerror(errno));
-		return -1;
-	}
-	if (strcmp(utsname.machine, "ia64") == 0)
-	{
-		/* For compatibility with older patches 
-		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
-		 */
-		info->kexec_flags |= KEXEC_ARCH_DEFAULT;
+		info->kexec_flags |= KEXEC_ARCH_IA_64;
 	}
 	else {
 		fprintf(stderr, "Unsupported machine type: %s\n",

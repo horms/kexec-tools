@@ -2,7 +2,7 @@
 .\" First parameter, NAME, should be all caps
 .\" Second parameter, SECTION, should be 1-8, maybe w/ subsection
 .\" other parameters are allowed: see man(7), man(1)
-.TH KEXEC-TOOLS 8 "October 13, 2004"
+.TH KEXEC 8 "October 13, 2004"
 .\" Please adjust this date whenever revising the manpage.
 .\"
 .\" Some roff macros, for reference:
@@ -16,30 +16,60 @@
 .\" .sp <n>    insert n+1 empty lines
 .\" for manpage-specific macros, see man(7)
 .SH NAME
-kexec-tools \- Tool to load a kernel for warm reboot and initiate a warm reboot
+kexec \- Tool to load a kernel for warm reboot and initiate a warm reboot
 .SH SYNOPSIS
-.B kexec-tools
+.B kexec
 .RI [ options ] " files" ...
 .SH DESCRIPTION
 .PP
 .\" TeX users may be more comfortable with the \fB<whatever>\fP and
 .\" \fI<whatever>\fP escape sequences to invode bold face and italics, 
 .\" respectively.
-\fBkexec-tools\fP does not have a man page yet. Please use "kexec -h" for help.
+\fBkexec\fP allows one to load another kernel from the currently running
+Linux kernel. Normally one would load a kernel, and possibly an initial
+ramdisk, into the currently running kernel using kexec and then initiate
+a warm reboot by executing kexec again with appropriate option.
 .SH OPTIONS
 These programs follow the usual GNU command line syntax, with long
 options starting with two dashes (`-').
 A summary of options is included below.
-For a complete description, see the Info files.
 .TP
 .B \-h, \-\-help
 Show summary of options.
 .TP
 .B \-v, \-\-version
 Show version of program.
-.SH SEE ALSO
+.TP
+.B \-f, \-\-force
+Force an immediate kexec without calling shutdown.
+.TP
+.B \-x, \-\-no-ifdown
+Don't bring down network interfaces. (if used, must be last option specified)
+.TP
+.B \-l, \-\-load
+Load the new kernel into the current kernel.
+.TP
+.B \-p, \-\-load-panic
+Load the new kernel for use on panic.
+.TP
+.B \-u, \-\-unload
+Unload the current kexec target kernel.
+.TP
+.B \-e, \-\-exec
+Execute a currently loaded kernel.
+.TP
+.B \-t, \-\-type=TYPE
+Specify the new kernel is of this type.
+.TP
+.B \-\-mem\-min=<addr>
+Specify the lowest memory addres to load code into.
+.TP
+.B \-\-mem\-max=<addr>
+Specify the highest memory addres to load code into.
+.TP
+There may be additional options supported on individual architectures.  Use --help option to see those options.
 .SH AUTHOR
-kexec-tools was written by Eric Biederman.
+kexec was written by Eric Biederman.
 .PP
-This manual page was written by Khalid Aziz <khalid_aziz@hp.com>,
+This manual page was written by Khalid Aziz <khalid.aziz@hp.com>,
 for the Debian project (but may be used by others).
