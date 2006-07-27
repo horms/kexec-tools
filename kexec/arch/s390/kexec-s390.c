@@ -36,7 +36,7 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
  *  - (-1) if something went wrong.
  */
 
-int get_memory_ranges(struct memory_range **range, int *ranges)
+int get_memory_ranges(struct memory_range **range, int *ranges, unsigned long flags)
 {
 	char sys_ram[] = "System RAM\n";
 	char iomem[] = "/proc/iomem";
