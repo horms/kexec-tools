@@ -331,7 +331,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		bufp += sizeof(Elf64_Phdr);
 		phdr->p_type    = PT_LOAD;
 		phdr->p_flags   = PF_R|PF_W|PF_X;
-		if (mstart == BACKUP_START && mend == BACKUP_END)
+		if (mstart == BACKUP_SRC_START && mend == BACKUP_SRC_END)
 			phdr->p_offset  = info->backup_start;
 		else
 			phdr->p_offset  = mstart;
@@ -368,7 +368,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		return -1;
 
 	/* Create a backup region segment to store backup data*/
-	sz = (BACKUP_SIZE + align - 1) & ~(align - 1);
+	sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
 	tmp = xmalloc(sz);
 	memset(tmp, 0, sz);
 	info->backup_start = add_buffer(info, tmp, sz, sz, align,

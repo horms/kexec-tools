@@ -21,9 +21,7 @@
 
 #include <stdint.h>
 #include <string.h>
-
-#define BACKUP_REGION_SOURCE 0x0
-#define BACKUP_REGION_SIZE 32*1024
+#include "../../../kexec/arch/ppc64/crashdump-ppc64.h"
 
 extern unsigned long backup_start;
 
@@ -32,10 +30,10 @@ void crashdump_backup_memory(void)
 {
 	void *dest, *src;
 
-	src = (void *)BACKUP_REGION_SOURCE;
+	src = (void *)BACKUP_SRC_START;
 
 	if (backup_start) {
 		dest = (void *)(backup_start);
-		memcpy(dest, src, BACKUP_REGION_SIZE);
+		memcpy(dest, src, BACKUP_SRC_SIZE);
 	}
 }
