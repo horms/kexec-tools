@@ -46,6 +46,8 @@ purgatory_start:
 	br.call.sptk.many b0=ia64_env_setup
 	movl r10=__kernel_entry;;
 	ld8 r14=[r10];;
+	movl r10=__boot_param_base;;
+	ld8 r28=[r10];;
 	mov b6=r14;;
 	mov ar.lc=r0
 	mov ar.ec=r0
@@ -61,6 +63,7 @@ DECLARE_DATA8(__command_line)
 DECLARE_DATA8(__command_line_len)
 DECLARE_DATA8(__efi_memmap_base)
 DECLARE_DATA8(__efi_memmap_size)
+DECLARE_DATA8(__boot_param_base)
 DECLARE_DATA8(__loaded_segments)
 DECLARE_DATA8(__loaded_segments_num)
 

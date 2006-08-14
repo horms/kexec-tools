@@ -115,9 +115,10 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long entry, max_addr, gp_value;
 	unsigned long command_line_base, ramdisk_base;
 	unsigned long efi_memmap_base, efi_memmap_size;
+	unsigned long boot_param_base;
 	int result;
 	int opt;
-	char *efi_memmap_buf;
+	char *efi_memmap_buf, *boot_param;
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
 #define OPT_RAMDISK	(OPT_ARCH_MAX+1)
 	static const struct option options[] = {
@@ -190,6 +191,13 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	if (load_crashdump_segments(info, &ehdr, max_addr, 0,
 				&command_line) < 0)
 		return -1;
+
+	// reverve 4k for ia64_boot_param
+	boot_param = xmalloc(4096);
+        boot_param_base = add_buffer(info, boot_param, 4096, 4096, 4096, 0,
+                        max_addr, -1);
+        elf_rel_set_symbol(&info->rhdr, "__boot_param_base",
+                        &boot_param_base, sizeof(long));
 
 	// reserve 8k for efi_memmap
 	efi_memmap_size = 1UL<<14;

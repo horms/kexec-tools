@@ -123,6 +123,7 @@ struct kexec_boot_params {
 	uint64_t command_line_len;
 	uint64_t efi_memmap_base;
 	uint64_t efi_memmap_size;
+	uint64_t boot_param_base;
 	struct loaded_segment *loaded_segments;
 	unsigned long loaded_segments_num;
 };
@@ -243,13 +244,15 @@ ia64_env_setup(struct ia64_boot_param *boot_param,
 	unsigned long *set_virtual_address_map;
 	char *command_line = (char *)params->command_line;
 	uint64_t command_line_len = params->command_line_len;
-
+	struct ia64_boot_param *new_boot_param =
+	(struct ia64_boot_param *) params->boot_param_base;
+	memcpy(new_boot_param, boot_param, 4096);
 	// patch efi_runtime->set_virtual_address_map to a
 	// dummy function
 	len = __dummy_efi_function_end - __dummy_efi_function;
 	memcpy(command_line + command_line_len,
 		__dummy_efi_function, len);
-	systab = (efi_system_table_t *)boot_param->efi_systab;
+	systab = (efi_system_table_t *)new_boot_param->efi_systab;
 	runtime = (efi_runtime_services_t *)PA(systab->runtime);
 	set_virtual_address_map =
 		(unsigned long *)PA(runtime->set_virtual_address_map);
@@ -257,15 +260,14 @@ ia64_env_setup(struct ia64_boot_param *boot_param,
 		(unsigned long)(command_line + command_line_len);
 	flush_icache_range(command_line + command_line_len, len);
 
-	patch_efi_memmap(params, boot_param);
+	patch_efi_memmap(params, new_boot_param);
 
-	boot_param->efi_memmap = params->efi_memmap_base;
-
-	boot_param->command_line = params->command_line;
-	boot_param->console_info.orig_x = 0;
-	boot_param->console_info.orig_y = 0;
-	boot_param->initrd_start = params->ramdisk_base;
-	boot_param->initrd_size =  params->ramdisk_size;
+	new_boot_param->efi_memmap = params->efi_memmap_base;
+	new_boot_param->command_line = params->command_line;
+	new_boot_param->console_info.orig_x = 0;
+	new_boot_param->console_info.orig_y = 0;
+	new_boot_param->initrd_start = params->ramdisk_base;
+	new_boot_param->initrd_size =  params->ramdisk_size;
 }
 
 /* This function can be used to execute after the SHA256 verification. */
