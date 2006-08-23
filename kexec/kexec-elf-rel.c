@@ -338,6 +338,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			struct mem_rela rel;
 			struct mem_sym sym;
 			const void *location;
+			const char *name;
 			unsigned long address, value, sec_base;
 			if (shdr->sh_type == SHT_REL) {
 				rel = elf_rel(ehdr, ptr);
@@ -353,9 +354,17 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 
 			/* The relevant symbol */
 			sym = elf_sym(ehdr, symtab->sh_data + (rel.r_sym * elf_sym_size(ehdr)));
+
+			if (sym.st_name) {
+				name = strtab + sym.st_name;
+			}
+			else {
+				name = ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
+				name += ehdr->e_shdr[sym.st_shndx].sh_name;
+			}
 #ifdef DEBUG
 			fprintf(stderr, "sym: %10s info: %02x other: %02x shndx: %lx value: %lx size: %lx\n",
-				strtab + sym.st_name,
+				name,
 				sym.st_info,
 				sym.st_other,
 				sym.st_shndx,
@@ -373,30 +382,28 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			 * So, is this really an error condition to flag die?
 			 */
 			/*
-				die("Undefined symbol: %s\n",
-					strtab + sym.st_name);
+				die("Undefined symbol: %s\n", name);
 			*/
 				continue;
 			}
 			sec_base = 0;
 			if (sym.st_shndx == SHN_COMMON) {
 				die("symbol: '%s' in common section\n",
-					strtab + sym.st_name);
+					name);
 			}
 			else if (sym.st_shndx == SHN_ABS) {
 				sec_base = 0;
 			}
 			else if (sym.st_shndx > ehdr->e_shnum) {
 				die("Invalid section: %d for symbol %s\n",
-					sym.st_shndx,
-					strtab + sym.st_name);
+					sym.st_shndx, name);
 			}
 			else {
 				sec_base = ehdr->e_shdr[sym.st_shndx].sh_addr;
 			}
 #ifdef DEBUG
 			fprintf(stderr, "sym: %s value: %lx addr: %lx\n",
-				strtab + sym.st_name, value, address);
+				name, value, address);
 #endif
 			value = sym.st_value;
 			value += sec_base;
