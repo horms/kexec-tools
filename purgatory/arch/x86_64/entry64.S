@@ -37,7 +37,11 @@ entry64:
 	movl	%eax, %fs
 	movl	%eax, %gs
 
-	/* In 64bit mode the code segment is meaningless */
+	movq	$stack_init, %rsp
+	pushq	$0x10 /* CS */
+	pushq	$new_cs_exit
+	lretq
+new_cs_exit:
 
 	/* Load the registers */
 	movq	rax(%rip), %rax
@@ -93,8 +97,10 @@ gdt:	/* 0x00 unusable segment
 	.word	0, 0, 0
 			
 	/* 0x10 4GB flat code segment */
-	.word	0xFFFF, 0x0000, 0x9A00, 0x00CF
+	.word	0xFFFF, 0x0000, 0x9A00, 0x00AF
 	
 	/* 0x18 4GB flat data segment */
 	.word	0xFFFF, 0x0000, 0x9200, 0x00CF
 gdt_end:
+stack:	.quad	0, 0
+stack_init:
