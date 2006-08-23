@@ -149,7 +149,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 			arg_style = ARG_STYLE_LINUX;
 			break;
 		case OPT_ARGS_NONE:
-#ifdef __i386___
+#ifdef __i386__
 			arg_style = ARG_STYLE_NONE;
 #else
 			die("--args-none only works on arch i386\n");
