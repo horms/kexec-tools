@@ -417,7 +417,7 @@ void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr,
 	int result;
 
 	/* Parse the Elf file */
-	result = build_elf_rel_info((char *)purgatory, purgatory_size, ehdr);
+	result = build_elf_rel_info(buf, len, ehdr);
 	if (result < 0) {
 		die("ELF rel parse failed\n");
 	}
