@@ -20,6 +20,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <unistd.h>
 #include <errno.h>
 #include <limits.h>
 #include <elf.h>
@@ -80,8 +81,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	unsigned long long start, end, cstart, cend;
 
 	/* create a separate program header for the backup region */
-	crash_memory_range[0].start = 0x0000000000000000;
-	crash_memory_range[0].end = 0x0000000000008000;
+	crash_memory_range[0].start = BACKUP_SRC_START;
+	crash_memory_range[0].end = BACKUP_SRC_END;
 	crash_memory_range[0].type = RANGE_RAM;
 	memory_ranges++;
 
@@ -126,8 +127,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 
 			start = ((unsigned long long *)buf)[0];
 			end = start + ((unsigned long long *)buf)[1];
-			if (start == 0 && end >= 0x8000)
-				start = 0x8000;
+			if (start == 0 && end >= BACKUP_SRC_END)
+				start = BACKUP_SRC_END;
 
 			cstart = crash_base;
 			cend = crash_base + crash_size;
@@ -419,8 +420,8 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 	unsigned long long end = base + size;
 	unsigned long long ustart, uend;
 
-	base = _ALIGN_DOWN(base, PAGE_SIZE);
-	end = _ALIGN_UP(end, PAGE_SIZE);
+	base = _ALIGN_DOWN(base, getpagesize());
+	end = _ALIGN_UP(end, getpagesize());
 
 	for (i=0; i < usablemem_rgns.size; i++) {
 		ustart = usablemem_rgns.ranges[i].start;
