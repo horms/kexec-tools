@@ -578,111 +578,6 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	return 0;
 }
 
-/* Prepares the crash memory elf32 headers and stores in supplied buffer. */
-static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
-						void *buf, unsigned long size)
-{
-	Elf32_Ehdr *elf;
-	Elf32_Phdr *phdr;
-	int i;
-	char *bufp;
-	long int nr_cpus = 0;
-	uint64_t notes_addr;
-
-	bufp = (char*) buf;
-
-	/* Setup ELF Header*/
-	elf = (Elf32_Ehdr *) bufp;
-	bufp += sizeof(Elf32_Ehdr);
-	memcpy(elf->e_ident, ELFMAG, SELFMAG);
-	elf->e_ident[EI_CLASS]  = ELFCLASS32;
-	elf->e_ident[EI_DATA]   = ELFDATA2LSB;
-	elf->e_ident[EI_VERSION]= EV_CURRENT;
-	elf->e_ident[EI_OSABI] = ELFOSABI_NONE;
-	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
-	elf->e_type	= ET_CORE;
-	elf->e_machine	= EM_X86_64;
-	elf->e_version	= EV_CURRENT;
-	elf->e_entry	= 0;
-	elf->e_phoff	= sizeof(Elf32_Ehdr);
-	elf->e_shoff	= 0;
-	elf->e_flags	= 0;
-	elf->e_ehsize   = sizeof(Elf32_Ehdr);
-	elf->e_phentsize= sizeof(Elf32_Phdr);
-	elf->e_phnum    = 0;
-	elf->e_shentsize= 0;
-	elf->e_shnum    = 0;
-	elf->e_shstrndx = 0;
-
-	/* PT_NOTE program headers. One per cpu*/
-	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
-	if (nr_cpus < 0) {
-		return -1;
-	}
-
-	/* Need to find a better way to determine per cpu notes section size. */
-#define MAX_NOTE_BYTES	1024
-	for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes_per_cpu(i, &notes_addr) < 0) {
-			/* This cpu is not present. Skip it. */
-			return -1;
-		}
-		phdr = (Elf32_Phdr *) bufp;
-		bufp += sizeof(Elf32_Phdr);
-		phdr->p_type	= PT_NOTE;
-		phdr->p_flags	= 0;
-		phdr->p_offset  = phdr->p_paddr = notes_addr;
-		phdr->p_vaddr   = 0;
-		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
-		/* Do we need any alignment of segments? */
-		phdr->p_align	= 0;
-
-		/* Increment number of program headers. */
-		(elf->e_phnum)++;
-	}
-
-	/* Setup PT_LOAD type program header for every system RAM chunk.
-	 * A seprate program header for Backup Region*/
-	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
-		unsigned long long mstart, mend;
-		mstart = crash_memory_range[i].start;
-		mend = crash_memory_range[i].end;
-		if (!mstart && !mend)
-			break;
-		if (crash_memory_range[i].type != RANGE_RAM)
-			break;
-		phdr = (Elf32_Phdr *) bufp;
-		bufp += sizeof(Elf32_Phdr);
-		phdr->p_type	= PT_LOAD;
-		phdr->p_flags	= PF_R|PF_W|PF_X;
-		if (mstart == BACKUP_START && mend == BACKUP_END)
-			phdr->p_offset	= info->backup_start;
-		else
-			phdr->p_offset	= mstart;
-		/* Handle linearly mapped region.*/
-
-		/* Filling the vaddr conditionally as we have two linearly
-		 * mapped regions here. One is __START_KERNEL_map 0 to 40 MB
-		 * other one is PAGE_OFFSET */
-
-		if (mend <= (MAXMEM - 1) && mstart < KERNEL_TEXT_SIZE)
-			phdr->p_vaddr = mstart + __START_KERNEL_map;
-		else {
-			if (mend <= (MAXMEM - 1))
-				phdr->p_vaddr = mstart + PAGE_OFFSET;
-			else
-				phdr->p_vaddr = UINT_MAX;
-		}
-		phdr->p_paddr = mstart;
-		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
-		/* Do we need any alignment of segments? */
-		phdr->p_align	= 0;
-		/* Increment number of program headers. */
-		(elf->e_phnum)++;
-	}
-	return 0;
-}
-
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
@@ -723,25 +618,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 			" failed: %s\n", strerror(errno));
 		return -1;
 	}
-	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
-		sz = 	sizeof(Elf64_Ehdr) +
-			nr_cpus * sizeof(Elf64_Phdr) +
+	sz = 	sizeof(Elf64_Ehdr) + nr_cpus * sizeof(Elf64_Phdr) +
 			nr_ranges * sizeof(Elf64_Phdr);
-	} else {
-		sz = 	sizeof(Elf32_Ehdr) +
-			nr_cpus * sizeof(Elf32_Phdr) +
-			nr_ranges * sizeof(Elf32_Phdr);
-	}
 	sz = (sz + align - 1) & ~(align -1);
 	tmp = xmalloc(sz);
 	memset(tmp, 0, sz);
-	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
-		if (prepare_crash_memory_elf64_headers(info, tmp, sz) < 0)
-			return -1;
-	} else {
-		if (prepare_crash_memory_elf32_headers(info, tmp, sz) < 0)
-			return -1;
-	}
+
+	/* Prepare ELF64 core heaers. */
+	if (prepare_crash_memory_elf64_headers(info, tmp, sz) < 0)
+		return -1;
 
 	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),
 	 * vmlinux program headers show a gap of two pages between bss segment

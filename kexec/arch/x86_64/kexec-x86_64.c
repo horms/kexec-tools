@@ -136,8 +136,6 @@ void arch_usage(void)
 		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
 		"     --console-vga             Enable the vga console\n"
 		"     --console-serial          Enable the serial console\n"
-		"     --elf32-core-headers      Prepare core headers in ELF32 format\n"
-		"     --elf64-core-headers      Prepare core headers in ELF64 format\n"
 		);
 }
 
@@ -218,12 +216,6 @@ int arch_process_options(int argc, char **argv)
 			}
 			arch_options.serial_baud = value;
 			break;
-			case OPT_ELF32_CORE:
-				arch_options.core_header_type = CORE_TYPE_ELF32;
-				break;
-			case OPT_ELF64_CORE:
-				arch_options.core_header_type = CORE_TYPE_ELF64;
-				break;
 		}
 	}
 	/* Reset getopt for the next pass; called in other source modules */
