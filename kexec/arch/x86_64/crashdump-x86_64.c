@@ -636,7 +636,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 * This is a makeshift solution until it is fixed in kernel.
 	 */
 	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
-							max_addr, 1);
+							max_addr, -1);
 	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
