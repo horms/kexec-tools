@@ -127,10 +127,10 @@
 	TTYS0_TX_AL
 
 
-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
 #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
 #else
-#define DEBUG(x)
+#define DEBUG_CHAR(x)
 #define DEBUG_TX_HEX32(x)
 #endif
 	
@@ -142,15 +142,15 @@
 entry16:
 	.code32
 
-DEBUG('a')	
+DEBUG_CHAR('a')
 	/* Setup the classic BIOS interrupt table at 0x0 */
 	lidt	idtptr
 
-DEBUG('b')		
+DEBUG_CHAR('b')
 	/* Provide us with 16bit segments that we can use */
 	lgdt	gdt
 
-DEBUG('c')	
+DEBUG_CHAR('c')
 	/* Note we don't disable the a20 line, (this shouldn't be required)
 	 * The code to do it is in kexec_test and it is a real pain.
 	 * I will worry about that when I need it.
@@ -164,26 +164,26 @@ DEBUG('c')
 	movl	%eax, %fs
 	movl	%eax, %gs
 
-DEBUG('d')
+DEBUG_CHAR('d')
 
 	/* switch to 16bit mode */
 	ljmp	$0x08, $1f - entry16
 1:
 	.code16
-DEBUG('e')	
+DEBUG_CHAR('e')
 	/* Disable Paging and protected mode */
 	/* clear the PG & PE bits of CR0 */
 	movl	%cr0,%eax
 	andl	$~((1 << 31)|(1<<0)),%eax
 	movl	%eax,%cr0
 
-DEBUG('f')
+DEBUG_CHAR('f')
 	/* make intersegment jmp to flush the processor pipeline
 	 * and reload %cs:%eip (to clear upper 16 bits of %eip).
 	 */
 	ljmp	*(realptr - entry16)
 3:
-DEBUG('g')
+DEBUG_CHAR('g')
 	/* we are in real mode now
 	 * set up the real mode segment registers : %ds, $ss, %es
 	 */
@@ -191,7 +191,7 @@ DEBUG('g')
 	movw	%cs, %ax
 	movw	%ax, %ds
 
-DEBUG('h')
+DEBUG_CHAR('h')
 	/* Load the registers */
 	movl	eax - entry16, %eax
 	movl	ebx - entry16, %ebx
@@ -386,10 +386,10 @@ gdt_end:
 	TTYS0_TX_AL
 
 
-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
 #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
 #else
-#define DEBUG(x)
+#define DEBUG_CHAR(x)
 #define DEBUG_TX_HEX32(x)
 #endif
 
@@ -403,7 +403,7 @@ setup16_debug_start:
 _reloc = .
 	.balign 16
 	.code32
-DEBUG('a')
+DEBUG_CHAR('a')
 	/* Compute where I am running at */
 	call	1f
 1:	popl	%ebx
@@ -412,13 +412,13 @@ DEBUG('a')
 	/* Remember where I am running at */
 	movl	%ebx, location - _reloc(%ebx)
 	
-DEBUG('b')
+DEBUG_CHAR('b')
 	/* Fixup my real mode segment */
 	movl	%ebx, %eax
 	shrl	$4, %eax
 	movw	%ax, 2 + realptr - _reloc(%ebx)
 
-DEBUG('c')
+DEBUG_CHAR('c')
 	/* Fixup the gdt */
 	movl	%ebx, %eax
 	shll	$16, %eax
@@ -440,7 +440,7 @@ DEBUG('c')
 
 
 	
-DEBUG('d')
+DEBUG_CHAR('d')
 	/* Setup the classic BIOS interrupt table at 0x0 */
 	lidt	idtptr - _reloc(%ebx)
 	
@@ -465,20 +465,20 @@ DEBUG('d')
 	ljmp	$0x08, $2f - _reloc
 2:
 	.code16
-DEBUG('e')
+DEBUG_CHAR('e')
 	/* Disable Paging and protected mode */
 	/* clear the PG & PE bits of CR0 */
 	movl	%cr0,%eax
 	andl	$~((1 << 31)|(1<<0)),%eax
 	movl	%eax,%cr0
 
-DEBUG('f')
+DEBUG_CHAR('f')
 	/* make intersegment jmp to flush the processor pipeline
 	 * and reload %cs:%eip (to clear upper 16 bits of %eip).
 	 */
 	ljmp	*(realptr - _reloc)
 3:
-DEBUG('g')
+DEBUG_CHAR('g')
 	/* we are in real mode now
 	 * set up the real mode segment registers : %ds, $ss, %es
 	 */
@@ -486,7 +486,7 @@ DEBUG('g')
 	movw	%cs, %ax
 	movw	%ax, %ds
 
-DEBUG('h')
+DEBUG_CHAR('h')
 	/* Load the registers */
 	movl	eax - _reloc, %eax
 	movl	ebx - _reloc, %ebx
@@ -600,7 +600,7 @@ debug_gdt_end:
 		
 setup16_debug_kernel_pre_protected:
 	.code16
-	DEBUG('i')
+	DEBUG_CHAR('i')
 	cli					# no interrupts allowed !
 	movb	$0x80, %al			# disable NMI for bootup
 						# sequence
@@ -611,7 +611,7 @@ setup16_debug_first_code32:
 	.byte	0xbf	/* movl $0x12345678, %edi */
 location:
 	.long	0x12345678
-	DEBUG('j')
+	DEBUG_CHAR('j')
 	.byte	0xb8	/* movl $0x10000, %eax */
 setup16_debug_old_code32:
 	.long	0x10000

@@ -311,6 +311,6 @@
 	TTYS0_TX_AL
 	
 
-#define DEBUG(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
+#define DEBUG_CHAR(x) TTYS0_TX_CHAR($x) ;  TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
 #define DEBUG_TX_HEX32(x) TTYS0_TX_HEX32(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')
 #define DEBUG_TX_HEX64(x) TTYS0_TX_HEX64(x); TTYS0_TX_CHAR($'\r') ;  TTYS0_TX_CHAR($'\n')

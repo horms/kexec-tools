@@ -55,15 +55,15 @@ entry16_debug:
 	orl	%ecx, 0x14 + gdt	
 	
 	
-DEBUG('a')	
+DEBUG_CHAR('a')
 	/* Setup the classic BIOS interrupt table at 0x0 */
 	lidt	idtptr
 
-DEBUG('b')		
+DEBUG_CHAR('b')
 	/* Provide us with 16bit segments that we can use */
 	lgdt	gdt
 
-DEBUG('c')	
+DEBUG_CHAR('c')
 	/* Note we don't disable the a20 line, (this shouldn't be required)
 	 * The code to do it is in kexec_test and it is a real pain.
 	 * I will worry about that when I need it.
@@ -77,26 +77,26 @@ DEBUG('c')
 	movl	%eax, %fs
 	movl	%eax, %gs
 
-DEBUG('d')
+DEBUG_CHAR('d')
 
 	/* switch to 16bit mode */
 	ljmp	$0x08, $1f - entry16_debug
 1:
 	.code16
-DEBUG('e')	
+DEBUG_CHAR('e')
 	/* Disable Paging and protected mode */
 	/* clear the PG & PE bits of CR0 */
 	movl	%cr0,%eax
 	andl	$~((1 << 31)|(1<<0)),%eax
 	movl	%eax,%cr0
 
-DEBUG('f')
+DEBUG_CHAR('f')
 	/* make intersegment jmp to flush the processor pipeline
 	 * and reload %cs:%eip (to clear upper 16 bits of %eip).
 	 */
 	ljmp	*(realptr - entry16_debug)
 3:
-DEBUG('g')
+DEBUG_CHAR('g')
 	/* we are in real mode now
 	 * set up the real mode segment registers : %ds, $ss, %es
 	 */
@@ -104,7 +104,7 @@ DEBUG('g')
 	movw	%cs, %ax
 	movw	%ax, %ds
 
-DEBUG('h')
+DEBUG_CHAR('h')
 	/* Load the registers */
 	movl	eax - entry16_debug, %eax
 	movl	ebx - entry16_debug, %ebx
@@ -176,7 +176,7 @@ gdt_end:
 	.text	
 entry16_debug_pre32:
 	.code16
-DEBUG('i')
+DEBUG_CHAR('i')
 	cli					# no interrupts allowed !
 	movb	$0x80, %al			# disable NMI for bootup
 						# sequence
@@ -186,7 +186,7 @@ DEBUG('i')
 	
 entry16_debug_first32:
 	.code32
-DEBUG('j')
+DEBUG_CHAR('j')
 	.byte	0xb8	/* movl $0x10000, %eax */
 entry16_debug_old_first32:
 	.long 0x100000
