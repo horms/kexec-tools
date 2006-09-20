@@ -64,7 +64,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			continue;
 		str = line + consumed;
 		end = end + 1;
-#if 0
+#ifdef DEBUG
 		printf("%016Lx-%016Lx : %s",
 			start, end, str);
 #endif
@@ -104,7 +104,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		memory_range[memory_ranges].start = start;
 		memory_range[memory_ranges].end = end;
 		memory_range[memory_ranges].type = type;
-#if 0
+#ifdef DEBUG
 		printf("%016Lx-%016Lx : %x\n",
 			start, end, type);
 #endif

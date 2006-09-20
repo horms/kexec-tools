@@ -88,7 +88,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		if (count != 2)
 			continue;
 		str = line + consumed;
-#if 0
+#ifdef DEBUG
 		printf("%016Lx-%016Lx : %s",
 			start, end, str);
 #endif
@@ -142,7 +142,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		return -1;
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
-#if 0
+#ifdef DEBUG
 	int i;
 	printf("CRASH MEMORY RANGES\n");
 	for(i = 0; i < memory_ranges; i++) {
@@ -243,7 +243,7 @@ static int add_memmap(struct memory_range *memmap_p, unsigned long long addr,
 			memmap_p[j+1] = memmap_p[j];
 		memmap_p[tidx].start = addr;
 		memmap_p[tidx].end = addr + size - 1;
-#if 0
+#ifdef DEBUG
 	printf("Memmap after adding segment\n");
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
 		mstart = memmap_p[i].start;
@@ -328,7 +328,7 @@ static int delete_memmap(struct memory_range *memmap_p, unsigned long long addr,
 			memmap_p[j-1] = memmap_p[j];
 		memmap_p[j-1].start = memmap_p[j-1].end = 0;
 	}
-#if 0
+#ifdef DEBUG
 	printf("Memmap after deleting segment\n");
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
 		mstart = memmap_p[i].start;
@@ -402,7 +402,7 @@ static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 			die("Command line overflow\n");
 		strcat(cmdline, str_mmap);
 	}
-#if 0
+#ifdef DEBUG
 		printf("Command line after adding memmap\n");
 		printf("%s\n", cmdline);
 #endif
@@ -430,7 +430,7 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
-#if 0
+#ifdef DEBUG
 		printf("Command line after adding elfcorehdr\n");
 		printf("%s\n", cmdline);
 #endif
@@ -463,7 +463,7 @@ static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
 		die("Command line overflow\n");
 	strcat(cmdline, str_mmap);
 
-#if 0
+#ifdef DEBUG
 		printf("Command line after adding acpi memmap\n");
 		printf("%s\n", cmdline);
 #endif

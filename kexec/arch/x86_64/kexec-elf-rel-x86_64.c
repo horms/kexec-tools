@@ -60,7 +60,7 @@ static const char *reloc_name(unsigned long r_type)
 void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type, 
 	void *location, unsigned long address, unsigned long value)
 {
-#if 0
+#ifdef DEBUG
 	fprintf(stderr, "%s\n", reloc_name(r_type));
 #endif
 	switch(r_type) {
