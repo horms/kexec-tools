@@ -52,7 +52,7 @@ int elf_ppc64_probe(const char *buf, off_t len)
 {
 	struct mem_ehdr ehdr;
 	int result;
-	result = build_elf_exec_info(buf, len, &ehdr);
+	result = build_elf_exec_info(buf, len, &ehdr, 0);
 	if (result < 0) {
 		goto out;
 	}
@@ -163,7 +163,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 
 	/* Parse the Elf file */
-	result = build_elf_exec_info(buf, len, &ehdr);
+	result = build_elf_exec_info(buf, len, &ehdr, 0);
 	if (result < 0) {
 		free_elf_info(&ehdr);
 		return result;
@@ -213,7 +213,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	memcpy(seg_buf, purgatory, purgatory_size);
 	seg_size = purgatory_size;
 	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
-				purgatory_size, 0, max_addr, 1);
+				purgatory_size, 0, max_addr, 1, 0);
 
 	/* Add a ram-disk to the current image
 	 * Note: Add the ramdisk after elf_rel_build_load
