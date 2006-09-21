@@ -68,3 +68,4 @@ DECLARE_DATA8(__loaded_segments)
 DECLARE_DATA8(__loaded_segments_num)
 
 DECLARE_DATA8(__gp_value)
+DECLARE_DATA8(__noio)

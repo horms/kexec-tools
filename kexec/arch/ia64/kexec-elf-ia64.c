@@ -116,16 +116,19 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long command_line_base, ramdisk_base;
 	unsigned long efi_memmap_base, efi_memmap_size;
 	unsigned long boot_param_base;
+	unsigned long noio=0;
 	int result;
 	int opt;
 	char *efi_memmap_buf, *boot_param;
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
 #define OPT_RAMDISK	(OPT_ARCH_MAX+1)
+#define OPT_NOIO	(OPT_ARCH_MAX+2)
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{"command-line", 1, 0, OPT_APPEND},
 		{"append",       1, 0, OPT_APPEND},
 		{"initrd",       1, 0, OPT_RAMDISK},
+		{"noio",         1, 0, OPT_NOIO},
 		{0, 0, 0, 0},
 	};
 
@@ -147,6 +150,9 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
+			break;
+		case OPT_NOIO:	/* disable PIO and MMIO in purgatory code*/
+			noio = 1;
 			break;
 		}
 	}
@@ -196,6 +202,10 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	boot_param = xmalloc(4096);
         boot_param_base = add_buffer(info, boot_param, 4096, 4096, 4096, 0,
                         max_addr, -1);
+
+	elf_rel_set_symbol(&info->rhdr, "__noio",
+			   &noio, sizeof(long));
+
         elf_rel_set_symbol(&info->rhdr, "__boot_param_base",
                         &boot_param_base, sizeof(long));
 

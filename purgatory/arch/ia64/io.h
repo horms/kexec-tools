@@ -3,7 +3,7 @@
 #define UNCACHED(x) (void *)((x)|(1UL<<63))
 #define MF()	asm volatile ("mf.a" ::: "memory")
 #define IO_SPACE_ENCODING(p)     ((((p) >> 2) << 12) | (p & 0xfff))
-
+extern long __noio;
 static inline void *io_addr (unsigned long port)
 {
         unsigned long offset;
@@ -16,28 +16,34 @@ static inline void *io_addr (unsigned long port)
 static inline unsigned int inb (unsigned long port)
 {
         volatile unsigned char *addr = io_addr(port);
-        unsigned char ret;
-        ret = *addr;
-        MF();
+	unsigned char ret = 0;
+	if (!__noio) {
+		ret = *addr;
+		MF();
+	}
         return ret;
 }
 
 static inline unsigned int inw (unsigned long port)
 {
         volatile unsigned short *addr = io_addr(port);
-        unsigned short ret;
+	unsigned short ret = 0;
 
-        ret = *addr;
-	MF();
+	if (!__noio) {
+		ret = *addr;
+		MF();
+	}
         return ret;
 }
 
-static inline unsigned int ia64_inl (unsigned long port)
+static inline unsigned int inl (unsigned long port)
 {
-        volatile unsigned int *addr = __ia64_mk_io_addr(port);
-        unsigned int ret;
-        ret = *addr;
-	MF();
+	volatile unsigned int *addr = io_addr(port);
+	unsigned int ret ;
+	if (!__noio) {
+		ret = *addr;
+		MF();
+	}
         return ret;
 }
 
@@ -45,50 +51,58 @@ static inline void outb (unsigned char val, unsigned long port)
 {
         volatile unsigned char *addr = io_addr(port);
 
-        *addr = val;
-	MF();
+	if (!__noio) {
+		*addr = val;
+		MF();
+	}
 }
 
 static inline void outw (unsigned short val, unsigned long port)
 {
         volatile unsigned short *addr = io_addr(port);
 
-        *addr = val;
-	MF();
+	if (!__noio) {
+		*addr = val;
+		MF();
+	}
 }
 
 static inline void outl (unsigned int val, unsigned long port)
 {
         volatile unsigned int *addr = io_addr(port);
 
-        *addr = val;
-	MF();
+	if (!__noio) {
+		*addr = val;
+		MF();
+	}
 }
-
 
 static inline unsigned char readb(const volatile void  *addr)
 {
-        return *(volatile unsigned char *) addr;
+	return __noio ? 0 :*(volatile unsigned char *) addr;
 }
 static inline unsigned short readw(const volatile void  *addr)
 {
-        return *(volatile unsigned short *) addr;
+	return __noio ? 0 :*(volatile unsigned short *) addr;
 }
 static inline unsigned int readl(const volatile void  *addr)
 {
-        return *(volatile unsigned int *) addr;
+	return __noio ? 0 :*(volatile unsigned int *) addr;
 }
 
 static inline void writeb(unsigned char b, volatile void  *addr)
 {
-        *(volatile unsigned char *) addr = b;
+	if (!__noio)
+		*(volatile unsigned char *) addr = b;
 }
 static inline void writew(unsigned short b, volatile void  *addr)
 {
-        *(volatile unsigned short *) addr = b;
+	if (!__noio)
+		*(volatile unsigned short *) addr = b;
 }
 static inline void writel(unsigned int b, volatile void  *addr)
 {
-        *(volatile unsigned int *) addr = b;
+	if (!__noio)
+		*(volatile unsigned int *) addr = b;
 }
 #endif
