@@ -133,7 +133,7 @@ int do_bzImage_load(struct kexec_info *info,
 	 * it's gdt.
 	 */
 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-		0x3000, 640*1024, -1);
+		0x3000, 640*1024, -1, 0);
 
 	/* The argument/parameter segment */
 	setup_size = kern16_size + command_line_len;
