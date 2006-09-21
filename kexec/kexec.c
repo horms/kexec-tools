@@ -683,6 +683,8 @@ void usage(void)
 		" -l, --load           Load the new kernel into the current kernel.\n"
 		" -p, --load-panic     Load the new kernel for use on panic.\n"
 		" -u, --unload         Unload the current kexec target kernel.\n"
+		"                      If capture kernel is being unloaded specify\n"
+		"                      -p with -u.\n"
 		" -e, --exec           Execute a currently loaded kernel.\n"
 		" -t, --type=TYPE      Specify the new kernel is of this type.\n"
 		"     --mem-min=<addr> Specify the lowest memory addres to load code into.\n"
