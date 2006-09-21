@@ -72,7 +72,7 @@ int elf_ppc_probe(const char *buf, off_t len)
 
 	struct mem_ehdr ehdr;
 	int result;
-	result = build_elf_exec_info(buf, len, &ehdr);
+	result = build_elf_exec_info(buf, len, &ehdr, 0);
 	if (result < 0) {
 		goto out;
 	}
@@ -180,7 +180,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	}
 
 	/* Parse the Elf file */
-	result = build_elf_exec_info(buf, len, &ehdr);
+	result = build_elf_exec_info(buf, len, &ehdr, 0);
 	if (result < 0) {
 		free_elf_info(&ehdr);
 		return result;
