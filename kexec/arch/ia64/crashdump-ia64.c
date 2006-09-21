@@ -28,7 +28,7 @@
 #include "crashdump-ia64.h"
 
 int memory_ranges = 0;
-#define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL - (1UL<<26))
+#define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL - kernel_code_start)
 #define MAX_LINE        160
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region */
