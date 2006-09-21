@@ -715,7 +715,8 @@ static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
 		note_size += (hdr.n_descsz + 3) & ~3;
 
 		if ((hdr.n_namesz != 0) && (name[hdr.n_namesz -1] != '\0')) {
-			die("Note name is not null termiated");
+			fprintf(stderr, "Note name is not null termiated\n");
+			return -1;
 		}
 		ehdr->e_note[i].n_type = hdr.n_type;
 		ehdr->e_note[i].n_name = (char *)name;

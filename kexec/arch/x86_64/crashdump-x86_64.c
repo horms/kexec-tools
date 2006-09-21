@@ -24,8 +24,10 @@
 #include <errno.h>
 #include <limits.h>
 #include <elf.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
@@ -37,6 +39,137 @@
 
 /* Forward Declaration. */
 static int exclude_crash_reserve_region(int *nr_ranges);
+
+#define KERN_VADDR_ALIGN	0x200000	/* 2MB */
+
+/* Read kernel physical load addr from /proc/iomem (Kernel Code) and
+ * store in kexec_info */
+static int get_kernel_paddr(struct kexec_info *info)
+{
+	const char iomem[]= "/proc/iomem";
+	char line[MAX_LINE];
+	FILE *fp;
+	unsigned long long start, end;
+
+	fp = fopen(iomem, "r");
+	if (!fp) {
+		fprintf(stderr, "Cannot open %s: %s\n", iomem, strerror(errno));
+		return -1;
+	}
+	while(fgets(line, sizeof(line), fp) != 0) {
+		char *str;
+		int consumed, count;
+		count = sscanf(line, "%Lx-%Lx : %n",
+			&start, &end, &consumed);
+		if (count != 2)
+			continue;
+		str = line + consumed;
+#ifdef DEBUG
+		printf("%016Lx-%016Lx : %s",
+			start, end, str);
+#endif
+		if (memcmp(str, "Kernel code\n", 12) == 0) {
+			info->kern_paddr_start = start;
+
+#ifdef DEBUG
+			printf("kernel load physical addr start = 0x%016Lx\n",
+					start);
+#endif
+			fclose(fp);
+			return 0;
+		}
+	}
+	fprintf(stderr, "Cannot determine kernel physical load addr\n");
+	fclose(fp);
+	return -1;
+}
+
+/* Hardcoding kernel virtual address and size. While writting
+ * this patch vanilla kernel is compiled for addr 2MB. Anybody
+ * using kernel older than that which was compiled for 1MB
+ * physical addr, use older version of kexec-tools. This function
+ * is there just for backward compatibility reasons and we should
+ * get rid of it at some point of time.
+ */
+
+static int hardcode_kernel_vaddr_size(struct kexec_info *info)
+{
+	fprintf(stderr, "Warning: Hardcoding kernel virtual addr and size\n");
+	info->kern_vaddr_start = __START_KERNEL_map + 0x200000;
+	info->kern_size = KERNEL_TEXT_SIZE - 0x200000;
+	fprintf(stderr, "Warning: virtual addr = 0x%lx size = 0x%lx\n",
+		info->kern_vaddr_start, info->kern_size);
+	return 0;
+}
+
+/* Retrieve info regarding virtual address kernel has been compiled for and
+ * size of the kernel from /proc/kcore. Current /proc/kcore parsing from
+ * from kexec-tools fails because of malformed elf notes. A kernel patch has
+ * been submitted. For the folks using older kernels, this function
+ * hard codes the values to remain backward compatible. Once things stablize
+ * we should get rid of backward compatible code. */
+
+static int get_kernel_vaddr_and_size(struct kexec_info *info)
+{
+	int result;
+	const char kcore[] = "/proc/kcore";
+	char *buf;
+	struct mem_ehdr ehdr;
+	struct mem_phdr *phdr, *end_phdr;
+	int align;
+	unsigned long size;
+	uint32_t elf_flags = 0;
+
+	align = getpagesize();
+	size = KCORE_ELF_HEADERS_SIZE;
+	buf = slurp_file_len(kcore, size);
+	if (!buf) {
+		fprintf(stderr, "Cannot read %s: %s\n", kcore, strerror(errno));
+		return -1;
+	}
+
+	/* Don't perform checks to make sure stated phdrs and shdrs are
+	 * actually present in the core file. It is not practical
+	 * to read the GB size file into a user space buffer, Given the
+	 * fact that we don't use any info from that.
+	 */
+	elf_flags |= ELF_SKIP_FILESZ_CHECK;
+	result = build_elf_core_info(buf, size, &ehdr, elf_flags);
+	if (result < 0) {
+		fprintf(stderr, "ELF core (kcore) parse failed\n");
+		hardcode_kernel_vaddr_size(info);
+		return 0;
+	}
+
+	/* Traverse through the Elf headers and find the region where
+	 * kernel is mapped. */
+	end_phdr = &ehdr.e_phdr[ehdr.e_phnum];
+	for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
+		if (phdr->p_type == PT_LOAD) {
+			unsigned long saddr = phdr->p_vaddr;
+			unsigned long eaddr = phdr->p_vaddr + phdr->p_memsz;
+			unsigned long size;
+
+			/* Look for kernel text mapping header. */
+			if ((saddr >= __START_KERNEL_map) &&
+			    (eaddr <= __START_KERNEL_map + KERNEL_TEXT_SIZE)) {
+				saddr = (saddr) & (~(KERN_VADDR_ALIGN - 1));
+				info->kern_vaddr_start = saddr;
+				size = eaddr - saddr;
+				/* Align size to page size boundary. */
+				size = (size + align - 1) & (~(align - 1));
+				info->kern_size = size;
+#ifdef DEBUG
+			printf("kernel vaddr = 0x%lx size = 0x%lx\n",
+					saddr, size);
+#endif
+				return 0;
+			}
+		}
+	}
+	fprintf(stderr, "Can't find kernel text map area from kcore\n");
+	return -1;
+}
 
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region */
@@ -81,6 +214,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	while(fgets(line, sizeof(line), fp) != 0) {
 		char *str;
 		int type, consumed, count;
+
 		if (memory_ranges >= CRASH_MAX_MEMORY_RANGES)
 			break;
 		count = sscanf(line, "%Lx-%Lx : %n",
@@ -125,17 +259,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		crash_memory_range[memory_ranges].end = end;
 		crash_memory_range[memory_ranges].type = type;
 		memory_ranges++;
-
-		/* Segregate linearly mapped region. */
-		if ((MAXMEM - 1) >= start && (MAXMEM - 1) <= end) {
-			crash_memory_range[memory_ranges-1].end = MAXMEM -1;
-
-			/* Add segregated region. */
-			crash_memory_range[memory_ranges].start = MAXMEM;
-			crash_memory_range[memory_ranges].end = end;
-			crash_memory_range[memory_ranges].type = type;
-			memory_ranges++;
-		}
 	}
 	fclose(fp);
 	if (exclude_crash_reserve_region(&memory_ranges) < 0)
@@ -532,7 +655,34 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
+#ifdef DEBUG
+		printf("Elf header: p_type = %d, p_offset = 0x%lx "
+			"p_paddr = 0x%lx p_vaddr = 0x%lx "
+			"p_filesz = 0x%lx p_memsz = 0x%lx\n",
+			phdr->p_type, phdr->p_offset, phdr->p_paddr,
+			phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz);
+#endif
 	}
+
+	/* Setup an PT_LOAD type program header for the region where
+	 * Kernel is mapped.
+	 */
+	phdr = (Elf64_Phdr *) bufp;
+	bufp += sizeof(Elf64_Phdr);
+	phdr->p_type	= PT_LOAD;
+	phdr->p_flags	= PF_R|PF_W|PF_X;
+	phdr->p_offset	= phdr->p_paddr = info->kern_paddr_start;
+	phdr->p_vaddr	= info->kern_vaddr_start;
+	phdr->p_filesz	= phdr->p_memsz	= info->kern_size;
+	phdr->p_align	= 0;
+	(elf->e_phnum)++;
+#ifdef DEBUG
+		printf("Kernel text Elf header: p_type = %d, p_offset = 0x%lx "
+			"p_paddr = 0x%lx p_vaddr = 0x%lx "
+			"p_filesz = 0x%lx p_memsz = 0x%lx\n",
+			phdr->p_type, phdr->p_offset, phdr->p_paddr,
+			phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz);
+#endif
 
 	/* Setup PT_LOAD type program header for every system RAM chunk.
 	 * A seprate program header for Backup Region*/
@@ -553,27 +703,25 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		else
 			phdr->p_offset	= mstart;
 
-		/* Handle linearly mapped region.*/
-
-		/* Filling the vaddr conditionally as we have two linearly
-		 * mapped regions here. One is __START_KERNEL_map 0 to 40 MB
-		 * other one is PAGE_OFFSET */
-
-		if ((mend <= (MAXMEM - 1)) && mstart < KERNEL_TEXT_SIZE)
-			phdr->p_vaddr = mstart + __START_KERNEL_map;
-		else {
-			if (mend <= (MAXMEM - 1))
-				phdr->p_vaddr = mstart + PAGE_OFFSET;
-			else
-				phdr->p_vaddr = -1ULL;
-		}
+		/* We already prepared the header for kernel text. Map
+		 * rest of the memory segments to kernel linearly mapped
+		 * memory region.
+		 */
 		phdr->p_paddr = mstart;
+		phdr->p_vaddr = mstart + PAGE_OFFSET;
 		phdr->p_filesz	= phdr->p_memsz	= mend - mstart + 1;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
+#ifdef DEBUG
+		printf("Elf header: p_type = %d, p_offset = 0x%lx "
+			"p_paddr = 0x%lx p_vaddr = 0x%lx "
+			"p_filesz = 0x%lx p_memsz = 0x%lx\n",
+			phdr->p_type, phdr->p_offset, phdr->p_paddr,
+			phdr->p_vaddr, phdr->p_filesz, phdr->p_memsz);
+#endif
 	}
 	return 0;
 }
@@ -590,6 +738,12 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	int nr_ranges, align = 1024, i;
 	long int nr_cpus = 0;
 	struct memory_range *mem_range, *memmap_p;
+
+	if (get_kernel_paddr(info))
+		return -1;
+
+	if (get_kernel_vaddr_and_size(info))
+		return -1;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
 		return -1;

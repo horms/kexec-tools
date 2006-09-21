@@ -392,6 +392,50 @@ char *slurp_file(const char *filename, off_t *r_size)
 	return buf;
 }
 
+/* This functions reads either specified number of bytes from the file or
+   lesser if EOF is met. */
+
+char *slurp_file_len(const char *filename, off_t size)
+{
+	int fd;
+	char *buf;
+	off_t progress;
+	ssize_t result;
+
+	if (!filename)
+		return 0;
+	fd = open(filename, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open %s: %s\n", filename,
+				strerror(errno));
+		return 0;
+	}
+	buf = xmalloc(size);
+	progress = 0;
+	while(progress < size) {
+		result = read(fd, buf + progress, size - progress);
+		if (result < 0) {
+			if ((errno == EINTR) ||	(errno == EAGAIN))
+				continue;
+			fprintf(stderr, "read on %s of %ld bytes failed: %s\n",
+					filename, (size - progress)+ 0UL,
+					strerror(errno));
+			free(buf);
+			return 0;
+		}
+		if (result == 0)
+			/* EOF */
+			break;
+		progress += result;
+	}
+	result = close(fd);
+	if (result < 0) {
+		die("Close of %s failed: %s\n",
+			filename, strerror(errno));
+	}
+	return buf;
+}
+
 #if HAVE_ZLIB_H
 char *slurp_decompress_file(const char *filename, off_t *r_size)
 {

@@ -13,6 +13,7 @@ KEXEC_C_SRCS:= kexec/kexec.c
 KEXEC_C_SRCS+= kexec/ifdown.c
 KEXEC_C_SRCS+= kexec/kexec-elf.c 
 KEXEC_C_SRCS+= kexec/kexec-elf-exec.c 
+KEXEC_C_SRCS+= kexec/kexec-elf-core.c
 KEXEC_C_SRCS+= kexec/kexec-elf-rel.c 
 KEXEC_C_SRCS+= kexec/kexec-elf-boot.c 
 KEXEC_C_SRCS+= kexec/crashdump.c

@@ -116,6 +116,9 @@ struct kexec_info {
 	struct mem_ehdr rhdr;
 	unsigned long backup_start;
 	unsigned long kexec_flags;
+	unsigned long kern_vaddr_start;
+	unsigned long kern_paddr_start;
+	unsigned long kern_size;
 };
 
 void usage(void);
@@ -177,6 +180,7 @@ extern void die(char *fmt, ...);
 extern void *xmalloc(size_t size);
 extern void *xrealloc(void *ptr, size_t size);
 extern char *slurp_file(const char *filename, off_t *r_size);
+extern char *slurp_file_len(const char *filename, off_t size);
 extern char *slurp_decompress_file(const char *filename, off_t *r_size);
 extern void add_segment(struct kexec_info *info,
 	const void *buf, size_t bufsz, unsigned long base, size_t memsz);
