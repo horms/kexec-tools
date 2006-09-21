@@ -56,7 +56,7 @@ int elf_ia64_probe(const char *buf, off_t len)
 {
 	struct mem_ehdr ehdr;
 	int result;
-	result = build_elf_exec_info(buf, len, &ehdr);
+	result = build_elf_exec_info(buf, len, &ehdr, 0);
 	if (result < 0) {
 		if (probe_debug) {
 			fprintf(stderr, "Not an ELF executable\n");
@@ -162,7 +162,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 
 	/* Parse the Elf file */
-	result = build_elf_exec_info(buf, len, &ehdr);
+	result = build_elf_exec_info(buf, len, &ehdr, 0);
 	if (result < 0) {
 		fprintf(stderr, "ELF parse failed\n");
 		free_elf_info(&ehdr);
@@ -191,7 +191,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 
 	/* Load the setup code */
 	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-			0x0, ULONG_MAX, -1);
+			0x0, ULONG_MAX, -1, 0);
 
 
 	if (load_crashdump_segments(info, &ehdr, max_addr, 0,
