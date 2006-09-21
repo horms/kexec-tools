@@ -11,11 +11,12 @@
 
 static const int probe_debug = 0;
 
-int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
+int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
+				uint32_t flags)
 {
 	struct mem_phdr *phdr, *end_phdr;
 	int result;
-	result = build_elf_info(buf, len, ehdr);
+	result = build_elf_info(buf, len, ehdr, flags);
 	if (result < 0) {
 		return result;
 	}
@@ -136,11 +137,11 @@ int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
 }
 
 void elf_exec_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
-	const char *buf, off_t len)
+	const char *buf, off_t len, uint32_t flags)
 {
 	int result;
 	/* Parse the Elf file */
-	result = build_elf_exec_info(buf, len, ehdr);
+	result = build_elf_exec_info(buf, len, ehdr, flags);
 	if (result < 0) {
 		die("ELF exec parse failed\n");
 	}

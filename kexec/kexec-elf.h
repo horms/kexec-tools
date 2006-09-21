@@ -82,22 +82,27 @@ typedef struct
 	uint32_t n_type;		/* Type of the note.  */
 } ElfNN_Nhdr;
 
+/* Misc flags */
 
+#define ELF_SKIP_FILESZ_CHECK		0x00000001
 
 extern void free_elf_info(struct mem_ehdr *ehdr);
-extern int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr);
-extern int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr);
-extern int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr);
+extern int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
+				uint32_t flags);
+extern int build_elf_exec_info(const char *buf, off_t len,
+				struct mem_ehdr *ehdr, uint32_t flags);
+extern int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
+				uint32_t flags);
 
 extern int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info);
 extern int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 	unsigned long min, unsigned long max, int end);
 
 extern void elf_exec_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
-	const char *buf, off_t len);
+				const char *buf, off_t len, uint32_t flags);
 extern void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
 	const char *buf, off_t len, unsigned long min, unsigned long max, 
-	int end);
+	int end, uint32_t flags);
 
 extern int elf_rel_find_symbol(struct mem_ehdr *ehdr,
 	const char *name, struct mem_sym *ret_sym);

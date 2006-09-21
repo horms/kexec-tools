@@ -135,10 +135,11 @@ static struct mem_rela elf_rela(struct mem_ehdr *ehdr, const unsigned char *ptr)
 	return rela;
 }
 
-int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
+int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
+				uint32_t flags)
 {
 	int result;
-	result = build_elf_info(buf, len, ehdr);
+	result = build_elf_info(buf, len, ehdr, flags);
 	if (result < 0) {
 		return result;
 	}
@@ -419,12 +420,12 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 
 void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr,
 	const char *buf, off_t len, unsigned long min, unsigned long max,
-	int end)
+	int end, uint32_t flags)
 {
 	int result;
 
 	/* Parse the Elf file */
-	result = build_elf_rel_info(buf, len, ehdr);
+	result = build_elf_rel_info(buf, len, ehdr, flags);
 	if (result < 0) {
 		die("ELF rel parse failed\n");
 	}

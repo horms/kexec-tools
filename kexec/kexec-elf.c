@@ -368,7 +368,8 @@ static int build_mem_elf64_phdr(const char *buf, off_t len,
 	return 0;
 }
 
-static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
+static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
+				uint32_t flags)
 {
 	size_t phdr_size, mem_phdr_size;
 	int i;
@@ -418,9 +419,11 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
 
 		/* Check the program headers to be certain
 		 * they are safe to use.
+		 * Skip the check if ELF_SKIP_FILESZ_CHECK is set.
 		 */
 		phdr = &ehdr->e_phdr[i];
-		if ((phdr->p_offset + phdr->p_filesz) > len) {
+		if (!(flags & ELF_SKIP_FILESZ_CHECK)
+			&& (phdr->p_offset + phdr->p_filesz) > len) {
 			/* The segment does not fit in the buffer */
 			if (probe_debug) {
 				fprintf(stderr, "ELF segment not in file\n");
@@ -580,7 +583,8 @@ static int build_mem_elf64_shdr(const char *buf, off_t len,
 	return 0;
 }
 
-static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
+static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
+				uint32_t flags)
 {
 	size_t shdr_size, mem_shdr_size;
 	int i;
@@ -628,11 +632,12 @@ static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr)
 		}
 		/* Check the section headers to be certain
 		 * they are safe to use.
+		 * Skip the check if ELF_SKIP_FILESZ_CHECK is set.
 		 */
 		shdr = &ehdr->e_shdr[i];
-		if ((shdr->sh_type != SHT_NOBITS) &&
-			((shdr->sh_offset + shdr->sh_size) > len))
-		{
+		if (!(flags & ELF_SKIP_FILESZ_CHECK)
+			&& (shdr->sh_type != SHT_NOBITS)
+			&& (shdr->sh_offset + shdr->sh_size) > len) {
 			/* The section does not fit in the buffer */
 			if (probe_debug) {
 				fprintf(stderr, "ELF section %d not in file\n",
@@ -729,7 +734,8 @@ void free_elf_info(struct mem_ehdr *ehdr)
 	memset(ehdr, 0, sizeof(*ehdr));
 }
 
-int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
+int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
+			uint32_t flags)
 {
 	int result;
 	result = build_mem_ehdr(buf, len, ehdr);
@@ -737,14 +743,14 @@ int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr)
 		return result;
 	}
 	if ((ehdr->e_phoff > 0) && (ehdr->e_phnum > 0)) {
-		result = build_mem_phdrs(buf, len, ehdr);
+		result = build_mem_phdrs(buf, len, ehdr, flags);
 		if (result < 0) {
 			free_elf_info(ehdr);
 			return result;
 		}
 	}
 	if ((ehdr->e_shoff > 0) && (ehdr->e_shnum > 0)) {
-		result = build_mem_shdrs(buf, len, ehdr);
+		result = build_mem_shdrs(buf, len, ehdr, flags);
 		if (result < 0) {
 			free_elf_info(ehdr);
 			return result;
