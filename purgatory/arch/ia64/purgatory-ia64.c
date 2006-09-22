@@ -152,11 +152,10 @@ patch_efi_memmap(struct kexec_boot_params *params,
 {
 	void *dest = (void *)params->efi_memmap_base;
 	void *src  = (void *)boot_param->efi_memmap;
-	unsigned long len = boot_param->efi_memmap_size;
 	unsigned long memdesc_size = boot_param->efi_memdesc_size;
 	uint64_t orig_type;
 	efi_memory_desc_t *src_md, *dst_md;
-	void *src_end = src + len;
+	void *src_end = src + boot_param->efi_memmap_size;
 	int i;
 	for (; src < src_end; src += memdesc_size, dest += memdesc_size) {
 		unsigned long mstart, mend;
