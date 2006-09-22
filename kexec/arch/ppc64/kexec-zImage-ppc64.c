@@ -71,7 +71,7 @@ int zImage_ppc64_load(FILE *file, int argc, char **argv, void **ret_entry,
 	Elf32_Phdr *p, *ph;
 	struct kexec_segment *segment;
 	int i;
-	unsigned long memsize, filesize, offset, load_loc;
+	unsigned long memsize, filesize, offset, load_loc = 0;
 
 	/* Parse command line arguments */
 
