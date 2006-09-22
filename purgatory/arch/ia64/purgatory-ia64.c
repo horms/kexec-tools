@@ -167,14 +167,9 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			continue;
 		mstart = md1->phys_addr;
 		mend = md1->phys_addr + (md1->num_pages << EFI_PAGE_SHIFT);
-		switch (md1->type) {
-			case EFI_LOADER_DATA:
-				*md2 = *md1;
-				md2->type = EFI_CONVENTIONAL_MEMORY;
-				break;
-			default:
-				*md2 = *md1;
-		}
+		*md2 = *md1;
+		if (md1->type == EFI_LOADER_DATA)
+			md2->type = EFI_CONVENTIONAL_MEMORY;
 		// segments are already sorted and aligned to 4K
 		orig_type = md2->type;
 		for (i = 0; i < params->loaded_segments_num; i++) {
