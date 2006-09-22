@@ -240,7 +240,22 @@ ia64_env_setup(struct ia64_boot_param *boot_param,
 	struct ia64_boot_param *new_boot_param =
 	(struct ia64_boot_param *) params->boot_param_base;
 	memcpy(new_boot_param, boot_param, 4096);
-	/* patch efi_runtime->set_virtual_address_map to a dummy function */
+
+	/*
+	 * patch efi_runtime->set_virtual_address_map to a dummy function
+	 *
+	 * The EFI specification mandates that set_virtual_address_map only
+	 * takes effect the first time that it is called, and that
+	 * subsequent calls will return error.  By replacing it with a
+	 * dummy function the new OS can think it is calling it again
+	 * without either the OS or any buggy EFI implementations getting
+	 * upset.
+	 *
+	 * Note: as the EFI specification says that set_virtual_address_map
+	 * will only take affect the first time it is called, the mapping
+	 * can't be updated, and thus mapping of the old and new OS really
+	 * needs to be the same.
+	 */
 	len = __dummy_efi_function_end - __dummy_efi_function;
 	memcpy(command_line + command_line_len,
 		__dummy_efi_function, len);
