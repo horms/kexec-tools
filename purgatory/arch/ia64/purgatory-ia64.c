@@ -179,48 +179,48 @@ patch_efi_memmap(struct kexec_boot_params *params,
 		orig_type = md2->type;
 		for (i = 0; i < params->loaded_segments_num; i++) {
 			struct loaded_segment *seg;
+			unsigned long start_pages, mid_pages, end_pages;
+
 			seg = &params->loaded_segments[i];
-			if (seg->start >= mstart && seg->start < mend) {
-				unsigned long start_pages, mid_pages, end_pages;
-				if (seg->end > mend) {
-					p1 += memdesc_size;
-					for(; p1 < src_end;
-							p1 += memdesc_size) {
-						md1 = p1;
-						/* TODO check contig and attribute here */
-						mend = md1->phys_addr
-							+ (md1->num_pages << EFI_PAGE_SHIFT);
-						if (seg->end < mend)
-							break;
-					}
+			if (seg->start < mstart || seg->start >= mend)
+				continue;
+
+			if (seg->end > mend) {
+				p1 += memdesc_size;
+				for(; p1 < src_end; p1 += memdesc_size) {
+					md1 = p1;
+					/* TODO check contig and
+					   attribute here */
+					mend = md1->phys_addr
+						+ (md1->num_pages <<
+						   EFI_PAGE_SHIFT);
+					if (seg->end < mend)
+						break;
 				}
-				start_pages = (seg->start - mstart)
-					>> EFI_PAGE_SHIFT;
-				mid_pages = (seg->end - seg->start)
-					>> EFI_PAGE_SHIFT;
-				end_pages  = (mend - seg->end)
-					>> EFI_PAGE_SHIFT;
-				if (start_pages) {
-					md2->num_pages = start_pages;
-					p2 += memdesc_size;
-					md2 = p2;
-					*md2 = *md1;
-				}
-				md2->phys_addr = seg->start;
-				md2->num_pages = mid_pages;
-				md2->type = seg->reserved ?
-					EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
-				if (end_pages) {
-					p2 += memdesc_size;
-					md2 = p2;
-					*md2 = *md1;
-					md2->phys_addr = seg->end;
-					md2->num_pages = end_pages;
-					md2->type = orig_type;
-					mstart = seg->end;
-				} else
-					break;
 			}
+			start_pages = (seg->start - mstart) >> EFI_PAGE_SHIFT;
+			mid_pages = (seg->end - seg->start) >> EFI_PAGE_SHIFT;
+			end_pages = (mend - seg->end) >> EFI_PAGE_SHIFT;
+			if (start_pages) {
+				md2->num_pages = start_pages;
+				p2 += memdesc_size;
+				md2 = p2;
+				*md2 = *md1;
+			}
+			md2->phys_addr = seg->start;
+			md2->num_pages = mid_pages;
+			md2->type = seg->reserved ?
+				EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
+			if (end_pages) {
+				p2 += memdesc_size;
+				md2 = p2;
+				*md2 = *md1;
+				md2->phys_addr = seg->end;
+				md2->num_pages = end_pages;
+				md2->type = orig_type;
+				mstart = seg->end;
+			} else
+				break;
 		}
 	}
 
