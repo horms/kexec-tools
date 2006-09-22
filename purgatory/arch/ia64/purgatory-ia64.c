@@ -169,7 +169,7 @@ patch_efi_memmap(struct kexec_boot_params *params,
 		*dst_md = *src_md;
 		if (src_md->type == EFI_LOADER_DATA)
 			dst_md->type = EFI_CONVENTIONAL_MEMORY;
-		// segments are already sorted and aligned to 4K
+		/* segments are already sorted and aligned to 4K */
 		orig_type = dst_md->type;
 		for (i = 0; i < params->loaded_segments_num; i++) {
 			struct loaded_segment *seg;
@@ -240,8 +240,7 @@ ia64_env_setup(struct ia64_boot_param *boot_param,
 	struct ia64_boot_param *new_boot_param =
 	(struct ia64_boot_param *) params->boot_param_base;
 	memcpy(new_boot_param, boot_param, 4096);
-	// patch efi_runtime->set_virtual_address_map to a
-	// dummy function
+	/* patch efi_runtime->set_virtual_address_map to a dummy function */
 	len = __dummy_efi_function_end - __dummy_efi_function;
 	memcpy(command_line + command_line_len,
 		__dummy_efi_function, len);
