@@ -68,8 +68,8 @@ typedef struct {
 
 typedef struct {
         efi_table_hdr_t hdr;
-        unsigned long fw_vendor;        /* physical addr of CHAR16 vendor string
- */
+        unsigned long fw_vendor;          /* physical addr of
+					     CHAR16 vendor string */
         uint32_t fw_revision;
         unsigned long con_in_handle;
         unsigned long con_in;
@@ -84,19 +84,26 @@ typedef struct {
 } efi_system_table_t;
 
 struct ia64_boot_param {
-        uint64_t command_line;             /* physical address of command line arguments */
-        uint64_t efi_systab;               /* physical address of EFI system table */
-        uint64_t efi_memmap;               /* physical address of EFI memory map */
+        uint64_t command_line;             /* physical address of
+					      command linearguments */
+        uint64_t efi_systab;               /* physical address of
+					      EFI system table */
+        uint64_t efi_memmap;               /* physical address of
+					      EFI memory map */
         uint64_t efi_memmap_size;          /* size of EFI memory map */
-        uint64_t efi_memdesc_size;         /* size of an EFI memory map descriptor */
+        uint64_t efi_memdesc_size;         /* size of an EFI memory map
+					      descriptor */
         uint32_t efi_memdesc_version;      /* memory descriptor version */
         struct {
-                uint16_t num_cols; /* number of columns on console output device */
-                uint16_t num_rows; /* number of rows on console output device */
-                uint16_t orig_x;   /* cursor's x position */
-                uint16_t orig_y;   /* cursor's y position */
+                uint16_t num_cols;         /* number of columns on console
+					      output device */
+                uint16_t num_rows;         /* number of rows on console
+					      output device */
+                uint16_t orig_x;           /* cursor's x position */
+                uint16_t orig_y;           /* cursor's y position */
         } console_info;
-        uint64_t fpswa;            /* physical address of the fpswa interface */
+        uint64_t fpswa;                    /* physical address of
+					      the fpswa interface */
         uint64_t initrd_start;
         uint64_t initrd_size;
 };
@@ -159,8 +166,7 @@ patch_efi_memmap(struct kexec_boot_params *params,
 		if (md1->num_pages == 0)
 			continue;
 		mstart = md1->phys_addr;
-		mend = md1->phys_addr + (md1->num_pages
-				<< EFI_PAGE_SHIFT);
+		mend = md1->phys_addr + (md1->num_pages << EFI_PAGE_SHIFT);
 		switch (md1->type) {
 			case EFI_LOADER_DATA:
 				*md2 = *md1;
