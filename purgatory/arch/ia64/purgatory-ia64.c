@@ -180,18 +180,12 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			if (seg->start < mstart || seg->start >= mend)
 				continue;
 
-			if (seg->end > mend) {
+			while (seg->end > mend && p1 < src_end) {
 				p1 += memdesc_size;
-				for(; p1 < src_end; p1 += memdesc_size) {
-					md1 = p1;
-					/* TODO check contig and
-					   attribute here */
-					mend = md1->phys_addr
-						+ (md1->num_pages <<
-						   EFI_PAGE_SHIFT);
-					if (seg->end < mend)
-						break;
-				}
+				md1 = p1;
+				/* TODO check contig and attribute here */
+				mend = md1->phys_addr +
+					(md1->num_pages << EFI_PAGE_SHIFT);
 			}
 			start_pages = (seg->start - mstart) >> EFI_PAGE_SHIFT;
 			mid_pages = (seg->end - seg->start) >> EFI_PAGE_SHIFT;
