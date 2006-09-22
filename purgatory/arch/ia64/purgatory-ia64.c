@@ -199,16 +199,15 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			dst_md->num_pages = mid_pages;
 			dst_md->type = seg->reserved ?
 				EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
-			if (end_pages) {
-				dest += boot_param->efi_memdesc_size;
-				dst_md = dest;
-				*dst_md = *src_md;
-				dst_md->phys_addr = seg->end;
-				dst_md->num_pages = end_pages;
-				dst_md->type = orig_type;
-				mstart = seg->end;
-			} else
+			if (!end_pages)
 				break;
+			dest += boot_param->efi_memdesc_size;
+			dst_md = dest;
+			*dst_md = *src_md;
+			dst_md->phys_addr = seg->end;
+			dst_md->num_pages = end_pages;
+			dst_md->type = orig_type;
+			mstart = seg->end;
 		}
 	}
 
