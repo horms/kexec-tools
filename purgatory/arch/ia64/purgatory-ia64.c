@@ -155,23 +155,23 @@ patch_efi_memmap(struct kexec_boot_params *params,
 	unsigned long len = boot_param->efi_memmap_size;
 	unsigned long memdesc_size = boot_param->efi_memdesc_size;
 	uint64_t orig_type;
-	efi_memory_desc_t *md1, *md2;
-	void *p1, *p2, *src_end = src + len;
+	efi_memory_desc_t *src_md, *dst_md;
+	void *src_end = src + len;
 	int i;
-	for (p1 = src, p2 = dest; p1 < src_end;
-			p1 += memdesc_size, p2 += memdesc_size) {
+	for (; src < src_end; src += memdesc_size, dest += memdesc_size) {
 		unsigned long mstart, mend;
-		md1 = p1;
-		md2 = p2;
-		if (md1->num_pages == 0)
+		src_md = src;
+		dst_md = dest;
+		if (src_md->num_pages == 0)
 			continue;
-		mstart = md1->phys_addr;
-		mend = md1->phys_addr + (md1->num_pages << EFI_PAGE_SHIFT);
-		*md2 = *md1;
-		if (md1->type == EFI_LOADER_DATA)
-			md2->type = EFI_CONVENTIONAL_MEMORY;
+		mstart = src_md->phys_addr;
+		mend = src_md->phys_addr +
+			(src_md->num_pages << EFI_PAGE_SHIFT);
+		*dst_md = *src_md;
+		if (src_md->type == EFI_LOADER_DATA)
+			dst_md->type = EFI_CONVENTIONAL_MEMORY;
 		// segments are already sorted and aligned to 4K
-		orig_type = md2->type;
+		orig_type = dst_md->type;
 		for (i = 0; i < params->loaded_segments_num; i++) {
 			struct loaded_segment *seg;
 			unsigned long start_pages, mid_pages, end_pages;
@@ -180,40 +180,40 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			if (seg->start < mstart || seg->start >= mend)
 				continue;
 
-			while (seg->end > mend && p1 < src_end) {
-				p1 += memdesc_size;
-				md1 = p1;
+			while (seg->end > mend && src < src_end) {
+				src += memdesc_size;
+				src_md = src;
 				/* TODO check contig and attribute here */
-				mend = md1->phys_addr +
-					(md1->num_pages << EFI_PAGE_SHIFT);
+				mend = src_md->phys_addr +
+					(src_md->num_pages << EFI_PAGE_SHIFT);
 			}
 			start_pages = (seg->start - mstart) >> EFI_PAGE_SHIFT;
 			mid_pages = (seg->end - seg->start) >> EFI_PAGE_SHIFT;
 			end_pages = (mend - seg->end) >> EFI_PAGE_SHIFT;
 			if (start_pages) {
-				md2->num_pages = start_pages;
-				p2 += memdesc_size;
-				md2 = p2;
-				*md2 = *md1;
+				dst_md->num_pages = start_pages;
+				dest += memdesc_size;
+				dst_md = dest;
+				*dst_md = *src_md;
 			}
-			md2->phys_addr = seg->start;
-			md2->num_pages = mid_pages;
-			md2->type = seg->reserved ?
+			dst_md->phys_addr = seg->start;
+			dst_md->num_pages = mid_pages;
+			dst_md->type = seg->reserved ?
 				EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
 			if (end_pages) {
-				p2 += memdesc_size;
-				md2 = p2;
-				*md2 = *md1;
-				md2->phys_addr = seg->end;
-				md2->num_pages = end_pages;
-				md2->type = orig_type;
+				dest += memdesc_size;
+				dst_md = dest;
+				*dst_md = *src_md;
+				dst_md->phys_addr = seg->end;
+				dst_md->num_pages = end_pages;
+				dst_md->type = orig_type;
 				mstart = seg->end;
 			} else
 				break;
 		}
 	}
 
-	boot_param->efi_memmap_size = p2 - dest;
+	boot_param->efi_memmap_size = dest - (void *)params->efi_memmap_base;
 }
 
 void
