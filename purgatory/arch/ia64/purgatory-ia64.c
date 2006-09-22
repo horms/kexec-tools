@@ -152,12 +152,12 @@ patch_efi_memmap(struct kexec_boot_params *params,
 {
 	void *dest = (void *)params->efi_memmap_base;
 	void *src  = (void *)boot_param->efi_memmap;
-	unsigned long memdesc_size = boot_param->efi_memdesc_size;
 	uint64_t orig_type;
 	efi_memory_desc_t *src_md, *dst_md;
 	void *src_end = src + boot_param->efi_memmap_size;
 	int i;
-	for (; src < src_end; src += memdesc_size, dest += memdesc_size) {
+	for (; src < src_end; src += boot_param->efi_memdesc_size,
+	     dest += boot_param->efi_memdesc_size) {
 		unsigned long mstart, mend;
 		src_md = src;
 		dst_md = dest;
@@ -180,7 +180,7 @@ patch_efi_memmap(struct kexec_boot_params *params,
 				continue;
 
 			while (seg->end > mend && src < src_end) {
-				src += memdesc_size;
+				src += boot_param->efi_memdesc_size;
 				src_md = src;
 				/* TODO check contig and attribute here */
 				mend = src_md->phys_addr +
@@ -191,7 +191,7 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			end_pages = (mend - seg->end) >> EFI_PAGE_SHIFT;
 			if (start_pages) {
 				dst_md->num_pages = start_pages;
-				dest += memdesc_size;
+				dest += boot_param->efi_memdesc_size;
 				dst_md = dest;
 				*dst_md = *src_md;
 			}
@@ -200,7 +200,7 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			dst_md->type = seg->reserved ?
 				EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
 			if (end_pages) {
-				dest += memdesc_size;
+				dest += boot_param->efi_memdesc_size;
 				dst_md = dest;
 				*dst_md = *src_md;
 				dst_md->phys_addr = seg->end;
