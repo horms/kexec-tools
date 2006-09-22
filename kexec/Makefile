@@ -16,14 +16,19 @@ KEXEC_C_SRCS+= kexec/kexec-elf-exec.c
 KEXEC_C_SRCS+= kexec/kexec-elf-rel.c 
 KEXEC_C_SRCS+= kexec/kexec-elf-boot.c 
 KEXEC_C_SRCS+= kexec/crashdump.c
-KEXEC_C_SRCS+= $(PURGATORY_HEX_C)
+KEXEC_C_GENERATED_SRCS+= $(PURGATORY_HEX_C)
 KEXEC_S_SRCS:= 
+KEXEC_S_GENERATED_SRCS:=
 include kexec/arch/$(ARCH)/Makefile
 
-KEXEC_C_OBJS:= $(patsubst %.c, $(OBJDIR)/%.o, $(KEXEC_C_SRCS))
+KEXEC_C_OBJS:= $(patsubst %.c, $(OBJDIR)/%.o, $(KEXEC_C_SRCS) \
+	       $(KEXEC_C_GENERATED_SRCS))
 KEXEC_C_DEPS:= $(patsubst %.c, $(OBJDIR)/%.d, $(KEXEC_C_SRCS))
-KEXEC_S_OBJS:= $(patsubst %.S, $(OBJDIR)/%.o, $(KEXEC_S_SRCS))
+KEXEC_C_DUMMY_DEPS:= $(patsubst %.c, $(OBJDIR)/%.d, $(KEXEC_C_GENERATED_SRCS))
+KEXEC_S_OBJS:= $(patsubst %.S, $(OBJDIR)/%.o, $(KEXEC_S_SRCS) \
+	       $(KEXEC_S_GENERATED_SRCS))
 KEXEC_S_DEPS:= $(patsubst %.S, $(OBJDIR)/%.d, $(KEXEC_S_SRCS))
+KEXEC_S_DUMMY_DEPS:= $(patsubst %.c, $(OBJDIR)/%.d, $(KEXEC_S_GENERATED_SRCS))
 KEXEC_SRCS:= $(KEXEC_C_SRCS) $(KEXEC_S_SRCS)
 KEXEC_OBJS:= $(KEXEC_C_OBJS) $(KEXEC_S_OBJS)
 KEXEC_DEPS:= $(KEXEC_C_DEPS) $(KEXEC_S_DEPS)
@@ -39,6 +44,18 @@ $(KEXEC_C_DEPS): $(OBJDIR)/%.d: %.c
 $(KEXEC_S_DEPS): $(OBJDIR)/%.d: %.S
 	mkdir -p $(@D)
 	$(CC) $(KCFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
+
+# This is needed to ensure that the rule below that depend
+# on each .c file having a .d file don't break
+$(KEXEC_C_DUMMY_DEPS): $(OBJDIR)/%.d: %.c
+	mkdir -p $(@D)
+	touch $@
+
+# This is needed to ensure that the rule below that depend
+# on each .S file having a .d file don't break
+$(KEXEC_S_DUMMY_DEPS): $(OBJDIR)/%.d: %.S
+	mkdir -p $(@D)
+	touch $@
 
 $(KEXEC_C_OBJS): $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
 	mkdir -p $(@D)
