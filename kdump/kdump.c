@@ -188,7 +188,7 @@ static void *generate_new_headers(
 
 static void write_all(int fd, const void *buf, size_t count)
 {
-	ssize_t result, written;
+	ssize_t result, written = 0;
 	const char *ptr;
 	size_t left;
 	ptr = buf;
