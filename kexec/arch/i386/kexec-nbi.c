@@ -216,6 +216,11 @@ int nbi_load(int argc, char **argv, const char *buf, off_t len,
 		else if ((seg.flags & NBI_SEG) == NBI_SEG_PREPEND) {
 			loadaddr = last0 - seg.loadaddr;
 		}
+		else {
+			printf("warning: unhandled segment of type %0x\n",
+				seg.flags & NBI_SEG);
+			continue;
+		}
 		add_segment(info, buf + file_off, seg.imglength,
 			loadaddr, seg.memlength);
 		last0 = loadaddr;
