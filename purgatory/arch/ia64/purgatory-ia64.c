@@ -106,6 +106,9 @@ struct ia64_boot_param {
 					      the fpswa interface */
         uint64_t initrd_start;
         uint64_t initrd_size;
+
+        uint64_t vmcode_start;
+        uint64_t vmcode_size;
 };
 
 typedef struct {
@@ -124,6 +127,8 @@ struct loaded_segment {
 };
 
 struct kexec_boot_params {
+	uint64_t vmcode_base;
+	uint64_t vmcode_size;
 	uint64_t ramdisk_base;
 	uint64_t ramdisk_size;
 	uint64_t command_line;
@@ -275,6 +280,8 @@ ia64_env_setup(struct ia64_boot_param *boot_param,
 	new_boot_param->console_info.orig_y = 0;
 	new_boot_param->initrd_start = params->ramdisk_base;
 	new_boot_param->initrd_size =  params->ramdisk_size;
+	new_boot_param->vmcode_start = params->vmcode_base;
+	new_boot_param->vmcode_size =  params->vmcode_size;
 }
 
 /* This function can be used to execute after the SHA256 verification. */

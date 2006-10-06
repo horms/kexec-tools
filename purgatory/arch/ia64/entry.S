@@ -42,7 +42,7 @@ purgatory_start:
 	alloc r2 = ar.pfs, 0, 0, 2, 0
 	;;
 	mov out0=r28
-	movl out1=__ramdisk_base;;
+	movl out1=__vmcode_base;
 	br.call.sptk.many b0=ia64_env_setup
 	movl r10=__kernel_entry;;
 	ld8 r14=[r10];;
@@ -57,6 +57,8 @@ purgatory_start:
 .endp   purgatory_start
 
 DECLARE_DATA8(__kernel_entry)
+DECLARE_DATA8(__vmcode_base)
+DECLARE_DATA8(__vmcode_size)
 DECLARE_DATA8(__ramdisk_base)
 DECLARE_DATA8(__ramdisk_size)
 DECLARE_DATA8(__command_line)

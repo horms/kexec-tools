@@ -79,7 +79,8 @@ void elf_ia64_usage(void)
 	printf(
 		"    --command-line=STRING Set the kernel command line to STRING.\n"
 		"    --append=STRING       Set the kernel command line to STRING.\n"
-		"    --initrd=FILE       Use FILE as the kernel's initial ramdisk.\n");
+		"    --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
+		"    --vmm=FILE            Use FILE as the kernel image for a virtual machine monitor (aka hypervisor)\n");
 }
 
 /* Move the crash kerenl physical offset to reserved region
@@ -108,12 +109,12 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
-	const char *command_line, *ramdisk=0;
+	const char *command_line, *ramdisk=0, *vmm=0, *kernel_buf;
 	char *ramdisk_buf = NULL;
-	off_t ramdisk_size = 0;
+	off_t ramdisk_size = 0, kernel_size;
 	unsigned long command_line_len;
 	unsigned long entry, max_addr, gp_value;
-	unsigned long command_line_base, ramdisk_base;
+	unsigned long command_line_base, ramdisk_base, image_base;
 	unsigned long efi_memmap_base, efi_memmap_size;
 	unsigned long boot_param_base;
 	unsigned long noio=0;
@@ -123,12 +124,14 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
 #define OPT_RAMDISK	(OPT_ARCH_MAX+1)
 #define OPT_NOIO	(OPT_ARCH_MAX+2)
+#define OPT_VMM		(OPT_ARCH_MAX+3)
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{"command-line", 1, 0, OPT_APPEND},
 		{"append",       1, 0, OPT_APPEND},
 		{"initrd",       1, 0, OPT_RAMDISK},
 		{"noio",         1, 0, OPT_NOIO},
+		{"vmm",          1, 0, OPT_VMM},
 		{0, 0, 0, 0},
 	};
 
@@ -154,6 +157,9 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 		case OPT_NOIO:	/* disable PIO and MMIO in purgatory code*/
 			noio = 1;
 			break;
+		case OPT_VMM:
+			vmm = optarg;
+			break;
 		}
 	}
 	command_line_len = 0;
@@ -161,8 +167,15 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 		command_line_len = strlen(command_line) + 16;
 	}
 
+	if (vmm)
+		kernel_buf = slurp_decompress_file(vmm, &kernel_size);
+	else {
+		kernel_buf = buf;
+		kernel_size = len;
+	}
+
 	/* Parse the Elf file */
-	result = build_elf_exec_info(buf, len, &ehdr, 0);
+	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
 	if (result < 0) {
 		fprintf(stderr, "ELF parse failed\n");
 		free_elf_info(&ehdr);
@@ -172,7 +185,8 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	if (info->kexec_flags & KEXEC_ON_CRASH ) {
 		if ((mem_min == 0x00) && (mem_max = ULONG_MAX)) {
 			fprintf(stderr, "Failed to find crash kernel region in /proc/iomem\n");
-		return -1;
+			free_elf_info(&ehdr);
+			return -1;
 		}
 		move_loaded_segments(info, &ehdr);
 	}
@@ -228,7 +242,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 		char *cmdline = xmalloc(command_line_len);
 		strcpy(cmdline, command_line);
 
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		if (info->kexec_flags & KEXEC_ON_CRASH) {
 			char buf[128];
 			sprintf(buf," max_addr=%lluM min_addr=%lluM",
 					mem_max>>20, mem_min>>20);
@@ -257,6 +271,15 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 				&ramdisk_base, sizeof(long));
 		elf_rel_set_symbol(&info->rhdr, "__ramdisk_size",
 				&ramdisk_size, sizeof(long));
+	}
+
+	if (vmm) {
+		image_base = add_buffer(info, buf, len, len,
+				getpagesize(), 0, max_addr, -1);
+		elf_rel_set_symbol(&info->rhdr, "__vmcode_base",
+				&image_base, sizeof(long));
+		elf_rel_set_symbol(&info->rhdr, "__vmcode_size",
+				&len, sizeof(long));
 	}
 
 	gp_value = info->rhdr.rel_addr + 0x200000;
