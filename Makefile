@@ -13,7 +13,7 @@ pkgincludedir = $(includedir)/$(PACKAGE)
 # Useful for building binary packages
 DESTDIR =
 
-CPPFLAGS:= -I./include -I./util_lib/include \
+EXTRA_CPPFLAGS:= -I./include -I./util_lib/include \
 	-DVERSION='"$(VERSION)"' -DRELEASE_DATE='"$(DATE)"' \
 	$(DEFS) $(EXTRA_CFLAGS)
 
@@ -54,8 +54,9 @@ all: $(TARGETS)
 
 # cc-option
 # Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
-cc-option = $(shell if $(CC) $(CFLAGS) $(1) -S -o /dev/null -xc /dev/null \
-             > /dev/null 2>&1; then echo "$(1)"; else echo "$(2)"; fi ;)
+cc-option = $(shell if $(CC) $(CFLAGS) $(EXTRA_CFLAGS) $(1) -S -o /dev/null \
+	     -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else \
+	     echo "$(2)"; fi ;)
 
 # Utility function library
 #

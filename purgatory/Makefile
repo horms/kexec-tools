@@ -8,13 +8,13 @@
 # or headers.
 
 ifeq ($(ARCH),ppc64)
-LDFLAGS = -melf64ppc
+EXTRA_LDFLAGS = -melf64ppc
 endif
 
 PCFLAGS:=-Wall -Os  \
 	-I$(shell $(CC) -print-file-name=include) \
 	-Ipurgatory/include -Ipurgatory/arch/$(ARCH)/include \
-	$(CPPFLAGS)
+	$(CPPFLAGS) $(EXTRA_CPPFLAGS)
 
 PCFLAGS += $(call cc-option, -ffreestanding)
 PCFLAGS += $(call cc-option, -fnobuiltin)
@@ -59,7 +59,7 @@ $(PURGATORY_S_OBJS): $(OBJDIR)/%.o: %.S $(OBJDIR)/%.d
 
 $(PURGATORY): $(PURGATORY_OBJS) $(UTIL_LIB)
 	$(MKDIR) -p $(@D)
-	$(LD) $(LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
+	$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
 
 echo::
 	@echo "PURGATORY_C_SRCS $(PURGATORY_C_SRCS)"

@@ -16,15 +16,15 @@ include $(KDUMP_DEPS)
 
 $(KDUMP_C_DEPS): $(OBJDIR)/%.d: %.c
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
 
 $(KDUMP_C_OBJS): $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -o $@ -c $<
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ -c $<
 
 $(KDUMP): $(KDUMP_OBJS)
 	mkdir -p $(@D)
-	$(CC) $(CFLAGS) -o $@ $(KDUMP_OBJS)
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ $(KDUMP_OBJS)
 
 $(KDUMP_MANPAGE): kdump/kdump.8
 	$(MKDIR) -p     $(MANDIR)/man8

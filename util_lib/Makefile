@@ -11,11 +11,11 @@ include $(UTIL_LIB_DEPS)
 
 $(UTIL_LIB_DEPS): $(OBJDIR)/%.d: %.c 
 	$(MKDIR) -p $(@D)
-	$(CC) $(CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
 
 $(UTIL_LIB_OBJS): $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
 	$(MKDIR) -p $(@D)
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -c -o $@ $<
 
 $(UTIL_LIB): $(UTIL_LIB_OBJS)
 	$(MKDIR) -p $(@D)

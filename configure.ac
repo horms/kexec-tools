@@ -50,7 +50,9 @@ OBJDIR=`pwd`/objdir
 if test "${host_alias}" ; then
 	OBJDIR="$OBJDIR-${host_alias}"
 fi 
-EXTRA_CFLAGS=""
+
+EXTRA_CFLAGS='-Wall -g -fno-strict-aliasing $(CPPFLAGS) $(EXTRA_CPPFLAGS)'
+BUILD_CFLAGS='-O2 -Wall $(CPPFLAGS)'
 
 # Check whether ppc64. Add -m64 for building 64-bit binary
 # Add -mcall-aixdesc to generate dot-symbols as in gcc 3.3.3
@@ -103,11 +105,6 @@ dnl See if I have a usable copy of zlib available
 if test "$with_zlib" = yes ; then
 	AC_CHECK_HEADER(zlib.h, AC_CHECK_LIB(z, inflateInit_, [AC_DEFINE(HAVE_ZLIB_H, 1) LIBS="$LIBS -lz"]))
 fi
-
-dnl ---Hard codes
-
-CFLAGS='-Wall -g -fno-strict-aliasing $(CPPFLAGS)'
-BUILD_CFLAGS='-O2 -Wall $(CPPFLAGS)'
 
 dnl ---Sanity checks
 if test "$CC"      = "no"; then AC_MSG_ERROR([cc not found]) fi

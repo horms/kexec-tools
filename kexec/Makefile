@@ -7,7 +7,7 @@ $(PURGATORY_HEX_C): $(PURGATORY) $(BIN_TO_HEX)
 	$(MKDIR) -p $(@D)
 	$(BIN_TO_HEX) purgatory < $(PURGATORY) > $@
 
-KCFLAGS:= $(CFLAGS) -Ikexec/arch/$(ARCH)/include
+KCFLAGS:= $(CFLAGS) $(EXTRA_CFLAGS) -Ikexec/arch/$(ARCH)/include
 
 KEXEC_C_SRCS:= kexec/kexec.c 
 KEXEC_C_SRCS+= kexec/ifdown.c
@@ -68,7 +68,8 @@ $(KEXEC_S_OBJS): $(OBJDIR)/%.o: %.S $(OBJDIR)/%.d
 
 $(KEXEC): $(KEXEC_OBJS) $(UTIL_LIB)
 	mkdir -p $(@D)
-	$(CC) $(KCFLAGS) -o $@ $(KEXEC_OBJS) $(UTIL_LIB) $(LIBS)
+	$(CC) $(LDFLAGS) $(EXTRA_LDFLAGS) $(KCFLAGS) -o $@ \
+		$(KEXEC_OBJS) $(UTIL_LIB) $(LIBS)
 
 $(KEXEC_MANPAGE): kexec/kexec.8
 	 $(MKDIR) -p     $(MANDIR)/man8

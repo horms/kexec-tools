@@ -15,11 +15,11 @@ include $(KEXEC_TEST_DEPS)
 
 $(KEXEC_TEST_S_DEPS): $(OBJDIR)/%.d: %.S
 	mkdir -p $(@D)
-	$(CC) -m32 $(CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
+	$(CC) -m32 $(CFLAGS) $(EXTRA_CFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
 
 $(KEXEC_TEST_S_TEMPS): $(OBJDIR)/%.s: %.S 
 	mkdir -p $(@D)
-	$(CPP) $(CPPFLAGS) -DRELOC=$(RELOC) $< > $@
+	$(CPP) $(CPPFLAGS) $(EXTRA_CPPFLAGS) -DRELOC=$(RELOC) $< > $@
 
 $(KEXEC_TEST_S_OBJS): $(OBJDIR)/%.o: $(OBJDIR)/%.s 
 	mkdir -p $(@D)
