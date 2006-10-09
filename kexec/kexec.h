@@ -199,6 +199,7 @@ void arch_usage(void);
 int arch_process_options(int argc, char **argv);
 int arch_compat_trampoline(struct kexec_info *info);
 void arch_update_purgatory(struct kexec_info *info);
+int is_crashkernel_mem_reserved(void);
 
 #define MAX_LINE	160
 #endif /* KEXEC_H */

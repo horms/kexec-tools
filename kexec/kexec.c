@@ -848,6 +848,13 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	if ((kexec_flags & KEXEC_ON_CRASH) && !is_crashkernel_mem_reserved()) {
+		printf("Memory for crashkernel is not reserved\n");
+		printf("Please reserve memory by passing ");
+		printf("\"crashkernel=X@Y\" parameter to the kernel\n");
+		die("Then try loading kdump kernel\n");
+	}
+
 	fileind = optind;
 	/* Reset getopt for the next pass; called in other source modules */
 	opterr = 1;
