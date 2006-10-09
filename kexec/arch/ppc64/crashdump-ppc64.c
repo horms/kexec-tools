@@ -450,6 +450,17 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 #endif
 }
 
+int is_crashkernel_mem_reserved(void)
+{
+	int fd;
+
+	fd = open("/proc/device-tree/chosen/linux,crashkernel-base", O_RDONLY);
+	if (fd < 0)
+		return 0;
+	close(fd);
+	return 1;
+}
+
 #if 0
 static int sort_regions(mem_rgns_t *rgn)
 {
