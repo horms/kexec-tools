@@ -722,3 +722,33 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 	return 0;
 }
+
+int is_crashkernel_mem_reserved(void)
+{
+	const char iomem[]= "/proc/iomem";
+	char line[MAX_LINE];
+	FILE *fp;
+	unsigned long long start, end;
+	char *str;
+	int consumed;
+	int count;
+
+	fp = fopen(iomem, "r");
+	if (!fp)
+		die("Cannot open /proc/iomem");
+
+	while(fgets(line, sizeof(line), fp) != 0) {
+		count = sscanf(line, "%Lx-%Lx : %n", &start, &end, &consumed);
+		if (count != 2)
+			continue;
+		str = line + consumed;
+		if (memcmp(str, "Crash kernel\n", 13) == 0)
+			break;
+	}
+
+	fclose(fp);
+	if (!memcmp(str, "Crash kernel\n", 13) == 0 || (start == end))
+		return 0;
+	else
+		return 1;
+}
