@@ -222,7 +222,9 @@ patch_efi_memmap(struct kexec_boot_params *params,
 void
 flush_icache_range(char *start, unsigned long len)
 {
-	unsigned long i;
+	unsigned long i, addr;
+	addr = (unsigned long)start & ~31UL;
+	len += (unsigned long)start - addr;
 	for (i = 0;i < len; i += 32)
 	  asm volatile("fc.i %0"::"r"(start + i):"memory");
 	asm volatile (";;sync.i;;":::"memory");
