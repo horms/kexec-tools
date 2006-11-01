@@ -34,8 +34,10 @@
 #include <x86/x86-linux.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
+#include "../../kexec-syscall.h"
 #include "kexec-x86.h"
 #include "x86-linux-setup.h"
+#include "crashdump-x86.h"
 #include <arch/options.h>
 
 static const int probe_debug = 0;
@@ -111,6 +113,7 @@ int do_bzImage_load(struct kexec_info *info,
 	struct entry16_regs regs16;
 	unsigned int relocatable_kernel = 0;
 	unsigned long kernel32_load_addr;
+	char *modified_cmdline;
 
 	/*
 	 * Find out about the file I am about to load.
@@ -136,6 +139,45 @@ int do_bzImage_load(struct kexec_info *info,
 		dfprintf(stdout, "bzImage is relocatable\n");
 	}
 
+	/* Can't use bzImage for crash dump purposes with real mode entry */
+	if((info->kexec_flags & KEXEC_ON_CRASH) && real_mode_entry) {
+		fprintf(stderr, "Can't use bzImage for crash dump purposes"
+				" with real mode entry\n");
+		return -1;
+	}
+
+	if((info->kexec_flags & KEXEC_ON_CRASH) && !relocatable_kernel) {
+		fprintf(stderr, "BzImage is not relocatable. Can't be used"
+				" as capture kernel.\n");
+		return -1;
+	}
+
+	/* Need to append some command line parameters internally in case of
+	 * taking crash dumps.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
+		memset((void *)modified_cmdline, 0, COMMAND_LINE_SIZE);
+		if (command_line) {
+			strncpy(modified_cmdline, command_line,
+					COMMAND_LINE_SIZE);
+			modified_cmdline[COMMAND_LINE_SIZE - 1] = '\0';
+		}
+
+		/* If panic kernel is being loaded, additional segments need
+		 * to be created. load_crashdump_segments will take care of
+		 * loading the segments as high in memory as possible, hence
+		 * in turn as away as possible from kernel to avoid being
+		 * stomped by the kernel.
+		 */
+		if (load_crashdump_segments(info, modified_cmdline, -1, 0) < 0)
+			return -1;
+
+		/* Use new command line buffer */
+		command_line = modified_cmdline;
+		command_line_len = strlen(command_line) +1;
+	}
+
 	/* Load the trampoline.  This must load at a higher address
 	 * the the argument/parameter segment or the kernel will stomp
 	 * it's gdt.
@@ -152,7 +194,16 @@ int do_bzImage_load(struct kexec_info *info,
 	setup_size = kern16_size + command_line_len;
 	real_mode = xmalloc(setup_size);
 	memcpy(real_mode, kernel, kern16_size);
-	if (real_mode->protocol_version >= 0x0200) {
+
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		/* If using bzImage for capture kernel, then we will not be
+		 * executing real mode code. setup segment can be loaded
+		 * anywhere as we will be just reading command line.
+		 */
+		setup_base = add_buffer(info, real_mode, setup_size, setup_size,
+			16, 0x3000, -1, 1);
+	}
+	else if (real_mode->protocol_version >= 0x0200) {
 		/* Careful setup_base must be greater than 8K */
 		setup_base = add_buffer(info, real_mode, setup_size, setup_size,
 			16, 0x3000, 640*1024, 1);
@@ -162,6 +213,7 @@ int do_bzImage_load(struct kexec_info *info,
 	}
 	dfprintf(stdout, "Loaded real-mode code and command line at 0x%lx\n",
 			setup_base);
+
 	/* Verify purgatory loads higher than the parameters */
 	if (info->rhdr.rel_addr < setup_base) {
 		die("Could not put setup code above the kernel parameters\n");
