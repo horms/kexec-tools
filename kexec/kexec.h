@@ -202,4 +202,11 @@ void arch_update_purgatory(struct kexec_info *info);
 int is_crashkernel_mem_reserved(void);
 
 #define MAX_LINE	160
+
+#ifdef DEBUG
+#define dfprintf(args...)	do {fprintf(args);} while(0)
+#else
+#define dfprintf(args...)	do { } while(0)
+#endif
+
 #endif /* KEXEC_H */
