@@ -141,7 +141,10 @@ struct x86_linux_param_header {
 	uint32_t high_filesz;			/* 0x254 */
 	uint8_t  reserved15[0x2d0 - 0x258];	/* 0x258 */
 #else
-	uint8_t  reserved15[0x2d0 - 0x230];	/* 0x230 */
+	/* 2.04+ */
+	uint32_t kernel_alignment;		/* 0x230 */
+	uint8_t  relocatable_kernel;		/* 0x234 */
+	uint8_t  reserved15[0x2d0 - 0x235];	/* 0x230 */
 #endif
 	struct e820entry e820_map[E820MAX];	/* 0x2d0 */
 						/* 0x550 */
@@ -201,12 +204,15 @@ struct x86_linux_header {
 	uint32_t high_filesz;			/* 0x254 */
 	uint32_t tail[32*1024 - 0x258];		/* 0x258 */
 #else
-	uint8_t  tail[32*1024 - 0x230];		/* 0x230 */
+	uint32_t kernel_alignment;		/* 0x230 */
+	uint8_t  relocatable_kernel;		/* 0x234 */
+	uint8_t  tail[32*1024 - 0x235];		/* 0x230 */
 #endif
 } PACKED;
 
 #endif /* ASSEMBLY */
 
 #define DEFAULT_INITRD_ADDR_MAX 0x37FFFFFF
+#define DEFAULT_BZIMAGE_ADDR_MAX 0x37FFFFFF
 
 #endif /* X86_LINUX_H */

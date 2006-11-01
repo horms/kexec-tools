@@ -109,6 +109,8 @@ int do_bzImage_load(struct kexec_info *info,
 	unsigned long setup_base, setup_size;
 	struct entry32_regs regs32;
 	struct entry16_regs regs16;
+	unsigned int relocatable_kernel = 0;
+	unsigned long kernel32_load_addr;
 
 	/*
 	 * Find out about the file I am about to load.
@@ -121,6 +123,7 @@ int do_bzImage_load(struct kexec_info *info,
 	if (setup_sects == 0) {
 		setup_sects = 4;
 	}
+
 	kern16_size = (setup_sects +1) *512;
 	kernel_version = ((unsigned char *)&setup_header) + 512 + setup_header.kver_addr;
 	if (kernel_len < kern16_size) {
@@ -128,13 +131,23 @@ int do_bzImage_load(struct kexec_info *info,
 		return -1;
 	}
 
+	if (setup_header.protocol_version >= 0x0205) {
+		relocatable_kernel = setup_header.relocatable_kernel;
+		dfprintf(stdout, "bzImage is relocatable\n");
+	}
+
 	/* Load the trampoline.  This must load at a higher address
 	 * the the argument/parameter segment or the kernel will stomp
 	 * it's gdt.
 	 */
-	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-		0x3000, 640*1024, -1, 0);
-
+	if (!real_mode_entry && relocatable_kernel)
+		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+					0x3000, -1, -1, 0);
+	else
+		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+					0x3000, 640*1024, -1, 0);
+	dfprintf(stdout, "Loaded purgatory at addr 0x%lx\n",
+				info->rhdr.rel_addr);
 	/* The argument/parameter segment */
 	setup_size = kern16_size + command_line_len;
 	real_mode = xmalloc(setup_size);
@@ -142,11 +155,13 @@ int do_bzImage_load(struct kexec_info *info,
 	if (real_mode->protocol_version >= 0x0200) {
 		/* Careful setup_base must be greater than 8K */
 		setup_base = add_buffer(info, real_mode, setup_size, setup_size,
-			16, 0x3000, 640*1024, -1);
+			16, 0x3000, 640*1024, 1);
 	} else {
 		add_segment(info, real_mode, setup_size, SETUP_BASE, setup_size);
 		setup_base = SETUP_BASE;
 	}
+	dfprintf(stdout, "Loaded real-mode code and command line at 0x%lx\n",
+			setup_base);
 	/* Verify purgatory loads higher than the parameters */
 	if (info->rhdr.rel_addr < setup_base) {
 		die("Could not put setup code above the kernel parameters\n");
@@ -154,9 +169,30 @@ int do_bzImage_load(struct kexec_info *info,
 	
 	/* The main kernel segment */
 	size = kernel_len - kern16_size;
-	add_segment(info, kernel + kern16_size, size, KERN32_BASE,  size);
 
+	if (real_mode->protocol_version >=0x0205 && relocatable_kernel) {
+		/* Relocatable bzImage */
+		unsigned long kern_align = real_mode->kernel_alignment;
+		unsigned long kernel32_max_addr = DEFAULT_BZIMAGE_ADDR_MAX;
+
+		if (real_mode->protocol_version >= 0x0203) {
+			if (kernel32_max_addr > real_mode->initrd_addr_max)
+				kernel32_max_addr = real_mode->initrd_addr_max;
+		}
+
+		kernel32_load_addr = add_buffer(info, kernel + kern16_size,
+						size, size, kern_align,
+						0x100000, kernel32_max_addr,
+						1);
+	}
+	else {
+		kernel32_load_addr = KERN32_BASE;
+		add_segment(info, kernel + kern16_size, size,
+				kernel32_load_addr, size);
+	}
 		
+	dfprintf(stdout, "Loaded 32bit kernel at 0x%lx\n", kernel32_load_addr);
+
 	/* Tell the kernel what is going on */
 	setup_linux_bootloader_parameters(info, real_mode, setup_base,
 		kern16_size, command_line, command_line_len,
@@ -177,7 +213,7 @@ int do_bzImage_load(struct kexec_info *info,
 	regs32.edi = 0; /* unused */
 	regs32.esp = elf_rel_get_addr(&info->rhdr, "stack_end"); /* stack, unused */
 	regs32.ebp = 0; /* unused */
-	regs32.eip = KERN32_BASE; /* kernel entry point */
+	regs32.eip = kernel32_load_addr; /* kernel entry point */
 
 	/*
 	 * Initialize the 16bit start information.
