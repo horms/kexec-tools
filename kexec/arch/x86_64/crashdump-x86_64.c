@@ -688,12 +688,12 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	 * A seprate program header for Backup Region*/
 	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 		unsigned long long mstart, mend;
+		if (crash_memory_range[i].type != RANGE_RAM)
+			continue;
 		mstart = crash_memory_range[i].start;
 		mend = crash_memory_range[i].end;
 		if (!mstart && !mend)
-			break;
-		if (crash_memory_range[i].type != RANGE_RAM)
-			break;
+			continue;
 		phdr = (Elf64_Phdr *) bufp;
 		bufp += sizeof(Elf64_Phdr);
 		phdr->p_type	= PT_LOAD;
