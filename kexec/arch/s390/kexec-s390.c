@@ -96,6 +96,7 @@ int arch_process_options(int argc, char **argv)
 
 int arch_compat_trampoline(struct kexec_info *info)
 {
+	info->kexec_flags |= KEXEC_ARCH_S390;
 	return 0;
 }
 
