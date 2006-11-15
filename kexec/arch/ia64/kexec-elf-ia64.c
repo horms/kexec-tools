@@ -130,7 +130,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 		{"command-line", 1, 0, OPT_APPEND},
 		{"append",       1, 0, OPT_APPEND},
 		{"initrd",       1, 0, OPT_RAMDISK},
-		{"noio",         1, 0, OPT_NOIO},
+		{"noio",         0, 0, OPT_NOIO},
 		{"vmm",          1, 0, OPT_VMM},
 		{0, 0, 0, 0},
 	};
