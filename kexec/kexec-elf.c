@@ -715,8 +715,14 @@ static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
 		note_size += (hdr.n_descsz + 3) & ~3;
 
 		if ((hdr.n_namesz != 0) && (name[hdr.n_namesz -1] != '\0')) {
-			fprintf(stderr, "Note name is not null termiated\n");
-			return -1;
+			/* If note name string is not null terminated, just
+			 * warn user about it and continue processing. This
+			 * allows us to parse /proc/kcore on older kernels
+			 * where /proc/kcore elf notes were not null
+			 * terminated. It has been fixed in 2.6.19.
+			 */
+			fprintf(stderr, "Warning: Elf Note name is not null "
+					"terminated\n");
 		}
 		ehdr->e_note[i].n_type = hdr.n_type;
 		ehdr->e_note[i].n_name = (char *)name;
