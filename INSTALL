@@ -1,0 +1,29 @@
+To build kexec-tools
+
+1. If ./configure deosn't exist, create it
+
+   # autoconf
+
+   If you obtain kexec-tools from a released tarball, you can ommit this
+   step.  If on the other hand you obtain kexec-tools from git or some
+   other revision control system, then you will probably need to do this.
+
+2. Run ./configure [--prefix=/usr/local] [options]...
+
+   e.g.
+   # ./configure --prefix=/usr/local
+
+   For a full list of options run
+
+   # ./configure --help
+
+3. Run make
+
+   # make
+
+To install kexec-tools
+
+   After following the above instructions to build-kexec tools, run
+
+   # make install
+
