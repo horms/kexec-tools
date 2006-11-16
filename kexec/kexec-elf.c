@@ -733,7 +733,6 @@ static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
 	return 0;
 }
 
-
 void free_elf_info(struct mem_ehdr *ehdr)
 {
 	free(ehdr->e_phdr);
