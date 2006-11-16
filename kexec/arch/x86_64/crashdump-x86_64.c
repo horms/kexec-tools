@@ -40,7 +40,7 @@
 /* Forward Declaration. */
 static int exclude_crash_reserve_region(int *nr_ranges);
 
-#define KERN_VADDR_ALIGN	0x200000	/* 2MB */
+#define KERN_VADDR_ALIGN	0x100000	/* 1MB */
 
 /* Read kernel physical load addr from /proc/iomem (Kernel Code) and
  * store in kexec_info */
@@ -84,24 +84,6 @@ static int get_kernel_paddr(struct kexec_info *info)
 	return -1;
 }
 
-/* Hardcoding kernel virtual address and size. While writting
- * this patch vanilla kernel is compiled for addr 2MB. Anybody
- * using kernel older than that which was compiled for 1MB
- * physical addr, use older version of kexec-tools. This function
- * is there just for backward compatibility reasons and we should
- * get rid of it at some point of time.
- */
-
-static int hardcode_kernel_vaddr_size(struct kexec_info *info)
-{
-	fprintf(stderr, "Warning: Hardcoding kernel virtual addr and size\n");
-	info->kern_vaddr_start = __START_KERNEL_map + 0x200000;
-	info->kern_size = KERNEL_TEXT_SIZE - 0x200000;
-	fprintf(stderr, "Warning: virtual addr = 0x%lx size = 0x%lx\n",
-		info->kern_vaddr_start, info->kern_size);
-	return 0;
-}
-
 /* Retrieve info regarding virtual address kernel has been compiled for and
  * size of the kernel from /proc/kcore. Current /proc/kcore parsing from
  * from kexec-tools fails because of malformed elf notes. A kernel patch has
@@ -137,8 +119,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *info)
 	result = build_elf_core_info(buf, size, &ehdr, elf_flags);
 	if (result < 0) {
 		fprintf(stderr, "ELF core (kcore) parse failed\n");
-		hardcode_kernel_vaddr_size(info);
-		return 0;
+		return -1;
 	}
 
 	/* Traverse through the Elf headers and find the region where
