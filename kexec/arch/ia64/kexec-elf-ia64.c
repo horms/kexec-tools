@@ -80,6 +80,7 @@ void elf_ia64_usage(void)
 		"    --command-line=STRING Set the kernel command line to STRING.\n"
 		"    --append=STRING       Set the kernel command line to STRING.\n"
 		"    --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
+		"    --noio		   Disable I/O in purgatory code.\n"
 		"    --vmm=FILE            Use FILE as the kernel image for a virtual machine monitor (aka hypervisor)\n");
 }
 
