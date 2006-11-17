@@ -26,9 +26,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include "kexec.h"
+#include "crashdump.h"
 
 /* Returns the physical address of start of crash notes buffer for a cpu. */
-int get_crash_notes_per_cpu(int cpu, uint64_t *addr)
+int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 {
 	char crash_notes[PATH_MAX];
 	char line[MAX_LINE];
@@ -40,6 +41,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr)
 	int stat_errno;
 
 	*addr = 0;
+	*len = 0;
 
 	sprintf(crash_notes, "/sys/devices/system/cpu/cpu%d/crash_notes", cpu);
 	fp = fopen(crash_notes, "r");
@@ -68,6 +70,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr)
 	if (count != 1)
 		die("Cannot parse %s: %s\n", crash_notes, strerror(errno));
 	*addr = (uint64_t) temp;
+	*len = MAX_NOTE_BYTES; /* we should get this from the kernel instead */
 #if 0
 	printf("crash_notes addr = %Lx\n", *addr);
 #endif

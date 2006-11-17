@@ -434,7 +434,7 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
  * backward compatibility, other architectures can use the per
  * cpu version get_crash_notes_per_cpu() directly.
  */
-static int get_crash_notes(int cpu, uint64_t *addr)
+static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 {
 	char crash_notes[PATH_MAX];
 	char line[MAX_LINE];
@@ -451,13 +451,15 @@ static int get_crash_notes(int cpu, uint64_t *addr)
 				die("Cannot parse %s: %s\n", crash_notes,
 						strerror(errno));
 		}
+
 		*addr = __pa(vaddr + (cpu * MAX_NOTE_BYTES));
+		*len = MAX_NOTE_BYTES;
 #if 0
 		printf("crash_notes addr = %Lx\n", *addr);
 #endif
 		return 0;
 	} else
-		return get_crash_notes_per_cpu(cpu, addr);
+		return get_crash_notes_per_cpu(cpu, addr, len);
 }
 
 /* Prepares the crash memory elf64 headers and stores in supplied buffer. */
@@ -469,7 +471,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	uint64_t notes_addr;
+	uint64_t notes_addr, notes_len;
 
 	bufp = (char*) buf;
 
@@ -503,7 +505,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	}
 
 	for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes(i, &notes_addr) < 0) {
+		if (get_crash_notes(i, &notes_addr, &notes_len) < 0) {
 			/* This cpu is not present. Skip it. */
 			continue;
 		}
@@ -513,7 +515,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		phdr->p_flags	= 0;
 		phdr->p_offset	= phdr->p_paddr = notes_addr;
 		phdr->p_vaddr	= 0;
-		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
+		phdr->p_filesz	= phdr->p_memsz	= notes_len;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
 
@@ -564,7 +566,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	uint64_t notes_addr;
+	uint64_t notes_addr, notes_len;
 
 	bufp = (char*) buf;
 
@@ -597,10 +599,8 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 		return -1;
 	}
 
-	/* Need to find a better way to determine per cpu notes section size. */
-#define MAX_NOTE_BYTES	1024
 	for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes(i, &notes_addr) < 0) {
+		if (get_crash_notes(i, &notes_addr, &notes_len) < 0) {
 			/* This cpu is not present. Skip it. */
 			return -1;
 		}
@@ -610,7 +610,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 		phdr->p_flags	= 0;
 		phdr->p_offset	= phdr->p_paddr = notes_addr;
 		phdr->p_vaddr	= 0;
-		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
+		phdr->p_filesz	= phdr->p_memsz	= notes_len;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
 

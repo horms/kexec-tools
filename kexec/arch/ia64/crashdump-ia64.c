@@ -80,7 +80,8 @@ static void add_loaded_segments_info(struct kexec_info *info,
 	}
 }
 
-static int get_crash_notes_section_addr(unsigned long *addr, int cpu)
+static int get_crash_notes_section_addr(int cpu, unsigned long *addr,
+					unsigned long *len)
 {
         char crash_notes[128];
         char line[MAX_LINE];
@@ -97,6 +98,9 @@ static int get_crash_notes_section_addr(unsigned long *addr, int cpu)
 		*addr = 0;
 		return -1;
 	}
+
+	*len = MAX_NOTE_BYTES;
+
         return 0;
 }
 
@@ -157,7 +161,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	int i;
 	long int nr_cpus = 0;
 	char *bufp = buf;
-	unsigned long notes_addr, notes_offset;
+	unsigned long notes_addr, notes_offset, notes_len;
 
 	/* Setup ELF Header*/
 	elf = (Elf64_Ehdr *) bufp;
@@ -188,11 +192,9 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		return -1;
 	}
 
-        /* Need to find a better way to determine per cpu notes section size. */
-#define MAX_NOTE_BYTES  1024
-
         for (i = 0; i < nr_cpus; i++) {
-        	if (get_crash_notes_section_addr (&notes_addr, i) < 0)
+		if (get_crash_notes_section_addr (i, &notes_addr,
+						  &notes_len) < 0)
                 	break;
 		notes_offset = notes_addr;
 		phdr = (Elf64_Phdr *) bufp;
@@ -201,7 +203,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
                 phdr->p_flags   = 0;
                 phdr->p_offset  = notes_offset;
                 phdr->p_vaddr   = phdr->p_paddr = notes_offset;
-                phdr->p_filesz  = phdr->p_memsz = MAX_NOTE_BYTES;
+                phdr->p_filesz  = phdr->p_memsz = notes_len;
                 /* Do we need any alignment of segments? */
                 phdr->p_align   = 0;
 

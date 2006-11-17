@@ -583,7 +583,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	int i;
 	char *bufp;
 	long int nr_cpus = 0;
-	uint64_t notes_addr;
+	uint64_t notes_addr, notes_len;
 
 	bufp = (char*) buf;
 
@@ -616,10 +616,8 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		return -1;
 	}
 
-	/* Need to find a better way to determine per cpu notes section size. */
-#define MAX_NOTE_BYTES	1024
 	for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes_per_cpu(i, &notes_addr) < 0) {
+		if (get_crash_notes_per_cpu(i, &notes_addr, &notes_len) < 0) {
 			/* This cpu is not present. Skip it. */
 			continue;
 		}
@@ -630,7 +628,7 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 		phdr->p_flags	= 0;
 		phdr->p_offset  = phdr->p_paddr = notes_addr;
 		phdr->p_vaddr   = 0;
-		phdr->p_filesz	= phdr->p_memsz	= MAX_NOTE_BYTES;
+		phdr->p_filesz	= phdr->p_memsz	= notes_len;
 		/* Do we need any alignment of segments? */
 		phdr->p_align	= 0;
 
