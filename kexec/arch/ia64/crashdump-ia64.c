@@ -80,30 +80,6 @@ static void add_loaded_segments_info(struct kexec_info *info,
 	}
 }
 
-static int get_crash_notes_section_addr(int cpu, unsigned long *addr,
-					unsigned long *len)
-{
-        char crash_notes[128];
-        char line[MAX_LINE];
-        FILE *fp;
-	sprintf(crash_notes, "/sys/devices/system/cpu/cpu%d/crash_notes", cpu);
-        fp = fopen(crash_notes, "r");
-        if (!fp) {
-                fprintf(stderr, "Cannot open %s: %s\n",
-                        crash_notes, strerror(errno));
-                fprintf(stderr, "Try mounting sysfs\n");
-                return -1;
-        }
-	if (fscanf(fp, "%lx", addr) != 1) {
-		*addr = 0;
-		return -1;
-	}
-
-	*len = MAX_NOTE_BYTES;
-
-        return 0;
-}
-
 /* Removes crash reserve region from list of memory chunks for whom elf program
  * headers have to be created. Assuming crash reserve region to be a single
  * continuous area fully contained inside one of the memory chunks */
@@ -193,9 +169,11 @@ static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
 	}
 
         for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes_section_addr (i, &notes_addr,
-						  &notes_len) < 0)
-                	break;
+		if (get_crash_notes_per_cpu(i, &notes_addr, &notes_len) < 0) {
+			/* This cpu is not present. Skip it. */
+			continue;
+		}
+
 		notes_offset = notes_addr;
 		phdr = (Elf64_Phdr *) bufp;
                 bufp += sizeof(Elf64_Phdr);
