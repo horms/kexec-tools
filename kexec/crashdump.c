@@ -20,15 +20,12 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
-#include <elf.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
 #include "kexec.h"
-#include "crashdump.h"
 
 /* Returns the physical address of start of crash notes buffer for a cpu. */
 int get_crash_notes_per_cpu(int cpu, uint64_t *addr)
