@@ -39,27 +39,41 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr)
 	struct stat cpu_stat;
 	int count;
 	unsigned long long temp;
+	int fopen_errno;
+	int stat_errno;
+
+	*addr = 0;
 
 	sprintf(crash_notes, "/sys/devices/system/cpu/cpu%d/crash_notes", cpu);
 	fp = fopen(crash_notes, "r");
 	if (!fp) {
-		/* Either sysfs is not mounted or CPU is not present*/
-		if (stat("/sys/devices", &cpu_stat))
-			die("Sysfs is not mounted. Try mounting sysfs\n");
-
+		fopen_errno = errno;
+		if (fopen_errno != ENOENT)
+			die(stderr, "Could not open \"%s\": %s\n",
+				crash_notes, strerror(fopen_errno));
+		if (!stat("/sys/devices", &cpu_stat)) {
+			stat_errno = errno;
+			fprintf(stderr, "Could not open \"%s\": %s\n",
+				crash_notes, strerror(fopen_errno));
+			if (stat_errno == ENOENT)
+				die("\"/sys/devices\" does not exist. "
+				    "Sysfs does not seem to be mounted. "
+				    "Try mounting sysfs.\n");
+			die("Could not open \"/sys/devices\": %s\n",
+			    crash_notes, strerror(stat_errno));
+		}
 		/* CPU is not physically present.*/
-		*addr = 0;
-		return errno;
+		return -1;
 	}
-	if (fgets(line, sizeof(line), fp) != 0) {
-		count = sscanf(line, "%Lx", &temp);
-		if (count != 1)
-			die("Cannot parse %s: %s\n", crash_notes,
-						strerror(errno));
-		*addr = (uint64_t) temp;
-	}
+	if (!fgets(line, sizeof(line), fp))
+		die("Cannot parse %s: %s\n", crash_notes, strerror(errno));
+	count = sscanf(line, "%Lx", &temp);
+	if (count != 1)
+		die("Cannot parse %s: %s\n", crash_notes, strerror(errno));
+	*addr = (uint64_t) temp;
 #if 0
 	printf("crash_notes addr = %Lx\n", *addr);
 #endif
+
 	return 0;
 }
