@@ -46,8 +46,8 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr)
 	if (!fp) {
 		fopen_errno = errno;
 		if (fopen_errno != ENOENT)
-			die(stderr, "Could not open \"%s\": %s\n",
-				crash_notes, strerror(fopen_errno));
+			die("Could not open \"%s\": %s\n", crash_notes,
+			    strerror(fopen_errno));
 		if (!stat("/sys/devices", &cpu_stat)) {
 			stat_errno = errno;
 			fprintf(stderr, "Could not open \"%s\": %s\n",
