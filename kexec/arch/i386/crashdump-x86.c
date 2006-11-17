@@ -602,7 +602,7 @@ static int prepare_crash_memory_elf32_headers(struct kexec_info *info,
 	for (i = 0; i < nr_cpus; i++) {
 		if (get_crash_notes(i, &notes_addr, &notes_len) < 0) {
 			/* This cpu is not present. Skip it. */
-			return -1;
+			continue;
 		}
 		phdr = (Elf32_Phdr *) bufp;
 		bufp += sizeof(Elf32_Phdr);
