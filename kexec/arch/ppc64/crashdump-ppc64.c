@@ -292,7 +292,6 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	void *tmp;
 	unsigned long sz, elfcorehdr;
 	int nr_ranges, align = 1024;
-	long int nr_cpus = 0;
 	struct memory_range *mem_range;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
