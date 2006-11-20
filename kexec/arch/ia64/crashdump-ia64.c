@@ -210,7 +210,6 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
                             unsigned long max_addr, unsigned long min_base,
 			    const char **cmdline)
 {
-	//struct memory_range *mem_range, *memmap_p;
 	struct memory_range *mem_range;
 	int nr_ranges;
 	unsigned long sz;
