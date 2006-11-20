@@ -194,13 +194,13 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 }
 
 static void
-cmdline_add_elfcorehdr(char **cmdline, unsigned long addr)
+cmdline_add_elfcorehdr(const char **cmdline, unsigned long addr)
 {
-	char *str = *cmdline;
+	char *str;
 	char buf[64];
 	size_t len;
 	sprintf(buf, " elfcorehdr=%ldK", addr/1024);
-	len = strlen(str) + strlen(buf) + 1;
+	len = strlen(*cmdline) + strlen(buf) + 1;
 	str = xmalloc(len);
 	sprintf(str, "%s%s", *cmdline, buf);
 	*cmdline = str;
@@ -208,7 +208,7 @@ cmdline_add_elfcorehdr(char **cmdline, unsigned long addr)
 
 int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
                             unsigned long max_addr, unsigned long min_base,
-			    char **cmdline)
+			    const char **cmdline)
 {
 	//struct memory_range *mem_range, *memmap_p;
 	struct memory_range *mem_range;

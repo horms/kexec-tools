@@ -5,7 +5,7 @@
 #define __pa(x)			((unsigned long)(x)-PAGE_OFFSET)
 extern int load_crashdump_segments(struct kexec_info *info,
 		struct mem_ehdr *ehdr, unsigned long max_addr,
-		unsigned long min_base, char **cmdline);
+		unsigned long min_base, const char **cmdline);
 
 #define CRASH_MAX_MEMMAP_NR     (KEXEC_MAX_SEGMENTS + 1)
 #define CRASH_MAX_MEMORY_RANGES (MAX_MEMORY_RANGES + 2)
