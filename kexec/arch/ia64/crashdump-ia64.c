@@ -193,6 +193,10 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	return 0;
 }
 
+/*
+ * Note that this assignes a malloced pointer to *cmdline,
+ * which is likely never freed by the caller
+ */
 static void
 cmdline_add_elfcorehdr(const char **cmdline, unsigned long addr)
 {
