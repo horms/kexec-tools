@@ -1,5 +1,5 @@
 /*
- * kexec: crashdum support
+ * kexec: crashdump support
  * Copyright (C) 2005-2006 Zou Nan hai <nanhai.zou@intel.com> Intel Corp
  *
  * This program is free software; you can redistribute it and/or modify
@@ -28,7 +28,17 @@
 #include "crashdump-ia64.h"
 
 int memory_ranges = 0;
-#define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL - kernel_code_start)
+#define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL)
+
+static struct crash_elf_info elf_info =
+{
+	class: ELFCLASS64,
+	data: ELFDATA2LSB,
+	machine: EM_IA_64,
+	page_offset: PAGE_OFFSET,
+};
+
+
 #define MAX_LINE        160
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region */
@@ -37,6 +47,7 @@ static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 static struct memory_range crash_reserved_mem;
 unsigned long elfcorehdr;
 static unsigned long kernel_code_start;
+static unsigned long kernel_code_end;
 struct loaded_segment {
         unsigned long start;
         unsigned long end;
@@ -129,100 +140,6 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 	return 0;
 }
 
-static int prepare_crash_memory_elf64_headers(struct kexec_info *info,
-                                                void *buf, unsigned long size)
-{
-	Elf64_Ehdr *elf;
-	Elf64_Phdr *phdr;
-	int i;
-	long int nr_cpus = 0;
-	char *bufp = buf;
-	unsigned long notes_addr, notes_offset, notes_len;
-
-	/* Setup ELF Header*/
-	elf = (Elf64_Ehdr *) bufp;
-	bufp += sizeof(Elf64_Ehdr);
-	memcpy(elf->e_ident, ELFMAG, SELFMAG);
-	elf->e_ident[EI_CLASS]  = ELFCLASS64;
-	elf->e_ident[EI_DATA]   = ELFDATA2LSB;
-	elf->e_ident[EI_VERSION]= EV_CURRENT;
-	elf->e_ident[EI_OSABI] = ELFOSABI_NONE;
-	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
-	elf->e_type     = ET_CORE;
-	elf->e_machine  = EM_IA_64;
-	elf->e_version  = EV_CURRENT;
-	elf->e_entry    = 0;
-	elf->e_phoff    = sizeof(Elf64_Ehdr);
-	elf->e_shoff    = 0;
-	elf->e_flags    = 0;
-	elf->e_ehsize   = sizeof(Elf64_Ehdr);
-	elf->e_phentsize= sizeof(Elf64_Phdr);
-	elf->e_phnum    = 0;
-	elf->e_shentsize= 0;
-	elf->e_shnum    = 0;
-	elf->e_shstrndx = 0;
-
-	/* PT_NOTE program headers. One per cpu*/
-	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
-	if (nr_cpus < 0) {
-		return -1;
-	}
-
-        for (i = 0; i < nr_cpus; i++) {
-		if (get_crash_notes_per_cpu(i, &notes_addr, &notes_len) < 0) {
-			/* This cpu is not present. Skip it. */
-			continue;
-		}
-
-		notes_offset = notes_addr;
-		phdr = (Elf64_Phdr *) bufp;
-                bufp += sizeof(Elf64_Phdr);
-                phdr->p_type    = PT_NOTE;
-                phdr->p_flags   = 0;
-                phdr->p_offset  = notes_offset;
-                phdr->p_vaddr   = phdr->p_paddr = notes_offset;
-                phdr->p_filesz  = phdr->p_memsz = notes_len;
-                /* Do we need any alignment of segments? */
-                phdr->p_align   = 0;
-
-                /* Increment number of program headers. */
-                (elf->e_phnum)++;
-        }
-
-	for (i = 0; i < memory_ranges; i++) {
-		unsigned long mstart, mend;
-		mstart = crash_memory_range[i].start;
-		mend = crash_memory_range[i].end;
-		if (!mstart && !mend)
-			break;
-		phdr = (Elf64_Phdr *) bufp;
-		bufp += sizeof(Elf64_Phdr);
-		phdr->p_type    = PT_LOAD;
-		phdr->p_flags   = PF_R|PF_W|PF_X;
-		phdr->p_offset  = mstart;
-		/*add region 5 mapping for kernel*/
-		if (kernel_code_start >= mstart && kernel_code_start < mend) {
-			phdr->p_vaddr = mstart + LOAD_OFFSET;
-			phdr->p_paddr = mstart;
-			phdr->p_filesz  = phdr->p_memsz = mend - mstart + 1;
-			phdr->p_align   = 0;
-			(elf->e_phnum)++;
-
-			phdr = (Elf64_Phdr *) bufp;
-			bufp += sizeof(Elf64_Phdr);
-			phdr->p_type    = PT_LOAD;
-			phdr->p_flags   = PF_R|PF_W|PF_X;
-			phdr->p_offset  = mstart;
-		}
-		phdr->p_vaddr = mstart + PAGE_OFFSET;
-		phdr->p_paddr = mstart;
-		phdr->p_filesz  = phdr->p_memsz = mend - mstart + 1;
-		phdr->p_align   = 0;
-		(elf->e_phnum)++;
-	}
-	return 0;
-}
-
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
 	const char iomem[]= "/proc/iomem";
@@ -259,6 +176,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		}
 		else if (memcmp(str, "Kernel code\n", 12) == 0) {
 			kernel_code_start = start;
+			kernel_code_end = end;
 			continue;
 		}else
 			continue;
@@ -294,18 +212,22 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 	//struct memory_range *mem_range, *memmap_p;
 	struct memory_range *mem_range;
 	int nr_ranges;
+	unsigned long sz;
 	size_t size;
 	void *tmp;
 	if (info->kexec_flags & KEXEC_ON_CRASH ) {
 		if (get_crash_memory_ranges(&mem_range, &nr_ranges) == 0) {
-			size =  sizeof(Elf64_Ehdr) +
-				(nr_ranges + 1) * sizeof(Elf64_Phdr);
-			size = (size + EFI_PAGE_SIZE - 1) & ~(EFI_PAGE_SIZE - 1);
-			tmp = xmalloc(size);
-			memset(tmp, 0, size);
-			if (prepare_crash_memory_elf64_headers(info, tmp, size) < 0)
+
+			info->kern_paddr_start = kernel_code_start;
+			info->kern_vaddr_start = LOAD_OFFSET;
+			info->kern_size = kernel_code_end - kernel_code_start + 1;
+			if (crash_create_elf64_headers(info, &elf_info,
+						       crash_memory_range,
+						       nr_ranges,
+						       &tmp, &sz) < 0)
 				return -1;
-			elfcorehdr = add_buffer(info, tmp, size, size, EFI_PAGE_SIZE, min_base,
+
+			elfcorehdr = add_buffer(info, tmp, sz, sz, EFI_PAGE_SIZE, min_base,
 					max_addr, -1);
 			loaded_segments[loaded_segments_num].start = elfcorehdr;
 			loaded_segments[loaded_segments_num].end = elfcorehdr + size;
