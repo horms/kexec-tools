@@ -250,11 +250,10 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 	return 0;
 }
 
-/*
- * Adding a dummy function, so that build on IA64 will not break.
- * Need to implement the actual checking code
- */
 int is_crashkernel_mem_reserved(void)
 {
-	return 1;
+	uint64_t start, end;
+
+	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
+	  (start != end) : 0;
 }
