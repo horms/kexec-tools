@@ -18,7 +18,11 @@ int FUNC(struct kexec_info *info,
 	uint64_t notes_addr, notes_len;
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);
 
-	nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
+	if (xen_present())
+		nr_cpus = xen_get_nr_phys_cpus();
+	else
+		nr_cpus = sysconf(_SC_NPROCESSORS_CONF);
+
 	if (nr_cpus < 0) {
 		return -1;
 	}
@@ -45,7 +49,7 @@ int FUNC(struct kexec_info *info,
 	 * PT_LOAD program header and in the physical RAM program headers.
 	 */
 
-	if (info->kern_size) {
+	if (info->kern_size && !xen_present()) {
 		sz += sizeof(PHDR);
 	}
 
@@ -87,6 +91,9 @@ int FUNC(struct kexec_info *info,
 	if (!get_note_info)
 		get_note_info = get_crash_notes_per_cpu;
 
+	if (xen_present())
+		get_note_info = xen_get_note;
+
 	/* PT_NOTE program headers. One per cpu */
 
 	for (i = 0; i < nr_cpus; i++) {
@@ -118,7 +125,7 @@ int FUNC(struct kexec_info *info,
 	 * Kernel is mapped if info->kern_size is non-zero.
 	 */
 
-	if (info->kern_size) {
+	if (info->kern_size && !xen_present()) {
 		phdr = (PHDR *) bufp;
 		bufp += sizeof(PHDR);
 		phdr->p_type	= PT_LOAD;

@@ -34,4 +34,8 @@ int crash_create_elf64_headers(struct kexec_info *info,
 			       struct memory_range *range, int ranges,
 			       void **buf, unsigned long *size);
 
+int xen_present(void);
+int xen_get_nr_phys_cpus(void);
+int xen_get_note(int cpu, uint64_t *addr, uint64_t *len);
+
 #endif /* CRASHDUMP_H */
