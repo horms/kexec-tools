@@ -201,6 +201,16 @@ int arch_compat_trampoline(struct kexec_info *info);
 void arch_update_purgatory(struct kexec_info *info);
 int is_crashkernel_mem_reserved(void);
 
+int kexec_iomem_for_each_line(char *match,
+			      int (*callback)(void *data,
+					      int nr,
+					      char *str,
+					      unsigned long base,
+					      unsigned long length),
+			      void *data);
+int parse_iomem_single(char *str, uint64_t *start, uint64_t *end);
+
+
 #define MAX_LINE	160
 
 #ifdef DEBUG

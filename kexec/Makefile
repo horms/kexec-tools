@@ -16,6 +16,7 @@ KEXEC_C_SRCS+= kexec/kexec-elf-exec.c
 KEXEC_C_SRCS+= kexec/kexec-elf-core.c
 KEXEC_C_SRCS+= kexec/kexec-elf-rel.c 
 KEXEC_C_SRCS+= kexec/kexec-elf-boot.c 
+KEXEC_C_SRCS+= kexec/kexec-iomem.c
 KEXEC_C_SRCS+= kexec/crashdump.c
 KEXEC_C_GENERATED_SRCS+= $(PURGATORY_HEX_C)
 KEXEC_S_SRCS:= 
