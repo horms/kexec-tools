@@ -25,8 +25,27 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <elf.h>
 #include "kexec.h"
 #include "crashdump.h"
+
+/* include "crashdump-elf.c" twice to create two functions from one */
+
+#define FUNC crash_create_elf64_headers
+#define EHDR Elf64_Ehdr
+#define PHDR Elf64_Phdr
+#include "crashdump-elf.c"
+#undef PHDR
+#undef EHDR
+#undef FUNC
+
+#define FUNC crash_create_elf32_headers
+#define EHDR Elf32_Ehdr
+#define PHDR Elf32_Phdr
+#include "crashdump-elf.c"
+#undef PHDR
+#undef EHDR
+#undef FUNC
 
 /* Returns the physical address of start of crash notes buffer for a cpu. */
 int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
