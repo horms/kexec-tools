@@ -56,41 +56,17 @@ static int exclude_crash_reserve_region(int *nr_ranges);
  * store in kexec_info */
 static int get_kernel_paddr(struct kexec_info *info)
 {
-	const char iomem[]= "/proc/iomem";
-	char line[MAX_LINE];
-	FILE *fp;
-	unsigned long long start, end;
+	uint64_t start;
 
-	fp = fopen(iomem, "r");
-	if (!fp) {
-		fprintf(stderr, "Cannot open %s: %s\n", iomem, strerror(errno));
-		return -1;
-	}
-	while(fgets(line, sizeof(line), fp) != 0) {
-		char *str;
-		int consumed, count;
-		count = sscanf(line, "%Lx-%Lx : %n",
-			&start, &end, &consumed);
-		if (count != 2)
-			continue;
-		str = line + consumed;
+	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
+		info->kern_paddr_start = start;
 #ifdef DEBUG
-		printf("%016Lx-%016Lx : %s",
-			start, end, str);
+		printf("kernel load physical addr start = 0x%016Lx\n", start);
 #endif
-		if (memcmp(str, "Kernel code\n", 12) == 0) {
-			info->kern_paddr_start = start;
+		return 0;
+	}
 
-#ifdef DEBUG
-			printf("kernel load physical addr start = 0x%016Lx\n",
-					start);
-#endif
-			fclose(fp);
-			return 0;
-		}
-	}
 	fprintf(stderr, "Cannot determine kernel physical load addr\n");
-	fclose(fp);
 	return -1;
 }
 
@@ -657,30 +633,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 int is_crashkernel_mem_reserved(void)
 {
-	const char iomem[]= "/proc/iomem";
-	char line[MAX_LINE];
-	FILE *fp;
-	unsigned long long start, end;
-	char *str;
-	int consumed;
-	int count;
+	uint64_t start, end;
 
-	fp = fopen(iomem, "r");
-	if (!fp)
-		die("Cannot open /proc/iomem");
-
-	while(fgets(line, sizeof(line), fp) != 0) {
-		count = sscanf(line, "%Lx-%Lx : %n", &start, &end, &consumed);
-		if (count != 2)
-			continue;
-		str = line + consumed;
-		if (memcmp(str, "Crash kernel\n", 13) == 0)
-			break;
-	}
-
-	fclose(fp);
-	if (!memcmp(str, "Crash kernel\n", 13) == 0 || (start == end))
-		return 0;
-	else
-		return 1;
+	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
+	  (start != end) : 0;
 }
