@@ -58,6 +58,9 @@ static int get_kernel_paddr(struct kexec_info *info)
 {
 	uint64_t start;
 
+	if (xen_present()) /* Kernel not entity mapped under Xen */
+		return 0;
+
 	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
 		info->kern_paddr_start = start;
 #ifdef DEBUG
@@ -87,6 +90,9 @@ static int get_kernel_vaddr_and_size(struct kexec_info *info)
 	int align;
 	unsigned long size;
 	uint32_t elf_flags = 0;
+
+	if (xen_present()) /* Kernel not entity mapped under Xen */
+		return 0;
 
 	align = getpagesize();
 	size = KCORE_ELF_HEADERS_SIZE;
