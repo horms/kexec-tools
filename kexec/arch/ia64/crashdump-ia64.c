@@ -26,6 +26,7 @@
 #include "../../kexec-syscall.h"
 #include "kexec-ia64.h"
 #include "crashdump-ia64.h"
+#include "../kexec/crashdump.h"
 
 int memory_ranges = 0;
 #define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL)
