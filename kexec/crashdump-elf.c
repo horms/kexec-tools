@@ -11,10 +11,9 @@ int FUNC(struct kexec_info *info,
 {
 	EHDR *elf;
 	PHDR *phdr;
-	int i, sz;
+	int i, sz, align;
 	char *bufp;
 	long int nr_cpus = 0;
-	int align = 1024;
 	uint64_t notes_addr, notes_len;
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);
 
@@ -52,6 +51,13 @@ int FUNC(struct kexec_info *info,
 	if (info->kern_size && !xen_present()) {
 		sz += sizeof(PHDR);
 	}
+
+	/*
+	 * The kernel command line option memmap= requires 1k granularity,
+	 * therefore we align the size to 1024 here.
+	 */
+
+	align = 1024;
 
 	sz += align - 1;
 	sz &= ~(align - 1);
