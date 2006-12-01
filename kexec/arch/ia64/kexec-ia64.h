@@ -9,7 +9,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 void elf_ia64_usage(void);
 int update_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr);
 void move_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
-        unsigned long addr);
+			  unsigned long addr);
 
 #define MAX_MEMORY_RANGES 1024
 #define EFI_PAGE_SIZE	  (1UL<<12)

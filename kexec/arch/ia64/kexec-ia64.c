@@ -38,6 +38,7 @@
 
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 static int memory_ranges;
+
 /* Reserve range for EFI memmap and Boot parameter */
 static int split_range(int range, unsigned long start, unsigned long end)
 {
@@ -215,38 +216,38 @@ int update_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr)
 	int i;
 	struct mem_phdr *phdr;
 	unsigned long start_addr = ULONG_MAX, end_addr = 0;
-	unsigned long align = 1UL<<26; // 64M
-	for(i = 0; i < ehdr->e_phnum; i++) {
-		phdr = &ehdr->e_phdr[i];
-		if (phdr->p_type == PT_LOAD) {
-			if (phdr->p_paddr < start_addr) 
-				start_addr = phdr->p_paddr;
-			if ((phdr->p_paddr + phdr->p_memsz) > end_addr)
-				end_addr = phdr->p_paddr + phdr->p_memsz;
-		}
+	unsigned long align = 1UL<<26; /* 64M */
+	unsigned long start, end;
 
+	for (i = 0; i < ehdr->e_phnum; i++) {
+		phdr = &ehdr->e_phdr[i];
+		if (phdr->p_type != PT_LOAD)
+			continue;
+		if (phdr->p_paddr < start_addr)
+			start_addr = phdr->p_paddr;
+		if ((phdr->p_paddr + phdr->p_memsz) > end_addr)
+			end_addr = phdr->p_paddr + phdr->p_memsz;
 	}
-	
-	for (i = 0; i < memory_ranges 
-		&& memory_range[i].start <= start_addr; i++) {
+
+	for (i = 0; i < memory_ranges && memory_range[i].start <= start_addr;
+	     i++) {
 		if (memory_range[i].type == RANGE_RAM &&
-			memory_range[i].end > end_addr)
-		return;
+		    memory_range[i].end > end_addr)
+			return 0;
 	}
 
 	for (i = 0; i < memory_ranges; i++) {
-		if (memory_range[i].type == RANGE_RAM) {
-			unsigned long start = 
-				(memory_range[i].start + align - 1)&~(align - 1);
-			unsigned long end = memory_range[i].end;
-			if (end > start && 
-					(end - start) > (end_addr - start_addr)) {
-				move_loaded_segments(info, ehdr, start);
-				return 0;
-			}
+		if (memory_range[i].type != RANGE_RAM)
+			continue;
+		start = (memory_range[i].start + align - 1) & ~(align - 1);
+		end = memory_range[i].end;
+		if (end > start && (end - start) > (end_addr - start_addr)) {
+		    move_loaded_segments(info, ehdr, start);
+			return 0;
 		}
 	}
-	return 1;
+
+	return -1;
 }
 
 void arch_update_purgatory(struct kexec_info *info)
