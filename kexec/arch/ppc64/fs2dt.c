@@ -276,10 +276,6 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 	}
 
 	fn[0] = '\0';
-	if(errno == ENOSYS)
-		errno = 0;
-	if (errno)
-		die("inrecoverable error: XXX: %s\n", strerror(errno));
 	checkprop(pathname, NULL);
 }
 
@@ -386,8 +382,6 @@ static void putnode(void)
 		if (S_ISDIR(statbuf.st_mode))
 			putnode();
 	}
-	if (errno)
-		die("unrecoverable error: XXX %s\n", strerror(errno));
 
 	*dt++ = 2;
 	dn[-1] = '\0';
