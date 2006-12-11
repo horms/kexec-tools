@@ -58,7 +58,6 @@ void err(const char *str, int rc)
 }
 
 typedef unsigned dvt;
-struct stat statbuf[1];
 char pathname[MAXPATH], *pathstart;
 char propnames[NAMESPACE];
 dvt dtstruct[TREEWORDS], *dt;
@@ -196,6 +195,7 @@ void putprops(char *fn, struct dirent **nlist, int numlist)
 {
 	struct dirent *dp;
 	int i = 0, fd, len;
+	struct stat statbuf;
 
 	for (i = 0; i < numlist; i++) {
 		dp = nlist[i];
@@ -204,7 +204,7 @@ void putprops(char *fn, struct dirent **nlist, int numlist)
 		if (!strcmp(dp->d_name, ".") || !strcmp(dp->d_name, ".."))
                         continue;
 
-		if (lstat(pathname, statbuf))
+		if (lstat(pathname, &statbuf))
 			err(pathname, ERR_STAT);
 
 		if (!crash_param && !strcmp(fn,"linux,crashkernel-base"))
@@ -230,10 +230,10 @@ void putprops(char *fn, struct dirent **nlist, int numlist)
 			!strcmp(dp->d_name, "linux,initrd-end"))
 				continue;
 
-		if (! S_ISREG(statbuf[0].st_mode))
+		if (! S_ISREG(statbuf.st_mode))
 			continue;
 
-		len = statbuf[0].st_size;
+		len = statbuf.st_size;
 
 		*dt++ = 3;
 		dt_len = dt;
@@ -331,6 +331,7 @@ void putnode(void)
 	char *basename;
 	struct dirent **namelist;
 	int numlist, i;
+	struct stat statbuf;
 
 	*dt++ = 1;
 	strcpy((void *)dt, *pathstart ? pathstart : "/");
@@ -389,10 +390,10 @@ void putnode(void)
 		if (!strcmp(dn, ".") || !strcmp(dn, ".."))
 			continue;
 
-		if (lstat(pathname, statbuf))
+		if (lstat(pathname, &statbuf))
 			err(pathname, ERR_STAT);
 
-		if (S_ISDIR(statbuf[0].st_mode))
+		if (S_ISDIR(statbuf.st_mode))
 			putnode();
 	}
 	if (errno)
