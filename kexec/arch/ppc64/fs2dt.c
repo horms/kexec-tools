@@ -195,7 +195,7 @@ void add_usable_mem_property(int fd, int len)
 void putprops(char *fn, struct dirent **nlist, int numlist)
 {
 	struct dirent *dp;
-	int i = 0;
+	int i = 0, fd, len;
 
 	for (i = 0; i < numlist; i++) {
 		dp = nlist[i];
@@ -230,65 +230,66 @@ void putprops(char *fn, struct dirent **nlist, int numlist)
 			!strcmp(dp->d_name, "linux,initrd-end"))
 				continue;
 
-		if (S_ISREG(statbuf[0].st_mode)) {
-			int fd, len = statbuf[0].st_size;
+		if (! S_ISREG(statbuf[0].st_mode))
+			continue;
 
-			*dt++ = 3;
-			dt_len = dt;
-			*dt++ = len;
-			*dt++ = propnum(fn);
+		len = statbuf[0].st_size;
 
-			if ((len >= 8) && ((unsigned long)dt & 0x4))
-				dt++;
+		*dt++ = 3;
+		dt_len = dt;
+		*dt++ = len;
+		*dt++ = propnum(fn);
 
-			fd = open(pathname, O_RDONLY);
-			if (fd == -1)
-				err(pathname, ERR_OPEN);
+		if ((len >= 8) && ((unsigned long)dt & 0x4))
+			dt++;
 
-			if (read(fd, dt, len) != len)
-				err(pathname, ERR_READ);
+		fd = open(pathname, O_RDONLY);
+		if (fd == -1)
+			err(pathname, ERR_OPEN);
 
-			checkprop(fn, dt);
+		if (read(fd, dt, len) != len)
+			err(pathname, ERR_READ);
 
-			/* Get the cmdline from the device-tree and modify it */
-			if (!strcmp(dp->d_name, "bootargs")) {
-				int cmd_len;
-				char temp_cmdline[COMMAND_LINE_SIZE] = { "" };
-				char *param = NULL;
-				cmd_len = strlen(local_cmdline);
-				if (cmd_len != 0) {
-					param = strstr(local_cmdline,
-							"crashkernel=");
-					if (param)
-						crash_param = 1;
-					param = strstr(local_cmdline, "root=");
-				}
-				if (!param) {
-					char *old_param;
-					memcpy(temp_cmdline, dt, len);
-					param = strstr(temp_cmdline, "root=");
-					if (param) {
-						old_param = strtok(param, " ");
-						if (cmd_len != 0)
-							strcat(local_cmdline, " ");
-						strcat(local_cmdline, old_param);
-					}
-				}
-				strcat(local_cmdline, " ");
-				cmd_len = strlen(local_cmdline);
-				cmd_len = cmd_len + 1;
-				memcpy(dt,local_cmdline,cmd_len);
-				len = cmd_len;
-				*dt_len = cmd_len;
-				fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
+		checkprop(fn, dt);
+
+		/* Get the cmdline from the device-tree and modify it */
+		if (!strcmp(dp->d_name, "bootargs")) {
+			int cmd_len;
+			char temp_cmdline[COMMAND_LINE_SIZE] = { "" };
+			char *param = NULL;
+			cmd_len = strlen(local_cmdline);
+			if (cmd_len != 0) {
+				param = strstr(local_cmdline, "crashkernel=");
+				if (param)
+					crash_param = 1;
+				param = strstr(local_cmdline, "root=");
 			}
-
-			dt += (len + 3)/4;
-			if (!strcmp(dp->d_name, "reg") && usablemem_rgns.size)
-				add_usable_mem_property(fd, len);
-			close(fd);
+			if (!param) {
+				char *old_param;
+				memcpy(temp_cmdline, dt, len);
+				param = strstr(temp_cmdline, "root=");
+				if (param) {
+					old_param = strtok(param, " ");
+					if (cmd_len != 0)
+						strcat(local_cmdline, " ");
+					strcat(local_cmdline, old_param);
+				}
+			}
+			strcat(local_cmdline, " ");
+			cmd_len = strlen(local_cmdline);
+			cmd_len = cmd_len + 1;
+			memcpy(dt, local_cmdline,cmd_len);
+			len = cmd_len;
+			*dt_len = cmd_len;
+			fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
 		}
+
+		dt += (len + 3)/4;
+		if (!strcmp(dp->d_name, "reg") && usablemem_rgns.size)
+			add_usable_mem_property(fd, len);
+		close(fd);
 	}
+
 	fn[0] = '\0';
 	if(errno == ENOSYS)
 		errno = 0;
