@@ -57,16 +57,15 @@ void err(const char *str, int rc)
 	exit(rc);
 }
 
-typedef unsigned dvt;
 char pathname[MAXPATH], *pathstart;
 char propnames[NAMESPACE];
-dvt dtstruct[TREEWORDS], *dt;
+unsigned dtstruct[TREEWORDS], *dt;
 unsigned long long mem_rsrv[2*MEMRESERVE];
 
 static int initrd_found = 0;
 static int crash_param = 0;
 char local_cmdline[COMMAND_LINE_SIZE] = { "" };
-dvt *dt_len; /* changed len of modified cmdline in flat device-tree */
+unsigned *dt_len; /* changed len of modified cmdline in flat device-tree */
 extern mem_rgns_t usablemem_rgns;
 struct bootblock bb[1];
 
@@ -84,7 +83,7 @@ void reserve(unsigned long long where, unsigned long long length)
 }
 
 /* look for properties we need to reserve memory space for */
-void checkprop(char *name, dvt *data)
+void checkprop(char *name, unsigned *data)
 {
 	static unsigned long long base, size, end;
 
@@ -114,9 +113,9 @@ void checkprop(char *name, dvt *data)
  * return the property index for a property name, creating a new one
  * if needed.
  */
-dvt propnum(const char *name)
+unsigned propnum(const char *name)
 {
-	dvt offset = 0;
+	unsigned offset = 0;
 
 	while(propnames[offset])
 		if (strcmp(name, propnames+offset))
@@ -438,7 +437,7 @@ int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
 	bb->off_dt_struct = bb->off_mem_rsvmap + len;
 
 	len = dt - dtstruct;
-	len *= sizeof(dvt);
+	len *= sizeof(unsigned);
 	bb->off_dt_strings = bb->off_dt_struct + len;
 
 	len = propnum("");
