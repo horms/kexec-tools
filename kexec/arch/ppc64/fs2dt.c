@@ -326,9 +326,12 @@ static void putnode(void)
 		dt++;
 
 	numlist = scandir(pathname, &namelist, 0, comparefunc);
-	if (numlist == 0)
+	if (numlist < 0)
 		die("unrecoverable error: could not scan \"%s\": %s\n",
 		    pathname, strerror(errno));
+	if (numlist == 0)
+		die("unrecoverable error: no directory entries in \"%s\"",
+		    pathname);
 
 	basename = strrchr(pathname,'/');
 
