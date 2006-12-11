@@ -60,7 +60,7 @@ static void err(const char *str, int rc)
 static char pathname[MAXPATH], *pathstart;
 static char propnames[NAMESPACE] = { 0 };
 static unsigned dtstruct[TREEWORDS], *dt;
-static unsigned long long mem_rsrv[2*MEMRESERVE];
+static unsigned long long mem_rsrv[2*MEMRESERVE] = { 0, 0 };
 
 static int initrd_found = 0;
 static int crash_param = 0;
@@ -72,15 +72,17 @@ static struct bootblock bb[1];
 
 void reserve(unsigned long long where, unsigned long long length)
 {
-	unsigned long long *mr;
+	size_t offset;
 
-	mr = mem_rsrv;
+	for (offset = 0; mem_rsrv[offset + 1]; offset += 2)
+		;
 
-	while(mr[1])
-		mr += 2;
+	if (offset + 4 >= 2 * MEMRESERVE)
+		err("exhasuted reservation meta data", ERR_RESERVE);
 
-	mr[0] = where;
-	mr[1] = length;
+	mem_rsrv[offset] = where;
+	mem_rsrv[offset + 1] = length;
+	mem_rsrv[offset + 3] = 0;  /* N.B: don't care about offset + 2 */
 }
 
 /* look for properties we need to reserve memory space for */
