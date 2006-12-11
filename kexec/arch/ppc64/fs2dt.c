@@ -88,9 +88,9 @@ void reserve(unsigned long long where, unsigned long long length)
 /* look for properties we need to reserve memory space for */
 static void checkprop(char *name, unsigned *data)
 {
-	static unsigned long long base, size, end;
+	static unsigned long long base, size;
 
-	if ((data == NULL) && (base || size || end))
+	if ((data == NULL) && (base || size))
 			err((void *)data, ERR_RESERVE);
 	else if (!strcmp(name, "linux,rtas-base"))
 		base = *data;
@@ -100,15 +100,9 @@ static void checkprop(char *name, unsigned *data)
 			!strcmp(name, "linux,tce-size"))
 		size = *data;
 
-	if (size && end)
-		err(name, ERR_RESERVE);
 	if (base && size) {
 		reserve(base, size);
 		base = size = 0;
-	}
-	if (base && end) {
-		reserve(base, end-base);
-		base = end = 0;
 	}
 }
 
