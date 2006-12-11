@@ -123,7 +123,9 @@ static void add_usable_mem_property(int fd, int len)
 	if (strncmp(bname, "/memory@", 8))
 		return;
 
-	lseek(fd, 0, SEEK_SET);
+	if (lseek(fd, 0, SEEK_SET) < 0)
+		die("unrecoverable error: error seeking in \"%s\": %s\n",
+		    pathname, strerror(errno));
 	if (read(fd, buf, len) != len)
 		die("unrecoverable error: error reading \"%s\": %s\n",
 		    pathname, strerror(errno));
