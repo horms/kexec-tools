@@ -48,7 +48,7 @@ enum {
 	ERR_RESERVE,
 };
 
-void err(const char *str, int rc)
+static void err(const char *str, int rc)
 {
 	if (errno)
 		perror(str);
@@ -57,17 +57,18 @@ void err(const char *str, int rc)
 	exit(rc);
 }
 
-char pathname[MAXPATH], *pathstart;
-char propnames[NAMESPACE];
-unsigned dtstruct[TREEWORDS], *dt;
-unsigned long long mem_rsrv[2*MEMRESERVE];
+static char pathname[MAXPATH], *pathstart;
+static char propnames[NAMESPACE];
+static unsigned dtstruct[TREEWORDS], *dt;
+static unsigned long long mem_rsrv[2*MEMRESERVE];
 
 static int initrd_found = 0;
 static int crash_param = 0;
-char local_cmdline[COMMAND_LINE_SIZE] = { "" };
-unsigned *dt_len; /* changed len of modified cmdline in flat device-tree */
+static char local_cmdline[COMMAND_LINE_SIZE] = { "" };
+static unsigned *dt_len; /* changed len of modified cmdline
+			    in flat device-tree */
 extern mem_rgns_t usablemem_rgns;
-struct bootblock bb[1];
+static struct bootblock bb[1];
 
 void reserve(unsigned long long where, unsigned long long length)
 {
@@ -83,7 +84,7 @@ void reserve(unsigned long long where, unsigned long long length)
 }
 
 /* look for properties we need to reserve memory space for */
-void checkprop(char *name, unsigned *data)
+static void checkprop(char *name, unsigned *data)
 {
 	static unsigned long long base, size, end;
 
@@ -113,7 +114,7 @@ void checkprop(char *name, unsigned *data)
  * return the property index for a property name, creating a new one
  * if needed.
  */
-unsigned propnum(const char *name)
+static unsigned propnum(const char *name)
 {
 	unsigned offset = 0;
 
@@ -128,7 +129,7 @@ unsigned propnum(const char *name)
 	return offset;
 }
 
-void add_usable_mem_property(int fd, int len)
+static void add_usable_mem_property(int fd, int len)
 {
 	char fname[MAXPATH], *bname;
 	char buf[MAXBYTES +1];
@@ -190,7 +191,7 @@ void add_usable_mem_property(int fd, int len)
 }
 
 /* put all properties (files) in the property structure */
-void putprops(char *fn, struct dirent **nlist, int numlist)
+static void putprops(char *fn, struct dirent **nlist, int numlist)
 {
 	struct dirent *dp;
 	int i = 0, fd, len;
@@ -301,7 +302,7 @@ void putprops(char *fn, struct dirent **nlist, int numlist)
  * Compare function used to sort the device-tree directories
  * This function will be passed to scandir.
  */
-int comparefunc(const void *dentry1, const void *dentry2)
+static int comparefunc(const void *dentry1, const void *dentry2)
 {
 	char *str1 = (*(struct dirent **)dentry1)->d_name;
 	char *str2 = (*(struct dirent **)dentry2)->d_name;
@@ -323,7 +324,7 @@ int comparefunc(const void *dentry1, const void *dentry2)
  * put a node (directory) in the property structure.  first properties
  * then children.
  */
-void putnode(void)
+static void putnode(void)
 {
 	char *dn;
 	struct dirent *dp;
