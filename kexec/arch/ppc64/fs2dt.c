@@ -37,26 +37,6 @@
 #define TREEWORDS 65536		/* max 32 bit words for property values */
 #define MEMRESERVE 256		/* max number of reserved memory blocks */
 
-enum {
-	ERR_NONE,
-	ERR_USAGE,
-	ERR_OPENDIR,
-	ERR_READDIR,
-	ERR_STAT,
-	ERR_OPEN,
-	ERR_READ,
-	ERR_RESERVE,
-};
-
-static void err(const char *str, int rc)
-{
-	if (errno)
-		perror(str);
-	else
-		fprintf(stderr, "%s: unrecoverable error\n", str);
-	exit(rc);
-}
-
 static char pathname[MAXPATH], *pathstart;
 static char propnames[NAMESPACE] = { 0 };
 static unsigned dtstruct[TREEWORDS], *dt;
@@ -78,7 +58,7 @@ void reserve(unsigned long long where, unsigned long long length)
 		;
 
 	if (offset + 4 >= 2 * MEMRESERVE)
-		err("exhasuted reservation meta data", ERR_RESERVE);
+		die("unrecoverable error: exhasuted reservation meta data\n");
 
 	mem_rsrv[offset] = where;
 	mem_rsrv[offset + 1] = length;
@@ -91,7 +71,7 @@ static void checkprop(char *name, unsigned *data)
 	static unsigned long long base, size;
 
 	if ((data == NULL) && (base || size))
-			err((void *)data, ERR_RESERVE);
+		die("unrecoverable error: no property data");
 	else if (!strcmp(name, "linux,rtas-base"))
 		base = *data;
 	else if (!strcmp(name, "linux,tce-base"))
@@ -145,7 +125,8 @@ static void add_usable_mem_property(int fd, int len)
 
 	lseek(fd, 0, SEEK_SET);
 	if (read(fd, buf, len) != len)
-		err(pathname, ERR_READ);
+		die("unrecoverable error: error reading \"%s\": %s\n",
+		    pathname, strerror(errno));
 
 	base = ((unsigned long long *)buf)[0];
 	end = base + ((unsigned long long *)buf)[1];
@@ -204,7 +185,8 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
                         continue;
 
 		if (lstat(pathname, &statbuf))
-			err(pathname, ERR_STAT);
+			die("unrecoverable error: could not stat \"%s\": %s\n",
+			    pathname, strerror(errno));
 
 		if (!crash_param && !strcmp(fn,"linux,crashkernel-base"))
 			continue;
@@ -244,10 +226,12 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 
 		fd = open(pathname, O_RDONLY);
 		if (fd == -1)
-			err(pathname, ERR_OPEN);
+			die("unrecoverable error: could not open \"%s\": %s\n",
+			    pathname, strerror(errno));
 
 		if (read(fd, dt, len) != len)
-			err(pathname, ERR_READ);
+			die("unrecoverable error: could not read \"%s\": %s\n",
+			    pathname, strerror(errno));
 
 		checkprop(fn, dt);
 
@@ -293,7 +277,7 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 	if(errno == ENOSYS)
 		errno = 0;
 	if (errno)
-		err(pathname, ERR_READDIR);
+		die("inrecoverable error: XXX: %s\n", strerror(errno));
 	checkprop(pathname, NULL);
 }
 
@@ -341,7 +325,8 @@ static void putnode(void)
 
 	numlist = scandir(pathname, &namelist, 0, comparefunc);
 	if (numlist == 0)
-		err(pathname, ERR_OPENDIR);
+		die("unrecoverable error: could not scan \"%s\": %s\n",
+		    pathname, strerror(errno));
 
 	basename = strrchr(pathname,'/');
 
@@ -390,13 +375,14 @@ static void putnode(void)
 			continue;
 
 		if (lstat(pathname, &statbuf))
-			err(pathname, ERR_STAT);
+			die("unrecoverable error: could not stat \"%s\": %s\n",
+			    pathname, strerror(errno));
 
 		if (S_ISDIR(statbuf.st_mode))
 			putnode();
 	}
 	if (errno)
-		err(pathname, ERR_READDIR);
+		die("unrecoverable error: XXX %s\n", strerror(errno));
 
 	*dt++ = 2;
 	dn[-1] = '\0';
