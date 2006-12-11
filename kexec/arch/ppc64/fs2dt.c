@@ -134,8 +134,10 @@ static void add_usable_mem_property(int fd, int len)
 		die("unrecoverable error: error reading \"%s\": %s\n",
 		    pathname, strerror(errno));
 
-	base = ((unsigned long long *)buf)[0];
-	end = base + ((unsigned long long *)buf)[1];
+	if (~0ULL - buf[0] < buf[1])
+		die("unrecoverable error: mem property overflow\n");
+	base = buf[0];
+	end = base + buf[1];
 
 	for (range = 0; range < usablemem_rgns.size; range++) {
 		loc_base = usablemem_rgns.ranges[range].start;
