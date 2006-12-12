@@ -58,7 +58,7 @@ static void err(const char *str, int rc)
 }
 
 static char pathname[MAXPATH], *pathstart;
-static char propnames[NAMESPACE];
+static char propnames[NAMESPACE] = { 0 };
 static unsigned dtstruct[TREEWORDS], *dt;
 static unsigned long long mem_rsrv[2*MEMRESERVE];
 
@@ -123,6 +123,9 @@ static unsigned propnum(const char *name)
 			offset += strlen(propnames+offset)+1;
 		else
 			return offset;
+
+	if (NAMESPACE - offset < strlen(name) + 1)
+		die("unrecoverable error: propnames overrun\n");
 
 	strcpy(propnames+offset, name);
 
