@@ -731,8 +731,8 @@ void usage(void)
 		"                      -p with -u.\n"
 		" -e, --exec           Execute a currently loaded kernel.\n"
 		" -t, --type=TYPE      Specify the new kernel is of this type.\n"
-		"     --mem-min=<addr> Specify the lowest memory addres to load code into.\n"
-		"     --mem-max=<addr> Specify the highest memory addres to load code into.\n"
+		"     --mem-min=<addr> Specify the lowest memory address to load code into.\n"
+		"     --mem-max=<addr> Specify the highest memory address to load code into.\n"
 		"\n"
 		"Supported kernel file types and options: \n"
 		);
