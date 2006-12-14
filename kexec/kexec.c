@@ -707,7 +707,7 @@ static int my_exec(void)
 
 static void version(void)
 {
-	printf("kexec " VERSION " released " RELEASE_DATE "\n");
+	printf(PACKAGE " " VERSION " released " RELEASE_DATE "\n");
 }
 
 void usage(void)

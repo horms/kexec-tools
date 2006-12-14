@@ -15,7 +15,7 @@ DESTDIR =
 
 EXTRA_CPPFLAGS:= -I./include -I./util_lib/include \
 	-DVERSION='"$(VERSION)"' -DRELEASE_DATE='"$(DATE)"' \
-	$(DEFS) $(EXTRA_CFLAGS)
+	-DPACKAGE='"$(PACKAGE)"' $(DEFS) $(EXTRA_CFLAGS)
 
 PREFIX:=$(OBJDIR)/build
 SBINDIR=$(PREFIX)/sbin
