@@ -92,8 +92,8 @@ ifeq ($(ARCH),x86_64)
 include kexec_test/Makefile
 endif
 
-GENERATED_SRCS:= ./configure
-SPEC=$(OBJDIR)/$(PACKAGE)-$(VERSION).spec
+SPEC=$(PACKAGE).spec
+GENERATED_SRCS:= ./configure ./$(SPEC)
 TARBALL=$(OBJDIR)/$(PACKAGE)-$(VERSION).tar.gz
 SRCS:=$(shell $(FIND) \
 	./AUTHORS ./COPYING ./News ./TODO \
@@ -104,7 +104,6 @@ SRCS:=$(shell $(FIND) \
 	-type f -print )
 SRCS+=$(GENERATED_SRCS)
 PSRCS:=$(patsubst ./%,$(PACKAGE)-$(VERSION)/%,$(SRCS))
-PSRCS+=$(PACKAGE)-$(VERSION).spec
 
 Makefile.conf: Makefile.conf.in configure
 	/bin/sh ./configure
