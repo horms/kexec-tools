@@ -1,8 +1,8 @@
 # Hey Emacs this is a -*- makefile-*-
 include Makefile.conf
-VERSION=1.102
-DATE=28 July 2006
-PACKAGE=kexec-tools
+VERSION=20061214
+DATE=14th December 2006
+PACKAGE=kexec-tools-testing
 
 pkgdatadir = $(datadir)/$(PACKAGE)
 pkglibdir = $(libdir)/$(PACKAGE)
