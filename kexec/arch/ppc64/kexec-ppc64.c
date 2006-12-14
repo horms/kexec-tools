@@ -20,6 +20,7 @@
 
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
@@ -34,16 +35,91 @@
 #include "crashdump-ppc64.h"
 #include <arch/options.h>
 
-static struct exclude_range exclude_range[MAX_MEMORY_RANGES];
+static struct exclude_range *exclude_range = NULL;
+static struct memory_range *memory_range = NULL;
+static struct memory_range *base_memory_range = NULL;
 static unsigned long long rmo_top;
-static struct memory_range memory_range[MAX_MEMORY_RANGES];
-static struct memory_range base_memory_range[MAX_MEMORY_RANGES];
 unsigned long long memory_max = 0;
 static int nr_memory_ranges, nr_exclude_ranges;
 unsigned long long crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
+int max_memory_ranges;
 
 static int sort_base_ranges();
+
+
+static void cleanup_memory_ranges()
+{
+	if (memory_range)
+		free(memory_range);
+	if (base_memory_range)
+		free(base_memory_range);
+	if (exclude_range)
+		free(exclude_range);
+	if (usablemem_rgns.ranges)
+		free(usablemem_rgns.ranges);
+}
+
+/*
+ * Allocate memory for various data structures used to hold
+ * values of different memory ranges
+ */
+static int alloc_memory_ranges()
+{
+	memory_range = (struct memory_range *) malloc(
+		(sizeof(struct memory_range) * max_memory_ranges));
+	if (!memory_range)
+		goto err1;
+
+	base_memory_range = (struct memory_range *) malloc(
+		(sizeof(struct memory_range) * max_memory_ranges));
+	if (!base_memory_range)
+		goto err1;
+
+	exclude_range = (struct exclude_range *) malloc(
+		(sizeof(struct exclude_range) * max_memory_ranges));
+	if (!exclude_range)
+		goto err1;
+
+	usablemem_rgns.ranges = (struct exclude_range *) malloc(
+		(sizeof(struct exclude_range) * max_memory_ranges));
+	if (!(usablemem_rgns.ranges))
+		goto err1;
+
+	return 0;
+
+err1:
+	fprintf(stderr, "memory range structure allocation failure\n");
+	cleanup_memory_ranges();
+	return -1;
+
+}
+
+/*
+ * Count the memory@ nodes under /proc/device-tree and populate the
+ * max_memory_ranges variable. This variable replaces MAX_MEMORY_RANGES
+ * macro used earlier.
+ */
+static int count_memory_ranges()
+{
+	char device_tree[256] = "/proc/device-tree/";
+	struct dirent *dentry;
+	DIR *dir;
+
+	if ((dir = opendir(device_tree)) == NULL) {
+		perror(device_tree);
+		return -1;
+	}
+
+	while ((dentry = readdir(dir)) != NULL) {
+		if (strncmp(dentry->d_name, "memory@", 7))
+			continue;
+		max_memory_ranges++;
+	}
+	closedir(dir);
+
+	return 0;
+}
 
 /* Get base memory ranges */
 static int get_base_ranges()
@@ -88,7 +164,7 @@ static int get_base_ranges()
 				closedir(dir);
 				return -1;
 			}
-			if (local_memory_ranges >= MAX_MEMORY_RANGES) {
+			if (local_memory_ranges >= max_memory_ranges) {
 				fclose(file);
 				break;
 			}
@@ -447,8 +523,10 @@ int setup_memory_ranges(unsigned long kexec_flags)
 	 * nodes. Build list of ranges to be excluded from valid memory
 	 */
 
-	get_base_ranges();
-	get_devtree_details(kexec_flags);
+	if (get_base_ranges())
+		goto out;
+	if (get_devtree_details(kexec_flags))
+		goto out;
 
 	for (i = 0; i < nr_exclude_ranges; i++) {
 		/* If first exclude range does not start with 0, include the
@@ -511,12 +589,21 @@ int setup_memory_ranges(unsigned long kexec_flags)
 		fprintf(stderr, "setup_memory_ranges memory_range[%d] start:%lx, end:%lx\n", k, memory_range[k].start, memory_range[k].end);
 #endif
 	return 0;
+
+out:
+	cleanup_memory_ranges();
+	return -1;
 }
 
 /* Return a list of valid memory ranges */
 int get_memory_ranges(struct memory_range **range, int *ranges,
 			unsigned long kexec_flags)
 {
+	if (count_memory_ranges())
+		return -1;
+	if (alloc_memory_ranges())
+		return -1;
+
 	setup_memory_ranges(kexec_flags);
 	*range = memory_range;
 	*ranges = nr_memory_ranges;

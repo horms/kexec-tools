@@ -1,8 +1,6 @@
 #ifndef KEXEC_PPC64_H
 #define KEXEC_PPC64_H
 
-#define MAX_MEMORY_RANGES 1024 /* TO FIX - needs to be dynamically set */
-
 #define MAXBYTES 128
 #define MAX_LINE 160
 #define CORE_TYPE_ELF32 1
@@ -17,6 +15,8 @@ void elf_ppc64_usage(void);
 void reserve(unsigned long long where, unsigned long long length);
 
 extern unsigned long initrd_base, initrd_size;
+extern int max_memory_ranges;
+
 /* boot block version 2 as defined by the linux kernel */
 struct bootblock {
 	unsigned magic,
@@ -39,7 +39,9 @@ struct exclude_range {
 
 typedef struct mem_rgns {
         unsigned int size;
-        struct exclude_range ranges[MAX_MEMORY_RANGES];
+        struct exclude_range *ranges;
 } mem_rgns_t;
+
+extern mem_rgns_t usablemem_rgns;
 
 #endif /* KEXEC_PPC64_H */

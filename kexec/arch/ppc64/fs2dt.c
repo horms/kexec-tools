@@ -36,6 +36,7 @@
 #define NAMESPACE 16384		/* max bytes for property names */
 #define TREEWORDS 65536		/* max 32 bit words for property values */
 #define MEMRESERVE 256		/* max number of reserved memory blocks */
+#define MAX_MEMORY_RANGES 1024
 
 static char pathname[MAXPATH], *pathstart;
 static char propnames[NAMESPACE] = { 0 };

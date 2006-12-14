@@ -62,13 +62,16 @@ extern struct arch_options_t arch_options;
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region
  */
-static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
+static struct memory_range *crash_memory_range = NULL;
+
+/* Define a variable to replace the CRASH_MAX_MEMORY_RANGES macro */
+static int crash_max_memory_ranges;
 
 /*
  * Used to save various memory ranges/regions needed for the captured
  * kernel to boot. (lime memmap= option in other archs)
  */
-mem_rgns_t usablemem_rgns = {0, };
+mem_rgns_t usablemem_rgns = {0, NULL};
 
 /*
  * To store the memory size of the first kernel and this value will be
@@ -105,6 +108,15 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	int i, n;
 	unsigned long long start, end, cstart, cend;
 
+	crash_max_memory_ranges = max_memory_ranges + 6;
+
+	crash_memory_range = (struct memory_range *) malloc(
+		(sizeof(struct memory_range) * (crash_max_memory_ranges)));
+	if (!crash_memory_range) {
+		fprintf(stderr, "Allocation for crash memory range failed\n");
+		return -1;
+	}
+
 	/* create a separate program header for the backup region */
 	crash_memory_range[0].start = BACKUP_SRC_START;
 	crash_memory_range[0].end = BACKUP_SRC_END;
@@ -113,7 +125,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 
 	if ((dir = opendir(device_tree)) == NULL) {
 		perror(device_tree);
-		return -1;
+		goto err;
 	}
 	while ((dentry = readdir(dir)) != NULL) {
 		if (strncmp(dentry->d_name, "memory@", 7))
@@ -123,7 +135,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		if ((dmem = opendir(fname)) == NULL) {
 			perror(fname);
 			closedir(dir);
-			return -1;
+			goto err;
 		}
 		while ((mentry = readdir(dmem)) != NULL) {
 			if (strcmp(mentry->d_name, "reg"))
@@ -133,21 +145,21 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				perror(fname);
 				closedir(dmem);
 				closedir(dir);
-				return -1;
+				goto err;
 			}
 			if ((n = fread(buf, 1, MAXBYTES, file)) < 0) {
 				perror(fname);
 				fclose(file);
 				closedir(dmem);
 				closedir(dir);
-				return -1;
+				goto err;
 			}
-			if (memory_ranges >= MAX_MEMORY_RANGES) {
+			if (memory_ranges >= max_memory_ranges) {
 				/* No space to insert another element. */
 				fprintf(stderr,
 					"Error: Number of crash memory ranges"
 					" excedeed the max limit\n");
-				return -1;
+				goto err;
 			}
 
 			start = ((unsigned long long *)buf)[0];
@@ -228,6 +240,11 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	}
 #endif
 	return 0;
+
+err:
+	if (crash_memory_range)
+		free(crash_memory_range);
+	return -1;
 }
 
 /* Converts unsigned long to ascii string. */
