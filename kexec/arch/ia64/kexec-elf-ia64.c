@@ -77,12 +77,16 @@ int elf_ia64_probe(const char *buf, off_t len)
 
 void elf_ia64_usage(void)
 {
-	printf(
-		"    --command-line=STRING Set the kernel command line to STRING.\n"
-		"    --append=STRING       Set the kernel command line to STRING.\n"
-		"    --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
-		"    --noio		   Disable I/O in purgatory code.\n"
-		"    --vmm=FILE            Use FILE as the kernel image for a virtual machine monitor (aka hypervisor)\n");
+	printf("    --command-line=STRING Set the kernel command line to "
+			"STRING.\n"
+	       "    --append=STRING       Set the kernel command line to "
+			"STRING.\n"
+	       "    --initrd=FILE         Use FILE as the kernel's initial "
+			"ramdisk.\n"
+	       "    --noio                Disable I/O in purgatory code.\n"
+	       "    --vmm=FILE            Use FILE as the kernel image for a\n"
+	       "                          virtual machine monitor "
+			"(aka hypervisor)\n");
 }
 
 /* Move the crash kerenl physical offset to reserved region
@@ -141,7 +145,8 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "";
 
 	command_line = 0;
-	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+	while ((opt = getopt_long(argc, argv, short_options,
+				  options, 0)) != -1) {
 		switch (opt) {
 		default:
 			/* Ignore core options */
@@ -187,7 +192,8 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 
 	if (info->kexec_flags & KEXEC_ON_CRASH ) {
 		if ((mem_min == 0x00) && (mem_max == ULONG_MAX)) {
-			fprintf(stderr, "Failed to find crash kernel region in /proc/iomem\n");
+			fprintf(stderr, "Failed to find crash kernel region "
+				"in /proc/iomem\n");
 			free_elf_info(&ehdr);
 			return -1;
 		}
@@ -292,7 +298,8 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
         elf_rel_set_symbol(&info->rhdr, "__gp_value", &gp_value,
                         sizeof(gp_value));
 
-	elf_rel_set_symbol(&info->rhdr, "__kernel_entry", &entry, sizeof(entry));
+	elf_rel_set_symbol(&info->rhdr, "__kernel_entry", &entry,
+			   sizeof(entry));
 	free_elf_info(&ehdr);
 	return 0;
 }
