@@ -123,10 +123,14 @@ void print_segments(FILE *f, struct kexec_info *info)
 
 	fprintf(f, "nr_segments = %d\n", info->nr_segments);
 	for (i = 0; i < info->nr_segments; i++) {
-		fprintf(f, "segment[%d].buf   = %p\n",	i, info->segment[i].buf);
-		fprintf(f, "segment[%d].bufsz = %zx\n", i, info->segment[i].bufsz);
-		fprintf(f, "segment[%d].mem   = %p\n",	i, info->segment[i].mem);
-		fprintf(f, "segment[%d].memsz = %zx\n", i, info->segment[i].memsz);
+		fprintf(f, "segment[%d].buf   = %p\n",	i,
+			info->segment[i].buf);
+		fprintf(f, "segment[%d].bufsz = %zx\n", i,
+			info->segment[i].bufsz);
+		fprintf(f, "segment[%d].mem   = %p\n",	i,
+			info->segment[i].mem);
+		fprintf(f, "segment[%d].memsz = %zx\n", i,
+			info->segment[i].memsz);
 	}
 }
 
@@ -203,7 +207,8 @@ unsigned long locate_hole(struct kexec_info *info,
 		mend = memory_range[i].end;
 		if (memory_range[i].type != RANGE_RAM)
 			continue;
-		while ((j < info->nr_segments) && (((unsigned long)info->segment[j].mem) <= mend)) {
+		while ((j < info->nr_segments) &&
+		       (((unsigned long)info->segment[j].mem) <= mend)) {
 			sstart = (unsigned long)info->segment[j].mem;
 			send = sstart + info->segment[j].memsz -1;
 			if (mstart < sstart) {
@@ -236,7 +241,8 @@ unsigned long locate_hole(struct kexec_info *info,
 		if (start < hole_min) {
 			start = hole_min;
 		}
-		start = (start + hole_align - 1) & ~((unsigned long long)hole_align - 1);
+		start = (start + hole_align - 1) &
+			~((unsigned long long)hole_align - 1);
 		if (end > mem_max) {
 			end = mem_max;
 		}
@@ -254,18 +260,19 @@ unsigned long locate_hole(struct kexec_info *info,
 				hole_base = start;
 				break;
 			} else {
-				hole_base = (end - hole_size) & ~((unsigned long long)hole_align - 1);
+				hole_base = (end - hole_size) &
+					~((unsigned long long)hole_align - 1);
 			}
 		}
 	}
 	if (hole_base == ULONG_MAX) {
-		fprintf(stderr, "Could not find a free area of memory of %lx bytes...\n",
-			hole_size);
+		fprintf(stderr, "Could not find a free area of memory of "
+			"%lx bytes...\n", hole_size);
 		return ULONG_MAX;
 	}
 	if ((hole_base + hole_size)  > hole_max) {
-		fprintf(stderr, "Could not find a free area of memory below: %lx...\n",
-			hole_max);
+		fprintf(stderr, "Could not find a free area of memory below: "
+			"%lx...\n", hole_max);
 		return ULONG_MAX;
 	}
 	return hole_base;
@@ -315,8 +322,8 @@ void add_segment(struct kexec_info *info,
 	info->segment[info->nr_segments].memsz = memsz;
 	info->nr_segments++;
 	if (info->nr_segments > KEXEC_MAX_SEGMENTS) {
-		fprintf(stderr, 
-			"Warning: kernel segment limit reached. This will likely fail\n");
+		fprintf(stderr, "Warning: kernel segment limit reached. "
+			"This will likely fail\n");
 	}
 }
 
@@ -379,15 +386,14 @@ char *slurp_file(const char *filename, off_t *r_size)
 		if (result < 0) {
 			if ((errno == EINTR) ||	(errno == EAGAIN))
 				continue;
-			die("read on %s of %ld bytes failed: %s\n",
-				filename, (size - progress)+ 0UL, strerror(errno));
+			die("read on %s of %ld bytes failed: %s\n", filename,
+			    (size - progress)+ 0UL, strerror(errno));
 		}
 		progress += result;
 	}
 	result = close(fd);
 	if (result < 0) {
-		die("Close of %s failed: %s\n",
-			filename, strerror(errno));
+		die("Close of %s failed: %s\n", filename, strerror(errno));
 	}
 	return buf;
 }
@@ -523,7 +529,8 @@ static void update_purgatory(struct kexec_info *info)
 		if (info->segment[i].mem == (void *)info->rhdr.rel_addr) {
 			continue;
 		}
-		sha256_update(&ctx, info->segment[i].buf, info->segment[i].bufsz);
+		sha256_update(&ctx, info->segment[i].buf,
+			      info->segment[i].bufsz);
 		nullsz = info->segment[i].memsz - info->segment[i].bufsz;
 		while(nullsz) {
 			unsigned long bytes = nullsz;
@@ -538,8 +545,10 @@ static void update_purgatory(struct kexec_info *info)
 		j++;
 	}
 	sha256_finish(&ctx, digest);
-	elf_rel_set_symbol(&info->rhdr, "sha256_regions", &region, sizeof(region));
-	elf_rel_set_symbol(&info->rhdr, "sha256_digest", &digest, sizeof(digest));
+	elf_rel_set_symbol(&info->rhdr, "sha256_regions", &region,
+			   sizeof(region));
+	elf_rel_set_symbol(&info->rhdr, "sha256_digest", &digest,
+			   sizeof(digest));
 }
 
 /*
@@ -615,7 +624,8 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 			}
 		}
 	}
-	if (file_type[i].load(argc, argv, kernel_buf, kernel_size, &info) < 0) {
+	if (file_type[i].load(argc, argv, kernel_buf,
+			      kernel_size, &info) < 0) {
 		fprintf(stderr, "Cannot load %s\n", kernel);
 		return -1;
 	}
@@ -715,27 +725,30 @@ void usage(void)
 	int i;
 
 	version();
-	printf(
-		"Usage: kexec [OPTION]... [kernel]\n"
-		"Directly reboot into a new kernel\n"
-		"\n"
-		" -h, --help           Print this help.\n"
-		" -v, --version        Print the version of kexec.\n"
-		" -f, --force          Force an immediate kexec, don't call shutdown.\n"
-		" -x, --no-ifdown      Don't bring down network interfaces.\n"
-		"                      (if used, must be last option specified)\n"
-		" -l, --load           Load the new kernel into the current kernel.\n"
-		" -p, --load-panic     Load the new kernel for use on panic.\n"
-		" -u, --unload         Unload the current kexec target kernel.\n"
-		"                      If capture kernel is being unloaded specify\n"
-		"                      -p with -u.\n"
-		" -e, --exec           Execute a currently loaded kernel.\n"
-		" -t, --type=TYPE      Specify the new kernel is of this type.\n"
-		"     --mem-min=<addr> Specify the lowest memory address to load code into.\n"
-		"     --mem-max=<addr> Specify the highest memory address to load code into.\n"
-		"\n"
-		"Supported kernel file types and options: \n"
-		);
+	printf("Usage: kexec [OPTION]... [kernel]\n"
+	       "Directly reboot into a new kernel\n"
+	       "\n"
+	       " -h, --help           Print this help.\n"
+	       " -v, --version        Print the version of kexec.\n"
+	       " -f, --force          Force an immediate kexec,"
+	       "                      don't call shutdown.\n"
+	       " -x, --no-ifdown      Don't bring down network interfaces.\n"
+	       "                      (if used, must be last option"
+	       "                       specified)\n"
+	       " -l, --load           Load the new kernel into the"
+	       "                      current kernel.\n"
+	       " -p, --load-panic     Load the new kernel for use on panic.\n"
+	       " -u, --unload         Unload the current kexec target kernel.\n"
+	       "                      If capture kernel is being unloaded"
+	       "                      specify -p with -u.\n"
+	       " -e, --exec           Execute a currently loaded kernel.\n"
+	       " -t, --type=TYPE      Specify the new kernel is of this type.\n"
+	       "     --mem-min=<addr> Specify the lowest memory address to"
+	       "                      load code into.\n"
+	       "     --mem-max=<addr> Specify the highest memory address to"
+	       "                      load code into.\n"
+	       "\n"
+	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
 		printf("%s\n", file_type[i].name);
 		file_type[i].usage();
@@ -779,7 +792,8 @@ int main(int argc, char *argv[])
 	static const char short_options[] = KEXEC_OPT_STR;
 
 	opterr = 0; /* Don't complain about unrecognized options here */
-	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+	while ((opt = getopt_long(argc, argv, short_options,
+				  options, 0)) != -1) {
 		switch(opt) {
 		case OPT_HELP:
 			usage();
@@ -828,7 +842,8 @@ int main(int argc, char *argv[])
 		case OPT_MEM_MIN:
 			mem_min = strtoul(optarg, &endptr, 0);
 			if (*endptr) {
-				fprintf(stderr, "Bad option value in --mem-min=%s\n",
+				fprintf(stderr,
+					"Bad option value in --mem-min=%s\n",
 					optarg);
 				usage();
 				return 1;
@@ -837,7 +852,8 @@ int main(int argc, char *argv[])
 		case OPT_MEM_MAX:
 			mem_max = strtoul(optarg, &endptr, 0);
 			if (*endptr) {
-				fprintf(stderr, "Bad option value in --mem-max=%s\n",
+				fprintf(stderr,
+					"Bad option value in --mem-max=%s\n",
 					optarg);
 				usage();
 				return 1;
@@ -864,7 +880,8 @@ int main(int argc, char *argv[])
 
 	/* Check for bogus options */
 	if (!do_load) {
-		while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+		while((opt = getopt_long(argc, argv, short_options,
+					 options, 0)) != -1) {
 			if ((opt == '?') || (opt >= OPT_ARCH_MAX)) {
 				usage();
 				return 1;
