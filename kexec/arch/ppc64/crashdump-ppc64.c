@@ -231,11 +231,11 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
 #if DEBUG
-	int i;
+	int j;
 	printf("CRASH MEMORY RANGES\n");
-	for(i = 0; i < *ranges; i++) {
-		start = crash_memory_range[i].start;
-		end = crash_memory_range[i].end;
+	for(j = 0; j < *ranges; j++) {
+		start = crash_memory_range[j].start;
+		end = crash_memory_range[j].end;
 		fprintf(stderr, "%016Lx-%016Lx\n", start, end);
 	}
 #endif
