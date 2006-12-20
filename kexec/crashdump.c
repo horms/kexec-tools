@@ -31,18 +31,22 @@
 
 /* include "crashdump-elf.c" twice to create two functions from one */
 
+#define ELF_WIDTH 64
 #define FUNC crash_create_elf64_headers
 #define EHDR Elf64_Ehdr
 #define PHDR Elf64_Phdr
 #include "crashdump-elf.c"
+#undef ELF_WIDTH
 #undef PHDR
 #undef EHDR
 #undef FUNC
 
+#define ELF_WIDTH 32
 #define FUNC crash_create_elf32_headers
 #define EHDR Elf32_Ehdr
 #define PHDR Elf32_Phdr
 #include "crashdump-elf.c"
+#undef ELF_WIDTH
 #undef PHDR
 #undef EHDR
 #undef FUNC
