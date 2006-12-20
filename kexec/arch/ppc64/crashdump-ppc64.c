@@ -383,7 +383,8 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 	usablemem_rgns.ranges[usablemem_rgns.size++].end = end;
 
 #ifdef DEBUG
-	fprintf(stderr, "usable memory rgns size:%d base:%lx size:%lx\n", usablemem_rgns.size, base, size);
+	fprintf(stderr, "usable memory rgns size:%u base:%llx size:%llx\n",
+		usablemem_rgns.size, base, size);
 #endif
 }
 

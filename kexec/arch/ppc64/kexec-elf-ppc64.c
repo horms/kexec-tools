@@ -322,13 +322,13 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 				sizeof(toc_addr));
 
 	fprintf(stderr, "info->entry is %p\n", info->entry);
-	fprintf(stderr, "kernel is %Lx\n", my_kernel);
-	fprintf(stderr, "dt_offset is %Lx\n", my_dt_offset);
+	fprintf(stderr, "kernel is %lx\n", my_kernel);
+	fprintf(stderr, "dt_offset is %lx\n", my_dt_offset);
 	fprintf(stderr, "panic_kernel is %x\n", my_panic_kernel);
-	fprintf(stderr, "backup_start is %Lx\n", my_backup_start);
-	fprintf(stderr, "stack is %Lx\n", my_stack);
-	fprintf(stderr, "toc_addr is %Lx\n", toc_addr);
-	fprintf(stderr, "purgatory size is %d\n", purgatory_size);
+	fprintf(stderr, "backup_start is %lx\n", my_backup_start);
+	fprintf(stderr, "stack is %lx\n", my_stack);
+	fprintf(stderr, "toc_addr is %lx\n", toc_addr);
+	fprintf(stderr, "purgatory size is %lu\n", purgatory_size);
 #endif
 
 	for (i = 0; i < nr_segments; i++)

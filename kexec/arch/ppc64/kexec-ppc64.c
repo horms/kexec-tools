@@ -509,7 +509,9 @@ static int get_devtree_details(unsigned long kexec_flags)
 #ifdef DEBUG
 	int k;
 	for (k = 0; k < i; k++)
-		fprintf(stderr, "exclude_range sorted exclude_range[%d] start:%lx, end:%lx\n", k, exclude_range[k].start, exclude_range[k].end);
+		fprintf(stderr, "exclude_range sorted exclude_range[%d] "
+			"start:%llx, end:%llx\n", k, exclude_range[k].start,
+			exclude_range[k].end);
 #endif
 	return 0;
 }
@@ -586,7 +588,9 @@ int setup_memory_ranges(unsigned long kexec_flags)
 #ifdef DEBUG
 	int k;
 	for (k = 0; k < j; k++)
-		fprintf(stderr, "setup_memory_ranges memory_range[%d] start:%lx, end:%lx\n", k, memory_range[k].start, memory_range[k].end);
+		fprintf(stderr, "setup_memory_ranges memory_range[%d] "
+			"start:%llx, end:%llx\n", k, memory_range[k].start,
+			memory_range[k].end);
 #endif
 	return 0;
 
