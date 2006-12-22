@@ -66,26 +66,32 @@ static void cleanup_memory_ranges()
  */
 static int alloc_memory_ranges()
 {
-	memory_range = (struct memory_range *) malloc(
-		(sizeof(struct memory_range) * max_memory_ranges));
-	if (!memory_range)
-		goto err1;
+	int memory_range_len, exclude_range_len;
 
-	base_memory_range = (struct memory_range *) malloc(
-		(sizeof(struct memory_range) * max_memory_ranges));
+	memory_range_len = sizeof(struct memory_range) * max_memory_ranges;
+	exclude_range_len = sizeof(struct exclude_range) * max_memory_ranges;
+
+	memory_range = (struct memory_range *) malloc(memory_range_len);
+	if (!memory_range)
+		return -1;
+
+	base_memory_range = (struct memory_range *) malloc(memory_range_len);
 	if (!base_memory_range)
 		goto err1;
 
-	exclude_range = (struct exclude_range *) malloc(
-		(sizeof(struct exclude_range) * max_memory_ranges));
+	exclude_range = (struct exclude_range *) malloc(exclude_range_len);
 	if (!exclude_range)
 		goto err1;
 
-	usablemem_rgns.ranges = (struct exclude_range *) malloc(
-		(sizeof(struct exclude_range) * max_memory_ranges));
+	usablemem_rgns.ranges = (struct exclude_range *)
+				malloc(exclude_range_len);
 	if (!(usablemem_rgns.ranges))
 		goto err1;
 
+	memset(memory_range, 0, memory_range_len);
+	memset(base_memory_range, 0, memory_range_len);
+	memset(exclude_range, 0, exclude_range_len);
+	memset(usablemem_rgns.ranges, 0, exclude_range_len);
 	return 0;
 
 err1:

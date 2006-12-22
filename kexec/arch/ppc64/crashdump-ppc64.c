@@ -105,17 +105,18 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	DIR *dir, *dmem;
 	FILE *file;
 	struct dirent *dentry, *mentry;
-	int i, n;
+	int i, n, crash_rng_len = 0;
 	unsigned long long start, end, cstart, cend;
 
 	crash_max_memory_ranges = max_memory_ranges + 6;
+	crash_rng_len = sizeof(struct memory_range) * crash_max_memory_ranges;
 
-	crash_memory_range = (struct memory_range *) malloc(
-		(sizeof(struct memory_range) * (crash_max_memory_ranges)));
+	crash_memory_range = (struct memory_range *) malloc(crash_rng_len);
 	if (!crash_memory_range) {
 		fprintf(stderr, "Allocation for crash memory range failed\n");
 		return -1;
 	}
+	memset(crash_memory_range, 0, crash_rng_len);
 
 	/* create a separate program header for the backup region */
 	crash_memory_range[0].start = BACKUP_SRC_START;
@@ -154,7 +155,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				closedir(dir);
 				goto err;
 			}
-			if (memory_ranges >= max_memory_ranges) {
+			if (memory_ranges >= (max_memory_ranges + 1)) {
 				/* No space to insert another element. */
 				fprintf(stderr,
 					"Error: Number of crash memory ranges"
