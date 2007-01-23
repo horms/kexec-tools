@@ -16,10 +16,10 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 #define COMMAND_LINE_SIZE       512 /* from kernel */
 /* Backup Region, First 64K of System RAM. */
 #define BACKUP_SRC_START    0x0000
-#define BACKUP_SRC_END      0x10000
+#define BACKUP_SRC_END      0xffff
 #define BACKUP_SRC_SIZE     (BACKUP_SRC_END - BACKUP_SRC_START + 1)
 
-#define KDUMP_BACKUP_LIMIT	BACKUP_SRC_END
+#define KDUMP_BACKUP_LIMIT	BACKUP_SRC_SIZE
 #define _ALIGN_UP(addr,size)	(((addr)+((size)-1))&(~((size)-1)))
 #define _ALIGN_DOWN(addr,size)	((addr)&(~((size)-1)))
 

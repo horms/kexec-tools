@@ -120,7 +120,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 
 	/* create a separate program header for the backup region */
 	crash_memory_range[0].start = BACKUP_SRC_START;
-	crash_memory_range[0].end = BACKUP_SRC_END;
+	crash_memory_range[0].end = BACKUP_SRC_END + 1;
 	crash_memory_range[0].type = RANGE_RAM;
 	memory_ranges++;
 
@@ -165,8 +165,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 
 			start = ((unsigned long long *)buf)[0];
 			end = start + ((unsigned long long *)buf)[1];
-			if (start == 0 && end >= BACKUP_SRC_END)
-				start = BACKUP_SRC_END;
+			if (start == 0 && end >= (BACKUP_SRC_END + 1))
+				start = BACKUP_SRC_END + 1;
 
 			cstart = crash_base;
 			cend = crash_base + crash_size;
@@ -309,7 +309,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 {
 	void *tmp;
 	unsigned long sz, elfcorehdr;
-	int nr_ranges, align = 1024;
+	int nr_ranges, align = 1024, i;
+	unsigned long long end;
 	struct memory_range *mem_range;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
@@ -322,6 +323,22 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	info->backup_start = add_buffer(info, tmp, sz, sz, align,
 					0, max_addr, 1);
 	reserve(info->backup_start, sz);
+
+	/* On ppc64 memory ranges in device-tree is denoted as start
+	 * and size rather than start and end, as is the case with
+	 * other architectures like i386 . Because of this when loading
+	 * the memory ranges in crashdump-elf.c the filesz calculation
+	 * [ end - start + 1 ] goes for a toss.
+	 *
+	 * To be in sync with other archs adjust the end value for
+	 * every crash memory range before calling the generic function
+	 */
+
+	for (i = 0; i < nr_ranges; i++) {
+		end = crash_memory_range[i].end - 1;
+		crash_memory_range[i].end = end;
+	}
+
 
 	/* Create elf header segment and store crash image data. */
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
