@@ -35,7 +35,7 @@
 #include "crashdump-ppc64.h"
 #include <arch/options.h>
 
-static struct exclude_range *exclude_range = NULL;
+static struct memory_range *exclude_range = NULL;
 static struct memory_range *memory_range = NULL;
 static struct memory_range *base_memory_range = NULL;
 static unsigned long long rmo_top;
@@ -66,10 +66,9 @@ static void cleanup_memory_ranges()
  */
 static int alloc_memory_ranges()
 {
-	int memory_range_len, exclude_range_len;
+	int memory_range_len;
 
 	memory_range_len = sizeof(struct memory_range) * max_memory_ranges;
-	exclude_range_len = sizeof(struct exclude_range) * max_memory_ranges;
 
 	memory_range = (struct memory_range *) malloc(memory_range_len);
 	if (!memory_range)
@@ -79,19 +78,19 @@ static int alloc_memory_ranges()
 	if (!base_memory_range)
 		goto err1;
 
-	exclude_range = (struct exclude_range *) malloc(exclude_range_len);
+	exclude_range = (struct memory_range *) malloc(memory_range_len);
 	if (!exclude_range)
 		goto err1;
 
-	usablemem_rgns.ranges = (struct exclude_range *)
-				malloc(exclude_range_len);
+	usablemem_rgns.ranges = (struct memory_range *)
+				malloc(memory_range_len);
 	if (!(usablemem_rgns.ranges))
 		goto err1;
 
 	memset(memory_range, 0, memory_range_len);
 	memset(base_memory_range, 0, memory_range_len);
-	memset(exclude_range, 0, exclude_range_len);
-	memset(usablemem_rgns.ranges, 0, exclude_range_len);
+	memset(exclude_range, 0, memory_range_len);
+	memset(usablemem_rgns.ranges, 0, memory_range_len);
 	return 0;
 
 err1:

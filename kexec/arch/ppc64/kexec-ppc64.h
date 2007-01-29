@@ -33,13 +33,9 @@ struct arch_options_t {
 	int core_header_type;
 };
 
-struct exclude_range {
-        unsigned long long start, end;
-};
-
 typedef struct mem_rgns {
         unsigned int size;
-        struct exclude_range *ranges;
+        struct memory_range *ranges;
 } mem_rgns_t;
 
 extern mem_rgns_t usablemem_rgns;
