@@ -52,6 +52,7 @@
 #define OPT_VMM		(OPT_ARCH_MAX+3)
 
 static const int probe_debug = 0;
+extern unsigned long saved_efi_memmap_size;
 
 /*
  * elf_ia64_probe - sanity check the elf image
@@ -236,8 +237,8 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
         elf_rel_set_symbol(&info->rhdr, "__boot_param_base",
                         &boot_param_base, sizeof(long));
 
-	// reserve 8k for efi_memmap
-	efi_memmap_size = 1UL<<14;
+	// reserve efi_memmap of actual size allocated in production kernel
+	efi_memmap_size = saved_efi_memmap_size;
 	efi_memmap_buf = xmalloc(efi_memmap_size);
 	efi_memmap_base = add_buffer(info, efi_memmap_buf,
 			efi_memmap_size, efi_memmap_size, 4096, 0,

@@ -38,6 +38,7 @@
 
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 static int memory_ranges;
+unsigned long saved_efi_memmap_size;
 
 /* Reserve range for EFI memmap and Boot parameter */
 static int split_range(int range, unsigned long start, unsigned long end)
@@ -124,6 +125,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			continue;
 		} else if (memcmp(str, "EFI Memory Map\n", 14) == 0) {
 			memory_ranges = split_range(memory_ranges, start, end);
+			saved_efi_memmap_size = end - start;
 			continue;
 		} else
 			continue;
