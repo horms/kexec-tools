@@ -25,9 +25,6 @@
 #ifdef __i386__
 #define __NR_kexec_load		283
 #endif
-#ifdef __sh__
-#define __NR_kexec_load		283
-#endif
 #ifdef __ia64__
 #define __NR_kexec_load		1268
 #endif

@@ -31,15 +31,12 @@ case $host_cpu in
 	s390x )
 		host_cpu="s390"
 		;;
-	sh4|sh3 )
-		host_cpu="sh"
-		;;
 	* ) 
 		host_cpu="$host_cpu"
 		;;
 esac
 case $host_cpu in
-	i386|ppc|x86_64|alpha|ppc64|ia64|s390|sh)
+	i386|ppc|x86_64|alpha|ppc64|ia64|s390)
 		;;
 	* )
 		AC_MSG_ERROR([ unsupported architecture $host_cpu])
