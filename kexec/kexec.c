@@ -58,6 +58,8 @@ void *xmalloc(size_t size)
 {
 	void *buf;
 	buf = malloc(size);
+	if (!size)
+		return NULL;
 	if (!buf) {
 		die("Cannot malloc %ld bytes: %s\n",
 			size + 0UL, strerror(errno));
@@ -224,7 +226,7 @@ unsigned long locate_hole(struct kexec_info *info,
 			mstart = send +1;
 			j++;
 		}
-		if (mstart <= mend) {
+		if (mstart < mend) {
 			mem_range[mem_ranges].start = mstart;
 			mem_range[mem_ranges].end = mend;
 			mem_range[mem_ranges].type = RANGE_RAM;
