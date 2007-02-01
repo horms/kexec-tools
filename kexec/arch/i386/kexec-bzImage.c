@@ -270,7 +270,7 @@ int do_bzImage_load(struct kexec_info *info,
 	/*
 	 * Initialize the 16bit start information.
 	 */
-	regs16.cs = setup_base + 0x20;
+	regs16.cs = (setup_base>>4) + 0x20;
 	regs16.ip = 0;
 	regs16.ss = (elf_rel_get_addr(&info->rhdr, "stack_end") - 64*1024) >> 4;
 	regs16.esp = 0xFFFC;
@@ -278,7 +278,7 @@ int do_bzImage_load(struct kexec_info *info,
 		printf("Starting the kernel in real mode\n");
 		regs32.eip = elf_rel_get_addr(&info->rhdr, "entry16");
 	}
-	if (real_mode && debug) {
+	if (real_mode_entry && debug) {
 		unsigned long entry16_debug, pre32, first32;
 		uint32_t old_first32;
 		/* Find the location of the symbols */
