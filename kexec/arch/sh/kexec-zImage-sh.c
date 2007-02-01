@@ -46,7 +46,6 @@ int zImage_sh_probe(const char *buf, off_t len)
 void zImage_sh_usage(void)
 {
 	printf(
-		
     " --append=STRING      Set the kernel command line to STRING.\n"
     " --empty-zero=ADDRESS Set the kernel top ADDRESS. \n\n");
 
@@ -84,7 +83,7 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 			command_line = optarg;
 			break;
 		case OPT_EMPTYZERO:
-			empty_zero = get_empty_zero(optarg); 
+			empty_zero = get_empty_zero(optarg);
 			break;
 		}
 	}

@@ -53,7 +53,7 @@ int netbsd_sh_probe(const char *buf, off_t len)
 
 void netbsd_sh_usage(void)
 {
-	printf( 
+	printf(
 		" --howto=VALUE        NetBSD kernel boot option.\n"
 		" --miniroot=FILE      NetBSD miniroot ramdisk.\n\n");
 }
@@ -141,12 +141,12 @@ int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 	/* howto & bootinfo */
 	param  = xmalloc(4096);
 	memset(param, 0, 4096);
-	paraml = (unsigned long *) &param[256]; 
+	paraml = (unsigned long *) &param[256];
 	memcpy(param, netbsd_booter, 256);
 	paraml[0] = entry;
 	paraml[1] = howto_value;
 	add_segment(info, param, 4096, start, 4096);
-	
+
 	/* For now we don't have arguments to pass :( */
 	info->entry = (void *) (start | 0xa0000000);
 	return 0;

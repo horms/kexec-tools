@@ -57,7 +57,7 @@ void arch_usage(void)
     " --empty-zero=0x%08x\n\n"
     " STRING of --appned is set form /proc/cmdline as default.\n"
     " ADDRESS of --empty-zero can be set SHELL environment variable\n"
-    " KEXEC_EMPTY_ZERO as default.\n\n" 
+    " KEXEC_EMPTY_ZERO as default.\n\n"
     " ADDRESS can be get in the following method in your system. \n"
     " 1) \"grep empty_zero /proc/kallsyms\". \n"
     " 2) \"grep empty_zero System.map\". \n"
@@ -90,9 +90,9 @@ int arch_process_options(int argc, char **argv)
 		case '?':
 		        usage();
 		  	return -1;
-		case OPT_APPEND:	
-		case OPT_NBSD_HOWTO:	
-		case OPT_NBSD_MROOT:	
+		case OPT_APPEND:
+		case OPT_NBSD_HOWTO:
+		case OPT_NBSD_MROOT:
 		  ;
 		}
 	}
@@ -113,10 +113,10 @@ int arch_compat_trampoline(struct kexec_info *info, unsigned long *flags)
 		return -1;
 	}
 	if (	(strcmp(utsname.machine, "sh3") == 0) ||
-		(strcmp(utsname.machine, "sh4") == 0)) 
+		(strcmp(utsname.machine, "sh4") == 0))
 
 	{
-		/* For compatibility with older patches 
+		/* For compatibility with older patches
 		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
 		 */
 		*flags |= KEXEC_ARCH_DEFAULT;
@@ -142,7 +142,7 @@ unsigned long get_empty_zero(char *s)
 
 	if(s){
 	  env = s;
-	}else if(!env){ 
+	}else if(!env){
 	  env = "0x0c001000";
 	}
 	return 0x1fffffff & strtoul(env,(char **)NULL,0);
