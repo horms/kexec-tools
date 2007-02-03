@@ -36,7 +36,10 @@
 #include "kexec-ia64.h"
 #include <arch/options.h>
 
-static struct memory_range memory_range[MAX_MEMORY_RANGES];
+/* The number of entries in memory_range array is always smaller than
+   the number of entries in /proc/iomem, stored in max_memory_ranges. */
+static struct memory_range *memory_range;
+int max_memory_ranges;
 static int memory_ranges;
 unsigned long saved_efi_memmap_size;
 
@@ -86,13 +89,21 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		return -1;
 	}
 
+	/* allocate memory_range dynamically */
+	while(fgets(line, sizeof(line), fp) != 0) {
+		max_memory_ranges++;
+	}
+	memory_range = xmalloc(sizeof(struct memory_range) *
+			max_memory_ranges);
+	rewind(fp);
+
 	while(fgets(line, sizeof(line), fp) != 0) {
 		unsigned long start, end;
 		char *str;
 		int type;
 		int consumed;
 		int count;
-		if (memory_ranges >= MAX_MEMORY_RANGES)
+		if (memory_ranges >= max_memory_ranges)
 			break;
 		count = sscanf(line, "%lx-%lx : %n",
 				&start, &end, &consumed);

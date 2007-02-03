@@ -42,8 +42,10 @@ static struct crash_elf_info elf_info =
 
 #define MAX_LINE        160
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
- * A separate program header is created for backup region */
-static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
+ * A separate program header is created for backup region.
+ * The number of entries in memory_range array is always smaller than
+ * the number of entries in /proc/iomem, stored in max_memory_ranges. */
+static struct memory_range *crash_memory_range;
 /* Memory region reserved for storing panic kernel and other data. */
 static struct memory_range crash_reserved_mem;
 unsigned long elfcorehdr;
@@ -125,7 +127,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 	}
 	/* Insert split memory region, if any. */
 	if (tidx >= 0) {
-		if (*nr_ranges == CRASH_MAX_MEMORY_RANGES) {
+		if (*nr_ranges == max_memory_ranges) {
 			/* No space to insert another element. */
 			fprintf(stderr, "Error: Number of crash memory ranges"
 					" excedeed the max limit\n");
@@ -148,6 +150,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
         FILE *fp;
         unsigned long start, end;
 
+	crash_memory_range = xmalloc(sizeof(struct memory_range) *
+				max_memory_ranges);
         fp = fopen(iomem, "r");
         if (!fp) {
                 fprintf(stderr, "Cannot open %s: %s\n",
@@ -157,7 +161,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	while(fgets(line, sizeof(line), fp) != 0) {
 		char *str;
 		int type, consumed, count;
-		if (memory_ranges >= CRASH_MAX_MEMORY_RANGES)
+		if (memory_ranges >= max_memory_ranges)
 			break;
 		count = sscanf(line, "%lx-%lx : %n",
 				&start, &end, &consumed);
