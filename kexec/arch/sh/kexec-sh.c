@@ -114,10 +114,12 @@ int arch_compat_trampoline(struct kexec_info *info)
 		return -1;
 	}
 	if (	(strcmp(utsname.machine, "sh3") == 0) ||
-		(strcmp(utsname.machine, "sh4") == 0))
+		(strcmp(utsname.machine, "sh4") == 0) ||
+		(strcmp(utsname.machine, "sh4a") == 0))
 	{
-		/* For compatibility with older patches
-		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_IA64 here.
+		/*
+		 * For compatibility with older patches
+		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_SH here.
 		 */
 		info->kexec_flags |= KEXEC_ARCH_DEFAULT;
 	}

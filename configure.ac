@@ -31,7 +31,7 @@ case $host_cpu in
 	s390x )
 		host_cpu="s390"
 		;;
-	sh4|sh3 )
+	sh4|sh4a|sh3 )
 		host_cpu="sh"
 		;;
 	* ) 
