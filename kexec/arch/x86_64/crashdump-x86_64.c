@@ -607,7 +607,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	/* Create elf header segment and store crash image data. */
 	if (crash_create_elf64_headers(info, &elf_info,
 				       crash_memory_range, nr_ranges,
-				       &tmp, &sz) < 0)
+				       &tmp, &sz, 1024) < 0)
 		return -1;
 
 	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),

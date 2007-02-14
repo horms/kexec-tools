@@ -524,13 +524,13 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
 		if (crash_create_elf64_headers(info, &elf_info64,
 					       crash_memory_range, nr_ranges,
-					       &tmp, &sz) < 0)
+					       &tmp, &sz, 1024) < 0)
 			return -1;
 	}
 	else {
 		if (crash_create_elf32_headers(info, &elf_info32,
 					       crash_memory_range, nr_ranges,
-					       &tmp, &sz) < 0)
+					       &tmp, &sz, 1024) < 0)
 			return -1;
 	}
 

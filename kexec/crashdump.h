@@ -27,12 +27,14 @@ struct crash_elf_info {
 int crash_create_elf32_headers(struct kexec_info *info,
 			       struct crash_elf_info *elf_info,
 			       struct memory_range *range, int ranges,
-			       void **buf, unsigned long *size);
+			       void **buf, unsigned long *size,
+			       unsigned long align);
 
 int crash_create_elf64_headers(struct kexec_info *info,
 			       struct crash_elf_info *elf_info,
 			       struct memory_range *range, int ranges,
-			       void **buf, unsigned long *size);
+			       void **buf, unsigned long *size,
+			       unsigned long align);
 
 int xen_present(void);
 int xen_get_nr_phys_cpus(void);
