@@ -29,7 +29,8 @@
 #include "../kexec/crashdump.h"
 
 int memory_ranges = 0;
-#define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL)
+#define LOAD_OFFSET 	(0xa000000000000000UL + 0x100000000UL -		\
+			 kernel_code_start)
 
 static struct crash_elf_info elf_info =
 {
