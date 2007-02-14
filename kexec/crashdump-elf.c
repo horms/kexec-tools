@@ -31,7 +31,8 @@ int FUNC(struct kexec_info *info,
 {
 	EHDR *elf;
 	PHDR *phdr;
-	int i, sz;
+	int i;
+	unsigned long sz;
 	char *bufp;
 	long int nr_cpus = 0;
 	uint64_t notes_addr, notes_len;
