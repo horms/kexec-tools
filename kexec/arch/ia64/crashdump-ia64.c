@@ -236,10 +236,12 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 						       EFI_PAGE_SIZE) < 0)
 				return -1;
 
-			elfcorehdr = add_buffer(info, tmp, sz, sz, EFI_PAGE_SIZE, min_base,
-					max_addr, -1);
+			elfcorehdr = add_buffer(info, tmp, sz, sz,
+						EFI_PAGE_SIZE, min_base,
+						max_addr, -1);
 			loaded_segments[loaded_segments_num].start = elfcorehdr;
-			loaded_segments[loaded_segments_num].end = elfcorehdr + sz;
+			loaded_segments[loaded_segments_num].end = elfcorehdr +
+								   sz;
 			loaded_segments[loaded_segments_num].reserved = 1;
 			loaded_segments_num++;
 			cmdline_add_elfcorehdr(cmdline, elfcorehdr);
