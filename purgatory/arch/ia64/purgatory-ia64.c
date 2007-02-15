@@ -123,7 +123,6 @@ typedef struct {
 struct loaded_segment {
         unsigned long start;
         unsigned long end;
-        unsigned long reserved;
 };
 
 struct kexec_boot_params {
@@ -202,8 +201,7 @@ patch_efi_memmap(struct kexec_boot_params *params,
 			}
 			dst_md->phys_addr = seg->start;
 			dst_md->num_pages = mid_pages;
-			dst_md->type = seg->reserved ?
-				EFI_UNUSABLE_MEMORY:EFI_LOADER_DATA;
+			dst_md->type = EFI_LOADER_DATA;
 			if (!end_pages)
 				break;
 			dest += boot_param->efi_memdesc_size;

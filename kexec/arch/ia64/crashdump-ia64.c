@@ -55,7 +55,6 @@ static unsigned long kernel_code_end;
 struct loaded_segment {
         unsigned long start;
         unsigned long end;
-	unsigned long reserved;
 };
 
 #define MAX_LOAD_SEGMENTS	128
@@ -90,7 +89,6 @@ static void add_loaded_segments_info(struct kexec_info *info,
                         start&~(ELF_PAGE_SIZE-1);
                 loaded_segments[loaded_segments_num].end =
                         (end + ELF_PAGE_SIZE - 1)&~(ELF_PAGE_SIZE - 1);
-		loaded_segments[loaded_segments_num].reserved = 0;
 		loaded_segments_num++;
 	}
 }
@@ -243,7 +241,6 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 			loaded_segments[loaded_segments_num].start = elfcorehdr;
 			loaded_segments[loaded_segments_num].end = elfcorehdr +
 								   sz;
-			loaded_segments[loaded_segments_num].reserved = 1;
 			loaded_segments_num++;
 			cmdline_add_elfcorehdr(cmdline, elfcorehdr);
 		}
