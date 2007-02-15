@@ -90,6 +90,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	}
 
 	/* allocate memory_range dynamically */
+	max_memory_ranges = 0;
 	while(fgets(line, sizeof(line), fp) != 0) {
 		max_memory_ranges++;
 	}
