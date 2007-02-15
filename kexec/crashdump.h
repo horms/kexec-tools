@@ -7,6 +7,12 @@ extern int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len);
 #define MAX_NOTE_BYTES		1024
 /* Expecting ELF headers to fit in 4K. Increase it if you need more. */
 #define KCORE_ELF_HEADERS_SIZE  4096
+/* The address of the ELF header is passed to the secondary kernel
+ * using the kernel command line option memmap=nnn.
+ * The smallest unit the kernel accepts is in kilobytes,
+ * so we need to make sure the ELF header is aligned to 1024.
+ */
+#define ELF_CORE_HEADER_ALIGN   1024
 
 /* structure passed to crash_create_elf32/64_headers() */
 

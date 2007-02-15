@@ -73,6 +73,17 @@ int FUNC(struct kexec_info *info,
 		sz += sizeof(PHDR);
 	}
 
+	/*
+	 * Make sure the ELF core header is aligned to at least 1024.
+	 * We do this because the secondary kernel gets the ELF core
+	 * header address on the kernel command line through the memmap=
+	 * option, and this option requires 1k granularity.
+	 */
+
+	if (align % ELF_CORE_HEADER_ALIGN) {
+		return -1;
+	}
+
 	sz += align - 1;
 	sz &= ~(align - 1);
 
