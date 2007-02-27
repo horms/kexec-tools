@@ -47,7 +47,6 @@
 #include <getopt.h>
 #include <elf.h>
 #include <boot/elf_boot.h>
-#include <asm/page.h>
 #include <ip_checksum.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
@@ -343,7 +342,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 			/* Pick the next aligned spot to load it in */
 			freespace = add_buffer(info,
 				buf, mod_size, mod_size,
-				PAGE_SIZE, 0, 0xffffffffUL, 1);
+				getpagesize(), 0, 0xffffffffUL, 1);
 
 			/* Add the module command line */
 			sprintf(mod_clp, "%s", mod_command_line);
