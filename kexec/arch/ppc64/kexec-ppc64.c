@@ -613,8 +613,9 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		return -1;
 	if (alloc_memory_ranges())
 		return -1;
+	if (setup_memory_ranges(kexec_flags))
+		return -1;
 
-	setup_memory_ranges(kexec_flags);
 	*range = memory_range;
 	*ranges = nr_memory_ranges;
 	fprintf(stderr, "get memory ranges:%d\n", nr_memory_ranges);
