@@ -181,10 +181,14 @@ int do_bzImage_load(struct kexec_info *info,
 	/* Load the trampoline.  This must load at a higher address
 	 * the the argument/parameter segment or the kernel will stomp
 	 * it's gdt.
+	 *
+	 * x86_64 purgatory code has got relocations type R_X86_64_32S
+	 * that means purgatory got to be loaded within first 2G otherwise
+	 * overflow takes place while applying relocations.
 	 */
 	if (!real_mode_entry && relocatable_kernel)
 		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
-					0x3000, -1, -1, 0);
+					0x3000, 0x7fffffff, -1, 0);
 	else
 		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
 					0x3000, 640*1024, -1, 0);
