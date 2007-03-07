@@ -47,7 +47,7 @@ static const char *reloc_name(unsigned long r_type)
 	};
 	static char buf[100];
 	const char *name;
-	if (r_type < (sizeof(reloc_name)/sizeof(r_name[0]))){
+	if (r_type < (sizeof(r_name)/sizeof(r_name[0]))){
 		name = r_name[r_type];
 	}
 	else {
