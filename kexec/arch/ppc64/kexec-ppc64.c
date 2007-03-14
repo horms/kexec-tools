@@ -117,7 +117,8 @@ static int count_memory_ranges()
 	}
 
 	while ((dentry = readdir(dir)) != NULL) {
-		if (strncmp(dentry->d_name, "memory@", 7))
+		if (strncmp(dentry->d_name, "memory@", 7) &&
+		    strncmp(dentry->d_name, "pci@", 4))
 			continue;
 		max_memory_ranges++;
 	}
