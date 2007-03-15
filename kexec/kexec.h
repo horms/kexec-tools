@@ -112,6 +112,8 @@ struct memory_range {
 struct kexec_info {
 	struct kexec_segment *segment;
 	int nr_segments;
+	struct memory_range *memory_range;
+	int memory_ranges;
 	void *entry;
 	struct mem_ehdr rhdr;
 	unsigned long backup_start;
@@ -124,8 +126,8 @@ struct kexec_info {
 void usage(void);
 int get_memory_ranges(struct memory_range **range, int *ranges,
 						unsigned long kexec_flags);
-int valid_memory_range(unsigned long sstart, unsigned long send);
-int valid_memory_segment(struct kexec_segment *segment);
+int valid_memory_range(struct kexec_info *info,
+		       unsigned long sstart, unsigned long send);
 void print_segments(FILE *file, struct kexec_info *info);
 int sort_segments(struct kexec_info *info);
 unsigned long locate_hole(struct kexec_info *info,

@@ -93,7 +93,7 @@ int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
 		/* If I can't use the default paddr find a new
 		 * hole for the dynamic executable.
 		 */
-		if (!valid_memory_range(first, last)) {
+		if (!valid_memory_range(info, first, last)) {
 			unsigned long hole;
 			hole = locate_hole(info,
 				last - first + 1, align, 

@@ -78,12 +78,8 @@ void *xrealloc(void *ptr, size_t size)
 	return buf;
 }
 
-
-/* local variables */
-static struct memory_range *memory_range;
-static int memory_ranges;
-
-int valid_memory_range(unsigned long sstart, unsigned long send)
+int valid_memory_range(struct kexec_info *info,
+		       unsigned long sstart, unsigned long send)
 {
 	int i;
 	if (sstart > send) {
@@ -92,15 +88,16 @@ int valid_memory_range(unsigned long sstart, unsigned long send)
 	if ((send > mem_max) || (sstart < mem_min)) {
 		return 0;
 	}
-	for (i = 0; i < memory_ranges; i++) {
+	for (i = 0; i < info->memory_ranges; i++) {
 		unsigned long mstart, mend;
 		/* Only consider memory ranges */
-		if (memory_range[i].type != RANGE_RAM)
+		if (info->memory_range[i].type != RANGE_RAM)
 			continue;
-		mstart = memory_range[i].start;
-		mend = memory_range[i].end;
-		if (i < memory_ranges - 1 && mend == memory_range[i+1].start)
-			mend = memory_range[i+1].end;
+		mstart = info->memory_range[i].start;
+		mend = info->memory_range[i].end;
+		if (i < info->memory_ranges - 1
+		    && mend == info->memory_range[i+1].start)
+			mend = info->memory_range[i+1].end;
 
 		/* Check to see if we are fully contained */
 		if ((mstart <= sstart) && (mend >= send)) {
@@ -110,13 +107,14 @@ int valid_memory_range(unsigned long sstart, unsigned long send)
 	return 0;
 }
 
-int valid_memory_segment(struct kexec_segment *segment)
+static int valid_memory_segment(struct kexec_info *info,
+				struct kexec_segment *segment)
 {
 	unsigned long sstart, send;
 	sstart = (unsigned long)segment->mem;
 	send   = sstart + segment->memsz - 1;
 
-	return valid_memory_range(sstart, send);
+	return valid_memory_range(info, sstart, send);
 }
 
 void print_segments(FILE *f, struct kexec_info *info)
@@ -197,17 +195,17 @@ unsigned long locate_hole(struct kexec_info *info,
 	}
 
 	/* Compute the free memory ranges */
-	max_mem_ranges = memory_ranges + info->nr_segments;
+	max_mem_ranges = info->memory_ranges + info->nr_segments;
 	mem_range = xmalloc(max_mem_ranges *sizeof(struct memory_range));
 	mem_ranges = 0;
 		
 	/* Perform a merge on the 2 sorted lists of memory ranges  */
-	for (j = 0, i = 0; i < memory_ranges; i++) {
+	for (j = 0, i = 0; i < info->memory_ranges; i++) {
 		unsigned long long sstart, send;
 		unsigned long long mstart, mend;
-		mstart = memory_range[i].start;
-		mend = memory_range[i].end;
-		if (memory_range[i].type != RANGE_RAM)
+		mstart = info->memory_range[i].start;
+		mend = info->memory_range[i].end;
+		if (info->memory_range[i].type != RANGE_RAM)
 			continue;
 		while ((j < info->nr_segments) &&
 		       (((unsigned long)info->segment[j].mem) <= mend)) {
@@ -312,7 +310,7 @@ void add_segment(struct kexec_info *info,
 	}
 	
 	last = base + memsz -1;
-	if (!valid_memory_range(base, last)) {
+	if (!valid_memory_range(info, base, last)) {
 		die("Invalid memory segment %p - %p\n",
 			(void *)base, (void *)last);
 	}
@@ -589,7 +587,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		kernel_buf, kernel_size);
 #endif
 
-	if (get_memory_ranges(&memory_range, &memory_ranges,
+	if (get_memory_ranges(&info.memory_range, &info.memory_ranges,
 		info.kexec_flags) < 0) {
 		fprintf(stderr, "Could not get memory layout\n");
 		return -1;
@@ -638,7 +636,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	}
 	/* Verify all of the segments load to a valid location in memory */
 	for (i = 0; i < info.nr_segments; i++) {
-		if (!valid_memory_segment(info.segment +i)) {
+		if (!valid_memory_segment(&info, info.segment +i)) {
 			fprintf(stderr, "Invalid memory segment %p - %p\n",
 				info.segment[i].mem,
 				((char *)info.segment[i].mem) + 
