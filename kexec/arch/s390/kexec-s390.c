@@ -104,11 +104,7 @@ void arch_update_purgatory(struct kexec_info *info)
 {
 }
 
-/*
- * Adding a dummy function, so that build on s390 will not break.
- * Need to implement the actual checking code
- */
 int is_crashkernel_mem_reserved(void)
 {
-	return 1;
+	return 0; /* kdump is not supported on this platform (yet) */
 }

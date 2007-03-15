@@ -170,9 +170,6 @@ char *get_append(void)
 
 int is_crashkernel_mem_reserved(void)
 {
-	uint64_t start, end;
-
-	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
-				  (start != end) : 0;
+	return 0; /* kdump is not supported on this platform (yet) */
 }
 
