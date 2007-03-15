@@ -40,8 +40,6 @@ static struct crash_elf_info elf_info =
 	page_offset: PAGE_OFFSET,
 };
 
-
-#define MAX_LINE        160
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region.
  * The number of entries in memory_range array is always smaller than
