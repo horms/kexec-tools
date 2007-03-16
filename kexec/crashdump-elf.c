@@ -103,7 +103,7 @@ int FUNC(struct kexec_info *info,
 	elf->e_ident[EI_OSABI] = ELFOSABI_NONE;
 	memset(elf->e_ident+EI_PAD, 0, EI_NIDENT-EI_PAD);
 	elf->e_type	= ET_CORE;
-	elf->e_machine	= elf_info->machine;
+	elf->e_machine  = crash_architecture(elf_info);
 	elf->e_version	= EV_CURRENT;
 	elf->e_entry	= 0;
 	elf->e_phoff	= sizeof(EHDR);

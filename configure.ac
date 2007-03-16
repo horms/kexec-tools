@@ -72,6 +72,9 @@ AC_ARG_WITH([gamecube], AC_HELP_STRING([--with-gamecube],[enable gamecube suppor
 AC_ARG_WITH([zlib], AC_HELP_STRING([--without-zlib],[disable gamecube support]),
 	[ with_zlib="$withval"], [ with_zlib=yes ] )
 
+AC_ARG_WITH([xen], AC_HELP_STRING([--with-xen],[enable extended xen support]),
+	[ with_xen="$withval"], [ with_xen=no ] )
+
 dnl ---Programs
 dnl To specify a different compiler, just 'export CC=/path/to/compiler'
 
@@ -107,6 +110,12 @@ AC_CHECK_PROG([DIRNAME],  dirname,  dirname,  "no", [$PATH])
 dnl See if I have a usable copy of zlib available
 if test "$with_zlib" = yes ; then
 	AC_CHECK_HEADER(zlib.h, AC_CHECK_LIB(z, inflateInit_, [AC_DEFINE(HAVE_ZLIB_H, 1) LIBS="$LIBS -lz"]))
+fi
+
+dnl find Xen control stack libraries
+if test "$with_xen" = yes ; then
+	AC_CHECK_HEADER(xenctrl.h, AC_CHECK_LIB(xenctrl, xc_version,
+		[AC_DEFINE(HAVE_XENCTRL_H, 1) LIBS="$LIBS -lxenctrl"]))
 fi
 
 dnl ---Sanity checks

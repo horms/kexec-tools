@@ -3,6 +3,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
+#include <elf.h>
 #include <errno.h>
 #include <limits.h>
 #include <sys/types.h>
@@ -11,6 +12,10 @@
 #include <fcntl.h>
 #include "kexec.h"
 #include "crashdump.h"
+
+#ifdef HAVE_XENCTRL_H
+#include <xenctrl.h>
+#endif
 
 struct crash_note_info {
 	unsigned long base;
@@ -25,6 +30,43 @@ int xen_present(void)
 	struct stat buf;
 
 	return stat("/proc/xen", &buf) == 0;
+}
+
+unsigned long xen_architecture(struct crash_elf_info *elf_info)
+{
+	unsigned long machine = elf_info->machine;
+#ifdef HAVE_XENCTRL_H
+	int xc, rc;
+	xen_capabilities_info_t capabilities;
+
+	if (!xen_present())
+		goto out;
+
+	memset(capabilities, '0', XEN_CAPABILITIES_INFO_LEN);
+
+	xc = xc_interface_open();
+	if ( xc == -1 ) {
+		fprintf(stderr, "failed to open xen control interface.\n");
+		goto out;
+	}
+
+	rc = xc_version(xc, XENVER_capabilities, &capabilities[0]);
+	if ( rc == -1 ) {
+		fprintf(stderr, "failed to make Xen version hypercall.\n");
+		goto out_close;
+	}
+
+	if (strstr(capabilities, "xen-3.0-x86_64"))
+		machine = EM_X86_64;
+        else if (strstr(capabilities, "xen-3.0-x86_32"))
+		machine = EM_386;
+
+ out_close:
+	xc_interface_close(xc);
+
+ out:
+#endif
+	return machine;
 }
 
 static int xen_crash_note_callback(void *data, int nr,

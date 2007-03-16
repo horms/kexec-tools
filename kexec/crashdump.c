@@ -51,6 +51,14 @@
 #undef EHDR
 #undef FUNC
 
+unsigned long crash_architecture(struct crash_elf_info *elf_info)
+{
+	if (xen_present())
+		return xen_architecture(elf_info);
+	else
+		return elf_info->machine;
+}
+
 /* Returns the physical address of start of crash notes buffer for a cpu. */
 int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 {

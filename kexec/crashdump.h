@@ -42,7 +42,10 @@ int crash_create_elf64_headers(struct kexec_info *info,
 			       void **buf, unsigned long *size,
 			       unsigned long align);
 
+unsigned long crash_architecture(struct crash_elf_info *elf_info);
+
 int xen_present(void);
+unsigned long xen_architecture(struct crash_elf_info *elf_info);
 int xen_get_nr_phys_cpus(void);
 int xen_get_note(int cpu, uint64_t *addr, uint64_t *len);
 
