@@ -676,7 +676,14 @@ static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
 	note_start = note_end = NULL;
 	for(i = 0; !note_start && (i < ehdr->e_phnum); i++) {
 		struct mem_phdr *phdr = &ehdr->e_phdr[i];
-		if (phdr->p_type == PT_NOTE) {
+		/*
+		 * binutils <= 2.17 has a bug where it can create the
+		 * PT_NOTE segment with an offset of 0. Therefore
+		 * check p_offset > 0.
+		 *
+		 * See: http://sourceware.org/bugzilla/show_bug.cgi?id=594
+		 */
+		if (phdr->p_type == PT_NOTE && phdr->p_offset) {
 			note_start = (unsigned char *)phdr->p_data;
 			note_end = note_start + phdr->p_filesz;
 		}
