@@ -69,7 +69,7 @@ AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for
 AC_ARG_WITH([gamecube], AC_HELP_STRING([--with-gamecube],[enable gamecube support]),
 	[ EXTRA_CFLAGS="$EXTRA_CFLAGS -DCONFIG_GAMECUBE=1" ])
 
-AC_ARG_WITH([zlib], AC_HELP_STRING([--without-zlib],[disable gamecube support]),
+AC_ARG_WITH([zlib], AC_HELP_STRING([--without-zlib],[disable zlib support]),
 	[ with_zlib="$withval"], [ with_zlib=yes ] )
 
 AC_ARG_WITH([xen], AC_HELP_STRING([--without-xen],
