@@ -72,8 +72,8 @@ AC_ARG_WITH([gamecube], AC_HELP_STRING([--with-gamecube],[enable gamecube suppor
 AC_ARG_WITH([zlib], AC_HELP_STRING([--without-zlib],[disable gamecube support]),
 	[ with_zlib="$withval"], [ with_zlib=yes ] )
 
-AC_ARG_WITH([xen], AC_HELP_STRING([--with-xen],[enable extended xen support]),
-	[ with_xen="$withval"], [ with_xen=no ] )
+AC_ARG_WITH([xen], AC_HELP_STRING([--without-xen],
+	[disable extended xen support]), [ with_xen="$withval"], [ with_xen=yes ] )
 
 dnl ---Programs
 dnl To specify a different compiler, just 'export CC=/path/to/compiler'
