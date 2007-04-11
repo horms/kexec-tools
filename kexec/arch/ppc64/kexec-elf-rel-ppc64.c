@@ -97,7 +97,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		break;
 
 	case R_PPC64_ADDR16_HA:
-		*(uint16_t *)location = ((value>>16)  & 0xffff);
+		*(uint16_t *)location = (((value+0x8000)>>16)  & 0xffff);
 		break;
 
 	case R_PPC64_ADDR16_HIGHEST:
