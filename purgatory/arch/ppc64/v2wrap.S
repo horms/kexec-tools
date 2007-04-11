@@ -45,13 +45,22 @@
 	oris    rn,rn,name##@h;         \
 	ori     rn,rn,name##@l
 
-# look a bit like a Linux kernel here ...
+
 	.machine ppc64
 	.globl purgatory_start
 purgatory_start:	b	master
-	tweq	0,0
+	.org purgatory_start + 0x60     # ABI: slaves start at 60 with r3=phys
+slave:	b $
+	.org purgatory_start + 0x100    # ABI: end of copied region
+	.size purgatory_start, . - purgatory_start
+
+#
+# The above 0x100 bytes at purgatory_start are replaced with the
+# code from the kernel (or next stage) by kexec/arch/ppc64/kexec-ppc64.c
+#
+
 master:
-	or	1,1,1		# low priority to let other thread catchup
+	or	1,1,1		# low priority to let other threads catchup
 	isync
 	mr      17,3            # save cpu id to r17
 	mr      15,4            # save physical address in reg15
@@ -66,25 +75,7 @@ master:
 	bl      .purgatory
 	nop
 
-	b       81f
-	.org purgatory_start + 0x60     # ABI: slaves start at 60 with r3=phys
-slave:
-	# load slave spin code address and branch into that
-	LOADADDR(6,slave_spin)
-	ld      4,0(6)
-	mtctr 4
-	bctr
-
-spin: .long 1
-slave_spin_code:
-	lis     5,spin@ha
-	lwz     5,spin@l(5)
-	cmpwi   0,5,0
-	bne     slave_spin_code
-	ba 0x60
-
-81:				# master continues here
-	or	3,3,3		# ok back to high, lets boot
+	or	3,3,3		# ok now to high priority, lets boot
 	lis	6,0x1
 	mtctr	6		# delay a bit for slaves to catch up
 83:	bdnz	83b		# before we overwrite 0-100 again
@@ -99,30 +90,12 @@ slave_spin_code:
 80:
 	LOADADDR(6,kernel)
 	ld      4,0(6)          # load the kernel address
-
-	addi	5,4,-8		# prepare copy with update form instructions
-	li	6,0x100/8
-	mtctr	6
-	li	6,-8
-85:	ldu	7,8(5)
-	stdu	7,8(6)
-	bdnz	85b
-
 	li	5,0		# r5 will be 0 for kernel
-	dcbst	0,5		# store dcache, flush icache
-	dcbst	0,6		# 0 and 0xf8 covers us with 128 byte lines
 	mtctr	4		# prepare branch too
-	sync
-	icbi	0,5
-	icbi	0,6
-	sync
-	isync
-	lis     6,spin@ha
-	li      0,0
-	stw     0,spin@l(6)
 	mr      3,16            # restore dt address
 
+	lwz	7,0(4)		# get the first instruction that we stole
+	stw	7,0(0)		# and put it in the slave loop at 0
+				# skip cache flush, do we care?
+
 	bctr			# start kernel
-
-slave_spin: .llong  slave_spin_code
-

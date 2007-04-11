@@ -89,6 +89,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned int my_panic_kernel;
 	unsigned long my_stack, my_backup_start;
 	unsigned long toc_addr;
+	unsigned int slave_code[256/sizeof (unsigned int)], master_entry;
 
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
 #define OPT_RAMDISK     (OPT_ARCH_MAX+1)
@@ -280,6 +281,15 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	my_dt_offset = (unsigned long )info->segment[nr_segments-1].mem;
 	elf_rel_set_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
 				sizeof(my_dt_offset));
+
+	/* get slave code from new kernel, put in purgatory */
+	elf_rel_get_symbol(&info->rhdr, "purgatory_start", slave_code,
+			sizeof(slave_code));
+	master_entry = slave_code[0];
+	memcpy(slave_code, info->segment[0].buf, sizeof(slave_code));
+	slave_code[0] = master_entry;
+	elf_rel_set_symbol(&info->rhdr, "purgatory_start", slave_code,
+				sizeof(slave_code));
 
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		my_panic_kernel = 1;
