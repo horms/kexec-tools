@@ -1,6 +1,6 @@
 # Hey Emacs this is a -*- makefile-*-
 include Makefile.conf
-VERSION=20070330
+VERSION=20070330-git
 DATE=30th March 2007
 PACKAGE=kexec-tools-testing
 
