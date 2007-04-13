@@ -150,10 +150,14 @@ clean:
 	@$(RM) -f config.log config.status config.cache
 	@$(RM) -f $(TARBALL)
 
+distclean: dist-clean
+
 dist-clean: clean
 	@$(RM) -rf $(OBJDIR)
 	@$(FIND) . -type f -name '*~' -o -name '*.orig' | $(XARGS) $(RM) -f
 	@$(RM) -f Makefile.conf
+
+maintainerclean: maintainer-clean
 
 maintainer-clean: dist-clean
 	@$(RM) -f $(GENERATED_SRCS)
@@ -247,4 +251,5 @@ install: $(TARGETS)
 		fi; \
 	done
 
-.PHONY: echo install all clean dist-clean maintainer-clean tarball rpm
+.PHONY: echo install all clean dist-clean distclean maintainer-clean 	\
+	maintainerclean tarball rpm
