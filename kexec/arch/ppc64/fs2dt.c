@@ -43,7 +43,6 @@ static char propnames[NAMESPACE] = { 0 };
 static unsigned dtstruct[TREEWORDS], *dt;
 static unsigned long long mem_rsrv[2*MEMRESERVE] = { 0, 0 };
 
-static int initrd_found = 0;
 static int crash_param = 0;
 static char local_cmdline[COMMAND_LINE_SIZE] = { "" };
 static unsigned *dt_len; /* changed len of modified cmdline
@@ -343,10 +342,8 @@ static void putnode(void)
 
 	putprops(dn, namelist, numlist);
 
-	/* Add initrd entries to the second kernel if first kernel does not
-	 * have and second kernel needs.
-	 */
-	if (initrd_base && !initrd_found && !strcmp(basename,"/chosen/")) {
+	/* Add initrd entries to the second kernel */
+	if (initrd_base && !strcmp(basename,"/chosen/")) {
 		int len = 8;
 		unsigned long long initrd_end;
 		*dt++ = 3;
