@@ -99,7 +99,8 @@ int valid_memory_range(struct kexec_info *info,
 		mstart = info->memory_range[i].start;
 		mend = info->memory_range[i].end;
 		if (i < info->memory_ranges - 1
-		    && mend == info->memory_range[i+1].start)
+		    && mend == info->memory_range[i+1].start
+		    && info->memory_range[i+1].type == RANGE_RAM)
 			mend = info->memory_range[i+1].end;
 
 		/* Check to see if we are fully contained */
