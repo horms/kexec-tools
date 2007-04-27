@@ -163,6 +163,7 @@ extern int file_types;
 #define OPT_MEM_MIN             256
 #define OPT_MEM_MAX             257
 #define OPT_MAX			258
+#define OPT_REUSE_INITRD	259
 #define KEXEC_OPTIONS \
 	{ "help",		0, 0, OPT_HELP }, \
 	{ "version",		0, 0, OPT_VERSION }, \
@@ -175,6 +176,7 @@ extern int file_types;
 	{ "load-panic",         0, 0, OPT_PANIC }, \
 	{ "mem-min",		1, 0, OPT_MEM_MIN }, \
 	{ "mem-max",		1, 0, OPT_MEM_MAX }, \
+	{ "reuseinitrd",	0, 0, OPT_REUSE_INITRD }, \
 
 #define KEXEC_OPT_STR "hvdfxluet:p"
 

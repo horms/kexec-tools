@@ -748,6 +748,7 @@ void usage(void)
 	       "                      load code into.\n"
 	       "     --mem-max=<addr> Specify the highest memory address to\n"
 	       "                      load code into.\n"
+	       "     --reuseinird     Reuse initrd from first boot.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
@@ -772,6 +773,29 @@ static int kexec_loaded(void)
 	return ret;
 }
 
+/* check we retained the initrd */
+void check_reuse_initrd(void)
+{
+	FILE * fp;
+	char * line = NULL;
+	size_t len = 0;
+	ssize_t read;
+
+	fp = fopen("/proc/cmdline", "r");
+	if (fp == NULL)
+		die("unable to open /proc/cmdline\n");
+	read = getline(&line, &len, fp);
+	if (strstr(line, "retain_initrd") == NULL)
+		die("unrecoverable error: current boot didn't "
+		    "retain the initrd for reuse.\n");
+}
+
+/* Arch hook for reuse_initrd */
+void __attribute__((weak)) arch_reuse_initrd(void)
+{
+	die("--reuseinitrd not implemented on this architecture\n");
+}
+
 int main(int argc, char *argv[])
 {
 	int do_load = 1;
@@ -780,6 +804,7 @@ int main(int argc, char *argv[])
 	int do_sync = 1;
 	int do_ifdown = 0;
 	int do_unload = 0;
+	int do_reuse_initrd = 0;
 	unsigned long kexec_flags = 0;
 	char *type = 0;
 	char *endptr;
@@ -860,6 +885,9 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 			break;
+		case OPT_REUSE_INITRD:
+			do_reuse_initrd = 1;
+			break;
 		default:
 			break;
 		}
@@ -888,6 +916,11 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 		}
+	}
+
+	if (do_reuse_initrd){
+		check_reuse_initrd();
+		arch_reuse_initrd();
 	}
 
 	if (do_unload) {
