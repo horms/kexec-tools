@@ -122,6 +122,11 @@ static int count_memory_ranges()
 			continue;
 		max_memory_ranges++;
 	}
+	/* need to add extra region for retained initrd */
+	if (reuse_initrd) {
+		max_memory_ranges++;
+	}
+
 	closedir(dir);
 
 	return 0;
@@ -253,12 +258,14 @@ static int get_devtree_details(unsigned long kexec_flags)
 	unsigned int tce_size;
 	unsigned long long htab_base, htab_size;
 	unsigned long long kernel_end;
+	unsigned long long initrd_start, initrd_end;
 	char buf[MAXBYTES-1];
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
 	DIR *dir, *cdir;
 	FILE *file;
 	struct dirent *dentry;
+	struct stat *fstat = malloc(sizeof(struct stat));
 	int n, i = 0;
 
 	if ((dir = opendir(device_tree)) == NULL) {
@@ -394,6 +401,68 @@ static int get_devtree_details(unsigned long kexec_flags)
 			exclude_range[i].start = htab_base;
 			exclude_range[i].end = htab_base + htab_size;
 			i++;
+
+			/* reserve the initrd_start and end locations. */
+			if (reuse_initrd) {
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,initrd-start");
+				if ((file = fopen(fname, "r")) == NULL) {
+					perror(fname);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				/* check for 4 and 8 byte initrd offset sizes */
+				if (stat(fname, fstat) != 0) {
+					perror(fname);
+					fclose(file);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+ 				if (fread(&initrd_start, fstat->st_size, 1, file) != 1) {
+					perror(fname);
+					fclose(file);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				fclose(file);
+
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,initrd-end");
+				if ((file = fopen(fname, "r")) == NULL) {
+					perror(fname);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				/* check for 4 and 8 byte initrd offset sizes */
+				if (stat(fname, fstat) != 0) {
+					perror(fname);
+					fclose(file);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+ 				if (fread(&initrd_end, fstat->st_size, 1, file) != 1) {
+					perror(fname);
+					fclose(file);
+					closedir(cdir);
+					closedir(dir);
+					return -1;
+				}
+				fclose(file);
+
+				/* Add initrd address to exclude_range */
+				exclude_range[i].start = initrd_start;
+				exclude_range[i].end = initrd_end;
+				i++;
+			}
 		} /* chosen */
 
 		if (strncmp(dentry->d_name, "rtas", 4) == 0) {

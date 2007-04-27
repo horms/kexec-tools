@@ -66,11 +66,11 @@ void reserve(unsigned long long where, unsigned long long length)
 }
 
 /* look for properties we need to reserve memory space for */
-static void checkprop(char *name, unsigned *data)
+static void checkprop(char *name, unsigned *data, int len)
 {
-	static unsigned long long base, size;
+	static unsigned long long base, size, end;
 
-	if ((data == NULL) && (base || size))
+	if ((data == NULL) && (base || size || end))
 		die("unrecoverable error: no property data");
 	else if (!strcmp(name, "linux,rtas-base"))
 		base = *data;
@@ -79,10 +79,23 @@ static void checkprop(char *name, unsigned *data)
 	else if (!strcmp(name, "rtas-size") ||
 			!strcmp(name, "linux,tce-size"))
 		size = *data;
+	else if (reuse_initrd && !strcmp(name, "linux,initrd-start"))
+		if (len == 8)
+			base = *(unsigned long long *) data;
+		else
+			base = *data;
+	else if (reuse_initrd && !strcmp(name, "linux,initrd-end"))
+		end = *(unsigned long long *) data;
 
+	if (size && end)
+		die("unrecoverable error: size and end set at same time\n");
 	if (base && size) {
 		reserve(base, size);
 		base = size = 0;
+	}
+	if (base && end) {
+		reserve(base, end-base);
+		base = end = 0;
 	}
 }
 
@@ -213,10 +226,11 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 				continue;
 
 		/* This property will be created/modified later in putnode()
-		 * So ignore it.
+		 * So ignore it, unless we are reusing the initrd.
 		 */
-		if (!strcmp(dp->d_name, "linux,initrd-start") ||
-			!strcmp(dp->d_name, "linux,initrd-end"))
+		if ((!strcmp(dp->d_name, "linux,initrd-start") ||
+		     !strcmp(dp->d_name, "linux,initrd-end")) &&
+		    !reuse_initrd)
 				continue;
 
 		if (! S_ISREG(statbuf.st_mode))
@@ -241,7 +255,7 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 			die("unrecoverable error: could not read \"%s\": %s\n",
 			    pathname, strerror(errno));
 
-		checkprop(fn, dt);
+		checkprop(fn, dt, len);
 
 		/* Get the cmdline from the device-tree and modify it */
 		if (!strcmp(dp->d_name, "bootargs")) {
@@ -282,7 +296,7 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 	}
 
 	fn[0] = '\0';
-	checkprop(pathname, NULL);
+	checkprop(pathname, NULL, 0);
 }
 
 /*

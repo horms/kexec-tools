@@ -43,6 +43,8 @@
 #define BOOTLOADER_VERSION VERSION
 
 unsigned long initrd_base, initrd_size;
+unsigned char reuse_initrd = 0;
+const char *ramdisk;
 
 int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
 			char *);
@@ -69,12 +71,17 @@ int elf_ppc64_probe(const char *buf, off_t len)
 	return result;
 }
 
+void arch_reuse_initrd(void)
+{
+	reuse_initrd = 1;
+}
+
 int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	char *cmdline, *modified_cmdline;
-	const char *ramdisk, *devicetreeblob;
+	const char *devicetreeblob;
 	int cmdline_len, modified_cmdline_len;
 	unsigned long long max_addr, hole_addr;
 	unsigned char *seg_buf = NULL;
@@ -147,6 +154,9 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		cmdline_len = strlen(cmdline) + 1;
 	else
 		fprintf(stdout, "Warning: append= option is not passed. Using the first kernel root partition\n");
+
+	if (ramdisk && reuse_initrd)
+		die("Can't specify --ramdisk or --initrd with --reuseinitrd\n");
 
 	setup_memory_ranges(info->kexec_flags);
 

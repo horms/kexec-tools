@@ -16,6 +16,7 @@ void reserve(unsigned long long where, unsigned long long length);
 
 extern unsigned long initrd_base, initrd_size;
 extern int max_memory_ranges;
+extern unsigned char reuse_initrd;
 
 /* boot block version 2 as defined by the linux kernel */
 struct bootblock {
