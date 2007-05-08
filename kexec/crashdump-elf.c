@@ -4,22 +4,20 @@
 #endif
 
 #if (ELF_WIDTH == 64)
-#define dfprintf_phdr(fh, prefix, phdr)					\
+#define dprintf_phdr(prefix, phdr)					\
 do {									\
-	dfprintf((fh),							\
-		 "%s: p_type = %u, p_offset = 0x%lx p_paddr = 0x%lx "	\
-		 "p_vaddr = 0x%lx p_filesz = 0x%lx p_memsz = 0x%lx\n",	\
-		 (prefix), (phdr)->p_type, (phdr)->p_offset, (phdr)->p_paddr, \
-		 (phdr)->p_vaddr, (phdr)->p_filesz, (phdr)->p_memsz);	\
+	dprintf("%s: p_type = %u, p_offset = 0x%lx p_paddr = 0x%lx "	\
+		"p_vaddr = 0x%lx p_filesz = 0x%lx p_memsz = 0x%lx\n",	\
+		(prefix), (phdr)->p_type, (phdr)->p_offset, (phdr)->p_paddr, \
+		(phdr)->p_vaddr, (phdr)->p_filesz, (phdr)->p_memsz);	\
 } while(0)
 #else
-#define dfprintf_phdr(fh, prefix, phdr)					\
+#define dprintf_phdr(prefix, phdr)					\
 do {									\
-	dfprintf((fh),							\
-		 "%s: p_type = %u, p_offset = 0x%x " "p_paddr = 0x%x "	\
-		 "p_vaddr = 0x%x p_filesz = 0x%x p_memsz = 0x%x\n",	\
-		 (prefix), (phdr)->p_type, (phdr)->p_offset, (phdr)->p_paddr, \
-		 (phdr)->p_vaddr, (phdr)->p_filesz, (phdr)->p_memsz);	\
+	dprintf("%s: p_type = %u, p_offset = 0x%x " "p_paddr = 0x%x "	\
+		"p_vaddr = 0x%x p_filesz = 0x%x p_memsz = 0x%x\n",	\
+		(prefix), (phdr)->p_type, (phdr)->p_offset, (phdr)->p_paddr, \
+		(phdr)->p_vaddr, (phdr)->p_filesz, (phdr)->p_memsz);	\
 } while(0)
 #endif
 
@@ -145,7 +143,7 @@ int FUNC(struct kexec_info *info,
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
-		dfprintf_phdr(stdout, "Elf header", phdr);
+		dprintf_phdr("Elf header", phdr);
 	}
 
 	/* Setup an PT_LOAD type program header for the region where
@@ -162,7 +160,7 @@ int FUNC(struct kexec_info *info,
 		phdr->p_filesz	= phdr->p_memsz	= info->kern_size;
 		phdr->p_align	= 0;
 		(elf->e_phnum)++;
-		dfprintf_phdr(stdout, "Kernel text Elf header", phdr);
+		dprintf_phdr("Kernel text Elf header", phdr);
 	}
 
 	/* Setup PT_LOAD type program header for every system RAM chunk.
@@ -203,9 +201,9 @@ int FUNC(struct kexec_info *info,
 
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
-		dfprintf_phdr(stdout, "Elf header", phdr);
+		dprintf_phdr("Elf header", phdr);
 	}
 	return 0;
 }
 
-#undef dfprintf_phdr
+#undef dprintf_phdr

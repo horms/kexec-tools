@@ -61,7 +61,7 @@ void setup_linux_bootloader_parameters(
 	initrd_addr_max = DEFAULT_INITRD_ADDR_MAX;
 	if (real_mode->protocol_version >= 0x0203) {
 		initrd_addr_max = real_mode->initrd_addr_max;
-		dfprintf(stdout, "initrd_addr_max is 0x%lx\n", initrd_addr_max);
+		dprintf("initrd_addr_max is 0x%lx\n", initrd_addr_max);
 	}
 
 	/* Load the initrd if we have one */
@@ -69,8 +69,8 @@ void setup_linux_bootloader_parameters(
 		initrd_base = add_buffer(info,
 			initrd_buf, initrd_size, initrd_size,
 			4096, INITRD_BASE, initrd_addr_max, -1);
-		dfprintf(stdout, "Loaded initrd at 0x%lx size 0x%lx\n",
-					initrd_base, initrd_size);
+		dprintf("Loaded initrd at 0x%lx size 0x%lx\n", initrd_base,
+			initrd_size);
 	} else {
 		initrd_base = 0;
 		initrd_size = 0;
