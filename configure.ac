@@ -45,7 +45,12 @@ case $host_cpu in
 		AC_MSG_ERROR([ unsupported architecture $host_cpu])
 		;;
 esac
-ARCH=$host_cpu
+
+dnl Try to guess the kernel ARCH based on the autoconf host_cpu variable.
+
+if ! test "${ARCH}" ; then
+	ARCH=$host_cpu
+fi
 
 dnl ---Options
 
@@ -59,8 +64,12 @@ BUILD_CFLAGS='-O2 -Wall $(CPPFLAGS)'
 
 # Check whether ppc64. Add -m64 for building 64-bit binary
 # Add -mcall-aixdesc to generate dot-symbols as in gcc 3.3.3
-if test "$ARCH" = ppc64; then
+if test "$host_cpu" = ppc64; then
   EXTRA_CFLAGS="$EXTRA_CFLAGS -m64 -mcall-aixdesc"
+fi;
+
+if test "$host_cpu" = ppc; then
+  EXTRA_CFLAGS="$EXTRA_CFLAGS -m32"
 fi;
 
 AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
