@@ -52,8 +52,8 @@ static int exclude_crash_reserve_region(int *nr_ranges);
 
 #define KERN_VADDR_ALIGN	0x100000	/* 1MB */
 
-/* Read kernel physical load addr from /proc/iomem (Kernel Code) and
- * store in kexec_info */
+/* Read kernel physical load addr from the file returned by proc_iomem()
+ * (Kernel Code) and store in kexec_info */
 static int get_kernel_paddr(struct kexec_info *info)
 {
 	uint64_t start;
@@ -61,7 +61,7 @@ static int get_kernel_paddr(struct kexec_info *info)
 	if (xen_present()) /* Kernel not entity mapped under Xen */
 		return 0;
 
-	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
+	if (parse_iomem_single("Kernel code\n", 0, &start, NULL) == 0) {
 		info->kern_paddr_start = start;
 #ifdef DEBUG
 		printf("kernel load physical addr start = 0x%016Lx\n", start);
@@ -164,7 +164,7 @@ static struct memory_range crash_reserved_mem;
  */
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
-	const char iomem[]= "/proc/iomem";
+	const char *iomem= proc_iomem(1);
 	int memory_ranges = 0;
 	char line[MAX_LINE];
 	FILE *fp;
@@ -642,6 +642,6 @@ int is_crashkernel_mem_reserved(void)
 {
 	uint64_t start, end;
 
-	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
+	return parse_iomem_single("Crash kernel\n", 1, &start, &end) == 0 ?
 	  (start != end) : 0;
 }

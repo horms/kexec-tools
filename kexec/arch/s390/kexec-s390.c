@@ -25,7 +25,8 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /*
  * get_memory_ranges:
- *  Return a list of memory ranges by parsing /proc/iomem
+ *  Return a list of memory ranges by parsing the file returned by
+ *  proc_iomem()
  *
  * INPUT:
  *  - Pointer to an array of memory_range structures.
@@ -39,7 +40,7 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
 int get_memory_ranges(struct memory_range **range, int *ranges, unsigned long flags)
 {
 	char sys_ram[] = "System RAM\n";
-	char iomem[] = "/proc/iomem";
+	char *iomem = proc_iomem(flags & KEXEC_ON_CRASH);
 	FILE *fp;
 	char line[80];
 	int current_range = 0;

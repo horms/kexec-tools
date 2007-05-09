@@ -34,7 +34,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	memory_ranges++;
 #else
 #error Please, fix this for your platform
-	const char iomem[] = "/proc/iomem";
+	const char *iomem = proc_iomem();
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end;

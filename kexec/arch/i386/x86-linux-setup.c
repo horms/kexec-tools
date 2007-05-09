@@ -126,7 +126,7 @@ int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 	real_mode->lfb_linelength = fix.line_length;
 	real_mode->vesapm_seg     = 0;
 
-	/* FIXME: better get size from /proc/iomem */
+	/* FIXME: better get size from the file returned by proc_iomem() */
 	real_mode->lfb_size       = (fix.smem_len + 65535) / 65536;
 	real_mode->pages          = (fix.smem_len + 4095) / 4096;
 

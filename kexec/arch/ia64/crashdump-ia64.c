@@ -43,7 +43,8 @@ static struct crash_elf_info elf_info =
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region.
  * The number of entries in memory_range array is always smaller than
- * the number of entries in /proc/iomem, stored in max_memory_ranges. */
+ * the number of entries in the file returned by proc_iomem(),
+ * stored in max_memory_ranges. */
 static struct memory_range *crash_memory_range;
 /* Memory region reserved for storing panic kernel and other data. */
 static struct memory_range crash_reserved_mem;
@@ -142,7 +143,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
-	const char iomem[]= "/proc/iomem";
+	const char *iomem = proc_iomem(1);
         char line[MAX_LINE];
         FILE *fp;
         unsigned long start, end;
@@ -261,6 +262,6 @@ int is_crashkernel_mem_reserved(void)
 {
 	uint64_t start, end;
 
-	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
-	  (start != end) : 0;
+	return parse_iomem_single("Crash kernel\n", 1, &start,
+				  &end) == 0 ?  (start != end) : 0;
 }

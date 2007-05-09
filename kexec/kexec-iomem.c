@@ -15,12 +15,14 @@
 /*
  * kexec_iomem_for_each_line()
  *
- * Iterate over each line in /proc/iomem. If match is NULL or if the line
- * matches with our match-pattern then call the callback if non-NULL.
+ * Iterate over each line in the file returned by proc_iomem(). If match is
+ * NULL or if the line matches with our match-pattern then call the
+ * callback if non-NULL.
+ *
  * Return the number of lines matched.
  */
 
-int kexec_iomem_for_each_line(char *match,
+int kexec_iomem_for_each_line(char *match, int machine,
 			      int (*callback)(void *data,
 					      int nr,
 					      char *str,
@@ -28,7 +30,7 @@ int kexec_iomem_for_each_line(char *match,
 					      unsigned long length),
 			      void *data)
 {
-	const char iomem[]= "/proc/iomem";
+	const char *iomem = proc_iomem(machine);
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end, size;
@@ -39,7 +41,7 @@ int kexec_iomem_for_each_line(char *match,
 
 	fp = fopen(iomem, "r");
 	if (!fp)
-		die("Cannot open /proc/iomem");
+		die("Cannot open %s\n", iomem);
 
 	while(fgets(line, sizeof(line), fp) != 0) {
 		count = sscanf(line, "%Lx-%Lx : %n", &start, &end, &consumed);
@@ -76,15 +78,15 @@ static int kexec_iomem_single_callback(void *data, int nr,
 	return 0;
 }
 
-int parse_iomem_single(char *str, uint64_t *start, uint64_t *end)
+int parse_iomem_single(char *str, int machine, uint64_t *start, uint64_t *end)
 {
 	struct memory_range range;
 	int ret;
 
 	memset(&range, 0, sizeof(range));
 
-	ret = kexec_iomem_for_each_line(str, kexec_iomem_single_callback,
-					&range);
+	ret = kexec_iomem_for_each_line(str, machine,
+	                                kexec_iomem_single_callback, &range);
 
 	if (ret == 1) {
 		if (start)
@@ -99,3 +101,16 @@ int parse_iomem_single(char *str, uint64_t *start, uint64_t *end)
 
 	return ret;
 }
+
+static const char proc_iomem_str[]= "/proc/iomem";
+
+/*
+ * Allow an architecture specific implementation of this
+ * function to override the location of a file looking a lot
+ * like /proc/iomem
+ */
+const char * __attribute__((weak)) proc_iomem(int machine)
+{
+        return proc_iomem_str;
+}
+

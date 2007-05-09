@@ -37,7 +37,8 @@
 #include <arch/options.h>
 
 /* The number of entries in memory_range array is always smaller than
-   the number of entries in /proc/iomem, stored in max_memory_ranges. */
+ * the number of entries in the file returned by proc_iomem(),
+ * stored in max_memory_ranges. */
 static struct memory_range *memory_range;
 int max_memory_ranges;
 static int memory_ranges;
@@ -79,7 +80,7 @@ static int split_range(int range, unsigned long start, unsigned long end)
 int get_memory_ranges(struct memory_range **range, int *ranges,
 				unsigned long kexec_flags)
 {
-	const char iomem[]= "/proc/iomem";
+	const char *iomem = proc_iomem(kexec_flags & KEXEC_ON_CRASH);
 	char line[MAX_LINE];
 	FILE *fp;
 	fp = fopen(iomem, "r");
