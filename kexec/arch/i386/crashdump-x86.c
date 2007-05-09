@@ -515,7 +515,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	memset(tmp, 0, sz);
 	info->backup_start = add_buffer(info, tmp, sz, sz, align,
 				0, max_addr, -1);
-	dprintf("Created backup segment at 0x%lx\n", info->backup_start);
+	dbgprintf("Created backup segment at 0x%lx\n", info->backup_start);
 	if (delete_memmap(memmap_p, info->backup_start, sz) < 0)
 		return -1;
 
@@ -544,7 +544,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 */
 	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
 							max_addr, -1);
-	dprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
+	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
 	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
