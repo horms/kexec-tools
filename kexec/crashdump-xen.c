@@ -93,13 +93,12 @@ int xen_get_nr_phys_cpus(void)
 	if ((cpus = kexec_iomem_for_each_line(match, NULL, NULL))) {
 		n = sizeof(struct crash_note_info) * cpus;
 		xen_phys_notes = malloc(n);
-		if (xen_phys_notes) {
-			memset(xen_phys_notes, 0, n);
-			kexec_iomem_for_each_line(match,
-						  xen_crash_note_callback,
-						  NULL);
+		if (!xen_phys_notes) {
+			fprintf(stderr, "failed to allocate xen_phys_notes.\n");
+			return -1;
 		}
-
+		memset(xen_phys_notes, 0, n);
+		kexec_iomem_for_each_line(match, xen_crash_note_callback, NULL);
 		xen_phys_cpus = cpus;
 	}
 
