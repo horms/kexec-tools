@@ -45,10 +45,7 @@ unsigned long long crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
 int max_memory_ranges;
 
-static int sort_base_ranges();
-
-
-static void cleanup_memory_ranges()
+static void cleanup_memory_ranges(void)
 {
 	if (memory_range)
 		free(memory_range);
@@ -64,7 +61,7 @@ static void cleanup_memory_ranges()
  * Allocate memory for various data structures used to hold
  * values of different memory ranges
  */
-static int alloc_memory_ranges()
+static int alloc_memory_ranges(void)
 {
 	int memory_range_len;
 
@@ -105,7 +102,7 @@ err1:
  * max_memory_ranges variable. This variable replaces MAX_MEMORY_RANGES
  * macro used earlier.
  */
-static int count_memory_ranges()
+static int count_memory_ranges(void)
 {
 	char device_tree[256] = "/proc/device-tree/";
 	struct dirent *dentry;
@@ -132,8 +129,32 @@ static int count_memory_ranges()
 	return 0;
 }
 
+/* Sort the base ranges in memory - this is useful for ensuring that our
+ * ranges are in ascending order, even if device-tree read of memory nodes
+ * is done differently. Also, could be used for other range coalescing later
+ */
+static int sort_base_ranges(void)
+{
+	int i, j;
+	unsigned long long tstart, tend;
+
+	for (i = 0; i < nr_memory_ranges - 1; i++) {
+		for (j = 0; j < nr_memory_ranges - i - 1; j++) {
+			if (base_memory_range[j].start > base_memory_range[j+1].start) {
+				tstart = base_memory_range[j].start;
+				tend = base_memory_range[j].end;
+				base_memory_range[j].start = base_memory_range[j+1].start;
+				base_memory_range[j].end = base_memory_range[j+1].end;
+				base_memory_range[j+1].start = tstart;
+				base_memory_range[j+1].end = tend;
+			}
+		}
+	}
+	return 0;
+}
+
 /* Get base memory ranges */
-static int get_base_ranges()
+static int get_base_ranges(void)
 {
 	int local_memory_ranges = 0;
 	char device_tree[256] = "/proc/device-tree/";
@@ -204,32 +225,8 @@ static int get_base_ranges()
 	return 0;
 }
 
-/* Sort the base ranges in memory - this is useful for ensuring that our
- * ranges are in ascending order, even if device-tree read of memory nodes
- * is done differently. Also, could be used for other range coalescing later
- */
-static int sort_base_ranges()
-{
-	int i, j;
-	unsigned long long tstart, tend;
-
-	for (i = 0; i < nr_memory_ranges - 1; i++) {
-		for (j = 0; j < nr_memory_ranges - i - 1; j++) {
-			if (base_memory_range[j].start > base_memory_range[j+1].start) {
-				tstart = base_memory_range[j].start;
-				tend = base_memory_range[j].end;
-				base_memory_range[j].start = base_memory_range[j+1].start;
-				base_memory_range[j].end = base_memory_range[j+1].end;
-				base_memory_range[j+1].start = tstart;
-				base_memory_range[j+1].end = tend;
-			}
-		}
-	}
-	return 0;
-}
-
 /* Sort the exclude ranges in memory */
-static int sort_ranges()
+static int sort_ranges(void)
 {
 	int i, j;
 	unsigned long long tstart, tend;
