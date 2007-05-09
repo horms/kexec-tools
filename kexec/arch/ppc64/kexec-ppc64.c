@@ -207,7 +207,7 @@ static int get_base_ranges(void)
 				((unsigned long long *)buf)[1];
 			base_memory_range[local_memory_ranges].type = RANGE_RAM;
 			local_memory_ranges++;
-			dfprintf(stderr, "%016llx-%016llx : %x\n",
+			dprintf("%016llx-%016llx : %x\n",
 				base_memory_range[local_memory_ranges-1].start,
 				base_memory_range[local_memory_ranges-1].end,
 				base_memory_range[local_memory_ranges-1].type);

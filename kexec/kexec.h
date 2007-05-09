@@ -217,12 +217,11 @@ int parse_iomem_single(char *str, uint64_t *start, uint64_t *end);
 
 #define MAX_LINE	160
 
-#define dprintf(args...) dfprintf(stdout, args)
 #ifdef DEBUG
-#define dfprintf(_f, _args...) do {fprintf(_f, _args);} while(0)
+#define dprintf(_args...) do {printf(_args);} while(0)
 #else
-static inline int __attribute__ ((format (printf, 2, 3)))
-	dfprintf(FILE *f, const char *fmt, ...) {return 0;}
+static inline int __attribute__ ((format (printf, 1, 2)))
+	dprintf(const char *fmt, ...) {return 0;}
 #endif
 
 #endif /* KEXEC_H */
