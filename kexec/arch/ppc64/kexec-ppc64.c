@@ -98,7 +98,7 @@ err1:
 }
 
 /*
- * Count the memory@ nodes under /proc/device-tree and populate the
+ * Count the memory nodes under /proc/device-tree and populate the
  * max_memory_ranges variable. This variable replaces MAX_MEMORY_RANGES
  * macro used earlier.
  */
@@ -115,7 +115,8 @@ static int count_memory_ranges(void)
 
 	while ((dentry = readdir(dir)) != NULL) {
 		if (strncmp(dentry->d_name, "memory@", 7) &&
-		    strncmp(dentry->d_name, "pci@", 4))
+			strcmp(dentry->d_name, "memory") &&
+			strncmp(dentry->d_name, "pci@", 4))
 			continue;
 		max_memory_ranges++;
 	}
@@ -170,7 +171,8 @@ static int get_base_ranges(void)
 		return -1;
 	}
 	while ((dentry = readdir(dir)) != NULL) {
-		if (strncmp(dentry->d_name, "memory@", 7))
+		if (strncmp(dentry->d_name, "memory@", 7) &&
+			strcmp(dentry->d_name, "memory"))
 			continue;
 		strcpy(fname, device_tree);
 		strcat(fname, dentry->d_name);
@@ -272,7 +274,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 
 	while ((dentry = readdir(dir)) != NULL) {
 		if (strncmp(dentry->d_name, "chosen", 6) &&
-			strncmp(dentry->d_name, "memory@0", 8) &&
+			strncmp(dentry->d_name, "memory@", 7) &&
+			strcmp(dentry->d_name, "memory") &&
 			strncmp(dentry->d_name, "pci@", 4) &&
 			strncmp(dentry->d_name, "rtas", 4))
 			continue;
@@ -452,7 +455,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 				add_usable_mem_rgns(rtas_base, rtas_size);
 		} /* rtas */
 
-		if (strncmp(dentry->d_name, "memory@0", 8) == 0) {
+		if (!strncmp(dentry->d_name, "memory@", 7) ||
+			!strcmp(dentry->d_name, "memory")) {
 			strcat(fname, "/reg");
 			if ((file = fopen(fname, "r")) == NULL) {
 				perror(fname);
