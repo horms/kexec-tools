@@ -162,8 +162,8 @@ extern int file_types;
 #define OPT_PANIC		'p'
 #define OPT_MEM_MIN             256
 #define OPT_MEM_MAX             257
-#define OPT_MAX			258
-#define OPT_REUSE_INITRD	259
+#define OPT_REUSE_INITRD	258
+#define OPT_MAX			259
 #define KEXEC_OPTIONS \
 	{ "help",		0, 0, OPT_HELP }, \
 	{ "version",		0, 0, OPT_VERSION }, \
