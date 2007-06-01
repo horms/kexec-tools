@@ -49,6 +49,9 @@
 #ifdef __arm__
 #define __NR_kexec_load		__NR_SYSCALL_BASE + 347  
 #endif
+#ifdef __MIPSEL__
+#define __NR_kexec_load                4311
+#endif
 #ifndef __NR_kexec_load
 #error Unknown processor architecture.  Needs a kexec_load syscall number.
 #endif

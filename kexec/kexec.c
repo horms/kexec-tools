@@ -3,6 +3,8 @@
  *
  * Copyright (C) 2003-2005  Eric Biederman (ebiederm@xmission.com)
  *
+ * Modified (2007-05-15) by Francesco Chiechi to rudely handle mips platform
+ *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation (version 2 of the License).
@@ -41,6 +43,10 @@
 #include "kexec-elf.h"
 #include "kexec-sha256.h"
 #include <arch/options.h>
+
+#ifdef __MIPSEL__
+#define virt_to_phys(X) ((X) - 0x80000000)
+#endif
 
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
@@ -290,6 +296,74 @@ void add_segment(struct kexec_info *info,
 	unsigned long last;
 	size_t size;
 	int pagesize;
+#ifdef __MIPSEL__
+	unsigned long base_phys;
+#endif
+
+	if (bufsz > memsz) {
+		bufsz = memsz;
+	}
+	/* Forget empty segments */
+	if (memsz == 0) {
+		return;
+	}
+
+	/* Round memsz up to a multiple of pagesize */
+	pagesize = getpagesize();
+	memsz = (memsz + (pagesize - 1)) & ~(pagesize - 1);
+
+#ifdef __MIPSEL__
+	base_phys=virt_to_phys(base);
+#endif
+	/* Verify base is pagesize aligned.
+	 * Finding a way to cope with this problem
+	 * is important but for now error so at least
+	 * we are not surprised by the code doing the wrong
+	 * thing.
+	 */
+	if (base & (pagesize -1)) {
+		die("Base address: %x is not page aligned\n", base);
+	}
+
+#ifdef __MIPSEL__
+	last = base_phys + memsz -1;
+	if (!valid_memory_range(info, base_phys, last)) {
+		die("Invalid memory segment %p - %p\n",
+			(void *)base_phys, (void *)last);
+	}
+#else
+	last = base + memsz -1;
+	if (!valid_memory_range(info, base, last)) {
+		die("Invalid memory segment %p - %p\n",
+			(void *)base, (void *)last);
+	}
+#endif
+
+	size = (info->nr_segments + 1) * sizeof(info->segment[0]);
+	info->segment = xrealloc(info->segment, size);
+	info->segment[info->nr_segments].buf   = buf;
+	info->segment[info->nr_segments].bufsz = bufsz;
+#ifdef __MIPSEL__
+	info->segment[info->nr_segments].mem   = (void *)base_phys;
+#else
+	info->segment[info->nr_segments].mem   = (void *)base;
+#endif
+	info->segment[info->nr_segments].memsz = memsz;
+	info->nr_segments++;
+	if (info->nr_segments > KEXEC_MAX_SEGMENTS) {
+		fprintf(stderr, "Warning: kernel segment limit reached. "
+			"This will likely fail\n");
+	}
+}
+
+#ifdef __MIPSEL__
+void add_segment_virt(struct kexec_info *info,
+	const void *buf, size_t bufsz,
+	unsigned long base, size_t memsz)
+{
+	unsigned long last;
+	size_t size;
+	int pagesize;
 
 	if (bufsz > memsz) {
 		bufsz = memsz;
@@ -331,6 +405,7 @@ void add_segment(struct kexec_info *info,
 			"This will likely fail\n");
 	}
 }
+#endif
 
 unsigned long add_buffer(struct kexec_info *info,
 	const void *buf, unsigned long bufsz, unsigned long memsz,
@@ -358,6 +433,35 @@ unsigned long add_buffer(struct kexec_info *info,
 	add_segment(info, buf, bufsz, base, memsz);
 	return base;
 }
+
+#ifdef __MIPSEL__
+unsigned long add_buffer_virt(struct kexec_info *info,
+	const void *buf, unsigned long bufsz, unsigned long memsz,
+	unsigned long buf_align, unsigned long buf_min, unsigned long buf_max,
+	int buf_end)
+{
+	unsigned long base;
+	int result;
+	int pagesize;
+
+	result = sort_segments(info);
+	if (result < 0) {
+		die("sort_segments failed\n");
+	}
+
+	/* Round memsz up to a multiple of pagesize */
+	pagesize = getpagesize();
+	memsz = (memsz + (pagesize - 1)) & ~(pagesize - 1);
+
+	base = locate_hole(info, memsz, buf_align, buf_min, buf_max, buf_end);
+	if (base == ULONG_MAX) {
+		die("locate_hole failed\n");
+	}
+
+	add_segment_virt(info, buf, bufsz, base, memsz);
+	return base;
+}
+#endif
 
 char *slurp_file(const char *filename, off_t *r_size)
 {
