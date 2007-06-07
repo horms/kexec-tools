@@ -18,6 +18,7 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#define _GNU_SOURCE
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -233,6 +234,12 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 		    !reuse_initrd)
 				continue;
 
+		/* This property will be created later in putnode() So
+		 * ignore it now.
+		 */
+		if (!strcmp(dp->d_name, "bootargs"))
+			continue;
+
 		if (! S_ISREG(statbuf.st_mode))
 			continue;
 
@@ -256,38 +263,6 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 			    pathname, strerror(errno));
 
 		checkprop(fn, dt, len);
-
-		/* Get the cmdline from the device-tree and modify it */
-		if (!strcmp(dp->d_name, "bootargs")) {
-			int cmd_len;
-			char temp_cmdline[COMMAND_LINE_SIZE] = { "" };
-			char *param = NULL;
-			cmd_len = strlen(local_cmdline);
-			if (cmd_len != 0) {
-				param = strstr(local_cmdline, "crashkernel=");
-				if (param)
-					crash_param = 1;
-				param = strstr(local_cmdline, "root=");
-			}
-			if (!param) {
-				char *old_param;
-				memcpy(temp_cmdline, dt, len);
-				param = strstr(temp_cmdline, "root=");
-				if (param) {
-					old_param = strtok(param, " ");
-					if (cmd_len != 0)
-						strcat(local_cmdline, " ");
-					strcat(local_cmdline, old_param);
-				}
-			}
-			strcat(local_cmdline, " ");
-			cmd_len = strlen(local_cmdline);
-			cmd_len = cmd_len + 1;
-			memcpy(dt, local_cmdline,cmd_len);
-			len = cmd_len;
-			*dt_len = cmd_len;
-			fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
-		}
 
 		dt += (len + 3)/4;
 		if (!strcmp(dp->d_name, "reg") && usablemem_rgns.size)
@@ -383,6 +358,62 @@ static void putnode(void)
 		dt += (len + 3)/4;
 
 		reserve(initrd_base, initrd_size);
+	}
+
+	/* Add cmdline to the second kernel.  Check to see if the new
+	 * cmdline has a root=.  If not, use the old root= cmdline.  */
+	if (!strcmp(basename,"/chosen/")) {
+		size_t cmd_len = 0;
+		char *param = NULL;
+
+		cmd_len = strlen(local_cmdline);
+		if (cmd_len != 0) {
+			param = strstr(local_cmdline, "crashkernel=");
+			if (param)
+				crash_param = 1;
+			/* does the new cmdline have a root= ? ... */
+			param = strstr(local_cmdline, "root=");
+		}
+
+		/* ... if not, grab root= from the old command line */
+		if (!param) {
+			char filename[MAXPATH];
+			FILE *fp;
+			char *last_cmdline = NULL;
+			char *old_param;
+
+			strcpy(filename, pathname);
+			strcat(filename, "bootargs");
+			fp = fopen(filename, "r");
+			if (fp) {
+				if (getline(&last_cmdline, &cmd_len, fp) == -1)
+					die("unable to read %s\n", filename);
+
+				param = strstr(last_cmdline, "root=");
+				if (param) {
+					old_param = strtok(param, " ");
+					if (cmd_len != 0)
+						strcat(local_cmdline, " ");
+					strcat(local_cmdline, old_param);
+				}
+			}
+			if (last_cmdline)
+				free(last_cmdline);
+		}
+		strcat(local_cmdline, " ");
+		cmd_len = strlen(local_cmdline);
+		cmd_len = cmd_len + 1;
+
+		/* add new bootargs */
+		*dt++ = 3;
+		*dt++ = cmd_len;
+		*dt++ = propnum("bootargs");
+		if ((cmd_len >= 8) && ((unsigned long)dt & 0x4))
+			dt++;
+		memcpy(dt, local_cmdline,cmd_len);
+		dt += (cmd_len + 3)/4;
+
+		fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
 	}
 
 	for (i=0; i < numlist; i++) {
