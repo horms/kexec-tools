@@ -788,6 +788,9 @@ void check_reuse_initrd(void)
 	if (strstr(line, "retain_initrd") == NULL)
 		die("unrecoverable error: current boot didn't "
 		    "retain the initrd for reuse.\n");
+	if (line)
+		free(line);
+	close(fp);
 }
 
 /* Arch hook for reuse_initrd */
