@@ -486,6 +486,23 @@ static struct crash_elf_info elf_info32 =
 	get_note_info: get_crash_notes,
 };
 
+static enum coretype get_core_type(struct kexec_info *info,
+				   struct memory_range *range, int ranges)
+{
+	if (info->kexec_flags & KEXEC_ARCH_X86_64)
+		return CORE_TYPE_ELF64;
+	else {
+		/* fall back to default */
+		if (ranges == 0)
+			return CORE_TYPE_ELF64;
+
+		if (range[ranges].end > 0xFFFFFFFFUL)
+			return CORE_TYPE_ELF64;
+		else
+			return CORE_TYPE_ELF32;
+	}
+}
+
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
@@ -500,6 +517,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
 		return -1;
+
+	/*
+	 * if the core type has not been set on command line, set it here
+	 * automatically
+	 */
+	if (arch_options.core_header_type == CORE_TYPE_UNDEF) {
+		arch_options.core_header_type =
+			get_core_type(info, mem_range, nr_ranges);
+	}
 
 	/* Memory regions which panic kernel can safely use to boot into */
 	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));

@@ -145,7 +145,7 @@ struct arch_options_t arch_options = {
 	.serial_baud = 0,
 	.console_vga = 0,
 	.console_serial = 0,
-	.core_header_type = CORE_TYPE_ELF64,
+	.core_header_type = CORE_TYPE_UNDEF,
 };
 
 int arch_process_options(int argc, char **argv)

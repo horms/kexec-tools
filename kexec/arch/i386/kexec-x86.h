@@ -2,8 +2,12 @@
 #define KEXEC_X86_H
 
 #define MAX_MEMORY_RANGES 64
-#define CORE_TYPE_ELF32 1
-#define CORE_TYPE_ELF64 2
+
+enum coretype {
+	CORE_TYPE_UNDEF = 0,
+	CORE_TYPE_ELF32 = 1,
+	CORE_TYPE_ELF64 = 2
+};
 
 extern unsigned char compat_x86_64[];
 extern uint32_t compat_x86_64_size, compat_x86_64_entry32;
@@ -40,12 +44,12 @@ struct entry16_regs {
 };
 
 struct arch_options_t {
-	uint8_t  reset_vga;
-	uint16_t serial_base;
-	uint32_t serial_baud;
-	uint8_t  console_vga;
-	uint8_t  console_serial;
-	int	 core_header_type;
+	uint8_t  	reset_vga;
+	uint16_t 	serial_base;
+	uint32_t 	serial_baud;
+	uint8_t  	console_vga;
+	uint8_t  	console_serial;
+	enum coretype	core_header_type;
 };
 
 int multiboot_x86_probe(const char *buf, off_t len);
