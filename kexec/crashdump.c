@@ -108,3 +108,35 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 
 	return 0;
 }
+
+/* Returns the physical address of start of crash notes buffer for a kernel. */
+int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
+{
+	char kdump_info[PATH_MAX];
+	char line[MAX_LINE];
+	int count;
+	FILE *fp;
+	unsigned long long temp, temp2;
+
+	*addr = 0;
+	*len = 0;
+
+	sprintf(kdump_info, "/sys/kernel/vmcoreinfo");
+	fp = fopen(kdump_info, "r");
+	if (!fp) {
+		die("Could not open \"%s\": %s\n", kdump_info,
+		    strerror(errno));
+		return -1;
+	}
+
+	if (!fgets(line, sizeof(line), fp))
+		die("Cannot parse %s: %s\n", kdump_info, strerror(errno));
+	count = sscanf(line, "%Lx %Lx", &temp, &temp2);
+	if (count != 2)
+		die("Cannot parse %s: %s\n", kdump_info, strerror(errno));
+
+	*addr = (uint64_t) temp;
+	*len = (uint64_t) temp2;
+
+	return 0;
+}

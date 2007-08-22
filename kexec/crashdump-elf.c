@@ -34,6 +34,8 @@ int FUNC(struct kexec_info *info,
 	char *bufp;
 	long int nr_cpus = 0;
 	uint64_t notes_addr, notes_len;
+	uint64_t vmcoreinfo_addr, vmcoreinfo_len;
+	int has_vmcoreinfo = 0;
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);
 
 	if (xen_present())
@@ -45,7 +47,12 @@ int FUNC(struct kexec_info *info,
 		return -1;
 	}
 
-	sz = sizeof(EHDR) + nr_cpus * sizeof(PHDR) + ranges * sizeof(PHDR);
+	if (get_kernel_vmcoreinfo(&vmcoreinfo_addr, &vmcoreinfo_len) == 0) {
+		has_vmcoreinfo = 1;
+	}
+
+	sz = sizeof(EHDR) + (nr_cpus + has_vmcoreinfo) * sizeof(PHDR) +
+	     ranges * sizeof(PHDR);
 
 	/*
 	 * Certain architectures such as x86_64 and ia64 require a separate
@@ -144,6 +151,21 @@ int FUNC(struct kexec_info *info,
 		/* Increment number of program headers. */
 		(elf->e_phnum)++;
 		dbgprintf_phdr("Elf header", phdr);
+	}
+
+	if (has_vmcoreinfo) {
+		phdr = (PHDR *) bufp;
+		bufp += sizeof(PHDR);
+		phdr->p_type	= PT_NOTE;
+		phdr->p_flags	= 0;
+		phdr->p_offset  = phdr->p_paddr = vmcoreinfo_addr;
+		phdr->p_vaddr   = 0;
+		phdr->p_filesz	= phdr->p_memsz	= vmcoreinfo_len;
+		/* Do we need any alignment of segments? */
+		phdr->p_align	= 0;
+
+		(elf->e_phnum)++;
+		dbgprintf_phdr("vmcoreinfo header", phdr);
 	}
 
 	/* Setup an PT_LOAD type program header for the region where
