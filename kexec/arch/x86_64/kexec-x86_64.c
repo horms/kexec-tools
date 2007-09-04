@@ -133,7 +133,7 @@ void arch_usage(void)
 	printf(
 		"     --reset-vga               Attempt to reset a standard vga device\n"
 		"     --serial=<port>           Specify the serial port for debug output\n"
-		"     --serial-baud=<buad_rate> Specify the serial port baud rate\n"
+		"     --serial-baud=<baud_rate> Specify the serial port baud rate\n"
 		"     --console-vga             Enable the vga console\n"
 		"     --console-serial          Enable the serial console\n"
 		);
