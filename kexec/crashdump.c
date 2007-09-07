@@ -122,12 +122,8 @@ int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
 	*len = 0;
 
 	sprintf(kdump_info, "/sys/kernel/vmcoreinfo");
-	fp = fopen(kdump_info, "r");
-	if (!fp) {
-		die("Could not open \"%s\": %s\n", kdump_info,
-		    strerror(errno));
-		return -1;
-	}
+	if (!(fp = fopen(kdump_info, "r")))
+		return 0;
 
 	if (!fgets(line, sizeof(line), fp))
 		die("Cannot parse %s: %s\n", kdump_info, strerror(errno));
