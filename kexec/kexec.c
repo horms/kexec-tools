@@ -790,7 +790,7 @@ void check_reuse_initrd(void)
 		    "retain the initrd for reuse.\n");
 	if (line)
 		free(line);
-	close(fp);
+	fclose(fp);
 }
 
 /* Arch hook for reuse_initrd */
