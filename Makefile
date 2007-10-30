@@ -1,7 +1,7 @@
 # Hey Emacs this is a -*- makefile-*-
 include Makefile.conf
-VERSION=20071017-rc
-DATE=30th March 2007
+VERSION=20071030
+DATE=30th October 2007
 PACKAGE=kexec-tools-testing
 
 pkgdatadir = $(datadir)/$(PACKAGE)
