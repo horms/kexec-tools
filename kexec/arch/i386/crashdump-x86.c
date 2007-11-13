@@ -496,7 +496,7 @@ static enum coretype get_core_type(struct kexec_info *info,
 		if (ranges == 0)
 			return CORE_TYPE_ELF64;
 
-		if (range[ranges].end > 0xFFFFFFFFUL)
+		if (range[ranges - 1].end > 0xFFFFFFFFUL)
 			return CORE_TYPE_ELF64;
 		else
 			return CORE_TYPE_ELF32;
