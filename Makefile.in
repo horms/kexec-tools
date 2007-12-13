@@ -172,8 +172,8 @@ SRCS:= AUTHORS COPYING News TODO Makefile.in configure.ac \
 PSRCS:=$(foreach s, $(SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 PGSRCS:=$(foreach s, $(GENERATED_SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 
-Makefile: Makefile.in configure
-	$(srcdir)/configure
+Makefile: Makefile.in config.status
+	./config.status
 
 configure: configure.ac
 	cd $(srcdir) && autoheader && autoconf && rm -rf autom4te.cache
