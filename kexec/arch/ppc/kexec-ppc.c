@@ -18,6 +18,8 @@
 #include "kexec-ppc.h"
 #include <arch/options.h>
 
+#include "config.h"
+
 #define MAX_MEMORY_RANGES  64
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
@@ -26,7 +28,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 					unsigned long kexec_flags)
 {
 	int memory_ranges = 0;
-#ifdef CONFIG_GAMECUBE
+#ifdef WITH_GAMECUBE
 	/* RAM - lowmem used by DOLs - framebuffer */
 	memory_range[memory_ranges].start = 0x00003000;
 	memory_range[memory_ranges].end = 0x0174bfff;

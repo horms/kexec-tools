@@ -25,6 +25,8 @@
 #include "kexec-ppc.h"
 #include <arch/options.h>
 
+#include "config.h"
+
 static const int probe_debug = 0;
 
 #define MAX_COMMAND_LINE   256
@@ -135,7 +137,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	unsigned char *setup_start;
 	uint32_t setup_size;
 	int result;
-#ifdef CONFIG_GAMECUBE
+#ifdef WITH_GAMECUBE
 	int target_is_gamecube = 1;
 #else
 	int target_is_gamecube = 0;
