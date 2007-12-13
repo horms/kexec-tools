@@ -29,6 +29,9 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <getopt.h>
+
+#include "config.h"
+
 #ifdef HAVE_ZLIB_H
 #include <zlib.h>
 #endif
@@ -718,7 +721,7 @@ static int my_exec(void)
 
 static void version(void)
 {
-	printf(PACKAGE " " VERSION " released " RELEASE_DATE "\n");
+	printf(PACKAGE_STRING " released " PACKAGE_DATE "\n");
 }
 
 void usage(void)

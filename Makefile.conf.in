@@ -15,7 +15,6 @@ infodir=@infodir@
 mandir=@mandir@
 includedir=@includedir@
 
-DEFS=@DEFS@
 LIBS=@LIBS@
 
 # The target architecture

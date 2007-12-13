@@ -1,8 +1,5 @@
 # Hey Emacs this is a -*- makefile-*-
 include Makefile.conf
-VERSION=20071030-git
-DATE=30th October 2007
-PACKAGE=kexec-tools-testing
 
 pkgdatadir = $(datadir)/$(PACKAGE)
 pkglibdir = $(libdir)/$(PACKAGE)
@@ -13,9 +10,7 @@ pkgincludedir = $(includedir)/$(PACKAGE)
 # Useful for building binary packages
 DESTDIR =
 
-EXTRA_CPPFLAGS:= -I./include -I./util_lib/include \
-	-DVERSION='"$(VERSION)"' -DRELEASE_DATE='"$(DATE)"' \
-	-DPACKAGE='"$(PACKAGE)"' $(DEFS) $(EXTRA_CFLAGS)
+EXTRA_CPPFLAGS:= -I./include -I./util_lib/include $(DEFS) $(EXTRA_CFLAGS)
 
 PREFIX:=$(OBJDIR)/build
 SBINDIR=$(PREFIX)/sbin
@@ -109,6 +104,7 @@ Makefile.conf: Makefile.conf.in configure
 	/bin/sh ./configure
 
 configure: configure.ac
+	autoheader
 	autoconf
 	$(RM) -rf autom4te.cache
 

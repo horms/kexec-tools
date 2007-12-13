@@ -1,6 +1,8 @@
 #ifndef KEXEC_H
 #define KEXEC_H
 
+#include "config.h"
+
 #include <sys/types.h>
 #include <stdint.h>
 #define USE_BSD
@@ -197,7 +199,7 @@ extern unsigned char purgatory[];
 extern size_t purgatory_size;
 
 #define BOOTLOADER "kexec"
-#define BOOTLOADER_VERSION VERSION
+#define BOOTLOADER_VERSION PACKAGE_VERSION
 
 void arch_usage(void);
 int arch_process_options(int argc, char **argv);

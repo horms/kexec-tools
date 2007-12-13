@@ -4,8 +4,13 @@ dnl
 dnl 
 
 dnl ---Required
-AC_INIT(Makefile.conf.in)
+AC_INIT(kexec-tools-testing, 20071030-git)
 AC_CONFIG_AUX_DIR(./config)
+AC_CONFIG_HEADERS([include/config.h])
+
+AC_DEFINE_UNQUOTED(PACKAGE_DATE, "30th October 2007",
+		[Define to the release date of this package])
+
 
 dnl -- Compilation platform configuration
 AC_CANONICAL_HOST
@@ -108,13 +113,16 @@ AC_CHECK_PROG([DIRNAME],  dirname,  dirname,  "no", [$PATH])
 
 dnl See if I have a usable copy of zlib available
 if test "$with_zlib" = yes ; then
-	AC_CHECK_HEADER(zlib.h, AC_CHECK_LIB(z, inflateInit_, [AC_DEFINE(HAVE_ZLIB_H, 1) LIBS="$LIBS -lz"]))
+	AC_CHECK_HEADER(zlib.h,
+		AC_CHECK_LIB(z, inflateInit_, ,
+		AC_MSG_NOTICE([zlib support disabled])))
 fi
 
 dnl find Xen control stack libraries
 if test "$with_xen" = yes ; then
-	AC_CHECK_HEADER(xenctrl.h, AC_CHECK_LIB(xenctrl, xc_version,
-		[AC_DEFINE(HAVE_XENCTRL_H, 1) LIBS="$LIBS -lxenctrl"]))
+	AC_CHECK_HEADER(xenctrl.h,
+		AC_CHECK_LIB(xenctrl, xc_version, ,
+		AC_MSG_NOTICE([Xen support disabled])))
 fi
 
 dnl ---Sanity checks
@@ -137,7 +145,6 @@ if test "$XARGS"   = "no"; then AC_MSG_ERROR([ xargs not found]) fi
 if test "$DIRNAME" = "no"; then AC_MSG_ERROR([ dirname not found]) fi 
 
 dnl ---Output variables...
-
 AC_SUBST([BUILD_CC])
 AC_SUBST([BUILD_CFLAGS])
 

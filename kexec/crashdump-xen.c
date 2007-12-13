@@ -14,7 +14,9 @@
 #include "crashdump.h"
 #include "kexec-syscall.h"
 
-#ifdef HAVE_XENCTRL_H
+#include "config.h"
+
+#ifdef HAVE_LIBXENCTRL
 #include <xenctrl.h>
 #endif
 
@@ -36,7 +38,7 @@ int xen_present(void)
 unsigned long xen_architecture(struct crash_elf_info *elf_info)
 {
 	unsigned long machine = elf_info->machine;
-#ifdef HAVE_XENCTRL_H
+#ifdef HAVE_LIBXENCTRL
 	int xc, rc;
 	xen_capabilities_info_t capabilities;
 

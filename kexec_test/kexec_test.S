@@ -17,6 +17,8 @@
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "config.h"
+
 	.equ	PROT_CODE_SEG, pmcs - gdt
 	.equ	REAL_CODE_SEG, rmcs - gdt
  	.equ	PROT_DATA_SEG, pmds - gdt
@@ -419,7 +421,7 @@ gdt_end:
 	
 s_hello:
 	.ascii	"kexec_test "
-	.ascii VERSION
+	.ascii PACKAGE_VERSION
 	.asciz " starting...\r\n"
 s_switching_descriptors:
 	.asciz	"Switching descriptors.\r\n"
