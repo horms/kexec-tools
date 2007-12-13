@@ -120,6 +120,9 @@ all: $(TARGETS)
 	@$(MKDIR) -p $(@D)
 	$(COMPILE.S) -MD -o $@ $<
 
+# collect objects to be removed in 'make clean'
+clean =
+
 # utility function for converting a list of files (with extension) to
 # file.o (or file.d) format.
 objify = $(addsuffix .o, $(basename $(1)))
@@ -215,23 +218,14 @@ echo::
 	@echo LD=$(LD)
 
 clean:
-	@$(FIND) $(OBJDIR) -name '*.o' -type f | $(XARGS) $(RM) rm -f
-	@$(RM) -rf rpm
-	@$(RM) -f config.log config.status config.cache
-	@$(RM) -f $(TARBALL)
+	$(RM) -f $(clean)
+	$(RM) -rf rpm build
+	$(RM) -f $(TARBALL) $(TARBALL.gz)
 
 distclean: dist-clean
 
 dist-clean: clean
-	@$(RM) -rf $(OBJDIR)
-	@$(FIND) . -type f -name '*~' -o -name '*.orig' | $(XARGS) $(RM) -f
-	@$(RM) -f Makefile.conf
-
-maintainerclean: maintainer-clean
-
-maintainer-clean: dist-clean
-	@$(RM) -f $(GENERATED_SRCS)
-
+	$(RM) -f config.log config.status config.cache Makefile include/config.h
 
 install: $(TARGETS)
 	for file in $(TARGETS) ; do \

@@ -6,3 +6,5 @@ $(BIN_TO_HEX): $(srcdir)/util/bin-to-hex.c
 
 $(BIN_TO_HEX): CC=$(BUILD_CC)
 $(BIN_TO_HEX): CFLAGS=$(BUILD_CFLAGS)
+
+clean += util/bin-to-hex.o $(BIN_TO_HEX)

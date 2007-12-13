@@ -28,6 +28,9 @@ include $(srcdir)/kexec/arch/$(ARCH)/Makefile
 KEXEC_OBJS = $(call objify, $(KEXEC_SRCS) $(KEXEC_GENERATED_SRCS))
 KEXEC_DEPS = $(call depify, $(KEXEC_OBJS))
 
+clean += $(KEXEC_OBJS) $(KEXEC_DEPS) $(KEXEC_GENERATED_SRCS) \
+	 $(KEXEC) $(KEXEC_MANPAGE)
+
 KEXEC = $(SBINDIR)/kexec
 KEXEC_MANPAGE = $(MANDIR)/man8/kexec.8
 

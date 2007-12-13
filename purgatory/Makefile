@@ -18,6 +18,8 @@ include $(srcdir)/purgatory/arch/$(ARCH)/Makefile
 PURGATORY_OBJS = $(call objify, $(PURGATORY_SRCS)) purgatory/sha256.o
 PURGATORY_DEPS = $(call depify, $(PURGATORY_OBJS))
 
+clean += $(PURGATORY_OBJS) $(PURGATORY_DEPS) $(PURGATORY)
+
 -include $(PURGATORY_DEPS)
 
 # sha256.c needs to be compiled without optimization, else

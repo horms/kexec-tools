@@ -10,6 +10,8 @@ UTIL_LIB = libutil.a
 
 -include $(UTIL_LIB_DEPS)
 
+clean += $(UTIL_LIB_OBJS) $(UTIL_LIB_DEPS) $(UTIL_LIB)
+
 $(UTIL_LIB): CPPFLAGS += -I$(srcdir)/util_lib/include
 
 $(UTIL_LIB): $(UTIL_LIB_OBJS)

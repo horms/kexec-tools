@@ -9,6 +9,8 @@ KEXEC_TEST_DEPS = $(call depify, $(KEXEC_TEST_OBJS))
 
 KEXEC_TEST = $(PKGLIBDIR)/kexec_test
 
+clean += $(KEXEC_TEST_OBJS) $(KEXEC_TEST_DEPS) $(KEXEC_TEST)
+
 -include $(KEXEC_TEST_DEPS)
 
 $(KEXEC_TEST): CPPFLAGS+=-DRELOC=$(RELOC)
