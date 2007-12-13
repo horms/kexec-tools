@@ -2,13 +2,12 @@
 # kexec_test Debugging payload to be certain the infrastructure works
 #
 RELOC:=0x10000
-KEXEC_TEST_S_SRCS:= kexec_test/kexec_test16.S kexec_test/kexec_test.S
-KEXEC_TEST_S_OBJS:=$(patsubst %.S, %.o, $(KEXEC_TEST_S_SRCS))
-KEXEC_TEST_S_DEPS:=$(patsubst %.S, %.d, $(KEXEC_TEST_S_SRCS))
-KEXEC_TEST_SRCS:= $(KEXEC_TEST_S_SRCS)
-KEXEC_TEST_OBJS:= $(KEXEC_TEST_S_OBJS)
-KEXEC_TEST_DEPS:= $(KEXEC_TEST_S_DEPS)
-KEXEC_TEST:=$(PKGLIBDIR)/kexec_test
+KEXEC_TEST_SRCS:= kexec_test/kexec_test16.S kexec_test/kexec_test.S
+
+KEXEC_TEST_OBJS = $(call objify, $(KEXEC_TEST_SRCS))
+KEXEC_TEST_DEPS = $(call depify, $(KEXEC_TEST_OBJS))
+
+KEXEC_TEST = $(PKGLIBDIR)/kexec_test
 
 -include $(KEXEC_TEST_DEPS)
 

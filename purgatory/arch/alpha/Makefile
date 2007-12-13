@@ -2,6 +2,5 @@
 # Purgatory alpha
 #
 
-PURGATORY_C_SRCS+=
-PURGATORY_S_SRCS+=
+PURGATORY_SRCS +=
 

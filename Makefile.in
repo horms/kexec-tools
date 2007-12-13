@@ -120,6 +120,11 @@ all: $(TARGETS)
 	@$(MKDIR) -p $(@D)
 	$(COMPILE.S) -MD -o $@ $<
 
+# utility function for converting a list of files (with extension) to
+# file.o (or file.d) format.
+objify = $(addsuffix .o, $(basename $(1)))
+depify = $(addsuffix .d, $(basename $(1)))
+
 # Utility function library
 #
 include $(srcdir)/util_lib/Makefile
