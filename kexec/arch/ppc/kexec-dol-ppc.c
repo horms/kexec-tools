@@ -90,8 +90,6 @@ typedef struct {
 #define PAGE_MASK		(~((1 << PAGE_SHIFT) - 1))
 #define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
 
-#define BOOTLOADER         "kexec"
-#define BOOTLOADER_VERSION VERSION
 #define MAX_COMMAND_LINE   256
 
 #define UPSZ(X) ((sizeof(X) + 3) & ~3)

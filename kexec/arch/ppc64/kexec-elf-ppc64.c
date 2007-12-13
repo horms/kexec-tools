@@ -39,9 +39,6 @@
 #include "crashdump-ppc64.h"
 #include <arch/options.h>
 
-#define BOOTLOADER         "kexec"
-#define BOOTLOADER_VERSION VERSION
-
 uint64_t initrd_base, initrd_size;
 unsigned char reuse_initrd = 0;
 const char *ramdisk;

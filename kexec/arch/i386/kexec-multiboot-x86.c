@@ -61,8 +61,6 @@
 static char headerbuf[MULTIBOOT_SEARCH];
 static struct multiboot_header *mbh = NULL;
 
-#define BOOTLOADER "kexec"
-#define BOOTLOADER_VERSION VERSION
 #define MIN(_x,_y) (((_x)<=(_y))?(_x):(_y))
 
 

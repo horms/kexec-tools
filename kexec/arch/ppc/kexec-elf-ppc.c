@@ -27,8 +27,6 @@
 
 static const int probe_debug = 0;
 
-#define BOOTLOADER         "kexec"
-#define BOOTLOADER_VERSION VERSION
 #define MAX_COMMAND_LINE   256
 
 #define UPSZ(X) ((sizeof(X) + 3) & ~3)
