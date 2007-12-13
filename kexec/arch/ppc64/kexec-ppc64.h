@@ -14,7 +14,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 void elf_ppc64_usage(void);
 void reserve(unsigned long long where, unsigned long long length);
 
-extern unsigned long initrd_base, initrd_size;
+extern uint64_t initrd_base, initrd_size;
 extern int max_memory_ranges;
 extern unsigned char reuse_initrd;
 

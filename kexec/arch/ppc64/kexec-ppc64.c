@@ -41,7 +41,7 @@ static struct memory_range *base_memory_range = NULL;
 static unsigned long long rmo_top;
 unsigned long long memory_max = 0;
 static int nr_memory_ranges, nr_exclude_ranges;
-unsigned long long crash_base, crash_size;
+uint64_t crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
 int max_memory_ranges;
 
@@ -203,10 +203,10 @@ static int get_base_ranges(void)
 				break;
 			}
 			base_memory_range[local_memory_ranges].start =
-				((unsigned long long *)buf)[0];
+				((uint64_t *)buf)[0];
 			base_memory_range[local_memory_ranges].end  =
 				base_memory_range[local_memory_ranges].start +
-				((unsigned long long *)buf)[1];
+				((uint64_t *)buf)[1];
 			base_memory_range[local_memory_ranges].type = RANGE_RAM;
 			local_memory_ranges++;
 			dbgprintf("%016llx-%016llx : %x\n",
@@ -231,7 +231,7 @@ static int get_base_ranges(void)
 static int sort_ranges(void)
 {
 	int i, j;
-	unsigned long long tstart, tend;
+	uint64_t tstart, tend;
 	for (i = 0; i < nr_exclude_ranges - 1; i++) {
 		for (j = 0; j < nr_exclude_ranges - i - 1; j++) {
 			if (exclude_range[j].start > exclude_range[j+1].start) {
@@ -292,7 +292,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_opencdir;
 			}
-			if (fread(&kernel_end, sizeof(unsigned long), 1, file) != 1) {
+			if (fread(&kernel_end, sizeof(uint64_t), 1, file) != 1) {
 				perror(fname);
 				goto error_openfile;
 			}
@@ -312,7 +312,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 					perror(fname);
 					goto error_opencdir;
 				}
-				if (fread(&crash_base, sizeof(unsigned long), 1,
+				if (fread(&crash_base, sizeof(uint64_t), 1,
 						file) != 1) {
 					perror(fname);
 					goto error_openfile;
@@ -327,7 +327,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 					perror(fname);
 					goto error_opencdir;
 				}
-				if (fread(&crash_size, sizeof(unsigned long), 1,
+				if (fread(&crash_size, sizeof(uint64_t), 1,
 						file) != 1) {
 					perror(fname);
 					goto error_openfile;
@@ -356,7 +356,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_opendir;
 			}
-			if (fread(&htab_base, sizeof(unsigned long), 1, file) != 1) {
+			if (fread(&htab_base, sizeof(uint64_t), 1, file) != 1) {
 				perror(fname);
 				goto error_openfile;
 			}
@@ -368,7 +368,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_opencdir;
 			}
-			if (fread(&htab_size, sizeof(unsigned long), 1, file) != 1) {
+			if (fread(&htab_size, sizeof(uint64_t), 1, file) != 1) {
 				perror(fname);
 				goto error_openfile;
 			}
@@ -487,7 +487,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_opendir;
 			}
-			if (fread(&tce_base, sizeof(unsigned long), 1, file) != 1) {
+			if (fread(&tce_base, sizeof(uint64_t), 1, file) != 1) {
 				perror(fname);
 				goto error_openfile;
 				return -1;

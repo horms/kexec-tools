@@ -42,7 +42,7 @@
 #define BOOTLOADER         "kexec"
 #define BOOTLOADER_VERSION VERSION
 
-unsigned long initrd_base, initrd_size;
+uint64_t initrd_base, initrd_size;
 unsigned char reuse_initrd = 0;
 const char *ramdisk;
 
@@ -83,19 +83,19 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	char *cmdline, *modified_cmdline;
 	const char *devicetreeblob;
 	int cmdline_len, modified_cmdline_len;
-	unsigned long long max_addr, hole_addr;
+	uint64_t max_addr, hole_addr;
 	unsigned char *seg_buf = NULL;
 	off_t seg_size = 0;
 	struct mem_phdr *phdr;
 	size_t size;
-	unsigned long long *rsvmap_ptr;
+	uint64_t *rsvmap_ptr;
 	struct bootblock *bb_ptr;
 	unsigned int nr_segments, i;
 	int result, opt;
-	unsigned long my_kernel, my_dt_offset;
+	uint64_t my_kernel, my_dt_offset;
 	unsigned int my_panic_kernel;
-	unsigned long my_stack, my_backup_start;
-	unsigned long toc_addr;
+	uint64_t my_stack, my_backup_start;
+	uint64_t toc_addr;
 	unsigned int slave_code[256/sizeof (unsigned int)], master_entry;
 
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
@@ -237,10 +237,10 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		}
 		seg_buf = (unsigned char *)slurp_file(ramdisk, &seg_size);
 		add_buffer(info, seg_buf, seg_size, seg_size, 0, 0, max_addr, 1);
-		hole_addr = (unsigned long long)
+		hole_addr = (uint64_t)
 			info->segment[info->nr_segments-1].mem;
 		initrd_base = hole_addr;
-		initrd_size = (unsigned long long)
+		initrd_size = (uint64_t)
 			info->segment[info->nr_segments-1].memsz;
 	} /* ramdisk */
 
@@ -270,25 +270,25 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	 */
 	bb_ptr = (struct bootblock *)(
 		(unsigned char *)info->segment[(info->nr_segments)-1].buf);
-	rsvmap_ptr = (unsigned long long *)(
+	rsvmap_ptr = (uint64_t *)(
 		(unsigned char *)info->segment[(info->nr_segments)-1].buf +
 		bb_ptr->off_mem_rsvmap);
 	while (*rsvmap_ptr || *(rsvmap_ptr+1))
 		rsvmap_ptr += 2;
 	rsvmap_ptr -= 2;
-	*rsvmap_ptr = (unsigned long long)(
+	*rsvmap_ptr = (uint64_t)(
 		info->segment[(info->nr_segments)-1].mem);
 	rsvmap_ptr++;
-	*rsvmap_ptr = (unsigned long long)bb_ptr->totalsize;
+	*rsvmap_ptr = (uint64_t)bb_ptr->totalsize;
 
 	nr_segments = info->nr_segments;
 
 	/* Set kernel */
-	my_kernel = (unsigned long )info->segment[0].mem;
+	my_kernel = (uint64_t)info->segment[0].mem;
 	elf_rel_set_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
 
 	/* Set dt_offset */
-	my_dt_offset = (unsigned long )info->segment[nr_segments-1].mem;
+	my_dt_offset = (uint64_t)info->segment[nr_segments-1].mem;
 	elf_rel_set_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
 				sizeof(my_dt_offset));
 

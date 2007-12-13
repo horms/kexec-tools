@@ -2,8 +2,8 @@
 #define KEXEC_SHA256_H
 
 struct sha256_region {
-	const void *start;
-	unsigned long len;
+	uint64_t start;
+	uint64_t len;
 };
 
 #define SHA256_REGIONS 16

@@ -46,3 +46,5 @@ void purgatory(void)
 	verify_sha256_digest();
 	post_verification_setup_arch();
 }
+
+#include "../util_lib/sha256.c"
