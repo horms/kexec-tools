@@ -14,50 +14,40 @@ dnl as there are only a small number of targets that kexec
 dnl can support on a given host system.  If it stops making
 dnl sense compile support for all possible targets a given
 dnl host can support AC_CANONICAL_TARGET may help
-dnl AC_CANONICAL_TARGET
+AC_CANONICAL_TARGET
 
 
-dnl Compute host cpu
-case $host_cpu in 
-	i?86 )	
-		host_cpu="i386"
+dnl Compute ARCH from target cpu info
+case $target_cpu in
+	i?86 )
+		ARCH="i386"
 		;;
 	powerpc )
-		host_cpu="ppc"
+		ARCH="ppc"
 		;;
 	powerpc64 )
-		host_cpu="ppc64"
+		ARCH="ppc64"
 		;;
-	s390x )
-		host_cpu="s390"
+	s390x|s390 )
+		ARCH="s390"
 		;;
-	sh4|sh4a|sh3 )
-		host_cpu="sh"
+	sh4|sh4a|sh3|sh )
+		ARCH="sh"
 		;;
-	* ) 
-		host_cpu="$host_cpu"
-		;;
-esac
-case $host_cpu in
-	i386|ppc|x86_64|alpha|ppc64|ia64|s390|sh)
+	ia64|x86_64|alpha )
+		ARCH="$target_cpu"
 		;;
 	* )
-		AC_MSG_ERROR([ unsupported architecture $host_cpu])
+		AC_MSG_ERROR([unsupported architecture $target_cpu])
 		;;
 esac
-
-dnl Try to guess the kernel ARCH based on the autoconf host_cpu variable.
-
-if ! test "${ARCH}" ; then
-	ARCH=$host_cpu
-fi
 
 dnl ---Options
 
 OBJDIR=`pwd`/objdir
 if test "${host_alias}" ; then
 	OBJDIR="$OBJDIR-${host_alias}"
-fi 
+fi
 
 EXTRA_CFLAGS='-Wall -g -fno-strict-aliasing -Wstrict-prototypes $(CPPFLAGS) $(EXTRA_CPPFLAGS)'
 BUILD_CFLAGS='-O2 -Wall $(CPPFLAGS)'
