@@ -1,6 +1,7 @@
 #ifndef SHA256_H
 #define SHA256_H
 
+#include <sys/types.h>
 #include <stdint.h>
 
 typedef struct

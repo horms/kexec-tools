@@ -16,7 +16,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <arch/io.h>
+#include <sys/io.h>
 #include <purgatory.h>
 #include "purgatory-x86.h"
 
