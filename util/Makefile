@@ -1,4 +1,8 @@
-BIN_TO_HEX:= $(OBJDIR)/bin/bin-to-hex
-$(BIN_TO_HEX): util/bin-to-hex.c
-	mkdir -p $(@D)
-	$(BUILD_CC) $(BUILD_CFLAGS) $< -o $@
+BIN_TO_HEX:= bin/bin-to-hex
+
+$(BIN_TO_HEX): $(srcdir)/util/bin-to-hex.c
+	@$(MKDIR) -p $(@D)
+	$(LINK.o) -o $@ $^
+
+$(BIN_TO_HEX): CC=$(BUILD_CC)
+$(BIN_TO_HEX): CFLAGS=$(BUILD_CFLAGS)

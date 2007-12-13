@@ -1,28 +1,92 @@
 # Hey Emacs this is a -*- makefile-*-
-include Makefile.conf
 
-pkgdatadir = $(datadir)/$(PACKAGE)
-pkglibdir = $(libdir)/$(PACKAGE)
-pkgincludedir = $(includedir)/$(PACKAGE)
+PACKAGE_NAME	= @PACKAGE_NAME@
+PACKAGE_VERSION	= @PACKAGE_VERSION@
+
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+
+bindir		= @bindir@
+sbindir		= @sbindir@
+libexecdir	= @libexecdir@
+datadir		= @datadir@
+sysconfdir	= @sysconfdir@
+sharedstatedir	= @sharedstatedir@
+localstatedir	= @localstatedir@
+libdir		= @libdir@
+infodir		= @infodir@
+mandir		= @mandir@
+includedir	= @includedir@
+
+
+# The target architecture
+ARCH		= @ARCH@
+OBJDIR		= @OBJDIR@
+target		= @target@
+host		= @host@
+
+# Compiler for building kexec
+CC		= @CC@
+CPP		= @CPP@
+LD		= @LD@
+AS		= @AS@
+OBJCOPY		= @OBJCOPY@
+AR		= @AR@
+
+# C compiler for binaries to run during the build
+BUILD_CC	= @BUILD_CC@
+BUILD_CFLAGS	= @BUILD_CFLAGS@
+TARGET_CC	= @TARGET_CC@
+TARGET_CFLAGS	= @TARGET_CFLAGS@
+
+
+# Base compiler flags. These are extended by the subcomponent-Makefiles
+# where necessary.
+CPPFLAGS	= @CPPFLAGS@ -I$(srcdir)/include -I$(srcdir)/util_lib/include \
+			-Iinclude/
+CFLAGS		= @CFLAGS@ -fno-strict-aliasing -Wall -Wstrict-prototypes
+ASFLAGS		= @ASFLAGS@
+LDFLAGS		= @LDFLAGS@
+LIBS		= @LIBS@
+
+# Utilities called by the makefiles
+INSTALL		= @INSTALL@
+MKDIR		= @MKDIR@
+RM		= @RM@
+CP		= @CP@
+LN		= @LN@
+TAR		= @TAR@
+RPMBUILD	= @RPMBUILD@
+SED		= @SED@
+FIND		= @FIND@
+XARGS		= @XARGS@
+DIRNAME		= @DIRNAME@
+
+
+pkgdatadir = $(datadir)/$(PACKAGE_NAME)
+pkglibdir = $(libdir)/$(PACKAGE_NAME)
+pkgincludedir = $(includedir)/$(PACKAGE_NAME)
 
 # You can specify DESTDIR on the command line to do a add
 # a prefix to the install so it doesn't really happen
 # Useful for building binary packages
 DESTDIR =
 
-EXTRA_CPPFLAGS:= -I./include -I./util_lib/include $(DEFS) $(EXTRA_CFLAGS)
+srcdir		= @srcdir@
+VPATH		= .:$(srcdir)
 
-PREFIX:=$(OBJDIR)/build
-SBINDIR=$(PREFIX)/sbin
-BINDIR=$(PREFIX)/bin
-LIBEXECDIR=$(PREFIX)/libexec
-DATADIR=$(PREFIX)/share
-SYSCONFDIR=$(PREFIX)/etc
-SHAREDSTATEDIR=$(PREFIX)/com
-LOCALSTATEDIR=$(PREFIX)/var
-LIBDIR=$(PREFIX)/lib
-INFODIR=$(PREFIX)/info
-MANDIR=$(PREFIX)/man
+# install paths
+BUILD_PREFIX:=build
+SBINDIR=$(BUILD_PREFIX)/sbin
+BINDIR=$(BUILD_PREFIX)/bin
+LIBEXECDIR=$(BUILD_PREFIX)/libexec
+DATADIR=$(BUILD_PREFIX)/share
+SYSCONFDIR=$(BUILD_PREFIX)/etc
+SHAREDSTATEDIR=$(BUILD_PREFIX)/com
+LOCALSTATEDIR=$(BUILD_PREFIX)/var
+LIBDIR=$(BUILD_PREFIX)/lib
+INFODIR=$(BUILD_PREFIX)/info
+MANDIR=$(BUILD_PREFIX)/man
 MAN1DIR=$(MANDIR)/man1
 MAN2DIR=$(MANDIR)/man2
 MAN3DIR=$(MANDIR)/man3
@@ -31,106 +95,111 @@ MAN5DIR=$(MANDIR)/man5
 MAN6DIR=$(MANDIR)/man6
 MAN7DIR=$(MANDIR)/man7
 MAN8DIR=$(MANDIR)/man8
-INCLUDEDIR=$(PREFIX)/include
+INCLUDEDIR=$(BUILD_PREFIX)/include
 
-PKGDATADIR=$(DATADIR)/$(PACKAGE)
-PKGLIBDIR=$(LIBDIR)/$(PACKAGE)
-PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE)
+PKGDATADIR=$(DATADIR)/$(PACKAGE_NAME)
+PKGLIBDIR=$(LIBDIR)/$(PACKAGE_NAME)
+PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE_NAME)
 
 MAN_PAGES:= kexec/kexec.8
 MAN_PAGES+= kdump/kdump.8
 BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
 BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
-BINARIES:=$(SBINDIR)/kexec $(SBINDIR)/kdump $(BINARIES_$(ARCH)) 
+BINARIES:=$(SBINDIR)/kexec $(SBINDIR)/kdump $(BINARIES_$(ARCH))
 
 TARGETS:=$(BINARIES) $(MAN_PAGES)
 
 all: $(TARGETS)
 
-# cc-option
-# Usage: cflags-y += $(call cc-option, -march=winchip-c6, -march=i586)
-cc-option = $(shell if $(CC) $(CFLAGS) $(EXTRA_CFLAGS) $(1) -S -o /dev/null \
-	     -xc /dev/null > /dev/null 2>&1; then echo "$(1)"; else \
-	     echo "$(2)"; fi ;)
+# generic build rules
+%.o: %.c
+	@$(MKDIR) -p $(@D)
+	$(COMPILE.c) -MD -o $@ $<
+
+%.o: %.S
+	@$(MKDIR) -p $(@D)
+	$(COMPILE.S) -MD -o $@ $<
 
 # Utility function library
 #
-include util_lib/Makefile
+include $(srcdir)/util_lib/Makefile
 
 #
 # Stand alone utilities
 #
-include util/Makefile
+include $(srcdir)/util/Makefile
 
 #
 # purgatory (code between kernels)
 #
-include purgatory/Makefile
+include $(srcdir)/purgatory/Makefile
 
 #
 # kexec (linux booting linux)
 #
-include kexec/Makefile
+include $(srcdir)/kexec/Makefile
 
 
 # kdump (read a crashdump from memory)
 #
-include kdump/Makefile
+include $(srcdir)/kdump/Makefile
 
 #
 # kexec_test (test program)
 #
 ifeq ($(ARCH),i386)
-include kexec_test/Makefile
+include $(srcdir)/kexec_test/Makefile
 endif
 ifeq ($(ARCH),x86_64)
-include kexec_test/Makefile
+include $(srcdir)/kexec_test/Makefile
 endif
 
-SPEC=$(PACKAGE).spec
-GENERATED_SRCS:= ./configure ./$(SPEC)
-TARBALL=$(OBJDIR)/$(PACKAGE)-$(VERSION).tar.gz
-SRCS:=$(shell $(FIND) \
-	./AUTHORS ./COPYING ./News ./TODO \
-	./Makefile ./Makefile.conf.in ./configure.ac \
-	./kexec-tools.spec.in ./config ./doc \
-	./include ./kexec ./purgatory ./kexec_test ./kdump ./util ./util_lib \
-	! -path '*CVS*' ! -name '*~' ! -name '.*' \
-	-type f -print )
-SRCS+=$(GENERATED_SRCS)
-PSRCS:=$(patsubst ./%,$(PACKAGE)-$(VERSION)/%,$(SRCS))
+SPEC=$(PACKAGE_NAME).spec
+GENERATED_SRCS:= $(SPEC)
+TARBALL=$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar
+TARBALL.gz=$(TARBALL).gz
+SRCS:= AUTHORS COPYING News TODO Makefile.in configure.ac \
+	kexec-tools.spec.in config doc include kexec purgatory kexec_test \
+	kdump util util_lib configure
+PSRCS:=$(foreach s, $(SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
+PGSRCS:=$(foreach s, $(GENERATED_SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 
-Makefile.conf: Makefile.conf.in configure
-	/bin/sh ./configure
+Makefile: Makefile.in configure
+	$(srcdir)/configure
 
 configure: configure.ac
-	autoheader
-	autoconf
-	$(RM) -rf autom4te.cache
+	cd $(srcdir) && autoheader && autoconf && rm -rf autom4te.cache
 
-tarball: $(TARBALL)
+tarball: $(TARBALL.gz)
 
-$(TARBALL): $(SRCS) $(SPEC)
-	$(MKDIR) -p $(OBJDIR)
-	$(RM) -f $(OBJDIR)/$(PACKAGE)-$(VERSION)
-	$(LN) -s .. $(OBJDIR)/$(PACKAGE)-$(VERSION)
-	(cd $(OBJDIR); $(TAR) -cf - $(PSRCS) | gzip -9) > $@
+$(TARBALL): $(SRCS) $(GENERATED_SRCS)
+	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(LN) -s $(srcdir) $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(TAR) -cf $@ $(PSRCS)
+	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(LN) -sf . $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(TAR) -rf $@ $(PGSRCS)
+	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
+$(TARBALL.gz): $(TARBALL)
+	gzip -c < $^ > $@
+
+RPMDIR=rpm
 rpm: $(TARBALL)
-	$(MKDIR) -p $(OBJDIR)/RPM $(OBJDIR)/SRPM $(OBJDIR)/BUILD $(OBJDIR)/SPECS \
-		$(OBJDIR)/TMP $(OBJDIR)/SOURCES
+	$(MKDIR) -p $(RPMDIR)/RPM $(RPMDIR)/SRPM $(RPMDIR)/BUILD \
+		$(RPMDIR)/SPECS $(RPMDIR)/TMP $(RPMDIR)/SOURCES
 	unset MAKEFLAGS MAKELEVEL; \
 	$(RPMBUILD) -ta \
-		--define '_rpmdir $(OBJDIR)/RPM' \
-		--define '_srcrpmdir $(OBJDIR)/SRPM' \
-		--define '_builddir $(OBJDIR)/BUILD' \
-		--define '_specdir $(OBJDIR)/SPECS' \
-		--define '_tmppath $(OBJDIR)/TMP' \
-		--define '_sourcedir $(OBJDIR)/SOURCES' \
+		--define '_rpmdir $(RPMDIR)/RPM' \
+		--define '_srcrpmdir $(RPMDIR)/SRPM' \
+		--define '_builddir $(RPMDIR)/BUILD' \
+		--define '_specdir $(RPMDIR)/SPECS' \
+		--define '_tmppath $(RPMDIR)/TMP' \
+		--define '_sourcedir $(RPMDIR)/SOURCES' \
 		$(TARBALL)
 
 $(SPEC): kexec-tools.spec.in Makefile
-	$(SED) -e 's,^Version: $$,Version: $(VERSION),' $< > $@
+	$(SED) -e 's,^Version: $$,Version: $(PACKAGE_VERSION),' $< > $@
 
 echo::
 	@echo ARCH=$(ARCH)
@@ -141,7 +210,7 @@ echo::
 	@echo LD=$(LD)
 
 clean:
-	@$(FIND) $(OBJDIR) ! -name '*.d' -type f | $(XARGS) $(RM) rm -f
+	@$(FIND) $(OBJDIR) -name '*.o' -type f | $(XARGS) $(RM) rm -f
 	@$(RM) -rf rpm
 	@$(RM) -f config.log config.status config.cache
 	@$(RM) -f $(TARBALL)

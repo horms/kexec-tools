@@ -7,59 +7,48 @@
 # should keep us from accidentially include unsafe library functions
 # or headers.
 
-ifeq ($(ARCH),ppc64)
-EXTRA_LDFLAGS = -melf64ppc
-endif
-
-PCFLAGS:=-Wall -Os  \
-	-I$(shell $(CC) -print-file-name=include) \
-	-Ipurgatory/include -Ipurgatory/arch/$(ARCH)/include \
-	$(CPPFLAGS) $(EXTRA_CPPFLAGS)
-
-PCFLAGS += $(call cc-option, -ffreestanding)
-PCFLAGS += $(call cc-option, -fnobuiltin)
-PCFLAGS += $(call cc-option, -fnostdinc)
-PCFLAGS += $(call cc-option, -fno-zero-initialized-in-bss)
-
 PURGATORY_C_SRCS:=
 PURGATORY_C_SRCS += purgatory/purgatory.c
 PURGATORY_C_SRCS += purgatory/printf.c
 PURGATORY_C_SRCS += purgatory/string.c
 PURGATORY_S_OBJS:=
+PURGATORY:= purgatory/purgatory.ro
 
-include purgatory/arch/$(ARCH)/Makefile
+include $(srcdir)/purgatory/arch/$(ARCH)/Makefile
 
-
-PURGATORY_C_OBJS:= $(patsubst %.c, $(OBJDIR)/%.o, $(PURGATORY_C_SRCS))
-PURGATORY_C_DEPS:= $(patsubst %.c, $(OBJDIR)/%.d, $(PURGATORY_C_SRCS))
-PURGATORY_S_OBJS:= $(patsubst %.S, $(OBJDIR)/%.o, $(PURGATORY_S_SRCS))
-PURGATORY_S_DEPS:= $(patsubst %.S, $(OBJDIR)/%.d, $(PURGATORY_S_SRCS))
+PURGATORY_C_OBJS:= $(patsubst %.c, %.o, $(PURGATORY_C_SRCS))
+PURGATORY_C_DEPS:= $(patsubst %.c, %.d, $(PURGATORY_C_SRCS))
+PURGATORY_S_OBJS:= $(patsubst %.S, %.o, $(PURGATORY_S_SRCS))
+PURGATORY_S_DEPS:= $(patsubst %.S, %.d, $(PURGATORY_S_SRCS))
 PURGATORY_SRCS:= $(PURGATORY_S_SRCS) $(PURGATORY_C_SRCS)
-PURGATORY_OBJS:= $(PURGATORY_S_OBJS) $(PURGATORY_C_OBJS)
+PURGATORY_OBJS:= $(PURGATORY_S_OBJS) $(PURGATORY_C_OBJS) purgatory/sha256.o
 PURGATORY_DEPS:= $(PURGATORY_S_DEPS) $(PURGATORY_C_DEPS)
-PURGATORY:= $(OBJDIR)/purgatory/purgatory.ro
 
-include $(PURGATORY_DEPS)
+-include $(PURGATORY_DEPS)
 
-$(PURGATORY_C_DEPS): $(OBJDIR)/%.d: %.c
+# sha256.c needs to be compiled without optimization, else
+# purgatory fails to execute on ia64.
+purgatory/sha256.o: CFLAGS += -O0
+
+purgatory/sha256.o: $(srcdir)/util_lib/sha256.c
+	mkdir -p $(@D)
+	$(COMPILE.c) -o $@ $^
+
+$(PURGATORY): CC=$(TARGET_CC)
+$(PURGATORY): CFLAGS+=-Os -fno-builtin -ffreestanding \
+		      -fno-zero-initialized-in-bss
+
+$(PURGATORY): CPPFLAGS+=-I$(srcdir)/purgatory/include \
+			-I$(srcdir)/purgatory/arch/$(ARCH)/include \
+			-I$(shell $(CC) -print-file-name=include)
+$(PURGATORY): LDFLAGS+=--no-undefined -nostartfiles -nostdlib -nodefaultlibs \
+			-e purgatory_start -r
+
+$(PURGATORY): $(PURGATORY_OBJS)
 	$(MKDIR) -p $(@D)
-	$(CC) $(PCFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
+	$(LD) $(LDFLAGS) -o $@ $^
 
-$(PURGATORY_S_DEPS): $(OBJDIR)/%.d: %.S
-	$(MKDIR) -p $(@D)
-	$(CC) $(PCFLAGS) -M $< | sed -e 's|$(patsubst %.d,%.o,$(@F))|$(patsubst %.d,%.o,$(@))|' > $@
-
-$(PURGATORY_C_OBJS): $(OBJDIR)/%.o: %.c $(OBJDIR)/%.d
-	$(MKDIR) -p $(@D)
-	$(CC) $(PCFLAGS) -o $@ -c $<
-
-$(PURGATORY_S_OBJS): $(OBJDIR)/%.o: %.S $(OBJDIR)/%.d
-	$(MKDIR) -p $(@D)
-	$(CC) $(PCFLAGS) -o $@ -c $<
-
-$(PURGATORY): $(PURGATORY_OBJS) $(UTIL_LIB)
-	$(MKDIR) -p $(@D)
-	$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
+#	$(LD) $(LDFLAGS) $(EXTRA_LDFLAGS) --no-undefined -e purgatory_start -r -o $@ $(PURGATORY_OBJS) $(UTIL_LIB)
 
 echo::
 	@echo "PURGATORY_C_SRCS $(PURGATORY_C_SRCS)"

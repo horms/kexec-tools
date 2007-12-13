@@ -1,4 +1,4 @@
-#include <stdarg.h>
+
 #include <limits.h>
 #include <stdint.h>
 #include <purgatory.h>
@@ -46,5 +46,3 @@ void purgatory(void)
 	verify_sha256_digest();
 	post_verification_setup_arch();
 }
-
-#include "../util_lib/sha256.c"
