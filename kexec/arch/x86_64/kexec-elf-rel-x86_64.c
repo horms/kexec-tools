@@ -83,7 +83,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		*(uint32_t *)location = value - address;
 		break;
 	default:
-		die("Unhandled rela relocation: %lu\n", reloc_name(r_type));
+		die("Unhandled rela relocation: %s\n", reloc_name(r_type));
 		break;
 	}
 	return;
