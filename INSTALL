@@ -1,14 +1,23 @@
 To build kexec-tools
 
-1. If ./configure deosn't exist, create it
+1. If ./include/config.h.in doesn't exist, create it
 
-   # autoconf
+   # autoheader
 
    If you obtain kexec-tools from a released tarball, you can ommit this
    step.  If on the other hand you obtain kexec-tools from git or some
    other revision control system, then you will probably need to do this.
 
-2. Run ./configure [--prefix=/usr/local] [options]...
+2. If ./configure deosn't exist, create it
+
+   # autoconf
+
+   As per ./include/config.h.in, if you obtain kexec-tools from a released
+   tarball, you can ommit this step.  If on the other hand you obtain
+   kexec-tools from git or some other revision control system, then you
+   will probably need to do this.
+
+3. Run ./configure [--prefix=/usr/local] [options]...
 
    e.g.
    # ./configure --prefix=/usr/local
@@ -17,7 +26,7 @@ To build kexec-tools
 
    # ./configure --help
 
-3. Run make
+4. Run make
 
    # make
 
