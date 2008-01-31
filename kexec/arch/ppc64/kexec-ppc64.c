@@ -160,7 +160,7 @@ static int get_base_ranges(void)
 	int local_memory_ranges = 0;
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
-	char buf[MAXBYTES-1];
+	char buf[MAXBYTES];
 	DIR *dir, *dmem;
 	FILE *file;
 	struct dirent *dentry, *mentry;
@@ -258,7 +258,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 	unsigned long long htab_base, htab_size;
 	unsigned long long kernel_end;
 	unsigned long long initrd_start, initrd_end;
-	char buf[MAXBYTES-1];
+	char buf[MAXBYTES];
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
 	DIR *dir, *cdir;
