@@ -38,8 +38,9 @@ void init_linux_parameters(struct x86_linux_param_header *real_mode)
 
 	/* Boot block magic */
 	memcpy(real_mode->header_magic, "HdrS", 4);
-	real_mode->protocol_version = 0x0203;
+	real_mode->protocol_version = 0x0206;
 	real_mode->initrd_addr_max = DEFAULT_INITRD_ADDR_MAX;
+	real_mode->cmdline_size = COMMAND_LINE_SIZE;
 }
 
 void setup_linux_bootloader_parameters(
