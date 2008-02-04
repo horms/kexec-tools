@@ -25,12 +25,9 @@
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include <arch/options.h>
-#include <asm/page.h>
 
 static const int probe_debug = 0;
 const extern unsigned char netbsd_booter[];
-
-#define PAGE_ALIGN(addr)        (((addr)+PAGE_SIZE-1)&PAGE_MASK)
 
 /*
  * netbsd_sh_probe - sanity check the elf image
@@ -62,7 +59,7 @@ int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	const char *howto, *miniroot;
-	unsigned long entry, start, size;
+	unsigned long entry, start, size, psz;
 	char *miniroot_buf;
 	off_t miniroot_length;
 	unsigned int howto_value;
@@ -105,6 +102,8 @@ int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 	        howto_value = strtol(howto, NULL, 0);
 	}
 
+	psz = getpagesize();
+
 	/* Parse the Elf file */
 	{
 	        Elf32_Ehdr *ehdr;
@@ -122,7 +121,8 @@ int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 		if(size < bbs){
 		        size = bbs;
 		}
-		size  = PAGE_ALIGN(size);
+
+		size = (size + psz - 1) & ~(psz - 1);
 		memset(&img[bbs], 0, size-bbs);
 		add_segment(info, img, size, start, size);
 		start += size;
@@ -133,7 +133,7 @@ int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 	if (miniroot) {
 		miniroot_buf = slurp_file(miniroot, &miniroot_length);
 		howto_value |= 0x200;
-		size = PAGE_ALIGN(miniroot_length);
+		size = (miniroot_length + psz - 1) & ~(psz - 1);
 		add_segment(info, miniroot_buf, size, start, size);
 		start += size;
 	}
