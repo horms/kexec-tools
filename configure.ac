@@ -29,6 +29,9 @@ case $target_cpu in
 	powerpc64 )
 		ARCH="ppc64"
 		;;
+	arm* )
+		ARCH="arm"
+		;;
 	s390x|s390 )
 		ARCH="s390"
 		;;
