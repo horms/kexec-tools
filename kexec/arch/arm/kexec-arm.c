@@ -23,7 +23,7 @@
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of available memory ranges. */
-int get_memory_ranges(struct memory_range **range, int *ranges, 
+int get_memory_ranges(struct memory_range **range, int *ranges,
 		unsigned long kexec_flags)
 {
 	const char iomem[]= "/proc/iomem";
@@ -32,7 +32,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	FILE *fp;
 	fp = fopen(iomem, "r");
 	if (!fp) {
-		fprintf(stderr, "Cannot open %s: %s\n", 
+		fprintf(stderr, "Cannot open %s: %s\n",
 			iomem, strerror(errno));
 		return -1;
 	}
@@ -47,14 +47,14 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			break;
 		count = sscanf(line, "%Lx-%Lx : %n",
 			&start, &end, &consumed);
-		if (count != 2) 
+		if (count != 2)
 			continue;
 		str = line + consumed;
 		end = end + 1;
 
 		if (memcmp(str, "System RAM\n", 11) == 0) {
 			type = RANGE_RAM;
-		} 
+		}
 		else if (memcmp(str, "reserved\n", 9) == 0) {
 			type = RANGE_RESERVED;
 		}
@@ -91,7 +91,7 @@ int arch_process_options(int argc, char **argv)
 {
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
-		{ 0, 			0, NULL, 0 },
+		{ 0,			0, NULL, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR;
 	int opt;
@@ -139,4 +139,3 @@ int is_crashkernel_mem_reserved(void)
 {
 	return 0; /* kdump is not supported on this platform (yet) */
 }
-	
