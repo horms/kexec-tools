@@ -32,7 +32,7 @@
 
 #include "config.h"
 
-#ifdef HAVE_ZLIB_H
+#ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
 #include <sha256.h>
@@ -446,7 +446,7 @@ char *slurp_file_len(const char *filename, off_t size)
 	return buf;
 }
 
-#if HAVE_ZLIB_H
+#if HAVE_LIBZ
 char *slurp_decompress_file(const char *filename, off_t *r_size)
 {
 	gzFile fp;
