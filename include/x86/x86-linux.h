@@ -22,9 +22,9 @@ struct e820entry {
 } PACKED;
 
 /* FIXME expand on drive_info_)struct... */
-struct drive_info_struct { 
-	uint8_t dummy[32]; 
-}; 
+struct drive_info_struct {
+	uint8_t dummy[32];
+};
 struct sys_desc_table {
 	uint16_t length;
 	uint8_t  table[318];
@@ -93,9 +93,9 @@ struct x86_linux_param_header {
 	uint16_t syssize;			/* 0x1f4 */
 	uint16_t swapdev;			/* 0x1f6 */
 	uint16_t ramdisk_flags;			/* 0x1f8 */
-#define RAMDISK_IMAGE_START_MASK  	0x07FF
+#define RAMDISK_IMAGE_START_MASK	0x07FF
 #define RAMDISK_PROMPT_FLAG		0x8000
-#define RAMDISK_LOAD_FLAG		0x4000	
+#define RAMDISK_LOAD_FLAG		0x4000
 	uint16_t vid_mode;			/* 0x1fa */
 	uint16_t root_dev;			/* 0x1fc */
 	uint8_t  reserved9[1];			/* 0x1fe */
@@ -152,7 +152,7 @@ struct x86_linux_param_header {
 #endif
 	struct e820entry e820_map[E820MAX];	/* 0x2d0 */
 						/* 0x550 */
-#define COMMAND_LINE_SIZE 2048 
+#define COMMAND_LINE_SIZE 2048
 };
 
 struct x86_linux_faked_param_header {
