@@ -2,5 +2,8 @@
 # Purgatory arm
 #
 
-PURGATORY_SRCS += 
+arm_PURGATORY_SRCS =
+
+dist += purgatory/arch/arm/Makefile $(arm_PURGATORY_SRCS)
+
 

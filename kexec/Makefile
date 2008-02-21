@@ -23,7 +23,23 @@ KEXEC_SRCS += kexec/crashdump-xen.c
 
 KEXEC_GENERATED_SRCS += $(PURGATORY_HEX_C)
 
-include $(srcdir)/kexec/arch/$(ARCH)/Makefile
+dist += kexec/Makefile $(KEXEC_SRCS) $(KEXEC_GENERATED_SRCS)	\
+	kexec/crashdump-elf.c					\
+	kexec/crashdump.h kexec/kexec-elf-boot.h		\
+	kexec/kexec-elf.h kexec/kexec-sha256.h			\
+	kexec/kexec-syscall.h kexec/kexec.h kexec/kexec.8
+
+include $(srcdir)/kexec/arch/alpha/Makefile
+include $(srcdir)/kexec/arch/arm/Makefile
+include $(srcdir)/kexec/arch/i386/Makefile
+include $(srcdir)/kexec/arch/ia64/Makefile
+include $(srcdir)/kexec/arch/ppc/Makefile
+include $(srcdir)/kexec/arch/ppc64/Makefile
+include $(srcdir)/kexec/arch/s390/Makefile
+include $(srcdir)/kexec/arch/sh/Makefile
+include $(srcdir)/kexec/arch/x86_64/Makefile
+
+KEXEC_SRCS += $($(ARCH)_KEXEC_SRCS)
 
 KEXEC_OBJS = $(call objify, $(KEXEC_SRCS) $(KEXEC_GENERATED_SRCS))
 KEXEC_DEPS = $(call depify, $(KEXEC_OBJS))

@@ -10,6 +10,7 @@ KDUMP_DEPS = $(call depify, $(KDUMP_OBJS))
 KDUMP = $(SBINDIR)/kdump
 KDUMP_MANPAGE = $(MANDIR)/man8/kdump.8
 
+dist += kdump/Makefile $(KDUMP_SRCS) kdump/kdump.8
 clean += $(KDUMP_OBJS) $(KDUMP_DEPS) $(KDUMP) $(KDUMP_MANPAGE)
 
 -include $(KDUMP_DEPS)

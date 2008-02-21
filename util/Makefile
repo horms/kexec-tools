@@ -7,4 +7,5 @@ $(BIN_TO_HEX): $(srcdir)/util/bin-to-hex.c
 $(BIN_TO_HEX): CC=$(BUILD_CC)
 $(BIN_TO_HEX): CFLAGS=$(BUILD_CFLAGS)
 
+dist += util/Makefile util/bin-to-hex.c
 clean += util/bin-to-hex.o $(BIN_TO_HEX)

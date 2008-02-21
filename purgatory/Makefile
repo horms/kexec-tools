@@ -13,7 +13,20 @@ PURGATORY_SRCS += purgatory/purgatory.c
 PURGATORY_SRCS += purgatory/printf.c
 PURGATORY_SRCS += purgatory/string.c
 
-include $(srcdir)/purgatory/arch/$(ARCH)/Makefile
+dist += purgatory/Makefile $(PURGATORY_SRCS)				\
+	purgatory/include/purgatory.h purgatory/include/string.h
+
+include $(srcdir)/purgatory/arch/alpha/Makefile
+include $(srcdir)/purgatory/arch/arm/Makefile
+include $(srcdir)/purgatory/arch/i386/Makefile
+include $(srcdir)/purgatory/arch/ia64/Makefile
+include $(srcdir)/purgatory/arch/ppc/Makefile
+include $(srcdir)/purgatory/arch/ppc64/Makefile
+include $(srcdir)/purgatory/arch/s390/Makefile
+include $(srcdir)/purgatory/arch/sh/Makefile
+include $(srcdir)/purgatory/arch/x86_64/Makefile
+
+PURGATORY_SRCS+=$($(ARCH)_PURGATORY_SRCS)
 
 PURGATORY_OBJS = $(call objify, $(PURGATORY_SRCS)) purgatory/sha256.o
 PURGATORY_DEPS = $(call depify, $(PURGATORY_OBJS))
@@ -31,13 +44,16 @@ purgatory/sha256.o: $(srcdir)/util_lib/sha256.c
 	$(COMPILE.c) -o $@ $^
 
 $(PURGATORY): CC=$(TARGET_CC)
-$(PURGATORY): CFLAGS+=-Os -fno-builtin -ffreestanding \
+$(PURGATORY): CFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
+		      -Os -fno-builtin -ffreestanding \
 		      -fno-zero-initialized-in-bss
 
-$(PURGATORY): CPPFLAGS+=-I$(srcdir)/purgatory/include \
+$(PURGATORY): CPPFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
+			-I$(srcdir)/purgatory/include \
 			-I$(srcdir)/purgatory/arch/$(ARCH)/include \
 			-I$(shell $(CC) -print-file-name=include)
-$(PURGATORY): LDFLAGS+=--no-undefined -nostartfiles -nostdlib -nodefaultlibs \
+$(PURGATORY): LDFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS)\
+			--no-undefined -nostartfiles -nostdlib -nodefaultlibs \
 			-e purgatory_start -r
 
 $(PURGATORY): $(PURGATORY_OBJS)

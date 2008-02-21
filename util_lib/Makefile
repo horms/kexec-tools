@@ -10,6 +10,8 @@ UTIL_LIB = libutil.a
 
 -include $(UTIL_LIB_DEPS)
 
+dist  += util_lib/Makefile $(UTIL_LIB_SRCS)				\
+	util_lib/include/sha256.h util_lib/include/ip_checksum.h
 clean += $(UTIL_LIB_OBJS) $(UTIL_LIB_DEPS) $(UTIL_LIB)
 
 $(UTIL_LIB): CPPFLAGS += -I$(srcdir)/util_lib/include

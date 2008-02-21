@@ -123,10 +123,22 @@ all: $(TARGETS)
 # collect objects to be removed in 'make clean'
 clean =
 
+# collect objects to be removed in 'make clean'
+dist =	AUTHORS COPYING News TODO Makefile.in configure.ac	\
+	kexec-tools.spec.in config/
+
 # utility function for converting a list of files (with extension) to
 # file.o (or file.d) format.
 objify = $(addsuffix .o, $(basename $(1)))
 depify = $(addsuffix .d, $(basename $(1)))
+
+# Documentation
+#
+include $(srcdir)/doc/Makefile
+
+# Headers
+#
+include $(srcdir)/include/Makefile
 
 # Utility function library
 #
@@ -155,20 +167,13 @@ include $(srcdir)/kdump/Makefile
 #
 # kexec_test (test program)
 #
-ifeq ($(ARCH),i386)
 include $(srcdir)/kexec_test/Makefile
-endif
-ifeq ($(ARCH),x86_64)
-include $(srcdir)/kexec_test/Makefile
-endif
 
 SPEC=$(PACKAGE_NAME).spec
 GENERATED_SRCS:= $(SPEC)
 TARBALL=$(PACKAGE_NAME)-$(PACKAGE_VERSION).tar
 TARBALL.gz=$(TARBALL).gz
-SRCS:= AUTHORS COPYING News TODO Makefile.in configure.ac \
-	kexec-tools.spec.in config doc include kexec purgatory kexec_test \
-	kdump util util_lib configure
+SRCS:= $(dist)
 PSRCS:=$(foreach s, $(SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 PGSRCS:=$(foreach s, $(GENERATED_SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 
@@ -188,6 +193,7 @@ $(TARBALL): $(SRCS) $(GENERATED_SRCS)
 	$(LN) -sf . $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	$(TAR) -rf $@ $(PGSRCS)
 	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	@echo $(dist)
 
 $(TARBALL.gz): $(TARBALL)
 	gzip -c < $^ > $@
