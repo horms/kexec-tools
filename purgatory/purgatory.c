@@ -18,7 +18,8 @@ void verify_sha256_digest(void)
 	sha256_starts(&ctx);
 	end = &sha256_regions[sizeof(sha256_regions)/sizeof(sha256_regions[0])];
 	for(ptr = sha256_regions; ptr < end; ptr++) {
-		sha256_update(&ctx, ptr->start, ptr->len);
+		sha256_update(&ctx, (uint8_t *)((uintptr_t)ptr->start),
+			      ptr->len);
 	}
 	sha256_finish(&ctx, digest);
 	if (memcmp(digest, sha256_digest, sizeof(digest)) != 0) {
