@@ -116,9 +116,7 @@ int elf_mipsel_load(int argc, char **argv, const char *buf, off_t len,
 	int command_line_len;
 	unsigned char *setup_start;
 	uint32_t setup_size;
-	int result;
 	int opt;
-	int i;
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
