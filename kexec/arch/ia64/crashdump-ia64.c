@@ -221,40 +221,34 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 	unsigned long sz;
 	size_t size;
 	void *tmp;
-	if (info->kexec_flags & KEXEC_ON_CRASH ) {
-		if (get_crash_memory_ranges(&mem_range, &nr_ranges) == 0) {
-			int i;
+	if (info->kexec_flags & KEXEC_ON_CRASH &&
+	    get_crash_memory_ranges(&mem_range, &nr_ranges) == 0) {
+		int i;
 
-			info->kern_paddr_start = kernel_code_start;
-			for (i=0; i < nr_ranges; i++) {
-				unsigned long long mstart = crash_memory_range[i].start;
-				unsigned long long mend = crash_memory_range[i].end;
-				if (!mstart && !mend)
-					continue;
-				if (kernel_code_start >= mstart &&
-				    kernel_code_start < mend) {
-					info->kern_vaddr_start = mstart +
-								 LOAD_OFFSET;
-					break;
-				}
+		info->kern_paddr_start = kernel_code_start;
+		for (i=0; i < nr_ranges; i++) {
+			unsigned long long mstart = crash_memory_range[i].start;
+			unsigned long long mend = crash_memory_range[i].end;
+			if (!mstart && !mend)
+				continue;
+			if (kernel_code_start >= mstart &&
+			    kernel_code_start < mend) {
+				info->kern_vaddr_start = mstart + LOAD_OFFSET;
+				break;
 			}
-			info->kern_size = kernel_code_end - kernel_code_start + 1;
-			if (crash_create_elf64_headers(info, &elf_info,
-						       crash_memory_range,
-						       nr_ranges,
-						       &tmp, &sz,
-						       EFI_PAGE_SIZE) < 0)
-				return -1;
-
-			elfcorehdr = add_buffer(info, tmp, sz, sz,
-						EFI_PAGE_SIZE, min_base,
-						max_addr, -1);
-			loaded_segments[loaded_segments_num].start = elfcorehdr;
-			loaded_segments[loaded_segments_num].end = elfcorehdr +
-								   sz;
-			loaded_segments_num++;
-			cmdline_add_elfcorehdr(cmdline, elfcorehdr);
 		}
+		info->kern_size = kernel_code_end - kernel_code_start + 1;
+		if (crash_create_elf64_headers(info, &elf_info,
+					       crash_memory_range, nr_ranges,
+					       &tmp, &sz, EFI_PAGE_SIZE) < 0)
+			return -1;
+
+		elfcorehdr = add_buffer(info, tmp, sz, sz, EFI_PAGE_SIZE,
+					min_base, max_addr, -1);
+		loaded_segments[loaded_segments_num].start = elfcorehdr;
+		loaded_segments[loaded_segments_num].end = elfcorehdr + sz;
+		loaded_segments_num++;
+		cmdline_add_elfcorehdr(cmdline, elfcorehdr);
 	}
 	add_loaded_segments_info(info, ehdr, max_addr);
 	size = sizeof(struct loaded_segment) * loaded_segments_num;
