@@ -59,7 +59,7 @@ static struct memory_range crash_reserved_mem;
  */
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
-	const char *iomem = proc_iomem(1);
+	const char *iomem = proc_iomem();
 	int memory_ranges = 0;
 	char line[MAX_LINE];
 	FILE *fp;
@@ -582,6 +582,6 @@ int is_crashkernel_mem_reserved(void)
 {
 	uint64_t start, end;
 
-	return parse_iomem_single("Crash kernel\n", 1, &start, &end) == 0 ?
+	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
 	  (start != end) : 0;
 }

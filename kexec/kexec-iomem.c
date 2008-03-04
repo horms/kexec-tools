@@ -22,7 +22,7 @@
  * Return the number of lines matched.
  */
 
-int kexec_iomem_for_each_line(char *match, int machine,
+int kexec_iomem_for_each_line(char *match,
 			      int (*callback)(void *data,
 					      int nr,
 					      char *str,
@@ -30,7 +30,7 @@ int kexec_iomem_for_each_line(char *match, int machine,
 					      unsigned long length),
 			      void *data)
 {
-	const char *iomem = proc_iomem(machine);
+	const char *iomem = proc_iomem();
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end, size;
@@ -78,14 +78,14 @@ static int kexec_iomem_single_callback(void *data, int nr,
 	return 0;
 }
 
-int parse_iomem_single(char *str, int machine, uint64_t *start, uint64_t *end)
+int parse_iomem_single(char *str, uint64_t *start, uint64_t *end)
 {
 	struct memory_range range;
 	int ret;
 
 	memset(&range, 0, sizeof(range));
 
-	ret = kexec_iomem_for_each_line(str, machine,
+	ret = kexec_iomem_for_each_line(str,
 	                                kexec_iomem_single_callback, &range);
 
 	if (ret == 1) {
@@ -109,7 +109,7 @@ static const char proc_iomem_str[]= "/proc/iomem";
  * function to override the location of a file looking a lot
  * like /proc/iomem
  */
-const char * __attribute__((weak)) proc_iomem(int machine)
+const char * __attribute__((weak)) proc_iomem(void)
 {
         return proc_iomem_str;
 }

@@ -13,9 +13,9 @@ static const char proc_iomem_machine_str[]= "/proc/iomem_machine";
  * If Xen is in use, then /proc/iomem is used for memory regions relating
  * to the currently running dom0 kernel, and /proc/iomem_machine is used
  * for regions relating to the machine itself or the hypervisor.
- * If Xen is not in used, then /proc/iomem is always used.
+ * If Xen is not in used, then /proc/iomem used.
  */
-const char *proc_iomem(int machine)
+const char *proc_iomem(void)
 {
 	if (xen_present())
 		return proc_iomem_machine_str;

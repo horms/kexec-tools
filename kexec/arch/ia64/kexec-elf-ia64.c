@@ -195,7 +195,7 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 	if (info->kexec_flags & KEXEC_ON_CRASH ) {
 		if ((mem_min == 0x00) && (mem_max == ULONG_MAX)) {
 			fprintf(stderr, "Failed to find crash kernel region "
-				"in %s\n", proc_iomem(1));
+				"in %s\n", proc_iomem());
 			free_elf_info(&ehdr);
 			return -1;
 		}

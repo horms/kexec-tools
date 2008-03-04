@@ -39,7 +39,7 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
 int get_memory_ranges(struct memory_range **range, int *ranges,
 				unsigned long kexec_flags)
 {
-	const char *iomem= proc_iomem(kexec_flags & KEXEC_ON_CRASH);
+	const char *iomem= proc_iomem();
 	int memory_ranges = 0;
 	char line[MAX_LINE];
 	FILE *fp;

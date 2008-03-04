@@ -93,7 +93,7 @@ int xen_get_nr_phys_cpus(void)
 	if (xen_phys_cpus)
 		return xen_phys_cpus;
 
-	if ((cpus = kexec_iomem_for_each_line(match, 1, NULL, NULL))) {
+	if ((cpus = kexec_iomem_for_each_line(match, NULL, NULL))) {
 		n = sizeof(struct crash_note_info) * cpus;
 		xen_phys_notes = malloc(n);
 		if (!xen_phys_notes) {
@@ -101,7 +101,7 @@ int xen_get_nr_phys_cpus(void)
 			return -1;
 		}
 		memset(xen_phys_notes, 0, n);
-		kexec_iomem_for_each_line(match, 1,
+		kexec_iomem_for_each_line(match,
 					  xen_crash_note_callback, NULL);
 		xen_phys_cpus = cpus;
 	}

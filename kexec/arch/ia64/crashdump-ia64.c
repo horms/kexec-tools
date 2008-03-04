@@ -143,7 +143,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
-	const char *iomem = proc_iomem(1);
+	const char *iomem = proc_iomem();
         char line[MAX_LINE];
         FILE *fp;
         unsigned long start, end;
@@ -268,6 +268,6 @@ int is_crashkernel_mem_reserved(void)
 {
 	uint64_t start, end;
 
-	return parse_iomem_single("Crash kernel\n", 1, &start,
+	return parse_iomem_single("Crash kernel\n", &start,
 				  &end) == 0 ?  (start != end) : 0;
 }
