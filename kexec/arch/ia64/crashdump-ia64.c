@@ -76,18 +76,29 @@ static void add_loaded_segments_info(struct kexec_info *info,
 {
 	 int i;
          for(i = 0; i < ehdr->e_phnum; i++) {
-                unsigned long start, end;
                 struct mem_phdr *phdr;
                 phdr = &ehdr->e_phdr[i];
                 if (phdr->p_type != PT_LOAD)
                         continue;
-                start = phdr->p_paddr;
-                end = phdr->p_paddr + phdr->p_memsz;
 
 		loaded_segments[loaded_segments_num].start =
-                        start&~(ELF_PAGE_SIZE-1);
+			phdr->p_paddr & ~(ELF_PAGE_SIZE-1);
                 loaded_segments[loaded_segments_num].end =
-                        (end + ELF_PAGE_SIZE - 1)&~(ELF_PAGE_SIZE - 1);
+			loaded_segments[loaded_segments_num].start;
+
+		while (i < ehdr->e_phnum) {
+			phdr = &ehdr->e_phdr[i];
+	                if (phdr->p_type != PT_LOAD)
+	                        break;
+			if (loaded_segments[loaded_segments_num].end !=
+				phdr->p_paddr & ~(ELF_PAGE_SIZE-1))
+				break;
+			loaded_segments[loaded_segments_num].end +=
+				(phdr->p_memsz + ELF_PAGE_SIZE - 1) &
+				~(ELF_PAGE_SIZE - 1);
+			i++;
+		}
+
 		loaded_segments_num++;
 	}
 }
