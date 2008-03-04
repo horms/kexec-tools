@@ -17,7 +17,7 @@ static const char proc_iomem_machine_str[]= "/proc/iomem_machine";
  */
 const char *proc_iomem(int machine)
 {
-	if (machine && xen_present())
+	if (xen_present())
 		return proc_iomem_machine_str;
 	return proc_iomem_str;
 }
