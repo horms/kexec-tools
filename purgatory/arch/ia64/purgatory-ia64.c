@@ -190,6 +190,22 @@ patch_efi_memmap(struct kexec_boot_params *params,
 				mend = src_md->phys_addr +
 					(src_md->num_pages << EFI_PAGE_SHIFT);
 			}
+                        if (seg->end < mend && src < src_end) {
+                                void *src_next;
+                                efi_memory_desc_t *src_next_md;
+                                src_next = src + boot_param->efi_memdesc_size;
+                                src_next_md = src_next;
+                                if (src_next_md->type ==
+                                    EFI_CONVENTIONAL_MEMORY) {
+				        /* TODO check contig and attribute */
+                                        src += boot_param->efi_memdesc_size;
+                                        src_md = src;
+				        mend = src_md->phys_addr +
+					        (src_md->num_pages <<
+                                                 EFI_PAGE_SHIFT);
+                                }
+
+                        }
 			start_pages = (seg->start - mstart) >> EFI_PAGE_SHIFT;
 			mid_pages = (seg->end - seg->start) >> EFI_PAGE_SHIFT;
 			end_pages = (mend - seg->end) >> EFI_PAGE_SHIFT;
