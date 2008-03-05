@@ -104,7 +104,6 @@ int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 {
 	struct fb_fix_screeninfo fix;
 	struct fb_var_screeninfo var;
-	static char *magic = "VESA VGA";
 	int fd;
 
 	fd = open("/dev/fb0", O_RDONLY);
@@ -115,11 +114,18 @@ int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 		goto out;
 	if (-1 == ioctl(fd, FBIOGET_VSCREENINFO, &var))
 		goto out;
-	if (0 != strcmp(fix.id, magic))
+	if (0 == strcmp(fix.id, "VESA VGA")) {
+		/* VIDEO_TYPE_VLFB */
+		real_mode->orig_video_isVGA = 0x23;
+	} else if (0 == strcmp(fix.id, "EFI VGA")) {
+		/* VIDEO_TYPE_EFI */
+		real_mode->orig_video_isVGA = 0x70;
+	} else {
+		/* cannot handle and other types */
 		goto out;
+	}
 	close(fd);
 
-	real_mode->orig_video_isVGA = 0x23 /* VIDEO_TYPE_VLFB */;
 	real_mode->lfb_width      = var.xres;
 	real_mode->lfb_height     = var.yres;
 	real_mode->lfb_depth      = var.bits_per_pixel;
