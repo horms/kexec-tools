@@ -188,12 +188,24 @@ extern void *xrealloc(void *ptr, size_t size);
 extern char *slurp_file(const char *filename, off_t *r_size);
 extern char *slurp_file_len(const char *filename, off_t size);
 extern char *slurp_decompress_file(const char *filename, off_t *r_size);
+extern unsigned long virt_to_phys(unsigned long addr);
 extern void add_segment(struct kexec_info *info,
 	const void *buf, size_t bufsz, unsigned long base, size_t memsz);
+extern void add_segment_phys_virt(struct kexec_info *info,
+	const void *buf, size_t bufsz, unsigned long base, size_t memsz,
+	int phys);
 extern unsigned long add_buffer(struct kexec_info *info,
 	const void *buf, unsigned long bufsz, unsigned long memsz,
 	unsigned long buf_align, unsigned long buf_min, unsigned long buf_max,
 	int buf_end);
+extern unsigned long add_buffer_virt(struct kexec_info *info,
+	const void *buf, unsigned long bufsz, unsigned long memsz,
+	unsigned long buf_align, unsigned long buf_min, unsigned long buf_max,
+	int buf_end);
+extern unsigned long add_buffer_phys_virt(struct kexec_info *info,
+	const void *buf, unsigned long bufsz, unsigned long memsz,
+	unsigned long buf_align, unsigned long buf_min, unsigned long buf_max,
+	int buf_end, int phys);
 
 extern unsigned char purgatory[];
 extern size_t purgatory_size;
