@@ -70,6 +70,8 @@ static struct boot_notes {
 };
 
 
+#define OPT_APPEND	(OPT_ARCH_MAX+0)
+
 int elf_mipsel_probe(const char *buf, off_t len)
 {
 
@@ -117,7 +119,6 @@ int elf_mipsel_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned char *setup_start;
 	uint32_t setup_size;
 	int opt;
-#define OPT_APPEND     (OPT_ARCH_MAX+0)
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{"command-line", 1, 0, OPT_APPEND},
