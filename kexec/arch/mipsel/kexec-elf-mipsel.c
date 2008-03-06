@@ -97,10 +97,10 @@ int elf_mipsel_probe(const char *buf, off_t len)
 
 void elf_mipsel_usage(void)
 {
-	printf
-	    (
-	     "    --command-line=STRING Set the kernel command line to STRING.  \n"
-	     "    --append=STRING       Set the kernel command line to STRING.  \n");
+	printf("    --command-line=STRING Set the kernel command line to "
+			"STRING.\n"
+	       "    --append=STRING       Set the kernel command line to "
+			"STRING.\n");
 }
 
 int elf_mipsel_load(int argc, char **argv, const char *buf, off_t len,
