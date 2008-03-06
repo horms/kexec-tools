@@ -128,7 +128,8 @@ int elf_mipsel_load(int argc, char **argv, const char *buf, off_t len,
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
 
 	command_line = 0;
-	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+	while ((opt = getopt_long(argc, argv, short_options,
+				  options, 0)) != -1) {
 		switch (opt) {
 		default:
 			/* Ignore core options */
