@@ -134,11 +134,9 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			}
 			continue;
 		} else if (memcmp(str, "Boot parameter\n", 14) == 0) {
-			printf("Boot parameter\n");
 			memory_ranges = split_range(memory_ranges, start, end);
 			continue;
 		} else if (memcmp(str, "EFI Memory Map\n", 14) == 0) {
-			printf("EFI Memory Map\n");
 			memory_ranges = split_range(memory_ranges, start, end);
 			saved_efi_memmap_size = end - start;
 			continue;
