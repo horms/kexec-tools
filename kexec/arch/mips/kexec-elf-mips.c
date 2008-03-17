@@ -1,5 +1,5 @@
 /*
- * kexec-elf-mipsel.c - kexec Elf loader for mips
+ * kexec-elf-mips.c - kexec Elf loader for mips
  * Copyright (C) 2007 Francesco Chiechi, Alessandro Rubini
  * Copyright (C) 2007 Tvblob s.r.l.
  *
@@ -26,7 +26,7 @@
 #include <ip_checksum.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
-#include "kexec-mipsel.h"
+#include "kexec-mips.h"
 #include <arch/options.h>
 
 static const int probe_debug = 0;
@@ -72,7 +72,7 @@ static struct boot_notes {
 
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
 
-int elf_mipsel_probe(const char *buf, off_t len)
+int elf_mips_probe(const char *buf, off_t len)
 {
 
 	struct mem_ehdr ehdr;
@@ -97,7 +97,7 @@ int elf_mipsel_probe(const char *buf, off_t len)
 	return result;
 }
 
-void elf_mipsel_usage(void)
+void elf_mips_usage(void)
 {
 	printf("    --command-line=STRING Set the kernel command line to "
 			"STRING.\n"
@@ -105,7 +105,7 @@ void elf_mipsel_usage(void)
 			"STRING.\n");
 }
 
-int elf_mipsel_load(int argc, char **argv, const char *buf, off_t len,
+int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;

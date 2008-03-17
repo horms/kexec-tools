@@ -9,9 +9,9 @@ extern struct {
 	uint32_t spr9;
 } setup_simple_regs;
 
-int elf_mipsel_probe(const char *buf, off_t len);
-int elf_mipsel_load(int argc, char **argv, const char *buf, off_t len,
+int elf_mips_probe(const char *buf, off_t len);
+int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
-void elf_mipsel_usage(void);
+void elf_mips_usage(void);
 
 #endif /* KEXEC_MIPS_H */

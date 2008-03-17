@@ -1,5 +1,5 @@
 /*
- * mipsel-setup-simple.S - code to execute before kernel to handle command line
+ * mips-setup-simple.S - code to execute before kernel to handle command line
  * Copyright (C) 2007 Francesco Chiechi, Alessandro Rubini
  * Copyright (C) 2007 Tvblob s.r.l.
  *

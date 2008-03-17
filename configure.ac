@@ -38,7 +38,10 @@ case $target_cpu in
 	sh4|sh4a|sh3|sh )
 		ARCH="sh"
 		;;
-	ia64|x86_64|alpha|mipsel )
+	mips|mipsel )
+		ARCH="mips"
+		;;
+	ia64|x86_64|alpha )
 		ARCH="$target_cpu"
 		;;
 	* )

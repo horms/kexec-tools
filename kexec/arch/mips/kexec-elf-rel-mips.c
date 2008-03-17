@@ -1,5 +1,5 @@
 /*
- * kexec-elf-rel-mipsel.c - kexec Elf relocation routines
+ * kexec-elf-rel-mips.c - kexec Elf relocation routines
  * Copyright (C) 2007 Francesco Chiechi, Alessandro Rubini
  * Copyright (C) 2007 Tvblob s.r.l.
  *

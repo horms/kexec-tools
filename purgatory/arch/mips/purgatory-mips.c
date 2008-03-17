@@ -1,5 +1,5 @@
 #include <purgatory.h>
-#include "purgatory-mipsel.h"
+#include "purgatory-mips.h"
 
 void setup_arch(void)
 {

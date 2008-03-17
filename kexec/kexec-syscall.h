@@ -49,7 +49,7 @@
 #ifdef __arm__
 #define __NR_kexec_load		__NR_SYSCALL_BASE + 347  
 #endif
-#ifdef __MIPSEL__
+#if defined(__mips__)
 #define __NR_kexec_load                4311
 #endif
 #ifndef __NR_kexec_load

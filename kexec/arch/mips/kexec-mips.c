@@ -1,9 +1,9 @@
 /*
- * kexec-mipsel.c - kexec for mips
+ * kexec-mips.c - kexec for mips
  * Copyright (C) 2007 Francesco Chiechi, Alessandro Rubini
  * Copyright (C) 2007 Tvblob s.r.l.
  *
- * derived from ../ppc/kexec-mipsel.c
+ * derived from ../ppc/kexec-mips.c
  * Copyright (C) 2004, 2005 Albert Herranz
  *
  * This source code is licensed under the GNU General Public License,
@@ -19,7 +19,7 @@
 #include <sys/utsname.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
-#include "kexec-mipsel.h"
+#include "kexec-mips.h"
 #include <arch/options.h>
 
 #define MAX_MEMORY_RANGES  64
@@ -92,7 +92,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges, unsigned long ke
 }
 
 struct file_type file_type[] = {
-	{"elf-mipsel", elf_mipsel_probe, elf_mipsel_load, elf_mipsel_usage},
+	{"elf-mips", elf_mips_probe, elf_mips_load, elf_mips_usage},
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
@@ -152,7 +152,7 @@ void arch_update_purgatory(struct kexec_info *info)
 }
 
 /*
- * Adding a dummy function, so that build on mipsel will not break.
+ * Adding a dummy function, so that build on mips will not break.
  * Need to implement the actual checking code
  */
 int is_crashkernel_mem_reserved(void)
@@ -166,7 +166,7 @@ unsigned long virt_to_phys(unsigned long addr)
 }
 
 /*
- * add_segment() should convert base to a physical address on mipsel,
+ * add_segment() should convert base to a physical address on mips,
  * while the default is just to work with base as is */
 void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
 		 unsigned long base, size_t memsz)
@@ -175,7 +175,7 @@ void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
 }
 
 /*
- * add_buffer() should convert base to a physical address on mipsel,
+ * add_buffer() should convert base to a physical address on mips,
  * while the default is just to work with base as is */
 unsigned long add_buffer(struct kexec_info *info, const void *buf,
 			 unsigned long bufsz, unsigned long memsz,
