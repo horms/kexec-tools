@@ -49,11 +49,12 @@ $(PURGATORY): CFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
 		      -Os -fno-builtin -ffreestanding \
 		      -fno-zero-initialized-in-bss
 
-$(PURGATORY): CPPFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
+$(PURGATORY): CPPFLAGS=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
 			-I$(srcdir)/purgatory/include \
 			-I$(srcdir)/purgatory/arch/$(ARCH)/include \
+			-I$(srcdir)/util_lib/include \
 			-I$(shell $(CC) -print-file-name=include)
-$(PURGATORY): LDFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS)\
+$(PURGATORY): LDFLAGS=$($(ARCH)_PURGATORY_EXTRA_CFLAGS)\
 			--no-undefined -nostartfiles -nostdlib -nodefaultlibs \
 			-e purgatory_start -r
 
