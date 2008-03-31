@@ -36,6 +36,8 @@ int FUNC(struct kexec_info *info,
 	uint64_t notes_addr, notes_len;
 	uint64_t vmcoreinfo_addr, vmcoreinfo_len;
 	int has_vmcoreinfo = 0;
+	uint64_t vmcoreinfo_addr_xen, vmcoreinfo_len_xen;
+	int has_vmcoreinfo_xen = 0;
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);
 
 	if (xen_present())
@@ -51,7 +53,12 @@ int FUNC(struct kexec_info *info,
 		has_vmcoreinfo = 1;
 	}
 
-	sz = sizeof(EHDR) + (nr_cpus + has_vmcoreinfo) * sizeof(PHDR) +
+	if (xen_present() &&
+	    get_xen_vmcoreinfo(&vmcoreinfo_addr_xen, &vmcoreinfo_len_xen) == 0) {
+		has_vmcoreinfo_xen = 1;
+	}
+
+	sz = sizeof(EHDR) + (nr_cpus + has_vmcoreinfo + has_vmcoreinfo_xen) * sizeof(PHDR) +
 	     ranges * sizeof(PHDR);
 
 	/*
@@ -166,6 +173,21 @@ int FUNC(struct kexec_info *info,
 
 		(elf->e_phnum)++;
 		dbgprintf_phdr("vmcoreinfo header", phdr);
+	}
+
+	if (has_vmcoreinfo_xen) {
+		phdr = (PHDR *) bufp;
+		bufp += sizeof(PHDR);
+		phdr->p_type	= PT_NOTE;
+		phdr->p_flags	= 0;
+		phdr->p_offset  = phdr->p_paddr = vmcoreinfo_addr_xen;
+		phdr->p_vaddr   = 0;
+		phdr->p_filesz	= phdr->p_memsz	= vmcoreinfo_len_xen;
+		/* Do we need any alignment of segments? */
+		phdr->p_align	= 0;
+
+		(elf->e_phnum)++;
+		dbgprintf_phdr("vmcoreinfo_xen header", phdr);
 	}
 
 	/* Setup an PT_LOAD type program header for the region where

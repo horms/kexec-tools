@@ -110,10 +110,8 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 	return 0;
 }
 
-/* Returns the physical address of start of crash notes buffer for a kernel. */
-int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
+static int get_vmcoreinfo(char *kdump_info, uint64_t *addr, uint64_t *len)
 {
-	char kdump_info[PATH_MAX];
 	char line[MAX_LINE];
 	int count;
 	FILE *fp;
@@ -122,9 +120,8 @@ int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
 	*addr = 0;
 	*len = 0;
 
-	sprintf(kdump_info, "/sys/kernel/vmcoreinfo");
 	if (!(fp = fopen(kdump_info, "r")))
-		return 0;
+		return -1;
 
 	if (!fgets(line, sizeof(line), fp))
 		die("Cannot parse %s: %s\n", kdump_info, strerror(errno));
@@ -136,4 +133,15 @@ int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
 	*len = (uint64_t) temp2;
 
 	return 0;
+}
+
+/* Returns the physical address of start of crash notes buffer for a kernel. */
+int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
+{
+	return get_vmcoreinfo("/sys/kernel/vmcoreinfo", addr, len);
+}
+
+int get_xen_vmcoreinfo(uint64_t *addr, uint64_t *len)
+{
+	return get_vmcoreinfo("/sys/hypervisor/vmcoreinfo", addr, len);
 }
