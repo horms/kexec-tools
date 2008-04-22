@@ -191,5 +191,5 @@ DEBUG_CHAR('j')
 entry16_debug_old_first32:
 	.long 0x100000
 	.size entry16_debug_old_first32, . - entry16_debug_old_first32
-	jmp	%eax
+	jmp	*%eax
 .size entry16_debug_first32, . - entry16_debug_first32
