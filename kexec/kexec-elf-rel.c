@@ -58,7 +58,7 @@ static size_t elf_rela_size(struct mem_ehdr *ehdr)
 
 static struct mem_sym elf_sym(struct mem_ehdr *ehdr, const unsigned char *ptr)
 {
-	struct mem_sym sym;
+	struct mem_sym sym = { };
 	if (ehdr->ei_class == ELFCLASS32) {
 		Elf32_Sym lsym;
 		memcpy(&lsym, ptr, sizeof(lsym));
@@ -87,7 +87,7 @@ static struct mem_sym elf_sym(struct mem_ehdr *ehdr, const unsigned char *ptr)
 
 static struct mem_rela elf_rel(struct mem_ehdr *ehdr, const unsigned char *ptr)
 {
-	struct mem_rela rela;
+	struct mem_rela rela = { };
 	if (ehdr->ei_class == ELFCLASS32) {
 		Elf32_Rel lrel;
 		memcpy(&lrel, ptr, sizeof(lrel));
@@ -112,7 +112,7 @@ static struct mem_rela elf_rel(struct mem_ehdr *ehdr, const unsigned char *ptr)
 
 static struct mem_rela elf_rela(struct mem_ehdr *ehdr, const unsigned char *ptr)
 {
-	struct mem_rela rela;
+	struct mem_rela rela = { };
 	if (ehdr->ei_class == ELFCLASS32) {
 		Elf32_Rela lrela;
 		memcpy(&lrela, ptr, sizeof(lrela));
@@ -339,7 +339,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			struct mem_rela rel;
 			struct mem_sym sym;
 			const void *location;
-			const char *name;
+			const unsigned char *name;
 			unsigned long address, value, sec_base;
 			if (shdr->sh_type == SHT_REL) {
 				rel = elf_rel(ehdr, ptr);

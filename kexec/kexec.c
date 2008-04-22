@@ -584,7 +584,7 @@ static void update_purgatory(struct kexec_info *info)
 			sha256_update(&ctx, null_buf, bytes);
 			nullsz -= bytes;
 		}
-		region[j].start = info->segment[i].mem;
+		region[j].start = (unsigned long) info->segment[i].mem;
 		region[j].len   = info->segment[i].memsz;
 		j++;
 	}

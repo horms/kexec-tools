@@ -210,7 +210,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	elf_exec_build_load(info, &ehdr, buf, len, 0);
 
 	/* Load the setup code */
-	elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size, 0,
+	elf_rel_build_load(info, &info->rhdr, (char *) purgatory, purgatory_size, 0,
 				ULONG_MAX, 1, 0);
 	
 	/* The first segment will contain the multiboot headers:

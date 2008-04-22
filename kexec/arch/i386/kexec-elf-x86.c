@@ -185,7 +185,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	/* Do we want arguments? */
 	if (arg_style != ARG_STYLE_NONE) {
 		/* Load the setup code */
-		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
+		elf_rel_build_load(info, &info->rhdr, (char *) purgatory, purgatory_size,
 			0, ULONG_MAX, 1, 0);
 	}
 	if (arg_style == ARG_STYLE_NONE) {
@@ -199,7 +199,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 
 		/* Setup the ELF boot notes */
 		note_base = elf_boot_notes(info, max_addr,
-			command_line, command_line_len);
+			(unsigned char *) command_line, command_line_len);
 
 		/* Initialize the stack arguments */
 		arg2 = 0; /* No return address */
@@ -247,7 +247,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf = NULL;
 		ramdisk_length = 0;
 		if (ramdisk) {
-			ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
+			ramdisk_buf = (unsigned char *) slurp_file(ramdisk, &ramdisk_length);
 		}
 
 		/* If panic kernel is being loaded, additional segments need

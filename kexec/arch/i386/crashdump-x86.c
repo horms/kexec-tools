@@ -151,7 +151,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 {
 	int i, j, tidx = -1;
 	unsigned long long cstart, cend;
-	struct memory_range temp_region;
+	struct memory_range temp_region = { };
 
 	/* Crash reserved region. */
 	cstart = crash_reserved_mem.start;
@@ -185,9 +185,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 		}
 		for (j = (*nr_ranges - 1); j >= tidx; j--)
 			crash_memory_range[j+1] = crash_memory_range[j];
-		crash_memory_range[tidx].start = temp_region.start;
-		crash_memory_range[tidx].end = temp_region.end;
-		crash_memory_range[tidx].type = temp_region.type;
+		crash_memory_range[tidx] = temp_region;
 		(*nr_ranges)++;
 	}
 	return 0;
@@ -291,6 +289,7 @@ static int delete_memmap(struct memory_range *memmap_p, unsigned long long addr,
 				memmap_p[i].end = addr - 1;
 				temp_region.start = addr + size;
 				temp_region.end = mend;
+				temp_region.type = memmap_p[i].type;
 				operation = 1;
 				tidx = i;
 				break;

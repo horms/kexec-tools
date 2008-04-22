@@ -79,7 +79,7 @@ int beoboot_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	struct beoboot_header bb_header;
-	const unsigned char *command_line, *kernel, *initrd;
+	const char *command_line, *kernel, *initrd;
 
 	int debug, real_mode_entry;
 	int opt;
