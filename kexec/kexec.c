@@ -704,13 +704,12 @@ int k_unload (unsigned long kexec_flags)
  */
 static int my_shutdown(void)
 {
-	char *args[8];
-	int i = 0;
-
-	args[i++] = "shutdown";
-	args[i++] = "-r";
-	args[i++] = "now";
-	args[i++] = NULL;
+	char *args[] = {
+		"shutdown",
+		"-r",
+		"now",
+		NULL
+	};
 
 	execv("/sbin/shutdown", args);
 	execv("/etc/shutdown", args);
