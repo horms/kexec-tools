@@ -1,5 +1,5 @@
 #include <stdint.h>
-#include <sys/io.h>
+#include <arch/io.h>
 #include <purgatory.h>
 
 /*
