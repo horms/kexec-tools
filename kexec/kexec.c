@@ -285,11 +285,6 @@ unsigned long locate_hole(struct kexec_info *info,
 	return hole_base;
 }
 
-unsigned long __attribute__((weak)) virt_to_phys(unsigned long addr)
-{
-	abort();
-}
-
 void add_segment_phys_virt(struct kexec_info *info,
 	const void *buf, size_t bufsz,
 	unsigned long base, size_t memsz, int phys)
@@ -342,13 +337,6 @@ void add_segment_phys_virt(struct kexec_info *info,
 	}
 }
 
-void __attribute__((weak)) add_segment(struct kexec_info *info,
-				       const void *buf, size_t bufsz,
-				       unsigned long base, size_t memsz)
-{
-	return add_segment_phys_virt(info, buf, bufsz, base, memsz, 0);
-}
-
 unsigned long add_buffer_phys_virt(struct kexec_info *info,
 	const void *buf, unsigned long bufsz, unsigned long memsz,
 	unsigned long buf_align, unsigned long buf_min, unsigned long buf_max,
@@ -383,19 +371,6 @@ unsigned long add_buffer_virt(struct kexec_info *info, const void *buf,
 {
 	return add_buffer_phys_virt(info, buf, bufsz, memsz, buf_align,
 				    buf_min, buf_max, buf_end, 0);
-}
-
-unsigned long __attribute__((weak)) add_buffer(struct kexec_info *info,
-					       const void *buf,
-					       unsigned long bufsz,
-					       unsigned long memsz,
-					       unsigned long buf_align,
-					       unsigned long buf_min,
-					       unsigned long buf_max,
-					       int buf_end)
-{
-	return add_buffer_virt(info, buf, bufsz, memsz, buf_align,
-			       buf_min, buf_max, buf_end);
 }
 
 char *slurp_file(const char *filename, off_t *r_size)
@@ -834,12 +809,6 @@ void check_reuse_initrd(void)
 	if (line)
 		free(line);
 	fclose(fp);
-}
-
-/* Arch hook for reuse_initrd */
-void __attribute__((weak)) arch_reuse_initrd(void)
-{
-	die("--reuseinitrd not implemented on this architecture\n");
 }
 
 int main(int argc, char *argv[])

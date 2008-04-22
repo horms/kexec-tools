@@ -101,16 +101,3 @@ int parse_iomem_single(char *str, uint64_t *start, uint64_t *end)
 
 	return ret;
 }
-
-static const char proc_iomem_str[]= "/proc/iomem";
-
-/*
- * Allow an architecture specific implementation of this
- * function to override the location of a file looking a lot
- * like /proc/iomem
- */
-const char * __attribute__((weak)) proc_iomem(void)
-{
-        return proc_iomem_str;
-}
-

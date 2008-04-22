@@ -29,6 +29,17 @@ dist += kexec/Makefile $(KEXEC_SRCS) $(KEXEC_GENERATED_SRCS)	\
 	kexec/kexec-elf.h kexec/kexec-sha256.h			\
 	kexec/kexec-syscall.h kexec/kexec.h kexec/kexec.8
 
+$(ARCH)_PROC_IOMEM		= kexec/proc_iomem.c
+KEXEC_SRCS += $($(ARCH)_PROC_IOMEM)
+$(ARCH)_VIRT_TO_PHYS		= kexec/virt_to_phys.c
+KEXEC_SRCS += $($(ARCH)_VIRT_TO_PHYS)
+$(ARCH)_ADD_SEGMENT		= kexec/add_segment.c
+KEXEC_SRCS += $($(ARCH)_ADD_SEGMENT)
+$(ARCH)_ADD_BUFFER		= kexec/add_buffer.c
+KEXEC_SRCS += $($(ARCH)_ADD_BUFFER)
+$(ARCH)_ARCH_REUSE_INITRD	= kexec/arch_reuse_initrd.c
+KEXEC_SRCS += $($(ARCH)_ARCH_REUSE_INITRD)
+
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
 include $(srcdir)/kexec/arch/i386/Makefile

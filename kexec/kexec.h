@@ -4,6 +4,7 @@
 #include "config.h"
 
 #include <sys/types.h>
+#include <stdio.h>
 #include <stdint.h>
 #define USE_BSD
 #include <byteswap.h>
@@ -206,6 +207,7 @@ extern unsigned long add_buffer_phys_virt(struct kexec_info *info,
 	const void *buf, unsigned long bufsz, unsigned long memsz,
 	unsigned long buf_align, unsigned long buf_min, unsigned long buf_max,
 	int buf_end, int phys);
+extern void arch_reuse_initrd(void);
 
 extern unsigned char purgatory[];
 extern size_t purgatory_size;
