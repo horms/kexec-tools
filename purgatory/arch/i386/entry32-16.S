@@ -25,7 +25,7 @@
 entry16:
 	.code32
 	/* Compute where I am running at */
-	movl	$entry16_debug, %ebx	
+	movl	$entry16, %ebx
 
 	/* Fixup my real mode segment */
 	movl	%ebx, %eax
