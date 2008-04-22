@@ -284,9 +284,12 @@ int do_bzImage_load(struct kexec_info *info,
 	/*
 	 * Initialize the 16bit start information.
 	 */
-	regs16.cs = (setup_base>>4) + 0x20;
+	regs16.ds = regs16.es = regs16.fs = regs16.gs = setup_base >> 4;
+	regs16.cs = regs16.ds + 0x20;
 	regs16.ip = 0;
+	/* XXX: Documentation/i386/boot.txt says 'ss' must equal 'ds' */
 	regs16.ss = (elf_rel_get_addr(&info->rhdr, "stack_end") - 64*1024) >> 4;
+	/* XXX: Documentation/i386/boot.txt says 'sp' must equal heap_end */
 	regs16.esp = 0xFFFC;
 	if (real_mode_entry) {
 		printf("Starting the kernel in real mode\n");
