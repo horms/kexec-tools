@@ -408,6 +408,8 @@ char *slurp_file(const char *filename, off_t *r_size)
 			die("read on %s of %ld bytes failed: %s\n", filename,
 			    (size - progress)+ 0UL, strerror(errno));
 		}
+		if (result == 0)
+			die("read on %s ended before stat said it should\n", filename);
 		progress += result;
 	}
 	result = close(fd);
