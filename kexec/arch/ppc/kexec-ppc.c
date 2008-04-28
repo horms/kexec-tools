@@ -27,62 +27,21 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
 int get_memory_ranges(struct memory_range **range, int *ranges,
 					unsigned long kexec_flags)
 {
-	int memory_ranges = 0;
 #ifdef WITH_GAMECUBE
+	int memory_ranges = 0;
+
 	/* RAM - lowmem used by DOLs - framebuffer */
 	memory_range[memory_ranges].start = 0x00003000;
 	memory_range[memory_ranges].end = 0x0174bfff;
 	memory_range[memory_ranges].type = RANGE_RAM;
 	memory_ranges++;
-#else
-#error Please, fix this for your platform
-	const char *iomem = proc_iomem();
-	char line[MAX_LINE];
-	FILE *fp;
-	unsigned long long start, end;
-	char *str;
-	int type, consumed, count;
-
-	fp = fopen(iomem, "r");
-	if (!fp) {
-		fprintf(stderr, "Cannot open %s: %s\n", iomem, strerror(errno));
-		return -1;
-	}
-	while (fgets(line, sizeof(line), fp) != 0) {
-		if (memory_ranges >= MAX_MEMORY_RANGES)
-			break;
-		count = sscanf(line, "%Lx-%Lx : %n", &start, &end, &consumed);
-		if (count != 2)
-			continue;
-		str = line + consumed;
-		end = end + 1;
-#if 0
-		printf("%016Lx-%016Lx : %s\n", start, end, str);
-#endif
-		if (memcmp(str, "System RAM\n", 11) == 0) {
-			type = RANGE_RAM;
-		} else if (memcmp(str, "reserved\n", 9) == 0) {
-			type = RANGE_RESERVED;
-		} else if (memcmp(str, "ACPI Tables\n", 12) == 0) {
-			type = RANGE_ACPI;
-		} else if (memcmp(str, "ACPI Non-volatile Storage\n", 26) == 0) {
-			type = RANGE_ACPI_NVS;
-		} else {
-			continue;
-		}
-		memory_range[memory_ranges].start = start;
-		memory_range[memory_ranges].end = end;
-		memory_range[memory_ranges].type = type;
-#if 0
-		printf("%016Lx-%016Lx : %x\n", start, end, type);
-#endif
-		memory_ranges++;
-	}
-	fclose(fp);
-#endif
 	*range = memory_range;
 	*ranges = memory_ranges;
 	return 0;
+#else
+	fprintf(stderr, "%s(): Unsupported platform\n", __func__);
+	return -1;
+#endif
 }
 
 struct file_type file_type[] = {
