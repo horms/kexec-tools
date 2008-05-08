@@ -197,6 +197,41 @@ Use
 as the kernel's initial ramdisk.
 .RE
 .PP
+.B bzImage-x86
+.RS
+.TP
+.BI \-\-append= string
+Append
+.I string
+to the kernel command line.
+.TP
+.BI \-\-command\-line= string
+Set the kernel command line to
+.IR string .
+.TP
+.BI \-\-reuse-cmdline
+Use the command line from the running system. When a panic kernel is loaded, it
+strips the
+.I
+crashkernel
+parameter automatically. The
+.I BOOT_IMAGE
+parameter is also stripped.
+.TP
+.BI \-\-initrd= file
+Use
+.I file
+as the kernel's initial ramdisk.
+.TP
+.BI \-\-ramdisk= file
+Use
+.I file
+as the kernel's initial ramdisk.
+.TP
+.BI \-\-real-mode
+Use real-mode entry point.
+.RE
+.PP
 .B multiboot-x86
 .RS
 .TP
