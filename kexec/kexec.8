@@ -67,6 +67,17 @@ The optional
 .I initrd-image
 is the initrd image to be used during boot.
 .PP
+It's also possible to invoke
+.B kexec
+without an option parameter. In that case, kexec loads the specified
+kernel and then invokes
+.BR shutdown (1).
+If the shutdown scripts of your Linux distribution support
+kexec-based rebooting, they then call
+.B kexec
+.I -e
+just before actually rebooting the machine. That way, the machine does
+a clean shutdown including all shutdown scripts.
 
 .SH EXAMPLE
 .PP
@@ -99,7 +110,14 @@ Run the currently loaded kernel.
 .B \-f\ (\-\-force)
 Force an immediate
 .B kexec
-call, do not call shutdown.
+call, do not call
+.BR shutdown (1)
+(contrary to the default action without any option parameter). This option
+performs the same actions like executing
+.IR -l
+and
+.IR -e
+in one call.
 .TP
 .B \-h\ (\-\-help)
 Open a help file for
