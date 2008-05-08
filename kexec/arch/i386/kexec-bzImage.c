@@ -89,6 +89,7 @@ void bzImage_usage(void)
 		"    --real-mode           Use the kernels real mode entry point.\n"
 		"    --command-line=STRING Set the kernel command line to STRING.\n"
 		"    --append=STRING       Set the kernel command line to STRING.\n"
+		"    --reuse-cmdline       Use kernel command line from running system.\n"
 		"    --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
 		"    --ramdisk=FILE        Use FILE as the kernel's initial ramdisk.\n"
 		);
@@ -335,14 +336,16 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	int debug, real_mode_entry;
 	int opt;
 	int result;
-#define OPT_APPEND	(OPT_ARCH_MAX+0)
-#define OPT_RAMDISK	(OPT_ARCH_MAX+1)
-#define OPT_REAL_MODE	(OPT_ARCH_MAX+2)
+#define OPT_APPEND		(OPT_ARCH_MAX+0)
+#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+1)
+#define OPT_RAMDISK		(OPT_ARCH_MAX+2)
+#define OPT_REAL_MODE		(OPT_ARCH_MAX+3)
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "debug",		0, 0, OPT_DEBUG },
 		{ "command-line",	1, 0, OPT_APPEND },
 		{ "append",		1, 0, OPT_APPEND },
+		{ "reuse-cmdline",	1, 0, OPT_REUSE_CMDLINE },
 		{ "initrd",		1, 0, OPT_RAMDISK },
 		{ "ramdisk",		1, 0, OPT_RAMDISK },
 		{ "real-mode",		0, 0, OPT_REAL_MODE },
@@ -373,6 +376,9 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_APPEND:
 			command_line = optarg;
+			break;
+		case OPT_REUSE_CMDLINE:
+			command_line = get_command_line();
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;

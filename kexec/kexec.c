@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <getopt.h>
+#include <ctype.h>
 
 #include "config.h"
 
@@ -46,6 +47,7 @@
 
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
+unsigned long kexec_flags = 0;
 
 void die(char *fmt, ...)
 {
@@ -792,25 +794,85 @@ static int kexec_loaded(void)
 	return ret;
 }
 
+/*
+ * Remove parameter from a kernel command line. Helper function by get_command_line().
+ */
+static void remove_parameter(char *line, const char *param_name)
+{
+	char *start, *end;
+
+	start = strstr(line, param_name);
+
+	/* parameter not found */
+	if (!start)
+		return;
+
+	/*
+	 * check if that's really the start of a parameter and not in
+	 * the middle of the word
+	 */
+	if (start != line && !isspace(*(start-1)))
+		return;
+
+	end = strstr(start, " ");
+	if (!end)
+		*start = 0;
+	else {
+		memmove(start, end+1, strlen(end));
+		*(end + strlen(end)) = 0;
+	}
+}
+
+/*
+ * Returns the contents of the current command line to be used with
+ * --reuse-cmdline option.  The function gets called from architecture specific
+ * code. If we load a panic kernel, that function will strip the
+ * "crashkernel=" option because it does not make sense that the crashkernel
+ * reserves memory for a crashkernel (well, it would not boot since the
+ * amount is exactly the same as the crashkernel has overall memory). Also,
+ * remove the BOOT_IMAGE from lilo (and others) since that doesn't make
+ * sense here any more. The kernel could be different even if we reuse the
+ * commandline.
+ *
+ * The function returns dynamically allocated memory.
+ */
+char *get_command_line(void)
+{
+	FILE *fp;
+	size_t len;
+	char *line = NULL;
+
+	fp = fopen("/proc/cmdline", "r");
+	if (!fp)
+		die("Could not read /proc/cmdline.");
+	getline(&line, &len, fp);
+	fclose(fp);
+
+	if (line) {
+		/* strip newline */
+		*(line + strlen(line) - 1) = 0;
+
+		remove_parameter(line, "crashkernel");
+		if (kexec_flags & KEXEC_ON_CRASH)
+			remove_parameter(line, "BOOT_IMAGE");
+	} else
+		line = strdup("");
+
+	return line;
+}
+
 /* check we retained the initrd */
 void check_reuse_initrd(void)
 {
-	FILE * fp;
-	char * line = NULL;
-	size_t len = 0;
-	ssize_t read;
+	char *line = get_command_line();
 
-	fp = fopen("/proc/cmdline", "r");
-	if (fp == NULL)
-		die("unable to open /proc/cmdline\n");
-	read = getline(&line, &len, fp);
 	if (strstr(line, "retain_initrd") == NULL)
 		die("unrecoverable error: current boot didn't "
 		    "retain the initrd for reuse.\n");
-	if (line)
-		free(line);
-	fclose(fp);
+
+	free(line);
 }
+
 
 int main(int argc, char *argv[])
 {
@@ -821,7 +883,6 @@ int main(int argc, char *argv[])
 	int do_ifdown = 0;
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
-	unsigned long kexec_flags = 0;
 	char *type = 0;
 	char *endptr;
 	int opt;

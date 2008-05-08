@@ -73,6 +73,7 @@ void elf_x86_64_usage(void)
 {
 	printf(	"    --command-line=STRING Set the kernel command line to STRING\n"
 		"    --append=STRING       Set the kernel command line to STRING\n"
+		"    --reuse-cmdline       Use kernel command line from running system.\n"
 		"    --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
 		"    --ramdisk=FILE        Use FILE as the kernel's initial ramdisk.\n"
 		"    --args-linux          Pass linux kernel style options\n"
@@ -96,16 +97,18 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 #define ARG_STYLE_LINUX 1
 #define ARG_STYLE_NONE  2
 	int opt;
-#define OPT_APPEND	(OPT_ARCH_MAX+0)
-#define OPT_RAMDISK	(OPT_ARCH_MAX+1)
-#define OPT_ARGS_ELF    (OPT_ARCH_MAX+2)
-#define OPT_ARGS_LINUX  (OPT_ARCH_MAX+3)
-#define OPT_ARGS_NONE   (OPT_ARCH_MAX+4)
+#define OPT_APPEND		(OPT_ARCH_MAX+0)
+#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+1)
+#define OPT_RAMDISK		(OPT_ARCH_MAX+2)
+#define OPT_ARGS_ELF		(OPT_ARCH_MAX+3)
+#define OPT_ARGS_LINUX		(OPT_ARCH_MAX+4)
+#define OPT_ARGS_NONE		(OPT_ARCH_MAX+5)
 
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",	1, NULL, OPT_APPEND },
 		{ "append",		1, NULL, OPT_APPEND },
+		{ "reuse-cmdline",	1, NULL, OPT_REUSE_CMDLINE },
 		{ "initrd",		1, NULL, OPT_RAMDISK },
 		{ "ramdisk",		1, NULL, OPT_RAMDISK },
 		{ "args-elf",		0, NULL, OPT_ARGS_ELF },
@@ -137,6 +140,9 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 			return -1;
 		case OPT_APPEND:
 			command_line = optarg;
+			break;
+		case OPT_REUSE_CMDLINE:
+			command_line = get_command_line();
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
