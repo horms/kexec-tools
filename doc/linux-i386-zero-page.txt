@@ -75,5 +75,4 @@ Offset	Type		Description
 0x224	unsigned short	setup.S heap end pointer
 0x290 - 0x2cf		EDD_MBR_SIG_BUFFER (edd.S)
 0x2d0 - 0x600		E820MAP
-0x600 - 0x7ff		EDDBUF (edd.S) for disk signature read sector
-0x600 - 0x7eb		EDDBUF (edd.S) for edd data
+0xd00 - 0xeec		EDDBUF (edd.S) for edd data

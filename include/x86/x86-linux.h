@@ -4,7 +4,7 @@
 #define TENATIVE 0 /* Code that is tenatively correct but hasn't yet been officially accepted */
 
 #define E820MAP	0x2d0		/* our map */
-#define E820MAX	32		/* number of entries in E820MAP */
+#define E820MAX	128		/* number of entries in E820MAP */
 #define E820NR	0x1e8		/* # entries in E820MAP */
 
 #ifndef ASSEMBLY
