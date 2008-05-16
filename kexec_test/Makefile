@@ -26,6 +26,7 @@ clean += $(KEXEC_TEST_OBJS) $(KEXEC_TEST_DEPS) $(KEXEC_TEST)
 
 -include $(KEXEC_TEST_DEPS)
 
+$(KEXEC_TEST): CC=$(TARGET_CC)
 $(KEXEC_TEST): CPPFLAGS+=-DRELOC=$(RELOC)
 $(KEXEC_TEST): ASFLAGS+=-m32
 #$(KEXEC_TEST): LDFLAGS=-m32 -Wl,-e -Wl,_start -Wl,-Ttext -Wl,$(RELOC) \
@@ -34,7 +35,6 @@ $(KEXEC_TEST): LDFLAGS=-melf_i386 -e _start -Ttext $(RELOC)
 
 $(KEXEC_TEST): $(KEXEC_TEST_OBJS)
 	mkdir -p $(@D)
-	#$(LINK.o) -o $@ $^
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(TARGET_LD) $(LDFLAGS) -o $@ $^
 
 endif

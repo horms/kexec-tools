@@ -15,6 +15,7 @@ clean += $(KDUMP_OBJS) $(KDUMP_DEPS) $(KDUMP) $(KDUMP_MANPAGE)
 
 -include $(KDUMP_DEPS)
 
+$(KDUMP): CC=$(TARGET_CC)
 $(KDUMP): $(KDUMP_OBJS)
 	@$(MKDIR) -p $(@D)
 	$(CC) $(CFLAGS) $(EXTRA_CFLAGS) -o $@ $(KDUMP_OBJS)

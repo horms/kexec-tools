@@ -87,6 +87,7 @@ fi
 dnl Find compiler for target
 if test "${target}" != "${host}" ; then
 	AC_CHECK_PROGS(TARGET_CC, [${target_alias}-gcc ${target}-gcc gcc])
+	AC_CHECK_PROGS(TARGET_LD, [${target_alias}-ld ${target}-ld ld])
 else
 	TARGET_CC="$CC"
 fi
@@ -148,6 +149,7 @@ dnl ---Output variables...
 AC_SUBST([BUILD_CC])
 AC_SUBST([BUILD_CFLAGS])
 AC_SUBST([TARGET_CC])
+AC_SUBST([TARGET_LD])
 AC_SUBST([TARGET_CFLAGS])
 AC_SUBST([ASFLAGS])
 
