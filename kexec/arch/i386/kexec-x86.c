@@ -25,7 +25,6 @@
 #include <limits.h>
 #include <stdlib.h>
 #include <getopt.h>
-#include <sys/utsname.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
@@ -223,29 +222,22 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
+const struct arch_map_entry arches[] = {
+	/* For compatibility with older patches
+	 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_386 here.
+	 */
+	{ "i386", KEXEC_ARCH_DEFAULT },
+	{ "i486", KEXEC_ARCH_DEFAULT },
+	{ "i586", KEXEC_ARCH_DEFAULT },
+	{ "i686", KEXEC_ARCH_DEFAULT },
+	{ "x86_64", KEXEC_ARCH_X86_64 },
+	{ 0 },
+};
+
 int arch_compat_trampoline(struct kexec_info *info)
 {
-	int result;
-	struct utsname utsname;
-	result = uname(&utsname);
-	if (result < 0) {
-		fprintf(stderr, "uname failed: %s\n",
-			strerror(errno));
-		return -1;
-	}
-	if (	(strcmp(utsname.machine, "i386") == 0) ||
-		(strcmp(utsname.machine, "i486") == 0) ||
-		(strcmp(utsname.machine, "i586") == 0) ||
-		(strcmp(utsname.machine, "i686") == 0)) 
+	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64)
 	{
-		/* For compatibility with older patches 
-		 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_386 here.
-		 */
-		info->kexec_flags |= KEXEC_ARCH_DEFAULT;
-	}
-	else if (strcmp(utsname.machine, "x86_64") == 0)
-	{
-		info->kexec_flags |= KEXEC_ARCH_X86_64;
 		if (!info->rhdr.e_shdr) {
 			fprintf(stderr, 
 				"A trampoline is required for cross architecture support\n");
@@ -255,11 +247,6 @@ int arch_compat_trampoline(struct kexec_info *info)
 			&info->entry, sizeof(info->entry));
 		
 		info->entry = (void *)elf_rel_get_addr(&info->rhdr, "compat_x86_64");
-	}
-	else {
-		fprintf(stderr, "Unsupported machine type: %s\n",
-			utsname.machine);
-		return -1;
 	}
 	return 0;
 }

@@ -28,7 +28,6 @@
 #include <sys/types.h>
 #include <dirent.h>
 #include <getopt.h>
-#include <sys/utsname.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-ppc64.h"
@@ -681,28 +680,16 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
+const struct arch_map_entry arches[] = {
+	/* We are running a 32-bit kexec-tools on 64-bit ppc64.
+	 * So pass KEXEC_ARCH_PPC64 here
+	 */
+	{ "ppc64", KEXEC_ARCH_PPC64 },
+	{ 0 },
+};
+
 int arch_compat_trampoline(struct kexec_info *info)
 {
-	int result;
-	struct utsname utsname;
-	result = uname(&utsname);
-	if (result < 0) {
-		fprintf(stderr, "uname failed: %s\n",
-			strerror(errno));
-		return -1;
-	}
-	if (strcmp(utsname.machine, "ppc64") == 0)
-	{
-		/* We are running a 32-bit kexec-tools on 64-bit ppc64.
-		 * So pass KEXEC_ARCH_PPC64 here
-		 */
-		info->kexec_flags |= KEXEC_ARCH_PPC64;
-	}
-	else {
-		fprintf(stderr, "Unsupported machine type: %s\n",
-			utsname.machine);
-		return -1;
-	}
 	return 0;
 }
 

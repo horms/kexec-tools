@@ -126,6 +126,14 @@ struct kexec_info {
 	unsigned long kern_size;
 };
 
+struct arch_map_entry {
+	const char *machine;
+	unsigned long arch;
+};
+
+extern const struct arch_map_entry arches[];
+long physical_arch(void);
+
 void usage(void);
 int get_memory_ranges(struct memory_range **range, int *ranges,
 						unsigned long kexec_flags);

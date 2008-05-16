@@ -28,7 +28,6 @@
 #include <string.h>
 #include <getopt.h>
 #include <sched.h>
-#include <sys/utsname.h>
 #include <limits.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
@@ -204,25 +203,13 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
+const struct arch_map_entry arches[] = {
+	{ "ia64", KEXEC_ARCH_IA_64 },
+	{ 0 },
+};
+
 int arch_compat_trampoline(struct kexec_info *info)
 {
-	int result;
-	struct utsname utsname;
-	result = uname(&utsname);
-	if (result < 0) {
-		fprintf(stderr, "uname failed: %s\n",
-			strerror(errno));
-		return -1;
-	}
-	if (strcmp(utsname.machine, "ia64") == 0)
-	{
-		info->kexec_flags |= KEXEC_ARCH_IA_64;
-	}
-	else {
-		fprintf(stderr, "Unsupported machine type: %s\n",
-			utsname.machine);
-		return -1;
-	}
 	return 0;
 }
 

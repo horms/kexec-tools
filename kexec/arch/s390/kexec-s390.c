@@ -14,7 +14,6 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
-#include <sys/utsname.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-s390.h"
@@ -95,9 +94,14 @@ int arch_process_options(int argc, char **argv)
 	return 0;
 }
 
+const struct arch_map_entry arches[] = {
+	{ "s390", KEXEC_ARCH_S390 },
+	{ "s390x", KEXEC_ARCH_S390 },
+	{ 0 },
+};
+
 int arch_compat_trampoline(struct kexec_info *info)
 {
-	info->kexec_flags |= KEXEC_ARCH_S390;
 	return 0;
 }
 

@@ -589,6 +589,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	int i = 0;
 	int result;
 	struct kexec_info info;
+	long native_arch;
 	int guess_only = 0;
 
 	memset(&info, 0, sizeof(info));
@@ -656,6 +657,11 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		return -1;
 	}
 	/* If we are not in native mode setup an appropriate trampoline */
+	native_arch = physical_arch();
+	if (native_arch < 0) {
+		return -1;
+	}
+	info.kexec_flags |= native_arch;
 	if (arch_compat_trampoline(&info) < 0) {
 		return -1;
 	}

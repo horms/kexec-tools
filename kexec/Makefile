@@ -20,6 +20,7 @@ KEXEC_SRCS += kexec/kexec-elf-boot.c
 KEXEC_SRCS += kexec/kexec-iomem.c
 KEXEC_SRCS += kexec/crashdump.c
 KEXEC_SRCS += kexec/crashdump-xen.c
+KEXEC_SRCS += kexec/phys_arch.c
 
 KEXEC_GENERATED_SRCS += $(PURGATORY_HEX_C)
 
