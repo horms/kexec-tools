@@ -1017,8 +1017,7 @@ int main(int argc, char *argv[])
 		sync();
 	}
 	if ((result == 0) && do_ifdown) {
-		extern int ifdown(void);
-		(void)ifdown();
+		ifdown();
 	}
 	if ((result == 0) && do_exec) {
 		result = my_exec();

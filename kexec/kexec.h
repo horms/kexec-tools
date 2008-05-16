@@ -209,6 +209,8 @@ extern unsigned long add_buffer_phys_virt(struct kexec_info *info,
 	int buf_end, int phys);
 extern void arch_reuse_initrd(void);
 
+extern int ifdown(void);
+
 extern unsigned char purgatory[];
 extern size_t purgatory_size;
 
