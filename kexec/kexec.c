@@ -30,6 +30,9 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <fcntl.h>
+#ifndef _O_BINARY
+#define _O_BINARY 0
+#endif
 #include <getopt.h>
 #include <ctype.h>
 
@@ -388,7 +391,7 @@ char *slurp_file(const char *filename, off_t *r_size)
 		*r_size = 0;
 		return 0;
 	}
-	fd = open(filename, O_RDONLY);
+	fd = open(filename, O_RDONLY | _O_BINARY);
 	if (fd < 0) {
 		die("Cannot open `%s': %s\n",
 			filename, strerror(errno));
@@ -433,7 +436,7 @@ char *slurp_file_len(const char *filename, off_t size)
 
 	if (!filename)
 		return 0;
-	fd = open(filename, O_RDONLY);
+	fd = open(filename, O_RDONLY | _O_BINARY);
 	if (fd < 0) {
 		fprintf(stderr, "Cannot open %s: %s\n", filename,
 				strerror(errno));
