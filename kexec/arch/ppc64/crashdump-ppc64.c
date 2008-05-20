@@ -107,6 +107,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	struct dirent *dentry, *mentry;
 	int i, n, crash_rng_len = 0;
 	unsigned long long start, end, cstart, cend;
+	int page_size;
 
 	crash_max_memory_ranges = max_memory_ranges + 6;
 	crash_rng_len = sizeof(struct memory_range) * crash_max_memory_ranges;
@@ -213,12 +214,25 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	 */
 	if (crash_base < rtas_base + rtas_size &&
 		rtas_base < crash_base + crash_size) {
+		page_size = getpagesize();
 		cstart = rtas_base;
 		cend = rtas_base + rtas_size;
 		if (cstart < crash_base)
 			cstart = crash_base;
 		if (cend > crash_base + crash_size)
 			cend = crash_base + crash_size;
+		/*
+		 * The rtas section created here is formed by reading rtas-base
+		 * and rtas-size from /proc/device-tree/rtas.  Unfortunately
+		 * rtas-size is not required to be a multiple of PAGE_SIZE
+		 * The remainder of the page it ends on is just garbage, and is
+		 * safe to read, its just not accounted in rtas-size.  Since
+		 * we're creating an elf section here though, lets round it up
+		 * to the next page size boundary though, so makedumpfile can
+		 * read it safely without going south on us.
+		 */
+		cend = (cend + page_size - 1) & (~(page_size - 1));
+
 		crash_memory_range[memory_ranges].start = cstart;
 		crash_memory_range[memory_ranges++].end = cend;
 	}
