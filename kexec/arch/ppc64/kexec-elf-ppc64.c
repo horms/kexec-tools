@@ -76,7 +76,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
-	char *cmdline, *modified_cmdline;
+	char *cmdline, *modified_cmdline = NULL;
 	const char *devicetreeblob;
 	int cmdline_len, modified_cmdline_len;
 	uint64_t max_addr, hole_addr;
