@@ -43,6 +43,29 @@ struct apm_bios_info {
 	uint8_t  reserved[44];	/* 0x54 */
 };
 
+/*
+ * EDD stuff
+ */
+
+#define EDD_MBR_SIG_MAX 16
+#define EDDMAXNR 	6	/* number of edd_info structs starting at EDDBUF  */
+
+#define EDD_EXT_FIXED_DISK_ACCESS           (1 << 0)
+#define EDD_EXT_DEVICE_LOCKING_AND_EJECTING (1 << 1)
+#define EDD_EXT_ENHANCED_DISK_DRIVE_SUPPORT (1 << 2)
+#define EDD_EXT_64BIT_EXTENSIONS            (1 << 3)
+
+#define EDD_DEVICE_PARAM_SIZE 74
+
+struct edd_info {
+	uint8_t	 device;
+	uint8_t  version;
+	uint16_t interface_support;
+	uint16_t legacy_max_cylinder;
+	uint8_t  legacy_max_head;
+	uint8_t  legacy_sectors_per_track;
+	uint8_t  edd_device_params[EDD_DEVICE_PARAM_SIZE];
+} __attribute__ ((packed));
 
 struct x86_linux_param_header {
 	uint8_t  orig_x;			/* 0x00 */
@@ -87,7 +110,9 @@ struct x86_linux_param_header {
 	uint32_t alt_mem_k;			/* 0x1e0 */
 	uint8_t  reserved5[4];			/* 0x1e4 */
 	uint8_t  e820_map_nr;			/* 0x1e8 */
-	uint8_t  reserved6[8];			/* 0x1e9 */
+	uint8_t  eddbuf_entries;		/* 0x1e9 */
+	uint8_t  edd_mbr_sig_buf_entries;	/* 0x1ea */
+	uint8_t  reserved6[6];			/* 0x1eb */
 	uint8_t  setup_sects;			/* 0x1f1 */
 	uint16_t mount_root_rdonly;		/* 0x1f2 */
 	uint16_t syssize;			/* 0x1f4 */
@@ -148,18 +173,20 @@ struct x86_linux_param_header {
 	uint32_t cmdline_size;			/* 0x238 */
 	uint32_t hardware_subarch;		/* 0x23C */
 	uint64_t hardware_subarch_data;		/* 0x240 */
-	uint8_t  reserved16[0x2d0 - 0x248];	/* 0x248 */
+	uint8_t  reserved16[0x290 - 0x248];	/* 0x248 */
+	uint32_t edd_mbr_sig_buffer[EDD_MBR_SIG_MAX];	/* 0x290 */
 #endif
-	struct e820entry e820_map[E820MAX];	/* 0x2d0 */
-						/* 0x550 */
+	struct 	e820entry e820_map[E820MAX];	/* 0x2d0 */
+	uint8_t _pad8[48];			/* 0xcd0 */
+	struct 	edd_info eddbuf[EDDMAXNR];	/* 0xd00 */
+						/* 0xeec */
 #define COMMAND_LINE_SIZE 2048
 };
 
 struct x86_linux_faked_param_header {
 	struct x86_linux_param_header hdr;	/* 0x00 */
-	uint8_t reserved17[0xab0];		/* 0x550 */
 	uint8_t command_line[COMMAND_LINE_SIZE]; /* 0x1000 */
-	uint8_t reserved18[0x200];		/* 0x1800 - 0x2000 */
+	// uint8_t reserved18[0x200];		/* 0x1800 - 0x2000 */
 };
 
 struct x86_linux_header {
