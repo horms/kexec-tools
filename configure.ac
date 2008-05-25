@@ -84,20 +84,21 @@ else
 	BUILD_CC="$CC"
 fi
 
-dnl Find compiler for target
-if test "${target}" != "${host}" ; then
-	AC_CHECK_PROGS(TARGET_CC, [${target_alias}-gcc ${target}-gcc gcc])
-	AC_CHECK_PROGS(TARGET_LD, [${target_alias}-ld ${target}-ld ld])
-else
-	TARGET_CC="$CC"
-fi
-
 dnl Find the compiler tool chain
 AC_PROG_CPP
 AC_CHECK_TOOL([LD], ld, "no", $PATH)
 AC_CHECK_TOOL([AS], as, "no", $PATH)
 AC_CHECK_TOOL([OBJCOPY], objcopy, "no", $PATH)
 AC_CHECK_TOOL([AR], ar, "", $PATH)
+
+dnl Find compiler for target
+if test "${target}" != "${host}" ; then
+	AC_CHECK_PROGS(TARGET_CC, [${target_alias}-gcc ${target}-gcc gcc])
+	AC_CHECK_PROGS(TARGET_LD, [${target_alias}-ld ${target}-ld ld])
+else
+	TARGET_CC="$CC"
+	TARGET_LD="$LD"
+fi
 
 dnl Find the helper functions
 AC_PROG_INSTALL
