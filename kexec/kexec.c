@@ -702,6 +702,14 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 int k_unload (unsigned long kexec_flags)
 {
 	int result;
+	long native_arch;
+
+	/* set the arch */
+	native_arch = physical_arch();
+	if (native_arch < 0) {
+		return -1;
+	}
+	kexec_flags |= native_arch;
 
 	result = kexec_load(NULL, 0, NULL, kexec_flags);
 	if (result != 0) {
