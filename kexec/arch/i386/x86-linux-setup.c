@@ -254,9 +254,9 @@ static int read_edd_raw_data(const char *dir, struct edd_info *edd_info)
 	len = ((uint16_t *)edd_info->edd_device_params)[0];
 	dbgprintf("EDD raw data has length %d\n", len);
 
-	if (read_chars != len) {
+	if (read_chars < len) {
 		fprintf(stderr, "BIOS reported EDD length of %hd but only "
-			"%d chars read.", len, (int)read_chars);
+			"%d chars read.\n", len, (int)read_chars);
 		return -1;
 	}
 
