@@ -869,9 +869,9 @@ char *get_command_line(void)
 		/* strip newline */
 		*(line + strlen(line) - 1) = 0;
 
-		remove_parameter(line, "crashkernel");
+		remove_parameter(line, "BOOT_IMAGE");
 		if (kexec_flags & KEXEC_ON_CRASH)
-			remove_parameter(line, "BOOT_IMAGE");
+			remove_parameter(line, "crashkernel");
 	} else
 		line = strdup("");
 
