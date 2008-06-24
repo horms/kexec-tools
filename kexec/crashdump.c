@@ -107,10 +107,11 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 	printf("crash_notes addr = %Lx\n", *addr);
 #endif
 
+	fclose(fp);
 	return 0;
 }
 
-static int get_vmcoreinfo(char *kdump_info, uint64_t *addr, uint64_t *len)
+static int get_vmcoreinfo(const char *kdump_info, uint64_t *addr, uint64_t *len)
 {
 	char line[MAX_LINE];
 	int count;
@@ -132,6 +133,7 @@ static int get_vmcoreinfo(char *kdump_info, uint64_t *addr, uint64_t *len)
 	*addr = (uint64_t) temp;
 	*len = (uint64_t) temp2;
 
+	fclose(fp);
 	return 0;
 }
 
