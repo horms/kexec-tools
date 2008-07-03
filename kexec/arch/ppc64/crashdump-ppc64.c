@@ -82,7 +82,7 @@ mem_rgns_t usablemem_rgns = {0, NULL};
  * we can determine the RAM size unless parsing the device-tree/memoy@/reg
  * property in the kernel.
  */
-unsigned long saved_max_mem = 0;
+uint64_t saved_max_mem = 0;
 
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
@@ -264,7 +264,7 @@ err:
 }
 
 /* Converts unsigned long to ascii string. */
-static void ultoa(unsigned long i, char *str)
+static void ultoa(uint64_t i, char *str)
 {
 	int j = 0, k;
 	char tmp;
@@ -282,8 +282,8 @@ static void ultoa(unsigned long i, char *str)
 	}
 }
 
-static int add_cmdline_param(char *cmdline, unsigned long addr,
-				char *cmdstr, char *byte)
+static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
+				char *byte)
 {
 	int cmdlen, len, align = 1024;
 	char str[COMMAND_LINE_SIZE], *ptr;
@@ -320,10 +320,11 @@ static int add_cmdline_param(char *cmdline, unsigned long addr,
  * for crash memory image.
  */
 int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
-				unsigned long max_addr, unsigned long min_base)
+				uint64_t max_addr, unsigned long min_base)
 {
 	void *tmp;
-	unsigned long sz, elfcorehdr;
+	unsigned long sz;
+	uint64_t elfcorehdr;
 	int nr_ranges, align = 1024, i;
 	unsigned long long end;
 	struct memory_range *mem_range;

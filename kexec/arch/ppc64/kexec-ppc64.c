@@ -37,8 +37,8 @@
 static struct memory_range *exclude_range = NULL;
 static struct memory_range *memory_range = NULL;
 static struct memory_range *base_memory_range = NULL;
-static unsigned long long rmo_top;
-unsigned long long memory_max = 0;
+static uint64_t rmo_top;
+uint64_t memory_max = 0;
 static int nr_memory_ranges, nr_exclude_ranges;
 uint64_t crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
@@ -251,12 +251,12 @@ static int sort_ranges(void)
  */
 static int get_devtree_details(unsigned long kexec_flags)
 {
-	unsigned long long rmo_base;
-	unsigned long long tce_base;
+	uint64_t rmo_base;
+	uint64_t tce_base;
 	unsigned int tce_size;
-	unsigned long long htab_base, htab_size;
-	unsigned long long kernel_end;
-	unsigned long long initrd_start, initrd_end;
+	uint64_t htab_base, htab_size;
+	uint64_t kernel_end;
+	uint64_t initrd_start, initrd_end;
 	char buf[MAXBYTES];
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
@@ -465,8 +465,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
-			rmo_base = ((unsigned long long *)buf)[0];
-			rmo_top = rmo_base + ((unsigned long long *)buf)[1];
+			rmo_base = ((uint64_t *)buf)[0];
+			rmo_top = rmo_base + ((uint64_t *)buf)[1];
 			if (rmo_top > 0x30000000UL)
 				rmo_top = 0x30000000UL;
 

@@ -3,7 +3,7 @@
 
 struct kexec_info;
 int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
-				unsigned long max_addr, unsigned long min_base);
+				uint64_t max_addr, unsigned long min_base);
 void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 
 #define PAGE_OFFSET     0xC000000000000000

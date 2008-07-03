@@ -125,9 +125,9 @@ static unsigned propnum(const char *name)
 static void add_usable_mem_property(int fd, int len)
 {
 	char fname[MAXPATH], *bname;
-	unsigned long long buf[2];
-	unsigned long ranges[2*MAX_MEMORY_RANGES];
-	unsigned long long base, end, loc_base, loc_end;
+	uint64_t buf[2];
+	uint64_t ranges[2*MAX_MEMORY_RANGES];
+	uint64_t base, end, loc_base, loc_end;
 	int range, rlen = 0;
 
 	strcpy(fname, pathname);
@@ -137,9 +137,9 @@ static void add_usable_mem_property(int fd, int len)
 	if (strncmp(bname, "/memory@", 8))
 		return;
 
-	if (len < 2 * sizeof(unsigned long long))
+	if (len < 2 * sizeof(uint64_t))
 		die("unrecoverable error: not enough data for mem property\n");
-	len = 2 * sizeof(unsigned long long);
+	len = 2 * sizeof(uint64_t);
 
 	if (lseek(fd, 0, SEEK_SET) < 0)
 		die("unrecoverable error: error seeking in \"%s\": %s\n",
@@ -179,7 +179,7 @@ static void add_usable_mem_property(int fd, int len)
 		ranges[rlen++] = 0;
 	}
 
-	rlen = rlen * sizeof(unsigned long);
+	rlen = rlen * sizeof(uint64_t);
 	/*
 	 * No add linux,usable-memory property.
 	 */
