@@ -226,12 +226,12 @@ const struct arch_map_entry arches[] = {
 	/* For compatibility with older patches
 	 * use KEXEC_ARCH_DEFAULT instead of KEXEC_ARCH_386 here.
 	 */
-	{ "i386", KEXEC_ARCH_DEFAULT },
-	{ "i486", KEXEC_ARCH_DEFAULT },
-	{ "i586", KEXEC_ARCH_DEFAULT },
-	{ "i686", KEXEC_ARCH_DEFAULT },
-	{ "x86_64", KEXEC_ARCH_X86_64 },
-	{ 0 },
+	{ "i386",   KEXEC_ARCH_DEFAULT },
+	{ "i486",   KEXEC_ARCH_DEFAULT },
+	{ "i586",   KEXEC_ARCH_DEFAULT },
+	{ "i686",   KEXEC_ARCH_DEFAULT },
+	{ "x86_64", KEXEC_ARCH_X86_64  },
+	{ 0,        0  		       },
 };
 
 int arch_compat_trampoline(struct kexec_info *info)
