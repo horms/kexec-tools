@@ -45,7 +45,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	FILE *fp;
 	fp = fopen(iomem, "r");
 	if (!fp) {
-		fprintf(stderr, "Cannot open %s: %s\n", 
+		fprintf(stderr, "Cannot open %s: %s\n",
 			iomem, strerror(errno));
 		return -1;
 	}
@@ -59,7 +59,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			break;
 		count = sscanf(line, "%Lx-%Lx : %n",
 			&start, &end, &consumed);
-		if (count != 2) 
+		if (count != 2)
 			continue;
 		str = line + consumed;
 		end = end + 1;
@@ -69,7 +69,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 #endif
 		if (memcmp(str, "System RAM\n", 11) == 0) {
 			type = RANGE_RAM;
-		} 
+		}
 		else if (memcmp(str, "reserved\n", 9) == 0) {
 			type = RANGE_RESERVED;
 		}
@@ -117,7 +117,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 
 struct file_type file_type[] = {
 	{ "elf-x86_64", elf_x86_64_probe, elf_x86_64_load, elf_x86_64_usage },
-	{ "multiboot-x86", multiboot_x86_probe, multiboot_x86_load, 
+	{ "multiboot-x86", multiboot_x86_probe, multiboot_x86_load,
 	  multiboot_x86_usage },
 	{ "elf-x86", elf_x86_probe, elf_x86_load, elf_x86_usage },
 	{ "bzImage", bzImage_probe, bzImage_load, bzImage_usage },
@@ -194,24 +194,24 @@ int arch_process_options(int argc, char **argv)
 				}
 			}
 			if (value >= 65536) {
-				fprintf(stderr, "Bad serial port base '%s'\n", 
+				fprintf(stderr, "Bad serial port base '%s'\n",
 					optarg);
 				usage();
 				return -1;
-				
+
 			}
 			arch_options.serial_base = value;
 			break;
 		case OPT_SERIAL_BAUD:
 			value = strtoul(optarg, &end, 0);
-			if ((value > 115200) || ((115200 %value) != 0) || 
-				(value < 9600) || (*end)) 
+			if ((value > 115200) || ((115200 %value) != 0) ||
+				(value < 9600) || (*end))
 			{
 				fprintf(stderr, "Bad serial port baud rate '%s'\n",
 					optarg);
 				usage();
 				return -1;
-				
+
 			}
 			arch_options.serial_baud = value;
 			break;
@@ -242,13 +242,13 @@ void arch_update_purgatory(struct kexec_info *info)
 
 	elf_rel_set_symbol(&info->rhdr, "reset_vga",
 		&arch_options.reset_vga, sizeof(arch_options.reset_vga));
-	elf_rel_set_symbol(&info->rhdr, "serial_base", 
+	elf_rel_set_symbol(&info->rhdr, "serial_base",
 		&arch_options.serial_base, sizeof(arch_options.serial_base));
-	elf_rel_set_symbol(&info->rhdr, "serial_baud", 
+	elf_rel_set_symbol(&info->rhdr, "serial_baud",
 		&arch_options.serial_baud, sizeof(arch_options.serial_baud));
-	elf_rel_set_symbol(&info->rhdr, "console_vga", 
+	elf_rel_set_symbol(&info->rhdr, "console_vga",
 		&arch_options.console_vga, sizeof(arch_options.console_vga));
-	elf_rel_set_symbol(&info->rhdr, "console_serial", 
+	elf_rel_set_symbol(&info->rhdr, "console_serial",
 		&arch_options.console_serial, sizeof(arch_options.console_serial));
 
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
