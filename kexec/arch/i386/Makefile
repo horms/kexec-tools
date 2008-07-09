@@ -2,6 +2,7 @@
 # kexec i386 (linux booting linux)
 #
 i386_KEXEC_SRCS =  kexec/arch/i386/kexec-x86.c
+i386_KEXEC_SRCS += kexec/arch/i386/kexec-x86-common.c
 i386_KEXEC_SRCS += kexec/arch/i386/kexec-elf-x86.c
 i386_KEXEC_SRCS += kexec/arch/i386/kexec-elf-rel-x86.c
 i386_KEXEC_SRCS += kexec/arch/i386/kexec-bzImage.c
