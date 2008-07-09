@@ -28,15 +28,26 @@
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
+#include "../../firmware_memmap.h"
 #include "kexec-x86.h"
 #include "crashdump-x86.h"
 #include <arch/options.h>
 
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
-/* Return a sorted list of memory ranges. */
-int get_memory_ranges(struct memory_range **range, int *ranges,
-				unsigned long kexec_flags)
+/**
+ * The old /proc/iomem parsing code.
+ *
+ * @param[out] range pointer that will be set to an array that holds the
+ *             memory ranges
+ * @param[out] ranges number of ranges valid in @p range
+ * @param[in]  kexec_flags the kexec_flags to determine if we load a normal
+ *             or a crashdump kernel
+ *
+ * @return 0 on success, any other value on failure.
+ */
+static int get_memory_ranges_proc_iomem(struct memory_range **range, int *ranges,
+					unsigned long kexec_flags)
 {
 	const char *iomem= proc_iomem();
 	int memory_ranges = 0;
@@ -112,6 +123,113 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	*range = memory_range;
 	*ranges = memory_ranges;
 	return 0;
+}
+
+/**
+ * Calls the architecture independent get_firmware_memmap_ranges() to parse
+ * /sys/firmware/memmap and then do some x86 only modifications.
+ *
+ * @param[out] range pointer that will be set to an array that holds the
+ *             memory ranges
+ * @param[out] ranges number of ranges valid in @p range
+ * @param[in]  kexec_flags the kexec_flags to determine if we load a normal
+ *             or a crashdump kernel
+ *
+ * @return 0 on success, any other value on failure.
+ */
+static int get_memory_ranges_sysfs(struct memory_range **range, int *ranges,
+				   unsigned long kexec_flags)
+{
+	int ret;
+	size_t i;
+	size_t range_number = MAX_MEMORY_RANGES;
+	unsigned long long start, end;
+
+	ret = get_firmware_memmap_ranges(memory_range, &range_number);
+	if (ret != 0) {
+		fprintf(stderr, "Parsing the /sys/firmware memory map failed. "
+			"Falling back to /proc/iomem.\n");
+		return get_memory_ranges_proc_iomem(range, ranges, kexec_flags);
+	}
+
+	/* Don't report the interrupt table as ram */
+	for (i = 0; i < range_number; i++) {
+		if (memory_range[i].type == RANGE_RAM &&
+				(memory_range[i].start < 0x100)) {
+			memory_range[i].start = 0x100;
+			break;
+		}
+	}
+
+	/*
+	 * Redefine the memory region boundaries if kernel
+	 * exports the limits and if it is panic kernel.
+	 * Override user values only if kernel exported values are
+	 * subset of user defined values.
+	 */
+	if (kexec_flags & KEXEC_ON_CRASH) {
+		ret = parse_iomem_single("Crash kernel\n", &start, &end);
+		if (ret != 0) {
+			fprintf(stderr, "parse_iomem_single failed.\n");
+			return -1;
+		}
+
+		if (start > mem_min)
+			mem_min = start;
+		if (end < mem_max)
+			mem_max = end;
+	}
+
+	*range = memory_range;
+	*ranges = range_number;
+
+	return 0;
+}
+
+/**
+ * Return a sorted list of memory ranges.
+ *
+ * If we have the /sys/firmware/memmap interface, then use that. If not,
+ * or if parsing of that fails, use /proc/iomem as fallback.
+ *
+ * @param[out] range pointer that will be set to an array that holds the
+ *             memory ranges
+ * @param[out] ranges number of ranges valid in @p range
+ * @param[in]  kexec_flags the kexec_flags to determine if we load a normal
+ *             or a crashdump kernel
+ *
+ * @return 0 on success, any other value on failure.
+ */
+int get_memory_ranges(struct memory_range **range, int *ranges,
+		      unsigned long kexec_flags)
+{
+	int ret;
+
+	if (have_sys_firmware_memmap())
+		ret = get_memory_ranges_sysfs(range, ranges,kexec_flags);
+	else
+		ret = get_memory_ranges_proc_iomem(range, ranges, kexec_flags);
+
+	/*
+	 * both get_memory_ranges_sysfs() and get_memory_ranges_proc_iomem()
+	 * have already printed an error message, so fail silently here
+	 */
+	if (ret != 0)
+		return ret;
+
+	/* just set 0 to 1 to enable printing for debugging */
+#if 0
+	{
+		int i;
+		printf("MEMORY RANGES\n");
+		for (i = 0; i < *ranges; i++) {
+			printf("%016Lx-%016Lx (%d)\n", (*range)[i].start,
+				(*range)[i].end, (*range)[i].type);
+		}
+	}
+#endif
+
+	return ret;
 }
 
 struct file_type file_type[] = {
