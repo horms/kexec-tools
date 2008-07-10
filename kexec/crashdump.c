@@ -84,14 +84,12 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 			    strerror(fopen_errno));
 		if (!stat("/sys/devices", &cpu_stat)) {
 			stat_errno = errno;
-			fprintf(stderr, "Could not open \"%s\": %s\n",
-				crash_notes, strerror(fopen_errno));
 			if (stat_errno == ENOENT)
 				die("\"/sys/devices\" does not exist. "
 				    "Sysfs does not seem to be mounted. "
 				    "Try mounting sysfs.\n");
 			die("Could not open \"/sys/devices\": %s\n",
-			    crash_notes, strerror(stat_errno));
+			    strerror(stat_errno));
 		}
 		/* CPU is not physically present.*/
 		return -1;
