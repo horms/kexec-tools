@@ -27,7 +27,8 @@ KEXEC_GENERATED_SRCS += $(PURGATORY_HEX_C)
 
 dist += kexec/Makefile $(KEXEC_SRCS) $(KEXEC_GENERATED_SRCS)	\
 	kexec/crashdump-elf.c					\
-	kexec/crashdump.h kexec/kexec-elf-boot.h		\
+	kexec/crashdump.h kexec/firmware_memmap.h		\
+	kexec/kexec-elf-boot.h					\
 	kexec/kexec-elf.h kexec/kexec-sha256.h			\
 	kexec/kexec-syscall.h kexec/kexec.h kexec/kexec.8
 
