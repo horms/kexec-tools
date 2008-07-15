@@ -5,7 +5,7 @@ $(BIN_TO_HEX): $(srcdir)/util/bin-to-hex.c
 	$(LINK.o) $(CFLAGS) -o $@ $^
 
 $(BIN_TO_HEX): CC=$(BUILD_CC)
-$(BIN_TO_HEX): CFLAGS+=$(BUILD_CFLAGS)
+$(BIN_TO_HEX): CFLAGS=$(BUILD_CFLAGS)
 $(BIN_TO_HEX): LDFLAGS=
 
 dist += util/Makefile util/bin-to-hex.c

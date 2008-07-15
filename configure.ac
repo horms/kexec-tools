@@ -56,8 +56,13 @@ if test "${host_alias}" ; then
 	OBJDIR="$OBJDIR-${host_alias}"
 fi
 
-BUILD_CFLAGS='-O2 -Wall'
-TARGET_CFLAGS='-O2 -Wall'
+if test "x$BUILD_CFLAGS" = "x" ; then
+	BUILD_CFLAGS='-O2 -Wall'
+fi
+
+if test "x$TARGET_CFLAGS" = "x" ; then
+	TARGET_CFLAGS='-O2 -Wall'
+fi
 
 AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
 	[ OBJDIR="$withval" ], [ OBJDIR="$OBJDIR" ])
