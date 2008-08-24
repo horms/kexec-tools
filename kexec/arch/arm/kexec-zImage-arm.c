@@ -3,6 +3,7 @@
  *
  */
 #define _GNU_SOURCE
+#define _XOPEN_SOURCE
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -11,7 +12,6 @@
 #include <stdint.h>
 #include <getopt.h>
 #include <arch/options.h>
-#include <asm/page.h>
 #include "../../kexec.h"
 
 #define COMMAND_LINE_SIZE 1024
