@@ -67,10 +67,9 @@ KEXEC_MANPAGE = $(MANDIR)/man8/kexec.8
 
 -include $(KEXEC_DEPS)
 
-$(KEXEC): LDFLAGS+=$(LIBS)
 $(KEXEC): $(KEXEC_OBJS) $(UTIL_LIB)
 	@$(MKDIR) -p $(@D)
-	$(LINK.o) -o $@ $^
+	$(LINK.o) -o $@ $^ $(LIBS)
 
 $(KEXEC): CPPFLAGS+=-I$(srcdir)/kexec/arch/$(ARCH)/include
 
