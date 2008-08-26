@@ -125,7 +125,7 @@ all: $(TARGETS)
 clean =
 
 # collect objects to be removed in 'make clean'
-dist =	AUTHORS COPYING News TODO Makefile.in configure.ac configure	\
+dist =	AUTHORS COPYING INSTALL News TODO Makefile.in configure.ac configure \
 	kexec-tools.spec.in config/
 
 # utility function for converting a list of files (with extension) to
