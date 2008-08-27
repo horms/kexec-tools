@@ -12,6 +12,7 @@ int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 void netbsd_sh_usage(void);
 
 char *get_append(void);
-unsigned long get_empty_zero(char *s);
+void kexec_sh_setup_zero_page(char *zero_page_buf, int zero_page_size,
+			      char *cmd_line);
 
 #endif /* KEXEC_SH_H */

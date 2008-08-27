@@ -28,6 +28,24 @@
 
 static const int probe_debug = 0;
 
+#define HEAD32_KERNEL_START_ADDR 0
+#define HEAD32_DECOMPRESS_KERNEL_ADDR 1
+#define HEAD32_INIT_STACK_ADDR 2
+#define HEAD32_INIT_SR 3
+#define HEAD32_INIT_SR_VALUE 0x400000F0
+
+unsigned long zImage_head32(const char *buf, off_t len, int offs)
+{
+	unsigned long *values = (void *)buf;
+	int k;
+
+	for (k = (0x200 / 4) - 1; k > 0; k--)
+		if (values[k] != 0x00090009) /* not nop + nop padding*/
+			return values[k - offs];
+
+	return 0;
+}
+
 /*
  * zImage_sh_probe - sanity check the elf image
  *
@@ -35,10 +53,12 @@ static const int probe_debug = 0;
  */
 int zImage_sh_probe(const char *buf, off_t len)
 {
-	if (memcmp(&buf[0x202], "HdrS", 4) != 0) {
-	        fprintf(stderr, "Not a zImage\n");
+	if (memcmp(&buf[0x202], "HdrS", 4) != 0)
 	        return -1;
-	}
+
+	if (zImage_head32(buf, len, HEAD32_INIT_SR) != HEAD32_INIT_SR_VALUE)
+	        return -1;
+
 	return 0;
 }
 
@@ -54,10 +74,9 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
         char *command_line;
-	int opt;
-	unsigned long empty_zero, area;
-	unsigned char *param;
-	unsigned long *paraml;
+	int opt, k;
+	unsigned long empty_zero, area, zero_page_base, zero_page_size;
+	char *param;
 
 	static const struct option options[] = {
        	        KEXEC_ARCH_OPTIONS
@@ -67,7 +86,6 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "";
 
 	command_line = 0;
-	empty_zero = get_empty_zero(NULL);
 	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch (opt) {
 		default:
@@ -81,25 +99,42 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 		case OPT_APPEND:
 			command_line = optarg;
 			break;
-		case OPT_EMPTYZERO:
-			empty_zero = get_empty_zero(optarg);
-			break;
 		}
 	}
-	param = xmalloc(4096);
-	memset(param, 0, 4096);
-	area       = empty_zero & 0x1c000000;
-	if (!command_line) {
+
+	if (!command_line)
 	        command_line = get_append();
+
+	/* assume the zero page is the page before the vmlinux entry point.
+	 * we don't know the page size though, but 64k seems to be max.
+	 * put several 4k zero page copies before the entry point to cover
+	 * all combinations.
+	 */
+
+	empty_zero = zImage_head32(buf, len, HEAD32_KERNEL_START_ADDR);
+
+	zero_page_size = 0x10000;
+	zero_page_base = virt_to_phys(empty_zero - zero_page_size);
+
+	while (!valid_memory_range(info, zero_page_base,
+				   zero_page_base + zero_page_size - 1)) {
+		zero_page_base += 0x1000;
+		zero_page_size -= 0x1000;
+		if (zero_page_size == 0)
+			die("Unable to determine zero page size from %p \n",
+			    (void *)empty_zero);
 	}
-	strncpy(&param[256], command_line, strlen(command_line));
-        paraml = (unsigned long *)param;
-	// paraml[0] = 1;  // readonly flag is set as default
 
-	add_segment(info, param, 4096, 0x80000000 | empty_zero, 4096);
+	param = xmalloc(zero_page_size);
+	for (k = 0; k < (zero_page_size / 0x1000); k++)
+		kexec_sh_setup_zero_page(param + (k * 0x1000), 0x1000,
+					 command_line);
+
+	add_segment(info, param, zero_page_size,
+		    0x80000000 | zero_page_base, zero_page_size);
+
+	area = empty_zero & 0x1c000000;
 	add_segment(info, buf,   len,  (area | 0x80210000), len);
-
-	/* For now we don't have arguments to pass :( */
 	info->entry = (void *)(0x80210000 | area);
 	return 0;
 }

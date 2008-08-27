@@ -65,16 +65,8 @@ void arch_usage(void)
     " none\n\n"
     "Default options:\n"
     " --append=\"%s\"\n"
-    " --empty-zero=0x%08x\n\n"
     " STRING of --appned is set form /proc/cmdline as default.\n"
-    " ADDRESS of --empty-zero can be set SHELL environment variable\n"
-    " KEXEC_EMPTY_ZERO as default.\n\n"
-    " ADDRESS can be get in the following method in your system. \n"
-    " 1) \"grep empty_zero /proc/kallsyms\". \n"
-    " 2) \"grep empty_zero System.map\". \n"
-    " 3) CONFIG_MEMORY_START + CONFIG_ZERO_PAGE_OFFSET in your kernel\n"
-    "    config file.\n"
-    ,get_append(), (unsigned int) get_empty_zero(NULL));
+    ,get_append());
 
 }
 
@@ -130,21 +122,6 @@ void arch_update_purgatory(struct kexec_info *info)
 {
 }
 
-
-unsigned long get_empty_zero(char *s)
-{
-        char *env;
-
-	env = getenv("KEXEC_EMPTY_ZERO");
-
-	if(s){
-	  env = s;
-	}else if(!env){
-	  env = "0x0c001000";
-	}
-	return 0x1fffffff & strtoul(env,(char **)NULL,0);
-}
-
 char append_buf[256];
 
 char *get_append(void)
@@ -162,6 +139,21 @@ char *get_append(void)
         return append_buf;
 }
 
+void kexec_sh_setup_zero_page(char *zero_page_buf, int zero_page_size,
+			      char *cmd_line)
+{
+	int n = zero_page_size - 0x100;
+
+	memset(zero_page_buf, 0, zero_page_size);
+
+	if (cmd_line) {
+		if (n > strlen(cmd_line))
+			n = strlen(cmd_line);
+
+		memcpy(zero_page_buf + 0x100, cmd_line, n);
+		zero_page_buf[0x100 + n] = '\0';
+	}
+}
 
 int is_crashkernel_mem_reserved(void)
 {
