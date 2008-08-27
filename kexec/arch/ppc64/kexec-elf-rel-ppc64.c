@@ -56,6 +56,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		break;
 
 	case R_PPC64_ADDR64:
+	case R_PPC64_REL64:
 		/* Simply set it */
 		*(uint64_t *)location = value;
 		break;
