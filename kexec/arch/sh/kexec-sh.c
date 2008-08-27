@@ -22,19 +22,31 @@
 #define MAX_MEMORY_RANGES 64
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
+static int kexec_sh_memory_range_callback(void *data, int nr,
+					  char *str,
+					  unsigned long base,
+					  unsigned long length)
+{
+	if (nr < MAX_MEMORY_RANGES) {
+		memory_range[nr].start = base;
+		memory_range[nr].end = base + length - 1;
+		memory_range[nr].type = RANGE_RAM;
+		return 0;
+	}
+
+	return 1;
+}
+
 /* Return a sorted list of available memory ranges. */
 int get_memory_ranges(struct memory_range **range, int *ranges,
 		      unsigned long kexec_flags)
 {
-	int memory_ranges;
+	int nr;
 
-	memory_ranges = 0;
-	memory_range[memory_ranges].start = 0x08000000;
-	memory_range[memory_ranges].end   = 0x10000000;
-	memory_range[memory_ranges].type  = RANGE_RAM;
-	memory_ranges++;
+	nr = kexec_iomem_for_each_line("System RAM\n",
+				       kexec_sh_memory_range_callback, NULL);
 	*range = memory_range;
-	*ranges = memory_ranges;
+	*ranges = nr;
 	return 0;
 }
 
