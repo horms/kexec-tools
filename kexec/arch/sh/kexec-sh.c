@@ -105,6 +105,7 @@ const struct arch_map_entry arches[] = {
 	{ "sh3", KEXEC_ARCH_DEFAULT },
 	{ "sh4", KEXEC_ARCH_DEFAULT },
 	{ "sh4a", KEXEC_ARCH_DEFAULT },
+	{ "sh4al-dsp", KEXEC_ARCH_DEFAULT },
 	{ 0 },
 };
 
