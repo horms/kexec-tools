@@ -96,8 +96,8 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
         paraml = (unsigned long *)param;
 	// paraml[0] = 1;  // readonly flag is set as default
 
-	add_segment(info, param, 4096, empty_zero, 4096);
-	add_segment(info, buf,   len,  (area | 0x00210000), len);
+	add_segment(info, param, 4096, 0x80000000 | empty_zero, 4096);
+	add_segment(info, buf,   len,  (area | 0x80210000), len);
 
 	/* For now we don't have arguments to pass :( */
 	info->entry = (void *)(0x80210000 | area);
