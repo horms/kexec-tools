@@ -6,6 +6,11 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void zImage_sh_usage(void);
 
+int elf_sh_probe(const char *buf, off_t len);
+int elf_sh_load(int argc, char **argv, const char *buf, off_t len,
+	struct kexec_info *info);
+void elf_sh_usage(void);
+
 int netbsd_sh_probe(const char *buf, off_t len);
 int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);

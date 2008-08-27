@@ -53,6 +53,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 /* Supported file types and callbacks */
 struct file_type file_type[] = {
        {"zImage-sh", zImage_sh_probe, zImage_sh_load, zImage_sh_usage},
+       {"elf-sh", elf_sh_probe, elf_sh_load, elf_sh_usage},
        {"netbsd-sh", netbsd_sh_probe, netbsd_sh_load, netbsd_sh_usage},
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
