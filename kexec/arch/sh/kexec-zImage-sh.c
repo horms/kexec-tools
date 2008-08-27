@@ -75,7 +75,8 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 {
         char *command_line;
 	int opt, k;
-	unsigned long empty_zero, area, zero_page_base, zero_page_size;
+	unsigned long empty_zero, zero_page_base, zero_page_size;
+	unsigned long image_base;
 	char *param;
 
 	static const struct option options[] = {
@@ -133,8 +134,12 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	add_segment(info, param, zero_page_size,
 		    0x80000000 | zero_page_base, zero_page_size);
 
-	area = empty_zero & 0x1c000000;
-	add_segment(info, buf,   len,  (area | 0x80210000), len);
-	info->entry = (void *)(0x80210000 | area);
+	/* load image a bit above the zero page, round up to 64k
+	 * the zImage will relocate itself, but only up seems supported.
+	 */
+
+	image_base = (empty_zero + (0x10000 - 1)) & ~(0x10000 - 1);
+	add_segment(info, buf, len, image_base, len);
+	info->entry = (void *)image_base;
 	return 0;
 }
