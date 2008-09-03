@@ -37,6 +37,7 @@
 #include "../../kexec-elf.h"
 #include "../../kexec-elf-boot.h"
 #include <arch/options.h>
+#include "crashdump-sh.h"
 #include "kexec-sh.h"
 
 int elf_sh_probe(const char *buf, off_t len)
@@ -70,8 +71,9 @@ int elf_sh_load(int argc, char **argv, const char *buf, off_t len,
 {
 	struct mem_ehdr ehdr;
 	char *command_line;
+	char *modified_cmdline;
 	struct mem_sym sym;
-	int opt;
+	int opt, rc;
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ 0, 0, 0, 0 },
@@ -82,7 +84,7 @@ int elf_sh_load(int argc, char **argv, const char *buf, off_t len,
 	/*
 	 * Parse the command line arguments
 	 */
-	command_line = 0;
+	command_line = modified_cmdline = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch(opt) {
 		default:
@@ -99,9 +101,32 @@ int elf_sh_load(int argc, char **argv, const char *buf, off_t len,
 		}
 	}
 
+	/* Need to append some command line parameters internally in case of
+	 * taking crash dumps.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
+		memset((void *)modified_cmdline, 0, COMMAND_LINE_SIZE);
+		if (command_line) {
+			strncpy(modified_cmdline, command_line,
+						COMMAND_LINE_SIZE);
+			modified_cmdline[COMMAND_LINE_SIZE - 1] = '\0';
+		}
+	}
+
 	/* Load the ELF executable */
 	elf_exec_build_load(info, &ehdr, buf, len, 0);
-	info->entry = (void *)ehdr.e_entry;
+	info->entry = (void *)virt_to_phys(ehdr.e_entry);
+
+	/* If panic kernel is being loaded, additional segments need
+	 * to be created. */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		rc = load_crashdump_segments(info, modified_cmdline);
+		if (rc < 0)
+			return -1;
+		/* Use new command line. */
+		command_line = modified_cmdline;
+	}
 
 	/* If we're booting a vmlinux then fill in empty_zero_page */
 	if (elf_rel_find_symbol(&ehdr, "empty_zero_page", &sym) == 0) {

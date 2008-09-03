@@ -41,12 +41,33 @@ static int kexec_sh_memory_range_callback(void *data, int nr,
 int get_memory_ranges(struct memory_range **range, int *ranges,
 		      unsigned long kexec_flags)
 {
-	int nr;
-
+	int nr, ret;
 	nr = kexec_iomem_for_each_line("System RAM\n",
 				       kexec_sh_memory_range_callback, NULL);
 	*range = memory_range;
 	*ranges = nr;
+
+	/*
+	 * Redefine the memory region boundaries if kernel
+	 * exports the limits and if it is panic kernel.
+	 * Override user values only if kernel exported values are
+	 * subset of user defined values.
+	 */
+	if (kexec_flags & KEXEC_ON_CRASH) {
+		unsigned long long start, end;
+
+		ret = parse_iomem_single("Crash kernel\n", &start, &end);
+		if (ret != 0) {
+			fprintf(stderr, "parse_iomem_single failed.\n");
+			return -1;
+		}
+
+		if (start > mem_min)
+			mem_min = start;
+		if (end < mem_max)
+			mem_max = end;
+	}
+
 	return 0;
 }
 
@@ -154,11 +175,6 @@ void kexec_sh_setup_zero_page(char *zero_page_buf, int zero_page_size,
 		memcpy(zero_page_buf + 0x100, cmd_line, n);
 		zero_page_buf[0x100 + n] = '\0';
 	}
-}
-
-int is_crashkernel_mem_reserved(void)
-{
-	return 0; /* kdump is not supported on this platform (yet) */
 }
 
 unsigned long virt_to_phys(unsigned long addr)
