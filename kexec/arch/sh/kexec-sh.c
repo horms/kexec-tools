@@ -66,7 +66,7 @@ void arch_usage(void)
     " none\n\n"
     "Default options:\n"
     " --append=\"%s\"\n"
-    " STRING of --appned is set form /proc/cmdline as default.\n"
+    " STRING of --append is set from /proc/cmdline as default.\n"
     ,get_append());
 
 }
