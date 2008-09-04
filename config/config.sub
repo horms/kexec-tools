@@ -457,7 +457,7 @@ case $basic_machine in
 	crds | unos)
 		basic_machine=m68k-crds
 		;;
-	cris | cris-* | etrax*)
+	cris | cris-* | etrax* | crisv32 | crisv32-* | etraxfs*)
 		basic_machine=cris-axis
 		;;
 	crx)

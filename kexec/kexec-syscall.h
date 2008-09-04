@@ -92,6 +92,7 @@ static inline long kexec_reboot(void)
 #define KEXEC_ARCH_SH      (42 << 16)
 #define KEXEC_ARCH_MIPS_LE (10 << 16)
 #define KEXEC_ARCH_MIPS    ( 8 << 16)
+#define KEXEC_ARCH_CRIS    (76 << 16)
 
 #define KEXEC_MAX_SEGMENTS 16
 
