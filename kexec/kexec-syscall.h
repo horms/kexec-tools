@@ -28,6 +28,11 @@
 #ifdef __sh__
 #define __NR_kexec_load		283
 #endif
+#ifdef __cris__
+#ifndef __NR_kexec_load
+#define __NR_kexec_load		283
+#endif
+#endif
 #ifdef __ia64__
 #define __NR_kexec_load		1268
 #endif
