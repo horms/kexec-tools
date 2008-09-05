@@ -6,6 +6,7 @@
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <string.h>
 #define USE_BSD
 #include <byteswap.h>
 #include <endian.h>
@@ -56,43 +57,41 @@
 #endif
 
 
-#if 0
 /*
- * This function doesn't actually exist.  The idea is that when someone uses the macros
- * below with an unsupported size (datatype), the linker will alert us to the problem via
- * an unresolved reference error.
+ * This function doesn't actually exist.  The idea is that when someone
+ * uses the macros below with an unsupported size (datatype), the linker
+ * will alert us to the problem via an unresolved reference error.
  */
 extern unsigned long bad_unaligned_access_length (void);
 
 #define get_unaligned(loc) \
 ({ \
-	__typeof__(*(loc)) value; \
+	__typeof__(*(loc)) _v; \
 	size_t size = sizeof(*(loc)); \
 	switch(size) {  \
 	case 1: case 2: case 4: case 8: \
-		memcpy(&value, (loc), size); \
+		memcpy(&_v, (loc), size); \
 		break; \
 	default: \
-		value = bad_unaligned_access_length(); \
+		_v = bad_unaligned_access_length(); \
 		break; \
 	} \
-	value; \
+	_v; \
 })
 
 #define put_unaligned(value, loc) \
 do { \
 	size_t size = sizeof(*(loc)); \
-	__typeof__(*(loc)) val = value; \
+	__typeof__(*(loc)) _v = value; \
 	switch(size) { \
 	case 1: case 2: case 4: case 8: \
-		memcpy((loc), &val, size); \
+		memcpy((loc), &_v, size); \
 		break; \
 	default: \
 		bad_unaligned_access_length(); \
 		break; \
 	} \
 } while(0)
-#endif
 
 extern unsigned long long mem_min, mem_max;
 
