@@ -161,7 +161,7 @@ int zImage_ppc64_load(FILE *file, int argc, char **argv, void **ret_entry,
 	segment->mem = (void *) load_loc;
 	segment->memsz = memsize;
 	segment->bufsz = filesize;
-	*ret_entry = (void *)((uint64_t)elf.e_entry);
+	*ret_entry = (void *)(uintptr_t)elf.e_entry;
 	*ret_nr_segments = i - 1;
 	free(ph);
 	return 0;

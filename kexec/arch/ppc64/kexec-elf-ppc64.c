@@ -118,7 +118,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	cmdline = 0;
 	ramdisk = 0;
 	devicetreeblob = 0;
-	max_addr = 0xFFFFFFFFFFFFFFFFUL;
+	max_addr = 0xFFFFFFFFFFFFFFFFULL;
 	hole_addr = 0;
 
 	while ((opt = getopt_long(argc, argv, short_options,
@@ -233,7 +233,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		}
 		seg_buf = (unsigned char *)slurp_file(ramdisk, &seg_size);
 		add_buffer(info, seg_buf, seg_size, seg_size, 0, 0, max_addr, 1);
-		hole_addr = (uint64_t)
+		hole_addr = (uintptr_t)
 			info->segment[info->nr_segments-1].mem;
 		initrd_base = hole_addr;
 		initrd_size = (uint64_t)
@@ -272,7 +272,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	while (*rsvmap_ptr || *(rsvmap_ptr+1))
 		rsvmap_ptr += 2;
 	rsvmap_ptr -= 2;
-	*rsvmap_ptr = (uint64_t)(
+	*rsvmap_ptr = (uintptr_t)(
 		info->segment[(info->nr_segments)-1].mem);
 	rsvmap_ptr++;
 	*rsvmap_ptr = (uint64_t)bb_ptr->totalsize;
@@ -280,11 +280,11 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	nr_segments = info->nr_segments;
 
 	/* Set kernel */
-	my_kernel = (uint64_t)info->segment[0].mem;
+	my_kernel = (uintptr_t)info->segment[0].mem;
 	elf_rel_set_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
 
 	/* Set dt_offset */
-	my_dt_offset = (uint64_t)info->segment[nr_segments-1].mem;
+	my_dt_offset = (uintptr_t)info->segment[nr_segments-1].mem;
 	elf_rel_set_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
 				sizeof(my_dt_offset));
 
@@ -338,17 +338,19 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 				sizeof(toc_addr));
 
 	fprintf(stderr, "info->entry is %p\n", info->entry);
-	fprintf(stderr, "kernel is %lx\n", my_kernel);
-	fprintf(stderr, "dt_offset is %lx\n", my_dt_offset);
+	fprintf(stderr, "kernel is %llx\n", (unsigned long long)my_kernel);
+	fprintf(stderr, "dt_offset is %llx\n",
+		(unsigned long long)my_dt_offset);
 	fprintf(stderr, "panic_kernel is %x\n", my_panic_kernel);
-	fprintf(stderr, "backup_start is %lx\n", my_backup_start);
-	fprintf(stderr, "stack is %lx\n", my_stack);
-	fprintf(stderr, "toc_addr is %lx\n", toc_addr);
-	fprintf(stderr, "purgatory size is %lu\n", purgatory_size);
+	fprintf(stderr, "backup_start is %llx\n",
+		(unsigned long long)my_backup_start);
+	fprintf(stderr, "stack is %llx\n", (unsigned long long)my_stack);
+	fprintf(stderr, "toc_addr is %llx\n", (unsigned long long)toc_addr);
+	fprintf(stderr, "purgatory size is %zu\n", purgatory_size);
 #endif
 
 	for (i = 0; i < nr_segments; i++)
-		fprintf(stderr, "segment[%d].mem:%p memsz:%ld\n", i,
+		fprintf(stderr, "segment[%d].mem:%p memsz:%zu\n", i,
 			info->segment[i].mem, info->segment[i].memsz);
 
 	return 0;
