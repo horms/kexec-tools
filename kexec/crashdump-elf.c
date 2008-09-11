@@ -8,8 +8,12 @@
 do {										\
 	dbgprintf("%s: p_type = %u, p_offset = 0x%llx p_paddr = 0x%llx "	\
 		"p_vaddr = 0x%llx p_filesz = 0x%llx p_memsz = 0x%llx\n",	\
-		(prefix), (phdr)->p_type, (phdr)->p_offset, (phdr)->p_paddr, 	\
-		(phdr)->p_vaddr, (phdr)->p_filesz, (phdr)->p_memsz);		\
+		(prefix), (phdr)->p_type,					\
+		(unsigned long long)((phdr)->p_offset),				\
+		(unsigned long long)((phdr)->p_paddr),				\
+		(unsigned long long)((phdr)->p_vaddr),				\
+		(unsigned long long)((phdr)->p_filesz),				\
+		(unsigned long long)((phdr)->p_memsz));				\
 } while(0)
 #else
 #define dbgprintf_phdr(prefix, phdr)					\

@@ -237,7 +237,7 @@ int get_firmware_memmap_ranges(struct memory_range *range, size_t *ranges)
 		/* array overflow check */
 		if ((size_t)i >= *ranges) {
 			fprintf(stderr, "The firmware provides more entries "
-				"allowed (%d). Please report that as bug.\n",
+				"allowed (%zd). Please report that as bug.\n",
 				*ranges);
 			goto error;
 		}
