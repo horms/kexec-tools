@@ -192,8 +192,11 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			kernel_code_start = start;
 			kernel_code_end = end;
 			continue;
-		}else
+		} else if (memcmp(str, "Uncached RAM\n", 13) == 0) {
+			type = RANGE_UNCACHED;
+		} else {
 			continue;
+		}
 		crash_memory_range[memory_ranges].start = start;
 		crash_memory_range[memory_ranges].end = end;
 		crash_memory_range[memory_ranges].type = type;

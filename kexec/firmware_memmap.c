@@ -158,6 +158,8 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 		range->type = RANGE_RESERVED;
 	else if (strcmp(type, "ACPI Non-volatile Storage") == 0)
 		range->type = RANGE_ACPI_NVS;
+	else if (strcmp(type, "Uncached RAM") == 0)
+		range->type = RANGE_UNCACHED;
 	else {
 		fprintf(stderr, "Unknown type (%s) while parsing %s. Please "
 			"report this as bug. Using RANGE_RESERVED now.\n",

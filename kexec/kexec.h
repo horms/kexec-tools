@@ -109,6 +109,7 @@ struct memory_range {
 #define RANGE_RESERVED	1
 #define RANGE_ACPI	2
 #define RANGE_ACPI_NVS	3
+#define RANGE_UNCACHED	4
 };
 
 struct kexec_info {

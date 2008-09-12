@@ -139,8 +139,11 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			memory_ranges = split_range(memory_ranges, start, end);
 			saved_efi_memmap_size = end - start;
 			continue;
-		} else
+		} else if (memcmp(str, "Uncached RAM\n", 13) == 0) {
+			type = RANGE_UNCACHED;
+		} else {
 			continue;
+		}
 		/*
 		 * Check if this memory range can be coalesced with
 		 * the previous range
