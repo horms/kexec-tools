@@ -86,19 +86,20 @@ static void add_loaded_segments_info(struct kexec_info *info,
                 loaded_segments[loaded_segments_num].end =
 			loaded_segments[loaded_segments_num].start;
 
+		/* Consolidate consecutive PL_LOAD segments into one.
+		 * The end addr of the last PL_LOAD segment, calculated by
+		 * adding p_memsz to p_paddr & rounded up to ELF_PAGE_SIZE,
+		 * will be the end address of this loaded_segments entry.
+		 */
 		while (i < ehdr->e_phnum) {
 			phdr = &ehdr->e_phdr[i];
 	                if (phdr->p_type != PT_LOAD)
 	                        break;
-			if (loaded_segments[loaded_segments_num].end !=
-				phdr->p_paddr & ~(ELF_PAGE_SIZE-1))
-				break;
-			loaded_segments[loaded_segments_num].end +=
-				(phdr->p_memsz + ELF_PAGE_SIZE - 1) &
-				~(ELF_PAGE_SIZE - 1);
+			loaded_segments[loaded_segments_num].end =
+				(phdr->p_paddr + phdr->p_memsz +
+				ELF_PAGE_SIZE - 1) & ~(ELF_PAGE_SIZE - 1);
 			i++;
 		}
-
 		loaded_segments_num++;
 	}
 }
