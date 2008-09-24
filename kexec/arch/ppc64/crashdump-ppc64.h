@@ -28,4 +28,7 @@ extern uint64_t crash_size;
 extern unsigned int rtas_base;
 extern unsigned int rtas_size;
 
+uint64_t lmb_size;
+unsigned int num_of_lmbs;
+
 #endif /* CRASHDUMP_PPC64_H */

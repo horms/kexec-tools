@@ -84,6 +84,82 @@ mem_rgns_t usablemem_rgns = {0, NULL};
  */
 uint64_t saved_max_mem = 0;
 
+static unsigned long long cstart, cend;
+static int memory_ranges;
+
+/*
+ * Exclude the region that lies within crashkernel
+ */
+static void exclude_crash_region(uint64_t start, uint64_t end)
+{
+	if (cstart < end && cend > start) {
+		if (start < cstart && end > cend) {
+			crash_memory_range[memory_ranges].start = start;
+			crash_memory_range[memory_ranges].end = cstart;
+			crash_memory_range[memory_ranges].type = RANGE_RAM;
+			memory_ranges++;
+			crash_memory_range[memory_ranges].start = cend;
+			crash_memory_range[memory_ranges].end = end;
+			crash_memory_range[memory_ranges].type = RANGE_RAM;
+			memory_ranges++;
+		} else if (start < cstart) {
+			crash_memory_range[memory_ranges].start = start;
+			crash_memory_range[memory_ranges].end = cstart;
+			crash_memory_range[memory_ranges].type = RANGE_RAM;
+			memory_ranges++;
+		} else if (end > cend) {
+			crash_memory_range[memory_ranges].start = cend;
+			crash_memory_range[memory_ranges].end = end;
+			crash_memory_range[memory_ranges].type = RANGE_RAM;
+			memory_ranges++;
+		}
+	} else {
+		crash_memory_range[memory_ranges].start = start;
+		crash_memory_range[memory_ranges].end  = end;
+		crash_memory_range[memory_ranges].type = RANGE_RAM;
+		memory_ranges++;
+	}
+}
+
+static int get_dyn_reconf_crash_memory_ranges()
+{
+	uint64_t start, end;
+	char fname[128], buf[32];
+	FILE *file;
+	int i, n;
+
+	strcpy(fname, "/proc/device-tree/");
+	strcat(fname, "ibm,dynamic-reconfiguration-memory/ibm,dynamic-memory");
+	if ((file = fopen(fname, "r")) == NULL) {
+		perror(fname);
+		return -1;
+	}
+
+	fseek(file, 4, SEEK_SET);
+	for (i = 0; i < num_of_lmbs; i++) {
+		if ((n = fread(buf, 1, 24, file)) < 0) {
+			perror(fname);
+			fclose(file);
+			return -1;
+		}
+		if (memory_ranges >= (max_memory_ranges + 1)) {
+			/* No space to insert another element. */
+				fprintf(stderr,
+				"Error: Number of crash memory ranges"
+				" excedeed the max limit\n");
+			return -1;
+		}
+
+		start = ((uint64_t *)buf)[0];
+		end = start + lmb_size;
+		if (start == 0 && end >= (BACKUP_SRC_END + 1))
+			start = BACKUP_SRC_END + 1;
+		exclude_crash_region(start, end);
+	}
+	fclose(file);
+	return 0;
+}
+
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
  * requirements are different in the case of normal kexec and crashdumps.
@@ -98,7 +174,6 @@ uint64_t saved_max_mem = 0;
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
 
-	int memory_ranges = 0;
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
 	char buf[MAXBYTES];
@@ -106,7 +181,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	FILE *file;
 	struct dirent *dentry, *mentry;
 	int i, n, crash_rng_len = 0;
-	unsigned long long start, end, cstart, cend;
+	unsigned long long start, end;
 	int page_size;
 
 	crash_max_memory_ranges = max_memory_ranges + 6;
@@ -129,7 +204,16 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		perror(device_tree);
 		goto err;
 	}
+
+	cstart = crash_base;
+	cend = crash_base + crash_size;
+
 	while ((dentry = readdir(dir)) != NULL) {
+		if (!strncmp(dentry->d_name,
+				"ibm,dynamic-reconfiguration-memory", 35)){
+			get_dyn_reconf_crash_memory_ranges();
+			continue;
+		}
 		if (strncmp(dentry->d_name, "memory@", 7) &&
 			strcmp(dentry->d_name, "memory"))
 			continue;
@@ -170,38 +254,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			if (start == 0 && end >= (BACKUP_SRC_END + 1))
 				start = BACKUP_SRC_END + 1;
 
-			cstart = crash_base;
-			cend = crash_base + crash_size;
-			/*
-			 * Exclude the region that lies within crashkernel
-			 */
-			if (cstart < end && cend > start) {
-				if (start < cstart && end > cend) {
-					crash_memory_range[memory_ranges].start = start;
-					crash_memory_range[memory_ranges].end = cstart;
-					crash_memory_range[memory_ranges].type = RANGE_RAM;
-					memory_ranges++;
-					crash_memory_range[memory_ranges].start = cend;
-					crash_memory_range[memory_ranges].end = end;
-					crash_memory_range[memory_ranges].type = RANGE_RAM;
-					memory_ranges++;
-				} else if (start < cstart) {
-					crash_memory_range[memory_ranges].start = start;
-					crash_memory_range[memory_ranges].end = cstart;
-					crash_memory_range[memory_ranges].type = RANGE_RAM;
-					memory_ranges++;
-				} else if (end > cend){
-					crash_memory_range[memory_ranges].start = cend;
-					crash_memory_range[memory_ranges].end = end;
-					crash_memory_range[memory_ranges].type = RANGE_RAM;
-					memory_ranges++;
-				}
-			} else {
-				crash_memory_range[memory_ranges].start = start;
-				crash_memory_range[memory_ranges].end  = end;
-				crash_memory_range[memory_ranges].type = RANGE_RAM;
-				memory_ranges++;
-			}
+			exclude_crash_region(start, end);
 			fclose(file);
 		}
 		closedir(dmem);
