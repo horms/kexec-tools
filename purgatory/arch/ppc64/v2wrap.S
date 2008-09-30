@@ -45,6 +45,7 @@
 	oris    rn,rn,name##@h;         \
 	ori     rn,rn,name##@l
 
+#define KDUMP_SIGNATURE 0xfeed1234
 
 	.machine ppc64
 	.globl purgatory_start
@@ -64,6 +65,7 @@ master:
 	isync
 	mr      17,3            # save cpu id to r17
 	mr      15,4            # save physical address in reg15
+	mr      18,6            # save kdump flag in reg18
 
 	LOADADDR(6,my_toc)
 	ld      2,0(6)          #setup toc
@@ -94,6 +96,12 @@ master:
 	mtctr	4		# prepare branch too
 	mr      3,16            # restore dt address
 
+	LOADADDR(6,KDUMP_SIGNATURE)
+	cmpd	18,6
+	bne	regular
+	li	7,1
+	std	7,24(4)		# mark kdump flag at kernel
+regular:
 	lwz	7,0(4)		# get the first instruction that we stole
 	stw	7,0(0)		# and put it in the slave loop at 0
 				# skip cache flush, do we care?
