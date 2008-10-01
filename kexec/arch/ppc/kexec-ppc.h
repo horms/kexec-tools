@@ -10,6 +10,7 @@ extern struct {
 
 extern unsigned char setup_dol_start[];
 extern uint32_t setup_dol_size;
+extern uint64_t rmo_top;
 
 extern struct {
 	uint32_t spr8;
@@ -24,5 +25,11 @@ int dol_ppc_probe(const char *buf, off_t len);
 int dol_ppc_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void dol_ppc_usage(void);
+
+/*
+ * During inital setup the kernel does not map the whole memory but a part of
+ * it. On Book-E that is 64MiB, 601 24MiB or 256MiB (if possible).
+ */
+#define KERNEL_ACCESS_TOP (24 * 1024 * 1024)
 
 #endif /* KEXEC_PPC_H */
