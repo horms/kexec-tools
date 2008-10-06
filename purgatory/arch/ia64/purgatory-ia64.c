@@ -147,7 +147,7 @@ setup_arch(void)
 
 inline unsigned long PA(unsigned long addr)
 {
-	return addr - PAGE_OFFSET;
+	return addr & 0x0fffffffffffffffLL;
 }
 
 void
