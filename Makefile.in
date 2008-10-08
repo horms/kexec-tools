@@ -46,6 +46,7 @@ TARGET_CFLAGS	= @TARGET_CFLAGS@
 CPPFLAGS	= @CPPFLAGS@ -I$(srcdir)/include -I$(srcdir)/util_lib/include \
 			-Iinclude/
 CFLAGS		= @CFLAGS@ -fno-strict-aliasing -Wall -Wstrict-prototypes
+PURGATORY_EXTRA_CFLAGS = @PURGATORY_EXTRA_CFLAGS@
 ASFLAGS		= @ASFLAGS@
 LDFLAGS		= @LDFLAGS@
 LIBS		= @LIBS@

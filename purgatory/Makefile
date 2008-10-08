@@ -45,9 +45,9 @@ purgatory/sha256.o: $(srcdir)/util_lib/sha256.c
 	$(COMPILE.c) -o $@ $^
 
 $(PURGATORY): CC=$(TARGET_CC)
-$(PURGATORY): CFLAGS+=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
-		      -Os -fno-builtin -ffreestanding \
-		      -fno-zero-initialized-in-bss
+$(PURGATORY): CFLAGS+=$(PURGATORY_EXTRA_CFLAGS) \
+		      $($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
+		      -Os -fno-builtin -ffreestanding
 
 $(PURGATORY): CPPFLAGS=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
 			-I$(srcdir)/purgatory/include \
