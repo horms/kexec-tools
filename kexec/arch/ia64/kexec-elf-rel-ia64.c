@@ -66,15 +66,6 @@ ia64_patch (uint64_t insn_addr, uint64_t mask, uint64_t val)
         b[1] = (b1 & ~m1) | (v1 & m1);
 }
 
-static void
-put_unaligned64(unsigned long val, unsigned char *location)
-{
-	unsigned char *src = (unsigned char *)&val;
-	int i;
-	for (i = 0; i < sizeof(long); i++)
-		*location++ = *src++;
-}
-
 static inline uint64_t
 bundle (const uint64_t insn)
 {
@@ -136,7 +127,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		break;
 	case R_IA64_PCREL64LSB: {
 		value = value - address;
-		put_unaligned64(value, location);
+		put_unaligned(value, (uint64_t *)location);
 	} break;
 	case R_IA64_GPREL22:
 	case R_IA64_LTOFF22X:
