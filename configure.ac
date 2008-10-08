@@ -42,7 +42,7 @@ case $target_cpu in
 	mips|mipsel )
 		ARCH="mips"
 		;;
-	crisv32 )
+	cris|crisv32 )
 		ARCH="cris"
 		;;
 	ia64|x86_64|alpha )
