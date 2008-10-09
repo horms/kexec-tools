@@ -137,6 +137,8 @@ static int count_dyn_reconf_memory_ranges(void)
 	num_of_lmbs = ((unsigned int *)buf)[0];
 	max_memory_ranges += num_of_lmbs;
 	fclose(file);
+
+	return 0;
 }
 
 /*
@@ -158,7 +160,8 @@ static int count_memory_ranges(void)
 	while ((dentry = readdir(dir)) != NULL) {
 		if (!strncmp(dentry->d_name,
 				"ibm,dynamic-reconfiguration-memory", 35)){
-			count_dyn_reconf_memory_ranges();
+			if (count_dyn_reconf_memory_ranges() != 0)
+				return -1;
 			continue;
 		}
 
