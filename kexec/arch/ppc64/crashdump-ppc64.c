@@ -121,7 +121,7 @@ static void exclude_crash_region(uint64_t start, uint64_t end)
 	}
 }
 
-static int get_dyn_reconf_crash_memory_ranges()
+static int get_dyn_reconf_crash_memory_ranges(void)
 {
 	uint64_t start, end;
 	char fname[128], buf[32];
