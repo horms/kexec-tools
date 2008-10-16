@@ -9,6 +9,7 @@ ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-rel-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-dol-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-simple.S
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-dol.S
+ppc_KEXEC_SRCS += kexec/arch/ppc/fixup_dtb.c
 
 libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
 libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/arch/ppc/libfdt/%)

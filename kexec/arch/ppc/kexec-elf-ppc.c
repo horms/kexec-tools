@@ -25,6 +25,7 @@
 #include <arch/options.h>
 
 #include "config.h"
+#include "fixup_dtb.h"
 
 static const int probe_debug = 0;
 
@@ -115,12 +116,14 @@ static void gamecube_hack_addresses(struct mem_ehdr *ehdr)
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
 #define OPT_GAMECUBE	(OPT_ARCH_MAX+1)
 #define OPT_DTB		(OPT_ARCH_MAX+2)
+#define OPT_NODES	(OPT_ARCH_MAX+3)
 static const struct option options[] = {
 	KEXEC_ARCH_OPTIONS
 	{"command-line", 1, 0, OPT_APPEND},
 	{"append",       1, 0, OPT_APPEND},
 	{"gamecube",     1, 0, OPT_GAMECUBE},
 	{"dtb",     1, 0, OPT_DTB},
+	{"reuse-node",     1, 0, OPT_NODES},
 	{0, 0, 0, 0},
 };
 static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
@@ -132,7 +135,9 @@ void elf_ppc_usage(void)
 	     "    --append=STRING       Set the kernel command line to STRING.\n"
 	     "    --gamecube=1|0        Enable/disable support for ELFs with changed\n"
 	     "                          addresses suitable for the GameCube.\n"
-	     "     --dtb=<filename> Specify device tree blob file.\n"
+	     "     --dtb=<filename>     Specify device tree blob file.\n"
+	     "     --reuse-node=node    Specify nodes which should be taken from /proc/device-tree.\n"
+	     "                          Can be set multiple times.\n"
 	     );
 }
 
@@ -157,6 +162,9 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	int target_is_gamecube = 0;
 	unsigned int addr;
 	unsigned long dtb_addr;
+#define FIXUP_ENTRYS	(20)
+	char *fixup_nodes[FIXUP_ENTRYS + 1];
+	int cur_fixup = 0;
 #endif
 	int opt;
 
@@ -182,12 +190,24 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 		case OPT_DTB:
 			dtb = optarg;
 			break;
+
+		case OPT_NODES:
+			if (cur_fixup >= FIXUP_ENTRYS) {
+				fprintf(stderr, "The number of entries for the fixup is too large\n");
+				exit(1);
+			}
+			fixup_nodes[cur_fixup] = optarg;
+			cur_fixup++;
+			break;
 		}
 	}
+
 	command_line_len = 0;
 	if (command_line) {
 		command_line_len = strlen(command_line) + 1;
 	}
+
+	fixup_nodes[cur_fixup] = NULL;
 
 	/* Parse the Elf file */
 	result = build_elf_exec_info(buf, len, &ehdr, 0);
@@ -247,12 +267,13 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 
 		/* Grab device tree from buffer */
 		blob_buf = slurp_file(dtb, &blob_size);
+		if (!blob_buf || !blob_size)
+			die("Device tree seems to be an empty file.\n");
+		blob_buf = fixup_dtb_nodes(blob_buf, &blob_size, fixup_nodes, command_line);
 		dtb_addr = add_buffer(info, blob_buf, blob_size, blob_size, 0, 0,
 				KERNEL_ACCESS_TOP, -1);
-		if (command_line)
-			die("Don't consider command line because dtb is supplied\n");
 	} else {
-		die("Missing dtb.\n");
+		dtb_addr = 0;
 	}
 
 	/* set various variables for the purgatory */
