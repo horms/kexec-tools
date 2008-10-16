@@ -1,6 +1,8 @@
 #
 # kexec ppc (linux booting linux)
 #
+include kexec/arch/ppc/libfdt/Makefile.libfdt
+
 ppc_KEXEC_SRCS =  kexec/arch/ppc/kexec-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-rel-ppc.c
@@ -8,7 +10,13 @@ ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-dol-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-simple.S
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-dol.S
 
+libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
+libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/arch/ppc/libfdt/%)
+
+CPPFLAGS+=-I$(srcdir)/kexec/arch/$(ARCH)/libfdt
+
+ppc_KEXEC_SRCS += $(libfdt_SRCS)
+
 dist += kexec/arch/ppc/Makefile $(ppc_KEXEC_SRCS)			\
 	kexec/arch/ppc/kexec-ppc.h kexec/arch/ppc/ppc_asm.h		\
 	kexec/arch/ppc/include/arch/options.h
-
