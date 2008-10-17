@@ -31,4 +31,7 @@ extern unsigned int rtas_size;
 uint64_t lmb_size;
 unsigned int num_of_lmbs;
 
+#define DRCONF_ADDR	0
+#define DRCONF_FLAGS	20
+
 #endif /* CRASHDUMP_PPC64_H */

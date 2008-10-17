@@ -127,6 +127,7 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 	char fname[128], buf[32];
 	FILE *file;
 	int i, n;
+	uint32_t flags;
 
 	strcpy(fname, "/proc/device-tree/");
 	strcat(fname, "ibm,dynamic-reconfiguration-memory/ibm,dynamic-memory");
@@ -150,10 +151,17 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 			return -1;
 		}
 
-		start = ((uint64_t *)buf)[0];
+		start = ((uint64_t *)buf)[DRCONF_ADDR];
 		end = start + lmb_size;
 		if (start == 0 && end >= (BACKUP_SRC_END + 1))
 			start = BACKUP_SRC_END + 1;
+
+		flags = (*((uint32_t *)&buf[DRCONF_FLAGS]));
+		/* skip this block if the reserved bit is set in flags (0x80)
+		   or if the block is not assigned to this partition (0x8) */
+		if ((flags & 0x80) || !(flags & 0x8))
+			continue;
+
 		exclude_crash_region(start, end);
 	}
 	fclose(file);
