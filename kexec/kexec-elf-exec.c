@@ -20,7 +20,8 @@ int build_elf_exec_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
 	if (result < 0) {
 		return result;
 	}
-	if ((ehdr->e_type != ET_EXEC) && (ehdr->e_type != ET_DYN)) {
+	if ((ehdr->e_type != ET_EXEC) && (ehdr->e_type != ET_DYN) &&
+	    (ehdr->e_type != ET_CORE)) {
 		/* not an ELF executable */
 		if (probe_debug) {
 			fprintf(stderr, "Not ELF type ET_EXEC or ET_DYN\n");
