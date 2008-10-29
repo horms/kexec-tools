@@ -164,7 +164,7 @@ int FUNC(struct kexec_info *info,
 		dbgprintf_phdr("Elf header", phdr);
 	}
 
-	if (has_vmcoreinfo) {
+	if (has_vmcoreinfo && !(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
 		phdr = (PHDR *) bufp;
 		bufp += sizeof(PHDR);
 		phdr->p_type	= PT_NOTE;

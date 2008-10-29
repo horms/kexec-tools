@@ -31,6 +31,8 @@ uint8_t reset_vga = 0;
 uint8_t legacy_timer = 0;
 uint8_t legacy_pic   = 0;
 uint8_t panic_kernel = 0;
+unsigned long jump_back_entry = 0;
+char *cmdline_end = 0;
 
 void setup_arch(void)
 {
@@ -40,8 +42,18 @@ void setup_arch(void)
 	/* if (legacy_timer) x86_setup_legacy_timer(); */
 }
 
+extern void x86_setup_jump_back_entry();
+
 /* This function can be used to execute after the SHA256 verification. */
 void post_verification_setup_arch(void)
 {
-	if (panic_kernel)   crashdump_backup_memory();
+	if (panic_kernel)    crashdump_backup_memory();
+	if (jump_back_entry) x86_setup_jump_back_entry();
+}
+
+void x86_setup_jump_back_entry()
+{
+	if (cmdline_end)
+		sprintf(cmdline_end, " kexec_jump_back_entry=0x%x",
+			jump_back_entry);
 }

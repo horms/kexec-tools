@@ -114,6 +114,7 @@ int do_bzImage_load(struct kexec_info *info,
 	unsigned int relocatable_kernel = 0;
 	unsigned long kernel32_load_addr;
 	char *modified_cmdline;
+	unsigned long cmdline_end;
 
 	/*
 	 * Find out about the file I am about to load.
@@ -166,7 +167,7 @@ int do_bzImage_load(struct kexec_info *info,
 	/* Need to append some command line parameters internally in case of
 	 * taking crash dumps.
 	 */
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
+	if (info->kexec_flags & (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)) {
 		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
 		memset((void *)modified_cmdline, 0, COMMAND_LINE_SIZE);
 		if (command_line) {
@@ -205,11 +206,11 @@ int do_bzImage_load(struct kexec_info *info,
 					0x3000, 640*1024, -1, 0);
 	dbgprintf("Loaded purgatory at addr 0x%lx\n", info->rhdr.rel_addr);
 	/* The argument/parameter segment */
-	setup_size = kern16_size + command_line_len;
+	setup_size = kern16_size + command_line_len + PURGATORY_CMDLINE_SIZE;
 	real_mode = xmalloc(setup_size);
 	memcpy(real_mode, kernel, kern16_size);
 
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
+	if (info->kexec_flags & (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)) {
 		/* If using bzImage for capture kernel, then we will not be
 		 * executing real mode code. setup segment can be loaded
 		 * anywhere as we will be just reading command line.
@@ -316,6 +317,9 @@ int do_bzImage_load(struct kexec_info *info,
 	elf_rel_set_symbol(&info->rhdr, "entry16_regs", &regs16, sizeof(regs16));
 	elf_rel_set_symbol(&info->rhdr, "entry16_debug_regs", &regs16, sizeof(regs16));
 	elf_rel_set_symbol(&info->rhdr, "entry32_regs", &regs32, sizeof(regs32));
+	cmdline_end = setup_base + kern16_size + command_line_len - 1;
+	elf_rel_set_symbol(&info->rhdr, "cmdline_end", &cmdline_end,
+			   sizeof(unsigned long));
 
 	/* Fill in the information BIOS calls would normally provide. */
 	if (!real_mode_entry) {

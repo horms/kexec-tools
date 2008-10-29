@@ -33,19 +33,23 @@ PRINTF and friends
 		%s	- string
 	Note: width specification not supported
 **************************************************************************/
-void printf(const char *fmt, ...)
+void vsprintf(char *buffer, const char *fmt, va_list args)
 {
-	va_list args;
 	char *p;
-	va_start(args, fmt);
 	for ( ; *fmt != '\0'; ++fmt) {
 		if (*fmt != '%') {
-			putchar(*fmt);
+			if (buffer)
+				*buffer++ = *fmt;
+			else
+				putchar(*fmt);
 			continue;
 		}
 		if (*++fmt == 's') {
 			for(p = va_arg(args, char *); *p != '\0'; p++) 
-				putchar(*p);
+				if (buffer)
+					*buffer++ = *p;
+				else
+					putchar(*p);
 		}
 		else {	/* Length of item is bounded */
 			char tmp[40], *q = tmp;
@@ -121,8 +125,30 @@ void printf(const char *fmt, ...)
 				*q++ = *fmt;
 			/* now output the saved string */
 			for (p = tmp; p < q; ++p)
-				putchar(*p);
+				if (buffer)
+					*buffer++ = *p;
+				else
+					putchar(*p);
 		}
 	}
+	if (buffer)
+		*buffer = '\0';
+}
+
+void sprintf(char *buffer, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(buffer, fmt, args);
+	va_end(args);
+}
+
+void printf(const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	vsprintf(0, fmt, args);
 	va_end(args);
 }

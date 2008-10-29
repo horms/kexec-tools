@@ -174,7 +174,10 @@ extern int file_types;
 #define OPT_MEM_MIN             256
 #define OPT_MEM_MAX             257
 #define OPT_REUSE_INITRD	258
-#define OPT_MAX			259
+#define OPT_LOAD_PRESERVE_CONTEXT 259
+#define OPT_LOAD_JUMP_BACK_HELPER 260
+#define OPT_ENTRY		261
+#define OPT_MAX			262
 #define KEXEC_OPTIONS \
 	{ "help",		0, 0, OPT_HELP }, \
 	{ "version",		0, 0, OPT_VERSION }, \
@@ -183,6 +186,9 @@ extern int file_types;
 	{ "load",		0, 0, OPT_LOAD }, \
 	{ "unload",		0, 0, OPT_UNLOAD }, \
 	{ "exec",		0, 0, OPT_EXEC }, \
+	{ "load-preserve-context", 0, 0, OPT_LOAD_PRESERVE_CONTEXT}, \
+	{ "load-jump-back-helper", 0, 0, OPT_LOAD_JUMP_BACK_HELPER }, \
+	{ "entry",		1, 0, OPT_ENTRY }, \
 	{ "type",		1, 0, OPT_TYPE }, \
 	{ "load-panic",         0, 0, OPT_PANIC }, \
 	{ "mem-min",		1, 0, OPT_MEM_MIN }, \
@@ -241,6 +247,10 @@ int kexec_iomem_for_each_line(char *match,
 			      void *data);
 int parse_iomem_single(char *str, uint64_t *start, uint64_t *end);
 const char * proc_iomem(void);
+
+extern int add_backup_segments(struct kexec_info *info,
+			       unsigned long backup_base,
+			       unsigned long backup_size);
 
 #define MAX_LINE	160
 

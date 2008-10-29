@@ -41,6 +41,9 @@ purgatory_start:
 	ljmp	$0x10,$1f
 1:		
 
+	movl	0(%esp), %eax
+	movl	%eax, jump_back_entry
+
 	/* Setup a stack */
 	movl	$lstack_end, %esp
 

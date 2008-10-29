@@ -15,4 +15,7 @@ void setup_linux_system_parameters(struct x86_linux_param_header *real_mode,
 #define KERN32_BASE  0x100000 /* 1MB */
 #define INITRD_BASE 0x1000000 /* 16MB */
 
+/* command line parameter may be appended by purgatory */
+#define PURGATORY_CMDLINE_SIZE 64
+
 #endif /* X86_LINUX_SETUP_H */

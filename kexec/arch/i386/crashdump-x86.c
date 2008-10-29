@@ -57,7 +57,8 @@ static struct memory_range crash_reserved_mem;
  * to look into down the line. May be something like /proc/kernelmem or may
  * be zone data structures exported from kernel.
  */
-static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
+static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
+				   int kexec_flags)
 {
 	const char *iomem = proc_iomem();
 	int memory_ranges = 0;
@@ -74,10 +75,12 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 
 	/* First entry is for first 640K region. Different bios report first
 	 * 640K in different manner hence hardcoding it */
-	crash_memory_range[0].start = 0x00000000;
-	crash_memory_range[0].end = 0x0009ffff;
-	crash_memory_range[0].type = RANGE_RAM;
-	memory_ranges++;
+	if (!(kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
+		crash_memory_range[0].start = 0x00000000;
+		crash_memory_range[0].end = 0x0009ffff;
+		crash_memory_range[0].type = RANGE_RAM;
+		memory_ranges++;
+	}
 
 	while(fgets(line, sizeof(line), fp) != 0) {
 		char *str;
@@ -128,6 +131,22 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		}
 	}
 	fclose(fp);
+	if (kexec_flags & KEXEC_PRESERVE_CONTEXT) {
+		int i;
+		for (i = 0; i < memory_ranges; i++) {
+			if (crash_memory_range[i].end > 0x0009ffff) {
+				crash_reserved_mem.start = \
+					crash_memory_range[i].start;
+				break;
+			}
+		}
+		if (crash_reserved_mem.start >= mem_max) {
+			fprintf("Too small mem_max: 0x%lx.\n", mem_max);
+			return -1;
+		}
+		crash_reserved_mem.end = mem_max;
+		crash_reserved_mem.type = RANGE_RAM;
+	}
 	if (exclude_crash_reserve_region(&memory_ranges) < 0)
 		return -1;
 	*range = crash_memory_range;
@@ -514,7 +533,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	int nr_ranges, align = 1024;
 	struct memory_range *mem_range, *memmap_p;
 
-	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
+	if (get_crash_memory_ranges(&mem_range, &nr_ranges,
+				    info->kexec_flags) < 0)
 		return -1;
 
 	/*
@@ -535,14 +555,17 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	add_memmap(memmap_p, crash_reserved_mem.start, sz);
 
 	/* Create a backup region segment to store backup data*/
-	sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
-	tmp = xmalloc(sz);
-	memset(tmp, 0, sz);
-	info->backup_start = add_buffer(info, tmp, sz, sz, align,
-				0, max_addr, -1);
-	dbgprintf("Created backup segment at 0x%lx\n", info->backup_start);
-	if (delete_memmap(memmap_p, info->backup_start, sz) < 0)
-		return -1;
+	if (!(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
+		sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
+		tmp = xmalloc(sz);
+		memset(tmp, 0, sz);
+		info->backup_start = add_buffer(info, tmp, sz, sz, align,
+						0, max_addr, -1);
+		dbgprintf("Created backup segment at 0x%lx\n",
+			  info->backup_start);
+		if (delete_memmap(memmap_p, info->backup_start, sz) < 0)
+			return -1;
+	}
 
 	/* Create elf header segment and store crash image data. */
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {

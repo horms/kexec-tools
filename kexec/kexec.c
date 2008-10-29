@@ -378,6 +378,91 @@ unsigned long add_buffer_virt(struct kexec_info *info, const void *buf,
 				    buf_min, buf_max, buf_end, 0);
 }
 
+static int find_memory_range(struct kexec_info *info,
+			     unsigned long *base, unsigned long *size)
+{
+	int i;
+	unsigned long start, end;
+
+	for (i = 0; i < info->memory_ranges; i++) {
+		if (info->memory_range[i].type != RANGE_RAM)
+			continue;
+		start = info->memory_range[i].start;
+		end = info->memory_range[i].end;
+		if (end > *base && start < *base + *size) {
+			if (start > *base) {
+				*size = *base + *size - start;
+				*base = start;
+			}
+			if (end < *base + *size)
+				*size = end - *base;
+			return 1;
+		}
+	}
+	return 0;
+}
+
+static int find_segment_hole(struct kexec_info *info,
+			     unsigned long *base, unsigned long *size)
+{
+	int i;
+	unsigned long seg_base, seg_size;
+
+	for (i = 0; i < info->nr_segments; i++) {
+		seg_base = (unsigned long)info->segment[i].mem;
+		seg_size = info->segment[i].memsz;
+
+		if (seg_base + seg_size <= *base)
+			continue;
+		else if (seg_base >= *base + *size)
+			break;
+		else if (*base < seg_base) {
+			*size = seg_base - *base;
+			break;
+		} else if (seg_base + seg_size < *base + *size) {
+			*size = *base + *size - (seg_base + seg_size);
+			*base = seg_base + seg_size;
+		} else {
+			*size = 0;
+			break;
+		}
+	}
+	return *size;
+}
+
+int add_backup_segments(struct kexec_info *info, unsigned long backup_base,
+			unsigned long backup_size)
+{
+	unsigned long mem_base, mem_size, bkseg_base, bkseg_size, start, end;
+	unsigned long pagesize;
+
+	pagesize = getpagesize();
+	while (backup_size) {
+		mem_base = backup_base;
+		mem_size = backup_size;
+		if (!find_memory_range(info, &mem_base, &mem_size))
+			break;
+		backup_size = backup_base + backup_size - \
+			(mem_base + mem_size);
+		backup_base = mem_base + mem_size;
+		while (mem_size) {
+			bkseg_base = mem_base;
+			bkseg_size = mem_size;
+			if (sort_segments(info) < 0)
+				return -1;
+			if (!find_segment_hole(info, &bkseg_base, &bkseg_size))
+				break;
+			start = (bkseg_base + pagesize - 1) & ~(pagesize - 1);
+			end = (bkseg_base + bkseg_size) & ~(pagesize - 1);
+			add_segment(info, NULL, 0, start, end-start);
+			mem_size = mem_base + mem_size - \
+				(bkseg_base + bkseg_size);
+			mem_base = bkseg_base + bkseg_size;
+		}
+	}
+	return 0;
+}
+
 char *slurp_file(const char *filename, off_t *r_size)
 {
 	int fd;
@@ -581,7 +666,7 @@ static void update_purgatory(struct kexec_info *info)
  *	Load the new kernel
  */
 static int my_load(const char *type, int fileind, int argc, char **argv,
-	unsigned long kexec_flags)
+		   unsigned long kexec_flags, unsigned long entry)
 {
 	char *kernel;
 	char *kernel_buf;
@@ -665,6 +750,9 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	if (arch_compat_trampoline(&info) < 0) {
 		return -1;
 	}
+	if (info.kexec_flags & KEXEC_PRESERVE_CONTEXT) {
+		add_backup_segments(&info, mem_min, mem_max - mem_min + 1);
+	}
 	/* Verify all of the segments load to a valid location in memory */
 	for (i = 0; i < info.nr_segments; i++) {
 		if (!valid_memory_segment(&info, info.segment +i)) {
@@ -681,6 +769,8 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	}
 	/* if purgatory is loaded update it */
 	update_purgatory(&info);
+	if (entry)
+		info.entry = entry;
 #if 0
 	fprintf(stderr, "kexec_load: entry = %p flags = %lx\n", 
 		info.entry, info.kexec_flags);
@@ -754,6 +844,47 @@ static int my_exec(void)
 	return -1;
 }
 
+static int kexec_loaded(void);
+
+static int load_jump_back_helper_image(unsigned long kexec_flags,
+				       unsigned long entry)
+{
+	int result;
+	struct kexec_segment seg;
+
+	memset(&seg, 0, sizeof(seg));
+	result = kexec_load((void *)entry, 1, &seg,
+			    kexec_flags);
+	return result;
+}
+
+/*
+ *	Jump back to the original kernel
+ */
+static int my_load_jump_back_helper(unsigned long kexec_flags,
+				    unsigned long entry)
+{
+	int result;
+
+	if (kexec_loaded()) {
+		fprintf(stderr, "There is kexec kernel loaded, make sure "
+			"you are in kexeced kernel.\n");
+		return -1;
+	}
+	if (!entry) {
+		fprintf(stderr, "Please specify jump back entry "
+			"in command line\n");
+		return -1;
+	}
+	result = load_jump_back_helper_image(kexec_flags, entry);
+	if (result) {
+		fprintf(stderr, "load jump back kernel failed: %s\n",
+			strerror(errno));
+		return result;
+	}
+	return result;
+}
+
 static void version(void)
 {
 	printf(PACKAGE_STRING " released " PACKAGE_DATE "\n");
@@ -787,6 +918,10 @@ void usage(void)
 	       "     --mem-max=<addr> Specify the highest memory address to\n"
 	       "                      load code into.\n"
 	       "     --reuseinird     Reuse initrd from first boot.\n"
+	       "     --load-preserve-context Load the new kernel and preserve\n"
+	       "                      context of current kernel during kexec.\n"
+	       "     --load-jump-back-helper Load a helper image to jump back\n"
+	       "                      to original kernel.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
@@ -895,11 +1030,13 @@ int main(int argc, char *argv[])
 {
 	int do_load = 1;
 	int do_exec = 0;
+	int do_load_jump_back_helper = 0;
 	int do_shutdown = 1;
 	int do_sync = 1;
 	int do_ifdown = 0;
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
+	unsigned long entry = 0;
 	char *type = 0;
 	char *endptr;
 	int opt;
@@ -949,6 +1086,32 @@ int main(int argc, char *argv[])
 			do_ifdown = 1;
 			do_exec = 1;
 			break;
+		case OPT_LOAD_JUMP_BACK_HELPER:
+			do_load = 0;
+			do_shutdown = 0;
+			do_sync = 1;
+			do_ifdown = 1;
+			do_exec = 0;
+			do_load_jump_back_helper = 1;
+			kexec_flags = KEXEC_PRESERVE_CONTEXT;
+			break;
+		case OPT_ENTRY:
+			entry = strtoul(optarg, &endptr, 0);
+			if (*endptr) {
+				fprintf(stderr,
+					"Bad option value in --load-jump-back-helper=%s\n",
+					optarg);
+				usage();
+				return 1;
+			}
+			break;
+		case OPT_LOAD_PRESERVE_CONTEXT:
+			do_load = 1;
+			do_exec = 0;
+			do_shutdown = 0;
+			do_sync = 1;
+			kexec_flags = KEXEC_PRESERVE_CONTEXT;
+			break;
 		case OPT_TYPE:
 			type = optarg;
 			break;
@@ -994,6 +1157,13 @@ int main(int argc, char *argv[])
 		die("Then try loading kdump kernel\n");
 	}
 
+	if (do_load && (kexec_flags & KEXEC_PRESERVE_CONTEXT) &&
+	    mem_max == ULONG_MAX) {
+		printf("Please specify memory range used by kexeced kernel\n");
+		printf("to preserve the context of original kernel with \n");
+		die("\"--mem-max\" parameter\n");
+	}
+
 	fileind = optind;
 	/* Reset getopt for the next pass; called in other source modules */
 	opterr = 1;
@@ -1021,7 +1191,7 @@ int main(int argc, char *argv[])
 		result = k_unload(kexec_flags);
 	}
 	if (do_load && (result == 0)) {
-		result = my_load(type, fileind, argc, argv, kexec_flags);
+		result = my_load(type, fileind, argc, argv, kexec_flags, entry);
 	}
 	/* Don't shutdown unless there is something to reboot to! */
 	if ((result == 0) && (do_shutdown || do_exec) && !kexec_loaded()) {
@@ -1038,6 +1208,9 @@ int main(int argc, char *argv[])
 	}
 	if ((result == 0) && do_exec) {
 		result = my_exec();
+	}
+	if ((result == 0) && do_load_jump_back_helper) {
+		result = my_load_jump_back_helper(kexec_flags, entry);
 	}
 
 	fflush(stdout);

@@ -29,6 +29,7 @@
 #include <elf.h>
 #include "kexec.h"
 #include "crashdump.h"
+#include "kexec-syscall.h"
 
 /* include "crashdump-elf.c" twice to create two functions from one */
 

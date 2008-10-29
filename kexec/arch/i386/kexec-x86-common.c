@@ -174,7 +174,8 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	 * Override user values only if kernel exported values are
 	 * subset of user defined values.
 	 */
-	if (kexec_flags & KEXEC_ON_CRASH) {
+	if ((kexec_flags & KEXEC_ON_CRASH) &&
+	    !(kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
 		unsigned long long start, end;
 
 		ret = parse_iomem_single("Crash kernel\n", &start, &end);
