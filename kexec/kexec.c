@@ -917,7 +917,7 @@ void usage(void)
 	       "                      load code into.\n"
 	       "     --mem-max=<addr> Specify the highest memory address to\n"
 	       "                      load code into.\n"
-	       "     --reuseinird     Reuse initrd from first boot.\n"
+	       "     --reuseinitrd    Reuse initrd from first boot.\n"
 	       "     --load-preserve-context Load the new kernel and preserve\n"
 	       "                      context of current kernel during kexec.\n"
 	       "     --load-jump-back-helper Load a helper image to jump back\n"
