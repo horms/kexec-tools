@@ -27,6 +27,7 @@
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "../../firmware_memmap.h"
+#include "../../crashdump.h"
 #include "kexec-x86.h"
 
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
@@ -147,7 +148,14 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 {
 	int ret, i;
 
-	if (have_sys_firmware_memmap())
+	/*
+	 * When using Xen, /sys/firmware/memmap (i.e., the E820 map) is
+	 * wrong, it just provides one large memory are and that cannot
+	 * be used for Kdump. Use always the /proc/iomem interface there
+	 * even if we have /sys/firmware/memmap. Without that, /proc/vmcore
+	 * is empty in the kdump kernel.
+	 */
+	if (!xen_present() && have_sys_firmware_memmap())
 		ret = get_memory_ranges_sysfs(range, ranges);
 	else
 		ret = get_memory_ranges_proc_iomem(range, ranges);
