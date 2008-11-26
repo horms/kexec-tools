@@ -1,10 +1,12 @@
 #include <stdint.h>
+#include <stddef.h>
 #include <purgatory.h>
 #include "purgatory-x86_64.h"
 
 uint8_t reset_vga = 0;
 uint8_t legacy_pic = 0;
 uint8_t panic_kernel = 0;
+char *cmdline_end = NULL;
 
 void setup_arch(void)
 {
