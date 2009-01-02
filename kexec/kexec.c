@@ -666,7 +666,7 @@ static void update_purgatory(struct kexec_info *info)
  *	Load the new kernel
  */
 static int my_load(const char *type, int fileind, int argc, char **argv,
-		   unsigned long kexec_flags, unsigned long entry)
+		   unsigned long kexec_flags, void *entry)
 {
 	char *kernel;
 	char *kernel_buf;
@@ -846,23 +846,20 @@ static int my_exec(void)
 
 static int kexec_loaded(void);
 
-static int load_jump_back_helper_image(unsigned long kexec_flags,
-				       unsigned long entry)
+static int load_jump_back_helper_image(unsigned long kexec_flags, void *entry)
 {
 	int result;
 	struct kexec_segment seg;
 
 	memset(&seg, 0, sizeof(seg));
-	result = kexec_load((void *)entry, 1, &seg,
-			    kexec_flags);
+	result = kexec_load(entry, 1, &seg, kexec_flags);
 	return result;
 }
 
 /*
  *	Jump back to the original kernel
  */
-static int my_load_jump_back_helper(unsigned long kexec_flags,
-				    unsigned long entry)
+static int my_load_jump_back_helper(unsigned long kexec_flags, void *entry)
 {
 	int result;
 
@@ -1036,7 +1033,7 @@ int main(int argc, char *argv[])
 	int do_ifdown = 0;
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
-	unsigned long entry = 0;
+	void *entry = 0;
 	char *type = 0;
 	char *endptr;
 	int opt;
@@ -1096,7 +1093,7 @@ int main(int argc, char *argv[])
 			kexec_flags = KEXEC_PRESERVE_CONTEXT;
 			break;
 		case OPT_ENTRY:
-			entry = strtoul(optarg, &endptr, 0);
+			entry = (void *)strtoul(optarg, &endptr, 0);
 			if (*endptr) {
 				fprintf(stderr,
 					"Bad option value in --load-jump-back-helper=%s\n",
