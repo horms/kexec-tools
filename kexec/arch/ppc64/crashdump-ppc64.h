@@ -23,6 +23,8 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 #define _ALIGN_UP(addr,size)	(((addr)+((size)-1))&(~((size)-1)))
 #define _ALIGN_DOWN(addr,size)	((addr)&(~((size)-1)))
 
+#define KERNEL_RUN_AT_ZERO_MAGIC 0x72756e30	/* "run0" */
+
 extern uint64_t crash_base;
 extern uint64_t crash_size;
 extern unsigned int rtas_base;

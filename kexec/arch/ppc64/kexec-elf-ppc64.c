@@ -92,6 +92,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned int my_panic_kernel;
 	uint64_t my_stack, my_backup_start;
 	uint64_t toc_addr;
+	uint32_t my_run_at_load;
 	unsigned int slave_code[256/sizeof (unsigned int)], master_entry;
 
 #define OPT_APPEND     (OPT_ARCH_MAX+0)
@@ -307,6 +308,18 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		my_backup_start = info->backup_start;
 		elf_rel_set_symbol(&info->rhdr, "backup_start",
 				&my_backup_start, sizeof(my_backup_start));
+
+		/* Tell relocatable kernel to run at load address
+		 * via word before slave code in purgatory
+		 */
+
+		elf_rel_get_symbol(&info->rhdr, "run_at_load", &my_run_at_load,
+				sizeof(my_run_at_load));
+		if (my_run_at_load == KERNEL_RUN_AT_ZERO_MAGIC)
+			my_run_at_load = 1;
+			/* else it should be a fixed offset image */
+		elf_rel_set_symbol(&info->rhdr, "run_at_load", &my_run_at_load,
+				sizeof(my_run_at_load));
 	}
 
 	/* Set stack address */
@@ -325,10 +338,13 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	my_backup_start = 0;
 	my_stack = 0;
 	toc_addr = 0;
+	my_run_at_load = 0;
 
 	elf_rel_get_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
 	elf_rel_get_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
 				sizeof(my_dt_offset));
+	elf_rel_get_symbol(&info->rhdr, "run_at_load", &my_run_at_load,
+				sizeof(my_run_at_load));
 	elf_rel_get_symbol(&info->rhdr, "panic_kernel", &my_panic_kernel,
 				sizeof(my_panic_kernel));
 	elf_rel_get_symbol(&info->rhdr, "backup_start", &my_backup_start,
@@ -341,6 +357,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	fprintf(stderr, "kernel is %llx\n", (unsigned long long)my_kernel);
 	fprintf(stderr, "dt_offset is %llx\n",
 		(unsigned long long)my_dt_offset);
+	fprintf(stderr, "run_at_load flag is %x\n", my_run_at_load);
 	fprintf(stderr, "panic_kernel is %x\n", my_panic_kernel);
 	fprintf(stderr, "backup_start is %llx\n",
 		(unsigned long long)my_backup_start);
