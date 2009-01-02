@@ -46,8 +46,6 @@ static unsigned long long mem_rsrv[2*MEMRESERVE] = { 0, 0 };
 
 static int crash_param = 0;
 static char local_cmdline[COMMAND_LINE_SIZE] = { "" };
-static unsigned *dt_len; /* changed len of modified cmdline
-			    in flat device-tree */
 extern mem_rgns_t usablemem_rgns;
 static struct bootblock bb[1];
 
@@ -314,7 +312,6 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 		len = statbuf.st_size;
 
 		*dt++ = 3;
-		dt_len = dt;
 		*dt++ = len;
 		*dt++ = propnum(fn);
 
@@ -509,12 +506,11 @@ static void putnode(void)
 	free(namelist);
 }
 
-int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
-			unsigned long *sizep, char *cmdline)
+int create_flatten_tree(char **bufp, off_t *sizep, char *cmdline)
 {
 	unsigned long len;
 	unsigned long tlen;
-	unsigned char *buf;
+	char *buf;
 	unsigned long me;
 
 	me = 0;
@@ -556,7 +552,7 @@ int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
 
 	reserve(me, bb->totalsize); /* patched later in kexec_load */
 
-	buf = (unsigned char *) malloc(bb->totalsize);
+	buf = malloc(bb->totalsize);
 	*bufp = buf;
 	memcpy(buf, bb, bb->off_mem_rsvmap);
 	tlen = bb->off_mem_rsvmap;

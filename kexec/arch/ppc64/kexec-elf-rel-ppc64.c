@@ -3,6 +3,7 @@
 #include <string.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
+#include "kexec-ppc64.h"
 
 int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 {

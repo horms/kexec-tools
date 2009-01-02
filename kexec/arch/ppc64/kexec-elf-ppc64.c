@@ -42,10 +42,6 @@ uint64_t initrd_base, initrd_size;
 unsigned char reuse_initrd = 0;
 const char *ramdisk;
 
-int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
-			char *);
-int my_r2(struct mem_ehdr *ehdr);
-
 int elf_ppc64_probe(const char *buf, off_t len)
 {
 	struct mem_ehdr ehdr;
@@ -80,7 +76,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	const char *devicetreeblob;
 	int cmdline_len, modified_cmdline_len;
 	uint64_t max_addr, hole_addr;
-	unsigned char *seg_buf = NULL;
+	char *seg_buf = NULL;
 	off_t seg_size = 0;
 	struct mem_phdr *phdr;
 	size_t size;
@@ -187,8 +183,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	if (size > phdr->p_memsz)
 		size = phdr->p_memsz;
 
-	my_kernel = hole_addr = (uint64_t)locate_hole(info, size, 0, 0,
-			max_addr, 1);
+	my_kernel = hole_addr = locate_hole(info, size, 0, 0, max_addr, 1);
 	ehdr.e_phdr[0].p_paddr = hole_addr;
 	result = elf_exec_load(&ehdr, info);
 	if (result < 0) {
@@ -210,16 +205,6 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 
 	/* Add v2wrap to the current image */
-	seg_buf = NULL;
-	seg_size = 0;
-
-	seg_buf = (unsigned char *) malloc(purgatory_size);
-	if (seg_buf == NULL) {
-		free_elf_info(&ehdr);
-		return -1;
-	}
-	memcpy(seg_buf, purgatory, purgatory_size);
-	seg_size = purgatory_size;
 	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
 				purgatory_size, 0, max_addr, 1, 0);
 
@@ -232,7 +217,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			"Can't use ramdisk with device tree blob input\n");
 			return -1;
 		}
-		seg_buf = (unsigned char *)slurp_file(ramdisk, &seg_size);
+		seg_buf = slurp_file(ramdisk, &seg_size);
 		hole_addr = add_buffer(info, seg_buf, seg_size, seg_size,
 			0, 0, max_addr, 1);
 		initrd_base = hole_addr;
@@ -240,21 +225,11 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	} /* ramdisk */
 
 	if (devicetreeblob) {
-		unsigned char *blob_buf = NULL;
-		off_t blob_size = 0;
-
 		/* Grab device tree from buffer */
-		blob_buf =
-			(unsigned char *)slurp_file(devicetreeblob, &blob_size);
-
-		seg_buf = blob_buf;
-		seg_size = blob_size;
+		seg_buf = slurp_file(devicetreeblob, &seg_size);
 	} else {
 		/* create from fs2dt */
-		seg_buf = NULL;
-		seg_size = 0;
-		create_flatten_tree(info, (unsigned char **)&seg_buf,
-				(unsigned long *)&seg_size,cmdline);
+		create_flatten_tree(&seg_buf, &seg_size, cmdline);
 	}
 	my_dt_offset = add_buffer(info, seg_buf, seg_size, seg_size,
 				0, 0, max_addr, -1);
@@ -264,14 +239,13 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	 * entry is before this one
 	 */
 	bb_ptr = (struct bootblock *)(seg_buf);
-	rsvmap_ptr = (uint64_t *)
-		(((char *)seg_buf) + bb_ptr->off_mem_rsvmap);
+	rsvmap_ptr = (uint64_t *)(seg_buf + bb_ptr->off_mem_rsvmap);
 	while (*rsvmap_ptr || *(rsvmap_ptr+1))
 		rsvmap_ptr += 2;
 	rsvmap_ptr -= 2;
 	*rsvmap_ptr = my_dt_offset;
 	rsvmap_ptr++;
-	*rsvmap_ptr = (uint64_t)bb_ptr->totalsize;
+	*rsvmap_ptr = bb_ptr->totalsize;
 
 	/* Set kernel */
 	elf_rel_set_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
@@ -319,7 +293,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	elf_rel_set_symbol(&info->rhdr, "stack", &my_stack, sizeof(my_stack));
 
 	/* Set toc */
-	toc_addr = (unsigned long) my_r2(&info->rhdr);
+	toc_addr = my_r2(&info->rhdr);
 	elf_rel_set_symbol(&info->rhdr, "my_toc", &toc_addr, sizeof(toc_addr));
 
 #ifdef DEBUG
