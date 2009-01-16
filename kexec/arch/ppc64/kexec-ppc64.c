@@ -107,7 +107,7 @@ static int realloc_memory_ranges(void)
 	if (!memory_range)
 		goto err;
 
-	base_memory_range = (struct memory_range *) realloc(memory_range, memory_range_len);
+	base_memory_range = (struct memory_range *) realloc(base_memory_range, memory_range_len);
 	if (!base_memory_range)
 		goto err;
 
