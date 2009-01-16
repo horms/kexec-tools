@@ -263,9 +263,8 @@ static int get_base_ranges(void)
 	closedir(dir);
 	sort_base_ranges();
 	memory_max = base_memory_range[nr_memory_ranges - 1].end;
-#ifdef DEBUG
-	fprintf(stderr, "get base memory ranges:%d\n", nr_memory_ranges);
-#endif
+	dbgprintf("get base memory ranges:%d\n", nr_memory_ranges);
+
 	return 0;
 }
 
@@ -726,7 +725,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		sizeof(struct memory_range) * nr_memory_ranges);
 
 	*ranges = nr_memory_ranges;
-	fprintf(stderr, "get memory ranges:%d\n", nr_memory_ranges);
+	dbgprintf("get memory ranges:%d\n", nr_memory_ranges);
 	return 0;
 }
 
