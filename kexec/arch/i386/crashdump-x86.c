@@ -141,7 +141,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 			}
 		}
 		if (crash_reserved_mem.start >= mem_max) {
-			fprintf("Too small mem_max: 0x%lx.\n", mem_max);
+			fprintf(stderr, "Too small mem_max: 0x%lx.\n", mem_max);
 			return -1;
 		}
 		crash_reserved_mem.end = mem_max;
