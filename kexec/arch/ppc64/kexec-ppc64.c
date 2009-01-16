@@ -715,7 +715,16 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	if (setup_memory_ranges(kexec_flags))
 		return -1;
 
-	*range = memory_range;
+	/*
+	 * copy the memory here, another realloc_memory_ranges might
+	 * corrupt the old memory
+	 */
+	*range = calloc(sizeof(struct memory_range), nr_memory_ranges);
+	if (*range == NULL)
+		return -1;
+	memmove(*range, memory_range,
+		sizeof(struct memory_range) * nr_memory_ranges);
+
 	*ranges = nr_memory_ranges;
 	fprintf(stderr, "get memory ranges:%d\n", nr_memory_ranges);
 	return 0;
