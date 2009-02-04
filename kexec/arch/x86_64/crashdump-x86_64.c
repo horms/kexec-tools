@@ -47,7 +47,7 @@ static struct crash_elf_info elf_info =
 };
 
 /* Forward Declaration. */
-static int exclude_crash_reserve_region(int *nr_ranges);
+static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
 
 #define KERN_VADDR_ALIGN	0x100000	/* 1MB */
 
@@ -164,10 +164,11 @@ static struct memory_range crash_reserved_mem;
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
 	const char *iomem= proc_iomem();
-	int memory_ranges = 0;
+	int memory_ranges = 0, gart = 0;
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end;
+	uint64_t gart_start = 0, gart_end = 0;
 
 	fp = fopen(iomem, "r");
 	if (!fp) {
@@ -219,6 +220,11 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			type = RANGE_ACPI;
 		} else if(memcmp(str,"ACPI Non-volatile Storage\n",26) == 0 ) {
 			type = RANGE_ACPI_NVS;
+		} else if (memcmp(str, "GART\n", 5) == 0) {
+			gart_start = start;
+			gart_end = end;
+			gart = 1;
+			continue;
 		} else {
 			continue;
 		}
@@ -233,8 +239,14 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		memory_ranges++;
 	}
 	fclose(fp);
-	if (exclude_crash_reserve_region(&memory_ranges) < 0)
+	if (exclude_region(&memory_ranges, crash_reserved_mem.start,
+				crash_reserved_mem.end) < 0)
 		return -1;
+	if (gart) {
+		/* exclude GART region if the system has one */
+		if (exclude_region(&memory_ranges, gart_start, gart_end) < 0)
+			return -1;
+	}
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
 #ifdef DEBUG
@@ -252,32 +264,27 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 /* Removes crash reserve region from list of memory chunks for whom elf program
  * headers have to be created. Assuming crash reserve region to be a single
  * continuous area fully contained inside one of the memory chunks */
-static int exclude_crash_reserve_region(int *nr_ranges)
+static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end)
 {
 	int i, j, tidx = -1;
-	unsigned long long cstart, cend;
 	struct memory_range temp_region;
-
-	/* Crash reserved region. */
-	cstart = crash_reserved_mem.start;
-	cend = crash_reserved_mem.end;
 
 	for (i = 0; i < (*nr_ranges); i++) {
 		unsigned long long mstart, mend;
 		mstart = crash_memory_range[i].start;
 		mend = crash_memory_range[i].end;
-		if (cstart < mend && cend > mstart) {
-			if (cstart != mstart && cend != mend) {
+		if (start < mend && end > mstart) {
+			if (start != mstart && end != mend) {
 				/* Split memory region */
-				crash_memory_range[i].end = cstart - 1;
-				temp_region.start = cend + 1;
+				crash_memory_range[i].end = start - 1;
+				temp_region.start = end + 1;
 				temp_region.end = mend;
 				temp_region.type = RANGE_RAM;
 				tidx = i+1;
-			} else if (cstart != mstart)
-				crash_memory_range[i].end = cstart - 1;
+			} else if (start != mstart)
+				crash_memory_range[i].end = start - 1;
 			else
-				crash_memory_range[i].start = cend + 1;
+				crash_memory_range[i].start = end + 1;
 		}
 	}
 	/* Insert split memory region, if any. */
