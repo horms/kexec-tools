@@ -150,6 +150,23 @@ static int get_dyn_reconf_base_ranges(void)
 	FILE *file;
 	int i, n;
 
+	strcpy(fname, "/proc/device-tree/");
+	strcat(fname, "ibm,dynamic-reconfiguration-memory/ibm,lmb-size");
+	if ((file = fopen(fname, "r")) == NULL) {
+		perror(fname);
+		return -1;
+	}
+	if (fread(buf, 1, 8, file) != 8) {
+		perror(fname);
+		fclose(file);
+		return -1;
+	}
+	/*
+	 * lmb_size, num_of_lmbs(global variables) are
+	 * initialized once here.
+	 */
+	lmb_size = ((uint64_t *)buf)[0];
+	fclose(file);
 
 	strcpy(fname, "/proc/device-tree/");
 	strcat(fname,
@@ -158,8 +175,14 @@ static int get_dyn_reconf_base_ranges(void)
 		perror(fname);
 		return -1;
 	}
+	/* first 4 bytes tell the number of lmbs */
+	if (fread(buf, 1, 4, file) != 4) {
+		perror(fname);
+		fclose(file);
+		return -1;
+	}
+	num_of_lmbs = ((unsigned int *)buf)[0];
 
-	fseek(file, 4, SEEK_SET);
 	for (i = 0; i < num_of_lmbs; i++) {
 		if ((n = fread(buf, 1, 24, file)) < 0) {
 			perror(fname);
