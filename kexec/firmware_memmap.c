@@ -1,7 +1,7 @@
 /*
  * firmware_memmap.c: Read /sys/firmware/memmap
  *
- * Created by: Bernhard Walle (bwalle@suse.de)
+ * Created by: Bernhard Walle (bernhard.walle@gmx.de)
  * Copyright (C) SUSE LINUX Products GmbH, 2008. All rights reserved
  *
  * This program is free software; you can redistribute it and/or modify
