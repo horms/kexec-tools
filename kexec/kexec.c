@@ -454,7 +454,8 @@ int add_backup_segments(struct kexec_info *info, unsigned long backup_base,
 				break;
 			start = (bkseg_base + pagesize - 1) & ~(pagesize - 1);
 			end = (bkseg_base + bkseg_size) & ~(pagesize - 1);
-			add_segment(info, NULL, 0, start, end-start);
+			add_segment_phys_virt(info, NULL, 0,
+					      start, end-start, 0);
 			mem_size = mem_base + mem_size - \
 				(bkseg_base + bkseg_size);
 			mem_base = bkseg_base + bkseg_size;
