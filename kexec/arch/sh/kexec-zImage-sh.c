@@ -140,6 +140,6 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 
 	image_base = (empty_zero + (0x10000 - 1)) & ~(0x10000 - 1);
 	add_segment(info, buf, len, image_base, len);
-	info->entry = (void *)image_base;
+	info->entry = (void *)virt_to_phys(image_base);
 	return 0;
 }
