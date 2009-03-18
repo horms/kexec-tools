@@ -104,7 +104,7 @@ int elf_sh_load(int argc, char **argv, const char *buf, off_t len,
 	/* Need to append some command line parameters internally in case of
 	 * taking crash dumps.
 	 */
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
+	if (info->kexec_flags & (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)) {
 		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
 		memset((void *)modified_cmdline, 0, COMMAND_LINE_SIZE);
 		if (command_line) {
@@ -120,7 +120,7 @@ int elf_sh_load(int argc, char **argv, const char *buf, off_t len,
 
 	/* If panic kernel is being loaded, additional segments need
 	 * to be created. */
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
+	if (info->kexec_flags & (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)) {
 		rc = load_crashdump_segments(info, modified_cmdline);
 		if (rc < 0)
 			return -1;
