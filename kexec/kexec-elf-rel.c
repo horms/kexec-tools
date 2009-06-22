@@ -402,13 +402,13 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			else {
 				sec_base = ehdr->e_shdr[sym.st_shndx].sh_addr;
 			}
+			value = sym.st_value;
+			value += sec_base;
+			value += rel.r_addend;
 #ifdef DEBUG
 			fprintf(stderr, "sym: %s value: %lx addr: %lx\n",
 				name, value, address);
 #endif
-			value = sym.st_value;
-			value += sec_base;
-			value += rel.r_addend;
 			machine_apply_elf_rel(ehdr, rel.r_type,
 				(void *)location, address, value);
 		}
