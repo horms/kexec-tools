@@ -15,4 +15,5 @@ sh_VIRT_TO_PHYS =
 
 dist += kexec/arch/sh/Makefile $(sh_KEXEC_SRCS)				\
 	kexec/arch/sh/kexec-sh.h					\
+	kexec/arch/sh/crashdump-sh.h					\
 	kexec/arch/sh/include/arch/options.h
