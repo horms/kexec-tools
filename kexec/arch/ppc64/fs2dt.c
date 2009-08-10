@@ -41,7 +41,7 @@
 
 static char pathname[MAXPATH], *pathstart;
 static char propnames[NAMESPACE] = { 0 };
-static unsigned dtstruct[TREEWORDS], *dt;
+static unsigned dtstruct[TREEWORDS] __attribute__ ((aligned (8))), *dt;
 static unsigned long long mem_rsrv[2*MEMRESERVE] = { 0, 0 };
 
 static int crash_param = 0;
