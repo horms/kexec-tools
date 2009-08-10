@@ -62,6 +62,10 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		*(uint64_t *)location = value;
 		break;
 
+	case R_PPC64_REL32:
+		*(uint32_t *)location = value - (uint32_t)location;
+		break;
+
 	case R_PPC64_TOC:
 		*(uint64_t *)location = my_r2(ehdr);
 		break;
