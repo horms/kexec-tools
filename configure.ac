@@ -4,12 +4,12 @@ dnl
 dnl 
 
 dnl ---Required
-AC_INIT(kexec-tools, 2.0.1-rc1-git)
+AC_INIT(kexec-tools, 2.0.1)
 AC_CONFIG_AUX_DIR(./config)
 AC_CONFIG_HEADERS([include/config.h])
 AC_LANG(C)
 
-AC_DEFINE_UNQUOTED(PACKAGE_DATE, "22nd July 2009",
+AC_DEFINE_UNQUOTED(PACKAGE_DATE, "13th August 2009",
 		[Define to the release date of this package])
 
 
