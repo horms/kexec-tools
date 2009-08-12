@@ -11,7 +11,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 #define MAXMEM           0x3fffffffffffUL
 
 /* Kernel text size */
-#define KERNEL_TEXT_SIZE  (40UL*1024*1024)
+#define KERNEL_TEXT_SIZE  (512UL*1024*1024)
 
 #define CRASH_MAX_MEMMAP_NR	(KEXEC_MAX_SEGMENTS + 1)
 #define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)
