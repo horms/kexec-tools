@@ -41,6 +41,8 @@
 uint64_t initrd_base, initrd_size;
 unsigned char reuse_initrd = 0;
 const char *ramdisk;
+/* Used for enabling printing message from purgatory code */
+int my_debug = 0;
 
 int elf_ppc64_probe(const char *buf, off_t len)
 {
@@ -296,6 +298,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	toc_addr = my_r2(&info->rhdr);
 	elf_rel_set_symbol(&info->rhdr, "my_toc", &toc_addr, sizeof(toc_addr));
 
+	/* Set debug */
+	elf_rel_set_symbol(&info->rhdr, "debug", &my_debug, sizeof(my_debug));
 #ifdef DEBUG
 	my_kernel = 0;
 	my_dt_offset = 0;
@@ -304,6 +308,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	my_stack = 0;
 	toc_addr = 0;
 	my_run_at_load = 0;
+	my_debug = 0;
 
 	elf_rel_get_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
 	elf_rel_get_symbol(&info->rhdr, "dt_offset", &my_dt_offset,
@@ -317,6 +322,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	elf_rel_get_symbol(&info->rhdr, "stack", &my_stack, sizeof(my_stack));
 	elf_rel_get_symbol(&info->rhdr, "my_toc", &toc_addr,
 				sizeof(toc_addr));
+	elf_rel_get_symbol(&info->rhdr, "debug", &my_debug, sizeof(my_debug));
 
 	fprintf(stderr, "info->entry is %p\n", info->entry);
 	fprintf(stderr, "kernel is %llx\n", (unsigned long long)my_kernel);
@@ -329,6 +335,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	fprintf(stderr, "stack is %llx\n", (unsigned long long)my_stack);
 	fprintf(stderr, "toc_addr is %llx\n", (unsigned long long)toc_addr);
 	fprintf(stderr, "purgatory size is %zu\n", purgatory_size);
+	fprintf(stderr, "debug is %d\n", my_debug);
 #endif
 
 	for (i = 0; i < info->nr_segments; i++)

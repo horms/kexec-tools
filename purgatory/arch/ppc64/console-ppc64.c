@@ -20,8 +20,22 @@
  */
 
 #include <purgatory.h>
+#include "hvCall.h"
+
+extern int debug;
 
 void putchar(int c)
 {
+	char buff[16];
+	unsigned long *lbuf = (unsigned long *)buff;
+
+	if (!debug) /* running on non pseries */
+		return;
+
+	if (c == '\n')
+		putchar('\r');
+
+	buff[0] = c;
+	plpar_hcall_norets(H_PUT_TERM_CHAR, 0, 1, lbuf[0], lbuf[1]);
 	return;
 }

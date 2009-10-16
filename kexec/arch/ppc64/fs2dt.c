@@ -48,6 +48,7 @@ static int crash_param = 0;
 static char local_cmdline[COMMAND_LINE_SIZE] = { "" };
 extern mem_rgns_t usablemem_rgns;
 static struct bootblock bb[1];
+extern int my_debug;
 
 void reserve(unsigned long long where, unsigned long long length)
 {
@@ -434,6 +435,9 @@ static void putnode(void)
 	if (!strcmp(basename,"/chosen/")) {
 		size_t cmd_len = 0;
 		char *param = NULL;
+		char filename[MAXPATH];
+		char *buff;
+		int fd;
 
 		cmd_len = strlen(local_cmdline);
 		if (cmd_len != 0) {
@@ -446,7 +450,6 @@ static void putnode(void)
 
 		/* ... if not, grab root= from the old command line */
 		if (!param) {
-			char filename[MAXPATH];
 			FILE *fp;
 			char *last_cmdline = NULL;
 			char *old_param;
@@ -483,8 +486,65 @@ static void putnode(void)
 		dt += (cmd_len + 3)/4;
 
 		fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
+
+		/*
+		 * Determine the platform type/stdout type, so that purgatory
+		 * code can print 'I'm in purgatory' message. Currently only
+		 * pseries/hvcterminal is supported.
+		 */
+		strcpy(filename, pathname);
+		strncat(filename, "linux,stdout-path", MAXPATH);
+		fd = open(filename, O_RDONLY);
+		if (fd == -1) {
+			printf("Unable to find %s, printing from purgatory is diabled\n",
+														filename);
+			goto no_debug;
+		}
+		if (fstat(fd, &statbuf)) {
+			printf("Unable to stat %s, printing from purgatory is diabled\n",
+														filename);
+			close(fd);
+			goto no_debug;
+
+		}
+
+		buff = malloc(statbuf.st_size);
+		if (!buff) {
+			printf("Can not allocate memory for buff\n");
+			close(fd);
+			goto no_debug;
+		}
+		read(fd, buff, statbuf.st_size);
+		close(fd);
+		strncpy(filename, "/proc/device-tree/", MAXPATH);
+		strncat(filename, buff, MAXPATH);
+		strncat(filename, "/compatible", MAXPATH);
+		fd = open(filename, O_RDONLY);
+		if (fd == -1) {
+			printf("Unable to find %s printing from purgatory is diabled\n",
+														filename);
+			goto no_debug;
+		}
+		if (fstat(fd, &statbuf)) {
+			printf("Unable to stat %s printing from purgatory is diabled\n",
+														filename);
+			close(fd);
+			goto no_debug;
+		}
+		buff = realloc(buff, statbuf.st_size);
+		if (!buff) {
+			printf("Can not allocate memory for buff\n");
+			close(fd);
+			goto no_debug;
+		}
+		read(fd, buff, statbuf.st_size);
+		if (!strcmp(buff, "hvterm1") || !strcmp(buff, "hvterm-protocol"))
+			my_debug = 1;
+		close(fd);
+		free(buff);
 	}
 
+no_debug:
 	for (i=0; i < numlist; i++) {
 		dp = namelist[i];
 		strcpy(dn, dp->d_name);
