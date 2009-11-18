@@ -79,6 +79,9 @@ AC_ARG_WITH([gamecube],
 AC_ARG_WITH([zlib], AC_HELP_STRING([--without-zlib],[disable zlib support]),
 	[ with_zlib="$withval"], [ with_zlib=yes ] )
 
+AC_ARG_WITH([lzma], AC_HELP_STRING([--without-lzma],[disable lzma support]),
+	[ with_lzma="$withval"], [ with_lzma=yes ] )
+
 AC_ARG_WITH([xen], AC_HELP_STRING([--without-xen],
 	[disable extended xen support]), [ with_xen="$withval"], [ with_xen=yes ] )
 
@@ -140,6 +143,13 @@ if test "$with_zlib" = yes ; then
 	AC_CHECK_HEADER(zlib.h,
 		AC_CHECK_LIB(z, inflateInit_, ,
 		AC_MSG_NOTICE([zlib support disabled])))
+fi
+
+dnl See if I have a usable copy of lzma available
+if test "$with_lzma" = yes ; then
+	AC_CHECK_HEADER(lzma.h,
+		AC_CHECK_LIB(lzma, lzma_code, ,
+		AC_MSG_NOTICE([lzma support disabled])))
 fi
 
 dnl find Xen control stack libraries

@@ -38,14 +38,13 @@
 
 #include "config.h"
 
-#ifdef HAVE_LIBZ
-#include <zlib.h>
-#endif
 #include <sha256.h>
 #include "kexec.h"
 #include "kexec-syscall.h"
 #include "kexec-elf.h"
 #include "kexec-sha256.h"
+#include "kexec-zlib.h"
+#include "kexec-lzma.h"
 #include <arch/options.h>
 
 unsigned long long mem_min = 0;
@@ -554,67 +553,18 @@ char *slurp_file_len(const char *filename, off_t size)
 	return buf;
 }
 
-#if HAVE_LIBZ
 char *slurp_decompress_file(const char *filename, off_t *r_size)
 {
-	gzFile fp;
-	int errnum;
-	const char *msg;
-	char *buf;
-	off_t size, allocated;
-	ssize_t result;
+	char *kernel_buf;
 
-	if (!filename) {
-		*r_size = 0;
-		return 0;
+	kernel_buf = zlib_decompress_file(filename, r_size);
+	if (!kernel_buf) {
+		kernel_buf = lzma_decompress_file(filename, r_size);
+		if (!kernel_buf)
+			return slurp_file(filename, r_size);
 	}
-	fp = gzopen(filename, "rb");
-	if (fp == 0) {
-		msg = gzerror(fp, &errnum);
-		if (errnum == Z_ERRNO) {
-			msg = strerror(errno);
-		}
-		die("Cannot open `%s': %s\n", filename, msg);
-	}
-	size = 0;
-	allocated = 65536;
-	buf = xmalloc(allocated);
-	do {
-		if (size == allocated) {
-			allocated <<= 1;
-			buf = xrealloc(buf, allocated);
-		}
-		result = gzread(fp, buf + size, allocated - size);
-		if (result < 0) {
-			if ((errno == EINTR) || (errno == EAGAIN))
-				continue;
-
-			msg = gzerror(fp, &errnum);
-			if (errnum == Z_ERRNO) {
-				msg = strerror(errno);
-			}
-			die ("read on %s of %ld bytes failed: %s\n",
-				filename, (allocated - size) + 0UL, msg);
-		}
-		size += result;
-	} while(result > 0);
-	result = gzclose(fp);
-	if (result != Z_OK) {
-		msg = gzerror(fp, &errnum);
-		if (errnum == Z_ERRNO) {
-			msg = strerror(errno);
-		}
-		die ("Close of %s failed: %s\n", filename, msg);
-	}
-	*r_size =  size;
-	return buf;
+	return kernel_buf;
 }
-#else
-char *slurp_decompress_file(const char *filename, off_t *r_size)
-{
-	return slurp_file(filename, r_size);
-}
-#endif
 
 static void update_purgatory(struct kexec_info *info)
 {
