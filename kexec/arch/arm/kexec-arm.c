@@ -74,6 +74,9 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 
 /* Supported file types and callbacks */
 struct file_type file_type[] = {
+	/* uImage is probed before zImage because the latter also accepts
+	   uncompressed images. */
+	{"uImage", uImage_arm_probe, uImage_arm_load, zImage_arm_usage},
 	{"zImage", zImage_arm_probe, zImage_arm_load, zImage_arm_usage},
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
