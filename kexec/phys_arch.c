@@ -13,9 +13,14 @@ long physical_arch(void)
 		return -1;
 	}
 
-	for (i = 0; arches[i].machine; ++i)
+	for (i = 0; arches[i].machine; ++i) {
 		if (strcmp(utsname.machine, arches[i].machine) == 0)
 			return arches[i].arch;
+		if ((strcmp(arches[i].machine, "arm") == 0) &&
+		    (strncmp(utsname.machine, arches[i].machine,
+		     strlen(arches[i].machine)) == 0))
+			return arches[i].arch;
+	}
 
 	fprintf(stderr, "Unsupported machine type: %s\n",
 		utsname.machine);
