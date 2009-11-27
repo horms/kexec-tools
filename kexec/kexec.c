@@ -933,15 +933,32 @@ void usage(void)
 
 static int kexec_loaded(void)
 {
-	int ret;
+	long ret = -1;
 	FILE *fp;
+	char *p;
+	char line[3];
 
 	fp = fopen("/sys/kernel/kexec_loaded", "r");
 	if (fp == NULL)
 		return -1;
-	fscanf(fp, "%d", &ret);
+
+	p = fgets(line, sizeof(line), fp);
 	fclose(fp);
-	return ret;
+
+	if (p == NULL)
+		return -1;
+
+	ret = strtol(line, &p, 10);
+
+	/* Too long */
+	if (ret > INT_MAX)
+		return -1;
+
+	/* No digits were found */
+	if (p == line)
+		return -1;
+
+	return (int)ret;
 }
 
 /*
@@ -989,24 +1006,28 @@ static void remove_parameter(char *line, const char *param_name)
 char *get_command_line(void)
 {
 	FILE *fp;
-	size_t len;
-	char *line = NULL;
+	char *line;
+	const int sizeof_line = 2048;
+
+	line = malloc(sizeof_line);
+	if (line == NULL)
+		die("Could not allocate memory to read /proc/cmdline.");
 
 	fp = fopen("/proc/cmdline", "r");
 	if (!fp)
-		die("Could not read /proc/cmdline.");
-	getline(&line, &len, fp);
+		die("Could not open /proc/cmdline.");
+
+	if (fgets(line, sizeof_line, fp) == NULL)
+		die("Can't read /proc/cmdline.");
+
 	fclose(fp);
 
-	if (line) {
-		/* strip newline */
-		*(line + strlen(line) - 1) = 0;
+	/* strip newline */
+	line[strlen(line) - 1] = '\0';
 
-		remove_parameter(line, "BOOT_IMAGE");
-		if (kexec_flags & KEXEC_ON_CRASH)
-			remove_parameter(line, "crashkernel");
-	} else
-		line = strdup("");
+	remove_parameter(line, "BOOT_IMAGE");
+	if (kexec_flags & KEXEC_ON_CRASH)
+		remove_parameter(line, "crashkernel");
 
 	return line;
 }
