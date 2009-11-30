@@ -1,4 +1,9 @@
+#include <unistd.h>
+#include <sys/types.h>
+
 #include "kexec-lzma.h"
+#include "config.h"
+
 #ifdef HAVE_LIBLZMA
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -7,13 +12,25 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
-#include <sys/types.h>
 #include <sys/stat.h>
-#include <unistd.h>
 #include <ctype.h>
 #include <lzma.h>
 
 #include "kexec.h"
+
+#define kBufferSize (1 << 15)
+
+typedef struct lzfile {
+	uint8_t buf[kBufferSize];
+	lzma_stream strm;
+	FILE *file;
+	int encoding;
+	int eof;
+} LZFILE;
+
+LZFILE *lzopen(const char *path, const char *mode);
+int lzclose(LZFILE *lzfile);
+ssize_t lzread(LZFILE *lzfile, void *buf, size_t len);
 
 static LZFILE *lzopen_internal(const char *path, const char *mode, int fd)
 {
