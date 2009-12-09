@@ -41,6 +41,9 @@ purgatory_start:
 
 	/* In 64bit mode the code segment is meaningless */
 
+	movq	0(%rsp), %rax
+	movq	%rax, jump_back_entry
+
 	/* Setup a stack */
 	movq	$lstack_end, %rsp
 
