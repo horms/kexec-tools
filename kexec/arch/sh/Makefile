@@ -2,6 +2,7 @@
 # kexec sh (linux booting linux)
 #
 sh_KEXEC_SRCS += kexec/arch/sh/kexec-sh.c
+sh_KEXEC_SRCS += kexec/arch/sh/kexec-uImage-sh.c
 sh_KEXEC_SRCS += kexec/arch/sh/kexec-zImage-sh.c
 sh_KEXEC_SRCS += kexec/arch/sh/kexec-netbsd-sh.c
 sh_KEXEC_SRCS += kexec/arch/sh/kexec-elf-sh.c

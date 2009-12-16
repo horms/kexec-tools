@@ -3,6 +3,10 @@
 
 #define COMMAND_LINE_SIZE 2048
 
+int uImage_sh_probe(const char *buf, off_t len);
+int uImage_sh_load(int argc, char **argv, const char *buf, off_t len,
+		        struct kexec_info *info);
+
 int zImage_sh_probe(const char *buf, off_t len);
 int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
