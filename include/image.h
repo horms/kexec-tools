@@ -55,28 +55,30 @@
 #define IH_OS_RTEMS		18	/* RTEMS	*/
 #define IH_OS_ARTOS		19	/* ARTOS	*/
 #define IH_OS_UNITY		20	/* Unity OS	*/
+#define IH_OS_INTEGRITY		21	/* INTEGRITY	*/
 
 /*
  * CPU Architecture Codes (supported by Linux)
  */
-#define IH_CPU_INVALID		0	/* Invalid CPU	*/
-#define IH_CPU_ALPHA		1	/* Alpha	*/
-#define IH_CPU_ARM		2	/* ARM		*/
-#define IH_CPU_I386		3	/* Intel x86	*/
-#define IH_CPU_IA64		4	/* IA64		*/
-#define IH_CPU_MIPS		5	/* MIPS		*/
-#define IH_CPU_MIPS64		6	/* MIPS	 64 Bit */
-#define IH_CPU_PPC		7	/* PowerPC	*/
-#define IH_CPU_S390		8	/* IBM S390	*/
-#define IH_CPU_SH		9	/* SuperH	*/
-#define IH_CPU_SPARC		10	/* Sparc	*/
-#define IH_CPU_SPARC64		11	/* Sparc 64 Bit */
-#define IH_CPU_M68K		12	/* M68K		*/
-#define IH_CPU_NIOS		13	/* Nios-32	*/
-#define IH_CPU_MICROBLAZE	14	/* MicroBlaze   */
-#define IH_CPU_NIOS2		15	/* Nios-II	*/
-#define IH_CPU_BLACKFIN		16	/* Blackfin	*/
-#define IH_CPU_AVR32		17	/* AVR32	*/
+#define IH_ARCH_INVALID		0	/* Invalid CPU	*/
+#define IH_ARCH_ALPHA		1	/* Alpha	*/
+#define IH_ARCH_ARM		2	/* ARM		*/
+#define IH_ARCH_I386		3	/* Intel x86	*/
+#define IH_ARCH_IA64		4	/* IA64		*/
+#define IH_ARCH_MIPS		5	/* MIPS		*/
+#define IH_ARCH_MIPS64		6	/* MIPS	 64 Bit */
+#define IH_ARCH_PPC		7	/* PowerPC	*/
+#define IH_ARCH_S390		8	/* IBM S390	*/
+#define IH_ARCH_SH		9	/* SuperH	*/
+#define IH_ARCH_SPARC		10	/* Sparc	*/
+#define IH_ARCH_SPARC64		11	/* Sparc 64 Bit */
+#define IH_ARCH_M68K		12	/* M68K		*/
+#define IH_ARCH_NIOS		13	/* Nios-32	*/
+#define IH_ARCH_MICROBLAZE	14	/* MicroBlaze   */
+#define IH_ARCH_NIOS2		15	/* Nios-II	*/
+#define IH_ARCH_BLACKFIN	16	/* Blackfin	*/
+#define IH_ARCH_AVR32		17	/* AVR32	*/
+#define IH_ARCH_ST200	        18	/* STMicroelectronics ST200  */
 
 /*
  * Image Types
@@ -126,6 +128,7 @@
 #define IH_TYPE_SCRIPT		6	/* Script file			*/
 #define IH_TYPE_FILESYSTEM	7	/* Filesystem Image (any type)	*/
 #define IH_TYPE_FLATDT		8	/* Binary Flat Device Tree Blob	*/
+#define IH_TYPE_KWBIMAGE	9	/* Kirkwood Boot Image		*/
 
 /*
  * Compression Types
@@ -134,6 +137,7 @@
 #define IH_COMP_GZIP		1	/* gzip	 Compression Used	*/
 #define IH_COMP_BZIP2		2	/* bzip2 Compression Used	*/
 #define IH_COMP_LZMA		3	/* lzma  Compression Used	*/
+#define IH_COMP_LZO		4	/* lzo   Compression Used	*/
 
 #define IH_MAGIC	0x27051956	/* Image Magic Number		*/
 #define IH_NMLEN		32	/* Image Name Length		*/
@@ -156,6 +160,5 @@ typedef struct image_header {
 	uint8_t		ih_comp;	/* Compression Type		*/
 	uint8_t		ih_name[IH_NMLEN];	/* Image Name		*/
 } image_header_t;
-
 
 #endif	/* __IMAGE_H__ */
