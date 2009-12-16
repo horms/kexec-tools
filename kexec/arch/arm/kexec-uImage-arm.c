@@ -4,9 +4,9 @@
 #include <stdint.h>
 #include <string.h>
 #include <sys/types.h>
+#include <image.h>
 #include "../../kexec.h"
 #include "kexec-arm.h"
-#include "kexec-uImage-arm.h"
 
 int uImage_arm_probe(const char *buf, off_t len)
 {
