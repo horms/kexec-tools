@@ -21,6 +21,11 @@ int elf_ppc_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_ppc_usage(void);
 
+int uImage_ppc_probe(const char *buf, off_t len);
+int uImage_ppc_load(int argc, char **argv, const char *buf, off_t len,
+	struct kexec_info *info);
+void uImage_ppc_usage(void);
+
 int dol_ppc_probe(const char *buf, off_t len);
 int dol_ppc_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);

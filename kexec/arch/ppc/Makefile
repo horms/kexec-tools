@@ -7,6 +7,7 @@ ppc_KEXEC_SRCS =  kexec/arch/ppc/kexec-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-rel-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-dol-ppc.c
+ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-uImage-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-simple.S
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-dol.S
 ppc_KEXEC_SRCS += kexec/arch/ppc/fixup_dtb.c

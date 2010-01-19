@@ -250,7 +250,7 @@ static int get_base_ranges(void)
 /* Get devtree details and create exclude_range array
  * Also create usablemem_ranges for KEXEC_ON_CRASH
  */
-static int get_devtree_details(unsigned long kexec_flags)
+static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 {
 	uint64_t rmo_base;
 	char buf[MAXBYTES];
@@ -485,6 +485,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 struct file_type file_type[] = {
 	{"elf-ppc", elf_ppc_probe, elf_ppc_load, elf_ppc_usage},
 	{"dol-ppc", dol_ppc_probe, dol_ppc_load, dol_ppc_usage},
+	{"uImage-ppc", uImage_ppc_probe, uImage_ppc_load, uImage_ppc_usage },
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
