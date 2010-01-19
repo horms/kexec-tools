@@ -147,7 +147,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long mbi_base;
 	struct entry32_regs regs;
 	size_t mbi_bytes, mbi_offset;
-	const char *command_line=NULL;
+	const char *command_line=NULL, *append=NULL;
 	char *imagename, *cp;
 	struct memory_range *range;
 	int ranges;
@@ -164,7 +164,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",		1, 0, OPT_CL },
 		{ "append",			1, 0, OPT_CL },
-		{ "reuse-cmdline",		1, 0, OPT_REUSE_CMDLINE },
+		{ "reuse-cmdline",		0, 0, OPT_REUSE_CMDLINE },
 		{ "module",			1, 0, OPT_MOD },
 		{ 0, 				0, 0, 0 },
 	};
@@ -195,7 +195,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 			usage();
 			return -1;
 		case OPT_CL:
-			command_line = optarg;
+			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
 			command_line = get_command_line();
@@ -207,6 +207,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		}
 	}
 	imagename = argv[optind];
+	command_line = concat_cmdline(command_line, append);
 	command_line_len = strlen(command_line) + strlen(imagename) + 2;
 
 

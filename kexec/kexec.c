@@ -994,6 +994,22 @@ void check_reuse_initrd(void)
 	free(line);
 }
 
+const char *concat_cmdline(const char *base, const char *append)
+{
+	const char *cmdline;
+	if (!base && !append)
+		return NULL;
+	if (!base)
+		return append;
+	if (!append)
+		return base;
+	cmdline = xmalloc(strlen(base) + 1 + strlen(append) + 1);
+	strcpy(cmdline, base);
+	strcat(cmdline, " ");
+	strcat(cmdline, append);
+	return cmdline;
+}
+
 
 int main(int argc, char *argv[])
 {

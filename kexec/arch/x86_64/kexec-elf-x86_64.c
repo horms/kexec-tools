@@ -87,7 +87,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
-	const char *command_line;
+	const char *command_line = NULL, *append = NULL;
 	char *modified_cmdline;
 	int command_line_len;
 	int modified_cmdline_len;
@@ -109,7 +109,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",	1, NULL, OPT_APPEND },
 		{ "append",		1, NULL, OPT_APPEND },
-		{ "reuse-cmdline",	1, NULL, OPT_REUSE_CMDLINE },
+		{ "reuse-cmdline",	0, NULL, OPT_REUSE_CMDLINE },
 		{ "initrd",		1, NULL, OPT_RAMDISK },
 		{ "ramdisk",		1, NULL, OPT_RAMDISK },
 		{ "args-elf",		0, NULL, OPT_ARGS_ELF },
@@ -124,7 +124,6 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 	 * Parse the command line arguments
 	 */
 	arg_style = ARG_STYLE_ELF;
-	command_line = 0;
 	modified_cmdline = 0;
 	modified_cmdline_len = 0;
 	ramdisk = 0;
@@ -140,7 +139,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 			usage();
 			return -1;
 		case OPT_APPEND:
-			command_line = optarg;
+			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
 			command_line = get_command_line();
@@ -163,6 +162,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		}
 	}
+	command_line = concat_cmdline(command_line, append);
 	command_line_len = 0;
 	if (command_line) {
 		command_line_len = strlen(command_line) +1;

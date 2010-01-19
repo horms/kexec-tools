@@ -332,7 +332,7 @@ int do_bzImage_load(struct kexec_info *info,
 int bzImage_load(int argc, char **argv, const char *buf, off_t len, 
 	struct kexec_info *info)
 {
-	const char *command_line;
+	const char *command_line = NULL, *append = NULL;
 	const char *ramdisk;
 	char *ramdisk_buf;
 	off_t ramdisk_length;
@@ -349,7 +349,7 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 		{ "debug",		0, 0, OPT_DEBUG },
 		{ "command-line",	1, 0, OPT_APPEND },
 		{ "append",		1, 0, OPT_APPEND },
-		{ "reuse-cmdline",	1, 0, OPT_REUSE_CMDLINE },
+		{ "reuse-cmdline",	0, 0, OPT_REUSE_CMDLINE },
 		{ "initrd",		1, 0, OPT_RAMDISK },
 		{ "ramdisk",		1, 0, OPT_RAMDISK },
 		{ "real-mode",		0, 0, OPT_REAL_MODE },
@@ -362,7 +362,6 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	 */
 	debug = 0;
 	real_mode_entry = 0;
-	command_line = 0;
 	ramdisk = 0;
 	ramdisk_length = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
@@ -379,7 +378,7 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 			debug = 1;
 			break;
 		case OPT_APPEND:
-			command_line = optarg;
+			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
 			command_line = get_command_line();
@@ -392,6 +391,7 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		}
 	}
+	command_line = concat_cmdline(command_line, append);
 	command_line_len = 0;
 	if (command_line) {
 		command_line_len = strlen(command_line) +1;

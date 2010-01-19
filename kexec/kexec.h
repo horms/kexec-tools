@@ -261,4 +261,6 @@ static inline int __attribute__ ((format (printf, 1, 2)))
 	dbgprintf(const char *fmt, ...) {return 0;}
 #endif
 
+const char *concat_cmdline(const char *base, const char *append);
+
 #endif /* KEXEC_H */
