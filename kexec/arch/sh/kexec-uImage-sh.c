@@ -7,24 +7,13 @@
 #include <string.h>
 #include <sys/types.h>
 #include <image.h>
+#include <kexec-uImage.h>
 #include "../../kexec.h"
 #include "kexec-sh.h"
 
 int uImage_sh_probe(const char *buf, off_t len)
 {
-	struct image_header header;
-
-	if ((uintmax_t)len < (uintmax_t)sizeof(header))
-		return -1;
-
-	memcpy(&header, buf, sizeof(header));
-
-	if (cpu_to_be32(header.ih_magic) != IH_MAGIC)
-		return -1;
-
-	/* XXX: check CRC Checksum? */
-
-	return 0;
+	return uImage_probe(buf, len, IH_ARCH_SH);
 }
 
 int uImage_sh_load(int argc, char **argv, const char *buf, off_t len,
