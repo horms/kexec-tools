@@ -205,7 +205,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 
 		/* Setup the ELF boot notes */
 		note_base = elf_boot_notes(info, max_addr,
-			(unsigned char *) command_line, command_line_len);
+					   command_line, command_line_len);
 
 		/* Initialize the stack arguments */
 		arg2 = 0; /* No return address */
@@ -226,7 +226,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	else if (arg_style == ARG_STYLE_LINUX) {
 		struct x86_linux_faked_param_header *hdr;
 		unsigned long param_base;
-		const unsigned char *ramdisk_buf;
+		const char *ramdisk_buf;
 		off_t ramdisk_length;
 		struct entry32_regs regs;
 		int rc = 0;
@@ -253,7 +253,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf = NULL;
 		ramdisk_length = 0;
 		if (ramdisk) {
-			ramdisk_buf = (unsigned char *) slurp_file(ramdisk, &ramdisk_length);
+			ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
 		}
 
 		/* If panic kernel is being loaded, additional segments need

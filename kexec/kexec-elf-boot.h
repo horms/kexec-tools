@@ -3,6 +3,6 @@
 
 unsigned long elf_boot_notes(
 	struct kexec_info *info, unsigned long max_addr, 
-	const unsigned char *cmdline, int cmdline_len);
+	const char *cmdline, int cmdline_len);
 
 #endif /* KEXEC_ELF_BOOT_H */

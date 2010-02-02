@@ -203,8 +203,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		struct entry64_regs regs;
 
 		/* Setup the ELF boot notes */
-		note_base = elf_boot_notes(info, max_addr,
-			command_line, command_line_len);
+		note_base = elf_boot_notes(info, max_addr, command_line, command_line_len);
 
 		/* Initialize the registers */
 		elf_rel_get_symbol(&info->rhdr, "entry64_regs", &regs, sizeof(regs));
@@ -220,7 +219,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 	else if (arg_style == ARG_STYLE_LINUX) {
 		struct x86_linux_faked_param_header *hdr;
 		unsigned long param_base;
-		const unsigned char *ramdisk_buf;
+		char *ramdisk_buf;
 		off_t ramdisk_length;
 		struct entry64_regs regs;
 		int rc=0;

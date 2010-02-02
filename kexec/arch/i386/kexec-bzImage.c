@@ -264,7 +264,7 @@ int do_bzImage_load(struct kexec_info *info,
 	/* Tell the kernel what is going on */
 	setup_linux_bootloader_parameters(info, real_mode, setup_base,
 		kern16_size, command_line, command_line_len,
-		(unsigned char *) initrd, initrd_len);
+		initrd, initrd_len);
 
 	/* Get the initial register values */
 	elf_rel_get_symbol(&info->rhdr, "entry16_regs", &regs16, sizeof(regs16));
