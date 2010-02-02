@@ -62,6 +62,14 @@ void die(char *fmt, ...)
 	exit(1);
 }
 
+char *xstrdup(const char *str)
+{
+	char *new = strdup(str);
+	if (!new)
+		die("Cannot strdup \"%s\": %s\n",
+			str, strerror(errno));
+	return new;
+}
 
 void *xmalloc(size_t size)
 {
@@ -994,15 +1002,15 @@ void check_reuse_initrd(void)
 	free(line);
 }
 
-const char *concat_cmdline(const char *base, const char *append)
+char *concat_cmdline(const char *base, const char *append)
 {
-	const char *cmdline;
+	char *cmdline;
 	if (!base && !append)
 		return NULL;
-	if (!base)
-		return append;
-	if (!append)
-		return base;
+	if (append)
+		return xstrdup(append);
+	if (base)
+		return xstrdup(base);
 	cmdline = xmalloc(strlen(base) + 1 + strlen(append) + 1);
 	strcpy(cmdline, base);
 	strcat(cmdline, " ");

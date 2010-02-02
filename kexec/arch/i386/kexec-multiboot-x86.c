@@ -147,8 +147,8 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long mbi_base;
 	struct entry32_regs regs;
 	size_t mbi_bytes, mbi_offset;
-	const char *command_line=NULL, *append=NULL;
-	char *imagename, *cp;
+	char *command_line = NULL;
+	char *imagename, *cp, *append = NULL;;
 	struct memory_range *range;
 	int ranges;
 	struct AddrRangeDesc *mmap;
@@ -389,6 +389,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	regs.eip = ehdr.e_entry;
 	elf_rel_set_symbol(&info->rhdr, "entry32_regs", &regs, sizeof(regs));
 
+	free(command_line);
 	return 0;
 }
 

@@ -88,8 +88,8 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
-	const char *command_line = NULL, *append = NULL;
-	char *modified_cmdline;
+	char *command_line = NULL, *modified_cmdline = NULL;
+	const char *append = NULL;
 	int command_line_len;
 	int modified_cmdline_len;
 	const char *ramdisk;
@@ -264,8 +264,10 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 			if (rc < 0)
 				return -1;
 			/* Use new command line. */
+			free(command_line);
 			command_line = modified_cmdline;
 			command_line_len = strlen(modified_cmdline) + 1;
+			modified_cmdline = NULL;
 		}
 
 		/* Tell the kernel what is going on */
@@ -288,5 +290,8 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	else {
 		die("Unknown argument style\n");
 	}
+
+	free(command_line);
+	free(modified_cmdline);
 	return 0;
 }

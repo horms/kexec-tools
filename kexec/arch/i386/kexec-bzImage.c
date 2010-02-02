@@ -332,8 +332,8 @@ int do_bzImage_load(struct kexec_info *info,
 int bzImage_load(int argc, char **argv, const char *buf, off_t len, 
 	struct kexec_info *info)
 {
-	const char *command_line = NULL, *append = NULL;
-	const char *ramdisk;
+	char *command_line = NULL;
+	const char *ramdisk, *append = NULL;
 	char *ramdisk_buf;
 	off_t ramdisk_length;
 	int command_line_len;
@@ -406,5 +406,6 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf, ramdisk_length,
 		real_mode_entry, debug);
 
+	free(command_line);
 	return result;
 }
