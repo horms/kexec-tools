@@ -110,7 +110,7 @@ int arch_process_options(int argc, char **argv)
 
 const struct arch_map_entry arches[] = {
 	{ "arm", KEXEC_ARCH_ARM },
-	{ 0 },
+	{ NULL, 0 },
 };
 
 int arch_compat_trampoline(struct kexec_info *UNUSED(info))

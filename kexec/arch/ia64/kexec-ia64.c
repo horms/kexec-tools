@@ -208,7 +208,7 @@ int arch_process_options(int argc, char **argv)
 
 const struct arch_map_entry arches[] = {
 	{ "ia64", KEXEC_ARCH_IA_64 },
-	{ 0 },
+	{ NULL, 0 },
 };
 
 int arch_compat_trampoline(struct kexec_info *UNUSED(info))

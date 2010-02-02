@@ -802,7 +802,7 @@ const struct arch_map_entry arches[] = {
 	 * So pass KEXEC_ARCH_PPC64 here
 	 */
 	{ "ppc64", KEXEC_ARCH_PPC64 },
-	{ 0 },
+	{ NULL, 0 },
 };
 
 int arch_compat_trampoline(struct kexec_info *UNUSED(info))

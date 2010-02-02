@@ -98,7 +98,7 @@ int arch_process_options(int UNUSED(argc), char **UNUSED(argv))
 const struct arch_map_entry arches[] = {
 	{ "s390", KEXEC_ARCH_S390 },
 	{ "s390x", KEXEC_ARCH_S390 },
-	{ 0 },
+	{ NULL, 0 },
 };
 
 int arch_compat_trampoline(struct kexec_info *UNUSED(info))

@@ -171,7 +171,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 {
 	int i, j, tidx = -1;
 	unsigned long long cstart, cend;
-	struct memory_range temp_region = { };
+	struct memory_range temp_region = {0, 0, 0};
 
 	/* Crash reserved region. */
 	cstart = crash_reserved_mem.start;

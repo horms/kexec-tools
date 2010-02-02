@@ -135,7 +135,7 @@ const struct arch_map_entry arches[] = {
 	{ "sh4", KEXEC_ARCH_DEFAULT },
 	{ "sh4a", KEXEC_ARCH_DEFAULT },
 	{ "sh4al-dsp", KEXEC_ARCH_DEFAULT },
-	{ 0 },
+	{ NULL, 0 },
 };
 
 int arch_compat_trampoline(struct kexec_info *UNUSED(info))
