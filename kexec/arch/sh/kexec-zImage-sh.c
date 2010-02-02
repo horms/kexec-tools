@@ -34,7 +34,7 @@ static const int probe_debug = 0;
 #define HEAD32_INIT_SR 3
 #define HEAD32_INIT_SR_VALUE 0x400000F0
 
-static unsigned long zImage_head32(const char *buf, off_t len, int offs)
+static unsigned long zImage_head32(const char *buf, int offs)
 {
 	unsigned long *values = (void *)buf;
 	int k;
@@ -56,7 +56,7 @@ int zImage_sh_probe(const char *buf, off_t len)
 	if (memcmp(&buf[0x202], "HdrS", 4) != 0)
 	        return -1;
 
-	if (zImage_head32(buf, len, HEAD32_INIT_SR) != HEAD32_INIT_SR_VALUE)
+	if (zImage_head32(buf, HEAD32_INIT_SR) != HEAD32_INIT_SR_VALUE)
 	        return -1;
 
 	return 0;
@@ -112,7 +112,7 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	 * all combinations.
 	 */
 
-	empty_zero = zImage_head32(buf, len, HEAD32_KERNEL_START_ADDR);
+	empty_zero = zImage_head32(buf, HEAD32_KERNEL_START_ADDR);
 
 	zero_page_size = 0x10000;
 	zero_page_base = virt_to_phys(empty_zero - zero_page_size);
