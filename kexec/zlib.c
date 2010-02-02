@@ -1,4 +1,6 @@
 #include "kexec-zlib.h"
+#include "kexec.h"
+
 #ifdef HAVE_LIBZ
 #define _GNU_SOURCE
 #include <stdio.h>
@@ -12,8 +14,6 @@
 #include <unistd.h>
 #include <ctype.h>
 #include <zlib.h>
-
-#include "kexec.h"
 
 char *zlib_decompress_file(const char *filename, off_t *r_size)
 {
@@ -71,7 +71,7 @@ char *zlib_decompress_file(const char *filename, off_t *r_size)
 	return buf;
 }
 #else
-char *zlib_decompress_file(const char *filename, off_t *r_size)
+char *zlib_decompress_file(const char *UNUSED(filename), off_t *UNUSED(r_size))
 {
 	return NULL;
 }

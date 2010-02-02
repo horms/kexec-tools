@@ -72,8 +72,8 @@ unsigned long xen_architecture(struct crash_elf_info *elf_info)
 	return machine;
 }
 
-static int xen_crash_note_callback(void *data, int nr,
-				   char *str,
+static int xen_crash_note_callback(void *UNUSED(data), int nr,
+				   char *UNUSED(str),
 				   unsigned long base,
 				   unsigned long length)
 {

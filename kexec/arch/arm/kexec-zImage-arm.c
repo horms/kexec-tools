@@ -78,7 +78,7 @@ struct tag {
 #define byte_size(t)    ((t)->hdr.size << 2)
 #define tag_size(type)  ((sizeof(struct tag_header) + sizeof(struct type) + 3) >> 2)
 
-int zImage_arm_probe(const char *buf, off_t len)
+int zImage_arm_probe(const char *UNUSED(buf), off_t UNUSED(len))
 {
 	/* 
 	 * Only zImage loading is supported. Do not check if

@@ -13,6 +13,7 @@
 #define _GNU_SOURCE
 
 #include "kexec-elf.h"
+#include "unused.h"
 
 #ifndef BYTE_ORDER
 #error BYTE_ORDER not defined
@@ -258,7 +259,7 @@ extern int add_backup_segments(struct kexec_info *info,
 #define dbgprintf(_args...) do {printf(_args);} while(0)
 #else
 static inline int __attribute__ ((format (printf, 1, 2)))
-	dbgprintf(const char *fmt, ...) {return 0;}
+	dbgprintf(const char *UNUSED(fmt), ...) {return 0;}
 #endif
 
 char *concat_cmdline(const char *base, const char *append);

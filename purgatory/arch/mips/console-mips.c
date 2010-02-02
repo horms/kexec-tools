@@ -1,5 +1,7 @@
 #include <purgatory.h>
-void putchar(int ch)
+#include "unused.h"
+
+void putchar(int UNUSED(ch))
 {
 	/* Nothing for now */
 }

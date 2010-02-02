@@ -33,7 +33,7 @@ const extern unsigned char netbsd_booter[];
  *
  * Make sure that the file image has a reasonable chance of working.
  */
-int netbsd_sh_probe(const char *buf, off_t len)
+int netbsd_sh_probe(const char *buf, off_t UNUSED(len))
 {
 	Elf32_Ehdr *ehdr;
 
@@ -54,7 +54,7 @@ void netbsd_sh_usage(void)
 		" --miniroot=FILE      NetBSD miniroot ramdisk.\n\n");
 }
 
-int netbsd_sh_load(int argc, char **argv, const char *buf, off_t len,
+int netbsd_sh_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	struct kexec_info *info)
 {
 	const char *howto, *miniroot;

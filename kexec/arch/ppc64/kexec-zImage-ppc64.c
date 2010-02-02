@@ -63,8 +63,9 @@ int zImage_ppc64_probe(FILE *file)
 		elf.e_machine         == EM_PPC);
 }
 
-int zImage_ppc64_load(FILE *file, int argc, char **argv, void **ret_entry,
-	struct kexec_segment **ret_segments, int *ret_nr_segments)
+int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
+		      void **ret_entry, struct kexec_segment **ret_segments,
+		      int *ret_nr_segments)
 {
 	Elf32_Ehdr elf;
 	Elf32_Phdr *p, *ph;

@@ -64,7 +64,7 @@ int kexec_iomem_for_each_line(char *match,
 }
 
 static int kexec_iomem_single_callback(void *data, int nr,
-				       char *str,
+				       char *UNUSED(str),
 				       unsigned long base,
 				       unsigned long length)
 {

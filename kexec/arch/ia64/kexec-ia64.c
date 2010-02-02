@@ -211,7 +211,7 @@ const struct arch_map_entry arches[] = {
 	{ 0 },
 };
 
-int arch_compat_trampoline(struct kexec_info *info)
+int arch_compat_trampoline(struct kexec_info *UNUSED(info))
 {
 	return 0;
 }
@@ -255,7 +255,7 @@ int update_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr)
 	return -1;
 }
 
-void arch_update_purgatory(struct kexec_info *info)
+void arch_update_purgatory(struct kexec_info *UNUSED(info))
 {
 }
 

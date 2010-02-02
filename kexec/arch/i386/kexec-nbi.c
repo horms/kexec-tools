@@ -150,7 +150,7 @@ void nbi_usage(void)
 		);
 }
 
-int nbi_load(int argc, char **argv, const char *buf, off_t len, 
+int nbi_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	struct kexec_info *info)
 {
 	struct imgheader hdr;

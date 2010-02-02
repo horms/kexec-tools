@@ -23,8 +23,8 @@
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of memory ranges. */
-int get_memory_ranges(struct memory_range **range, int *ranges,
-					unsigned long kexec_flags)
+int get_memory_ranges(struct memory_range **UNUSED(range), int *UNUSED(ranges),
+		      unsigned long UNUSED(kexec_flags))
 {
 #ifdef WITH_GAMECUBE
 	int memory_ranges = 0;
@@ -83,12 +83,12 @@ const struct arch_map_entry arches[] = {
 	{ 0 },
 };
 
-int arch_compat_trampoline(struct kexec_info *info)
+int arch_compat_trampoline(struct kexec_info *UNUSED(info))
 {
 	return 0;
 }
 
-void arch_update_purgatory(struct kexec_info *info)
+void arch_update_purgatory(struct kexec_info *UNUSED(info))
 {
 }
 

@@ -57,7 +57,7 @@ static const char *reloc_name(unsigned long r_type)
 	return name;
 }
 
-void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type, 
+void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr), unsigned long r_type,
 	void *location, unsigned long address, unsigned long value)
 {
 #ifdef DEBUG

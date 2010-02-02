@@ -75,7 +75,7 @@ void beoboot_usage(void)
 #define KERN32_BASE  0x100000 /* 1MB */
 #define INITRD_BASE 0x1000000 /* 16MB */
 
-int beoboot_load(int argc, char **argv, const char *buf, off_t len,
+int beoboot_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	struct kexec_info *info)
 {
 	struct beoboot_header bb_header;

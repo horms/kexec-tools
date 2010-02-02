@@ -34,7 +34,7 @@ static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 uint64_t saved_max_mem;
 
 static int crash_sh_range_nr;
-static int crash_sh_memory_range_callback(void *data, int nr,
+static int crash_sh_memory_range_callback(void *UNUSED(data), int UNUSED(nr),
 					  char *str,
 					  unsigned long base,
 					  unsigned long length)

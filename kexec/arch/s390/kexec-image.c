@@ -119,7 +119,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 }
 
 int 
-image_s390_probe(const char *kernel_buf, off_t kernel_size)
+image_s390_probe(const char *UNUSED(kernel_buf), off_t UNUSED(kernel_size))
 {
 	/*
 	 * Can't reliably tell if an image is valid,

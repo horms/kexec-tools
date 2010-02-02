@@ -3,6 +3,7 @@
 
 #include "kexec-lzma.h"
 #include "config.h"
+#include "kexec.h"
 
 #ifdef HAVE_LIBLZMA
 #define _GNU_SOURCE
@@ -15,8 +16,6 @@
 #include <sys/stat.h>
 #include <ctype.h>
 #include <lzma.h>
-
-#include "kexec.h"
 
 #define kBufferSize (1 << 15)
 
@@ -197,7 +196,7 @@ char *lzma_decompress_file(const char *filename, off_t *r_size)
 	return buf;
 }
 #else
-char *lzma_decompress_file(const char *filename, off_t *r_size)
+char *lzma_decompress_file(const char *UNUSED(filename), off_t *UNUSED(r_size))
 {
 	return NULL;
 }

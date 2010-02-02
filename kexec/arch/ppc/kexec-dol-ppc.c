@@ -316,7 +316,7 @@ void dol_ppc_usage(void)
 
 }
 
-int dol_ppc_load(int argc, char **argv, const char *buf, off_t len,
+int dol_ppc_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	struct kexec_info *info)
 {
 	dol_header header, *h;
