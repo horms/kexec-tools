@@ -71,8 +71,7 @@ static int seg_comp(const void *a, const void *b)
 
 /* purgatory code need this info to patch the EFI memmap
  */
-static void add_loaded_segments_info(struct kexec_info *info,
-	struct mem_ehdr *ehdr, unsigned long max_addr)
+static void add_loaded_segments_info(struct mem_ehdr *ehdr)
 {
 	 int i;
          for(i = 0; i < ehdr->e_phnum; i++) {
@@ -265,7 +264,7 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 		loaded_segments_num++;
 		cmdline_add_elfcorehdr(cmdline, elfcorehdr);
 	}
-	add_loaded_segments_info(info, ehdr, max_addr);
+	add_loaded_segments_info(ehdr);
 	size = sizeof(struct loaded_segment) * loaded_segments_num;
 	qsort(loaded_segments, loaded_segments_num,
                         sizeof(struct loaded_segment), seg_comp);
