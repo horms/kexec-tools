@@ -19,8 +19,10 @@
 
 #include "config.h"
 
+#ifdef WITH_GAMECUBE
 #define MAX_MEMORY_RANGES  64
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
+#endif
 
 /* Return a sorted list of memory ranges. */
 int get_memory_ranges(struct memory_range **UNUSED(range), int *UNUSED(ranges),
