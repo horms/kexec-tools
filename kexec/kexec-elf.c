@@ -302,8 +302,7 @@ static int build_mem_ehdr(const char *buf, off_t len, struct mem_ehdr *ehdr)
 	return 0;
 }
 
-static int build_mem_elf32_phdr(const char *buf, off_t len,
-	struct mem_ehdr *ehdr, int idx)
+static int build_mem_elf32_phdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 {
 	struct mem_phdr *phdr;
 	const char *pbuf;
@@ -335,8 +334,7 @@ static int build_mem_elf32_phdr(const char *buf, off_t len,
 	return 0;
 }
 
-static int build_mem_elf64_phdr(const char *buf, off_t len,
-	struct mem_ehdr *ehdr, int idx)
+static int build_mem_elf64_phdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 {
 	struct mem_phdr *phdr;
 	const char *pbuf;
@@ -407,11 +405,11 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 		int result;
 		result = -1;
 		if (ehdr->ei_class == ELFCLASS32) {
-			result = build_mem_elf32_phdr(buf, len, ehdr, i);
+			result = build_mem_elf32_phdr(buf, ehdr, i);
 
 		}
 		else if (ehdr->ei_class == ELFCLASS64) {
-			result = build_mem_elf64_phdr(buf, len, ehdr, i);
+			result = build_mem_elf64_phdr(buf, ehdr, i);
 		}
 		if (result < 0) {
 			return result;
@@ -443,8 +441,7 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 	return 0;
 }
 
-static int build_mem_elf32_shdr(const char *buf, off_t len,
-	struct mem_ehdr *ehdr, int idx)
+static int build_mem_elf32_shdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 {
 	struct mem_shdr *shdr;
 	const char *sbuf;
@@ -513,8 +510,7 @@ static int build_mem_elf32_shdr(const char *buf, off_t len,
 	return 0;
 }
 
-static int build_mem_elf64_shdr(const char *buf, off_t len,
-	struct mem_ehdr *ehdr, int idx)
+static int build_mem_elf64_shdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 {
 	struct mem_shdr *shdr;
 	const char *sbuf;
@@ -622,10 +618,10 @@ static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 		int result;
 		result = -1;
 		if (ehdr->ei_class == ELFCLASS32) {
-			result = build_mem_elf32_shdr(buf, len, ehdr, i);
+			result = build_mem_elf32_shdr(buf, ehdr, i);
 		}
 		else if (ehdr->ei_class == ELFCLASS64) {
-			result = build_mem_elf64_shdr(buf, len, ehdr, i);
+			result = build_mem_elf64_shdr(buf, ehdr, i);
 		}
 		if (result < 0) {
 			return result;
@@ -667,7 +663,7 @@ static void read_nhdr(const struct mem_ehdr *ehdr,
 	hdr->n_type   = elf32_to_cpu(ehdr, hdr->n_type);
 
 }
-static int build_mem_notes(const char *buf, off_t len, struct mem_ehdr *ehdr)
+static int build_mem_notes(struct mem_ehdr *ehdr)
 {
 	const unsigned char *note_start, *note_end, *note;
 	size_t note_size;
@@ -769,7 +765,7 @@ int build_elf_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
 			return result;
 		}
 	}
-	result = build_mem_notes(buf, len, ehdr);
+	result = build_mem_notes(ehdr);
 	if (result < 0) {
 		free_elf_info(ehdr);
 		return result;
