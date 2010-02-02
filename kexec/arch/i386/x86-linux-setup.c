@@ -353,8 +353,7 @@ static void zero_edd(struct x86_linux_param_header *real_mode)
 		EDD_MBR_SIG_MAX * sizeof(uint32_t));
 }
 
-void setup_edd_info(struct x86_linux_param_header *real_mode,
-					unsigned long kexec_flags)
+void setup_edd_info(struct x86_linux_param_header *real_mode)
 {
 	DIR *edd_dir;
 	struct dirent *cursor;
@@ -482,5 +481,5 @@ void setup_linux_system_parameters(struct x86_linux_param_header *real_mode,
 	}
 
 	/* fill the EDD information */
-	setup_edd_info(real_mode, kexec_flags);
+	setup_edd_info(real_mode);
 }
