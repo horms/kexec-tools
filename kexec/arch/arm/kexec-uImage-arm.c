@@ -12,7 +12,7 @@ int uImage_arm_probe(const char *buf, off_t len)
 {
 	struct image_header header;
 
-	if (len < sizeof(header))
+	if ((uintmax_t)len < (uintmax_t)sizeof(header))
 		return -1;
 
 	memcpy(&header, buf, sizeof(header));

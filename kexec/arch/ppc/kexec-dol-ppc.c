@@ -265,7 +265,8 @@ int dol_ppc_probe(const char *buf, off_t dol_length)
 		}
 
 		/* end of physical storage must be within file */
-		if (dol_sect_offset(h, i) + dol_sect_size(h, i) > dol_length) {
+		if ((uintmax_t)(dol_sect_offset(h, i) + dol_sect_size(h, i)) >
+		    (uintmax_t)dol_length) {
 			if (debug) {
 				fprintf(stderr,
 					"%s segment past DOL file size\n",

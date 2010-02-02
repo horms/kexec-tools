@@ -44,7 +44,7 @@ static const int probe_debug = 0;
 int bzImage_probe(const char *buf, off_t len)
 {
 	struct x86_linux_header header;
-	if (len < sizeof(header)) {
+	if ((uintmax_t)len < (uintmax_t)sizeof(header)) {
 		return -1;
 	}
 	memcpy(&header, buf, sizeof(header));
@@ -119,7 +119,7 @@ int do_bzImage_load(struct kexec_info *info,
 	/*
 	 * Find out about the file I am about to load.
 	 */
-	if (kernel_len < sizeof(setup_header)) {
+	if ((uintmax_t)kernel_len < (uintmax_t)sizeof(setup_header)) {
 		return -1;
 	}
 	memcpy(&setup_header, kernel, sizeof(setup_header));
@@ -136,7 +136,8 @@ int do_bzImage_load(struct kexec_info *info,
 	}
 
 	if (setup_header.protocol_version >= 0x0206) {
-		if (command_line_len > setup_header.cmdline_size) {
+		if ((uintmax_t)command_line_len >
+		    (uintmax_t)setup_header.cmdline_size) {
 			dbgprintf("Kernel command line too long for kernel!\n");
 			return -1;
 		}

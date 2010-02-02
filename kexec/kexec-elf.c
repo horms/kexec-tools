@@ -98,7 +98,7 @@ unsigned long elf_max_addr(const struct mem_ehdr *ehdr)
 static int build_mem_elf32_ehdr(const char *buf, off_t len, struct mem_ehdr *ehdr)
 {
 	Elf32_Ehdr lehdr;
-	if (len < sizeof(lehdr)) {
+	if ((uintmax_t)len < (uintmax_t)sizeof(lehdr)) {
 		/* Buffer is to small to be an elf executable */
 		if (probe_debug) {
 			fprintf(stderr, "Buffer is to small to hold ELF header\n");
@@ -170,7 +170,7 @@ static int build_mem_elf32_ehdr(const char *buf, off_t len, struct mem_ehdr *ehd
 static int build_mem_elf64_ehdr(const char *buf, off_t len, struct mem_ehdr *ehdr)
 {
 	Elf64_Ehdr lehdr;
-	if (len < sizeof(lehdr)) {
+	if ((uintmax_t)len < (uintmax_t)sizeof(lehdr)) {
 		/* Buffer is to small to be an elf executable */
 		if (probe_debug) {
 			fprintf(stderr, "Buffer is to small to hold ELF header\n");
@@ -244,7 +244,7 @@ static int build_mem_ehdr(const char *buf, off_t len, struct mem_ehdr *ehdr)
 	unsigned char e_ident[EI_NIDENT];
 	int result;
 	memset(ehdr, 0, sizeof(*ehdr));
-	if (len < sizeof(e_ident)) {
+	if ((uintmax_t)len < (uintmax_t)sizeof(e_ident)) {
 		/* Buffer is to small to be an elf executable */
 		if (probe_debug) {
 			fprintf(stderr, "Buffer is to small to hold ELF e_ident\n");
@@ -387,7 +387,7 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 		return -1;
 	}
 	phdr_size *= ehdr->e_phnum;
-	if (ehdr->e_phoff + phdr_size > len) {
+	if ((uintmax_t)(ehdr->e_phoff + phdr_size) > (uintmax_t)len) {
 		/* The program header did not fit in the file buffer */
 		if (probe_debug) {
 			fprintf(stderr, "ELF program segment truncated\n");
@@ -420,7 +420,8 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 		 */
 		phdr = &ehdr->e_phdr[i];
 		if (!(flags & ELF_SKIP_FILESZ_CHECK)
-			&& (phdr->p_offset + phdr->p_filesz) > len) {
+			&& (uintmax_t)(phdr->p_offset + phdr->p_filesz) >
+			   (uintmax_t)len) {
 			/* The segment does not fit in the buffer */
 			if (probe_debug) {
 				fprintf(stderr, "ELF segment not in file\n");
@@ -599,7 +600,7 @@ static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 		return -1;
 	}
 	shdr_size *= ehdr->e_shnum;
-	if (ehdr->e_shoff + shdr_size > len) {
+	if ((uintmax_t)(ehdr->e_shoff + shdr_size) > (uintmax_t)len) {
 		/* The section header did not fit in the file buffer */
 		if (probe_debug) {
 			fprintf(stderr, "ELF section header does not fit in file\n");
@@ -631,7 +632,8 @@ static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 		shdr = &ehdr->e_shdr[i];
 		if (!(flags & ELF_SKIP_FILESZ_CHECK)
 			&& (shdr->sh_type != SHT_NOBITS)
-			&& (shdr->sh_offset + shdr->sh_size) > len) {
+			&& (uintmax_t)(shdr->sh_offset + shdr->sh_size) >
+			   (uintmax_t)len) {
 			/* The section does not fit in the buffer */
 			if (probe_debug) {
 				fprintf(stderr, "ELF section %zd not in file\n",

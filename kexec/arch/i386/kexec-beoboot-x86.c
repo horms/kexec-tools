@@ -43,7 +43,7 @@ int beoboot_probe(const char *buf, off_t len)
 	struct beoboot_header bb_header;
 	const char *cmdline, *kernel;
 	int result;
-	if (len < sizeof(bb_header)) {
+	if ((uintmax_t)len < (uintmax_t)sizeof(bb_header)) {
 		return -1;
 	}
 	memcpy(&bb_header, buf, sizeof(bb_header));
