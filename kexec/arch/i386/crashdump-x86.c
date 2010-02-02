@@ -111,7 +111,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		}
 
 		/* First 640K already registered */
-		if (start >= 0x00000000 && end <= 0x0009ffff)
+		if (start >= 0x00000000ULL && end <= 0x0009ffffULL)
 			continue;
 
 		crash_memory_range[memory_ranges].start = start;
@@ -141,7 +141,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 			}
 		}
 		if (crash_reserved_mem.start >= mem_max) {
-			fprintf(stderr, "Too small mem_max: 0x%lx.\n", mem_max);
+			fprintf(stderr, "Too small mem_max: 0x%llx.\n",
+				mem_max);
 			return -1;
 		}
 		crash_reserved_mem.end = mem_max;
