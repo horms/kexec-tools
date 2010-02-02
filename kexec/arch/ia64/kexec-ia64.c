@@ -101,7 +101,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	while(fgets(line, sizeof(line), fp) != 0) {
 		unsigned long start, end;
 		char *str;
-		int type;
+		unsigned type;
 		int consumed;
 		int count;
 		if (memory_ranges >= max_memory_ranges)
@@ -219,13 +219,14 @@ int arch_compat_trampoline(struct kexec_info *UNUSED(info))
 int update_loaded_segments(struct mem_ehdr *ehdr)
 {
 	int i;
+	unsigned u;
 	struct mem_phdr *phdr;
 	unsigned long start_addr = ULONG_MAX, end_addr = 0;
 	unsigned long align = 1UL<<26; /* 64M */
 	unsigned long start, end;
 
-	for (i = 0; i < ehdr->e_phnum; i++) {
-		phdr = &ehdr->e_phdr[i];
+	for (u = 0; u < ehdr->e_phnum; u++) {
+		phdr = &ehdr->e_phdr[u];
 		if (phdr->p_type != PT_LOAD)
 			continue;
 		if (phdr->p_paddr < start_addr)

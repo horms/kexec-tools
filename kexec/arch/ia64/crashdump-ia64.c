@@ -73,7 +73,7 @@ static int seg_comp(const void *a, const void *b)
  */
 static void add_loaded_segments_info(struct mem_ehdr *ehdr)
 {
-	 int i;
+	 unsigned i;
          for(i = 0; i < ehdr->e_phnum; i++) {
                 struct mem_phdr *phdr;
                 phdr = &ehdr->e_phdr[i];

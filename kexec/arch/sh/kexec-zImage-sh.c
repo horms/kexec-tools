@@ -74,8 +74,8 @@ int zImage_sh_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
         char *command_line;
-	int opt, k;
-	unsigned long empty_zero, zero_page_base, zero_page_size;
+	int opt;
+	unsigned long empty_zero, zero_page_base, zero_page_size, k;
 	unsigned long image_base;
 	char *param;
 

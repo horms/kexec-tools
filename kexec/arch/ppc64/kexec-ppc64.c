@@ -148,7 +148,8 @@ static int get_dyn_reconf_base_ranges(void)
 	uint64_t start, end;
 	char fname[128], buf[32];
 	FILE *file;
-	int i, n;
+	unsigned int i;
+	int n;
 
 	strcpy(fname, "/proc/device-tree/");
 	strcat(fname, "ibm,dynamic-reconfiguration-memory/ibm,lmb-size");

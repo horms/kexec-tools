@@ -84,7 +84,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	size_t size;
 	uint64_t *rsvmap_ptr;
 	struct bootblock *bb_ptr;
-	unsigned int i;
+	int i;
 	int result, opt;
 	uint64_t my_kernel, my_dt_offset;
 	unsigned int my_panic_kernel;

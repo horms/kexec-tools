@@ -154,6 +154,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	struct AddrRangeDesc *mmap;
 	int command_line_len;
 	int i;
+	uint32_t u;
 	int opt;
 	int modules, mod_command_line_space;
 #define OPT_CL  		(OPT_ARCH_MAX+0)
@@ -375,8 +376,8 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	/* Relocate offsets in the MBI to absolute addresses */
 	mbi_offset = mbi_base;
 	modp = ((void *)mbi) + mbi->mods_addr;
-	for (i=0; i<mbi->mods_count; i++) {
-		modp[i].cmdline += mbi_offset;
+	for (u = 0; u < mbi->mods_count; u++) {
+		modp[u].cmdline += mbi_offset;
 	}
 	mbi->mods_addr += mbi_offset;
 	mbi->cmdline += mbi_offset;

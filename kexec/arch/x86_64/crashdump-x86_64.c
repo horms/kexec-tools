@@ -487,7 +487,8 @@ static void ultoa(unsigned long i, char *str)
  * memory regions the new kernel can use to boot into. */
 static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 {
-	int i, cmdlen, len, min_sizek = 100;
+	int i, cmdlen, len;
+	unsigned long min_sizek = 100;
 	char str_mmap[256], str_tmp[20];
 
 	/* Exact map */

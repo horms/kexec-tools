@@ -98,7 +98,7 @@ void elf_ia64_usage(void)
  */
 void move_loaded_segments(struct mem_ehdr *ehdr, unsigned long addr)
 {
-	int i;
+	unsigned i;
 	long offset;
 	struct mem_phdr *phdr;
 	for(i = 0; i < ehdr->e_phnum; i++) {

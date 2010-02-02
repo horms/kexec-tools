@@ -127,8 +127,9 @@ static void add_dyn_reconf_usable_mem_property(int fd)
 	uint64_t buf[32];
 	uint64_t ranges[2*MAX_MEMORY_RANGES];
 	uint64_t base, end, loc_base, loc_end;
-	int range, rlen = 0, i;
-	int rngs_cnt, tmp_indx;
+	size_t i, rngs_cnt, range;
+	int rlen = 0;
+	int tmp_indx;
 
 	strcpy(fname, pathname);
 	bname = strrchr(fname, '/');
@@ -189,13 +190,15 @@ static void add_dyn_reconf_usable_mem_property(int fd)
 	dt += (rlen + 3)/4;
 }
 
-static void add_usable_mem_property(int fd, int len)
+static void add_usable_mem_property(int fd, size_t len)
 {
 	char fname[MAXPATH], *bname;
 	uint64_t buf[2];
 	uint64_t ranges[2*MAX_MEMORY_RANGES];
 	uint64_t base, end, loc_base, loc_end;
-	int range, rlen = 0;
+	size_t range;
+	int rlen = 0;
+	ssize_t slen;
 
 	strcpy(fname, pathname);
 	bname = strrchr(fname,'/');
@@ -206,12 +209,12 @@ static void add_usable_mem_property(int fd, int len)
 
 	if (len < 2 * sizeof(uint64_t))
 		die("unrecoverable error: not enough data for mem property\n");
-	len = 2 * sizeof(uint64_t);
+	slen = 2 * sizeof(uint64_t);
 
 	if (lseek(fd, 0, SEEK_SET) < 0)
 		die("unrecoverable error: error seeking in \"%s\": %s\n",
 		    pathname, strerror(errno));
-	if (read(fd, buf, len) != len)
+	if (read(fd, buf, slen) != slen)
 		die("unrecoverable error: error reading \"%s\": %s\n",
 		    pathname, strerror(errno));
 
@@ -263,7 +266,9 @@ static void add_usable_mem_property(int fd, int len)
 static void putprops(char *fn, struct dirent **nlist, int numlist)
 {
 	struct dirent *dp;
-	int i = 0, fd, len;
+	int i = 0, fd;
+	size_t len;
+	ssize_t slen;
 	struct stat statbuf;
 
 	for (i = 0; i < numlist; i++) {
@@ -324,9 +329,13 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 			die("unrecoverable error: could not open \"%s\": %s\n",
 			    pathname, strerror(errno));
 
-		if (read(fd, dt, len) != len)
+		slen = read(fd, dt, len);
+		if (slen < 0)
 			die("unrecoverable error: could not read \"%s\": %s\n",
 			    pathname, strerror(errno));
+		if ((size_t)slen != len)
+			die("unrecoverable error: short read from\"%s\"\n",
+			    pathname);
 
 		checkprop(fn, dt, len);
 

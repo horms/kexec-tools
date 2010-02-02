@@ -369,8 +369,7 @@ static int build_mem_elf64_phdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 				uint32_t flags)
 {
-	size_t phdr_size, mem_phdr_size;
-	int i;
+	size_t phdr_size, mem_phdr_size, i;
 
 	/* e_phnum is at most 65535 so calculating
 	 * the size of the program header cannot overflow.
@@ -582,8 +581,7 @@ static int build_mem_elf64_shdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 				uint32_t flags)
 {
-	size_t shdr_size, mem_shdr_size;
-	int i;
+	size_t shdr_size, mem_shdr_size, i;
 
 	/* e_shnum is at most 65536 so calculating
 	 * the size of the section header cannot overflow.
@@ -636,7 +634,7 @@ static int build_mem_shdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 			&& (shdr->sh_offset + shdr->sh_size) > len) {
 			/* The section does not fit in the buffer */
 			if (probe_debug) {
-				fprintf(stderr, "ELF section %d not in file\n",
+				fprintf(stderr, "ELF section %zd not in file\n",
 					i);
 			}
 			return -1;
@@ -666,8 +664,7 @@ static void read_nhdr(const struct mem_ehdr *ehdr,
 static int build_mem_notes(struct mem_ehdr *ehdr)
 {
 	const unsigned char *note_start, *note_end, *note;
-	size_t note_size;
-	int i;
+	size_t note_size, i;
 	/* First find the note segment or section */
 	note_start = note_end = NULL;
 	for(i = 0; !note_start && (i < ehdr->e_phnum); i++) {

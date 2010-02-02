@@ -91,7 +91,7 @@ LZFILE *lzopen(const char *path, const char *mode)
 int lzclose(LZFILE *lzfile)
 {
 	lzma_ret ret;
-	int n;
+	size_t n;
 
 	if (!lzfile)
 		return -1;

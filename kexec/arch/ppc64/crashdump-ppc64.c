@@ -126,7 +126,8 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 	uint64_t start, end;
 	char fname[128], buf[32];
 	FILE *file;
-	int i, n;
+	unsigned int i;
+	int n;
 	uint32_t flags;
 
 	strcpy(fname, "/proc/device-tree/");
@@ -450,7 +451,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 {
-	int i;
+	unsigned int i;
 	unsigned long long end = base + size;
 	unsigned long long ustart, uend;
 
