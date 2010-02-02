@@ -99,15 +99,19 @@ void elf_ia64_usage(void)
 void move_loaded_segments(struct mem_ehdr *ehdr, unsigned long addr)
 {
 	unsigned i;
-	long offset;
+	long offset = 0;
+	int found = 0;
 	struct mem_phdr *phdr;
 	for(i = 0; i < ehdr->e_phnum; i++) {
 		phdr = &ehdr->e_phdr[i];
 		if (phdr->p_type == PT_LOAD) {
 			offset = addr - phdr->p_paddr;
+			found++;
 			break;
 		}
 	}
+	if (!found)
+		die("move_loaded_segments: no PT_LOAD region 0x%016x\n", addr);
 	ehdr->e_entry += offset;
 	for(i = 0; i < ehdr->e_phnum; i++) {
 		phdr = &ehdr->e_phdr[i];
