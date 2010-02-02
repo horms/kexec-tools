@@ -216,7 +216,7 @@ int arch_compat_trampoline(struct kexec_info *UNUSED(info))
 	return 0;
 }
 
-int update_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr)
+int update_loaded_segments(struct mem_ehdr *ehdr)
 {
 	int i;
 	struct mem_phdr *phdr;
@@ -247,7 +247,7 @@ int update_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr)
 		start = (memory_range[i].start + align - 1) & ~(align - 1);
 		end = memory_range[i].end;
 		if (end > start && (end - start) > (end_addr - start_addr)) {
-		    move_loaded_segments(info, ehdr, start);
+		    move_loaded_segments(ehdr, start);
 			return 0;
 		}
 	}

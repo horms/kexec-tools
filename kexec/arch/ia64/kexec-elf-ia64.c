@@ -96,8 +96,7 @@ void elf_ia64_usage(void)
 
 /* Move the crash kerenl physical offset to reserved region
  */
-void move_loaded_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
-			  unsigned long addr)
+void move_loaded_segments(struct mem_ehdr *ehdr, unsigned long addr)
 {
 	int i;
 	long offset;
@@ -198,8 +197,8 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 			free_elf_info(&ehdr);
 			return -1;
 		}
-		move_loaded_segments(info, &ehdr, mem_min);
-	} else if (update_loaded_segments(info, &ehdr) < 0) {
+		move_loaded_segments(&ehdr, mem_min);
+	} else if (update_loaded_segments(&ehdr) < 0) {
 		fprintf(stderr, "Failed to place kernel\n");
 		return -1;
 	}
