@@ -111,7 +111,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		}
 
 		/* First 640K already registered */
-		if (start >= 0x00000000ULL && end <= 0x0009ffffULL)
+		if (end <= 0x0009ffff)
 			continue;
 
 		crash_memory_range[memory_ranges].start = start;
