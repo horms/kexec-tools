@@ -164,10 +164,10 @@ char *get_append(void)
         return append_buf;
 }
 
-void kexec_sh_setup_zero_page(char *zero_page_buf, int zero_page_size,
+void kexec_sh_setup_zero_page(char *zero_page_buf, size_t zero_page_size,
 			      char *cmd_line)
 {
-	int n = zero_page_size - 0x100;
+	size_t n = zero_page_size - 0x100;
 
 	memset(zero_page_buf, 0, zero_page_size);
 
