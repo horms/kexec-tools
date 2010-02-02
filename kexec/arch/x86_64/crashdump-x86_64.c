@@ -286,7 +286,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end)
 {
 	int i, j, tidx = -1;
-	struct memory_range temp_region;
+	struct memory_range temp_region = { 0, 0, 0 };
 
 	for (i = 0; i < (*nr_ranges); i++) {
 		unsigned long long mstart, mend;
@@ -385,7 +385,7 @@ static int delete_memmap(struct memory_range *memmap_p, unsigned long long addr,
 {
 	int i, j, nr_entries = 0, tidx = -1, operation = 0, align = 1024;
 	unsigned long long mstart, mend;
-	struct memory_range temp_region;
+	struct memory_range temp_region = { 0, 0, 0 };
 
 	/* Do alignment check. */
 	if ((addr%align) || (size%align))
