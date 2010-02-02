@@ -208,7 +208,7 @@ unsigned long locate_hole(struct kexec_info *info,
 		hole_align = 1;
 	}
 	/* Align everything to at least a page size boundary */
-	if (hole_align < getpagesize()) {
+	if (hole_align < (unsigned long)getpagesize()) {
 		hole_align = getpagesize();
 	}
 
