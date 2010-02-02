@@ -207,7 +207,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	}
 
 	/* Add v2wrap to the current image */
-	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
+	elf_rel_build_load(info, &info->rhdr, purgatory,
 				purgatory_size, 0, max_addr, 1, 0);
 
 	/* Add a ram-disk to the current image

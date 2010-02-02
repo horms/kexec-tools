@@ -200,10 +200,10 @@ int do_bzImage_load(struct kexec_info *info,
 	 * overflow takes place while applying relocations.
 	 */
 	if (!real_mode_entry && relocatable_kernel)
-		elf_rel_build_load(info, &info->rhdr, (char *) purgatory, purgatory_size,
+		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
 					0x3000, 0x7fffffff, -1, 0);
 	else
-		elf_rel_build_load(info, &info->rhdr, (char *) purgatory, purgatory_size,
+		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
 					0x3000, 640*1024, -1, 0);
 	dbgprintf("Loaded purgatory at addr 0x%lx\n", info->rhdr.rel_addr);
 	/* The argument/parameter segment */

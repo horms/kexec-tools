@@ -191,7 +191,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	/* Do we want arguments? */
 	if (arg_style != ARG_STYLE_NONE) {
 		/* Load the setup code */
-		elf_rel_build_load(info, &info->rhdr, (char *) purgatory, purgatory_size,
+		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
 			0, ULONG_MAX, 1, 0);
 	}
 	if (arg_style == ARG_STYLE_NONE) {
