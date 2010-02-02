@@ -34,7 +34,7 @@ static const int probe_debug = 0;
 #define HEAD32_INIT_SR 3
 #define HEAD32_INIT_SR_VALUE 0x400000F0
 
-unsigned long zImage_head32(const char *buf, off_t len, int offs)
+static unsigned long zImage_head32(const char *buf, off_t len, int offs)
 {
 	unsigned long *values = (void *)buf;
 	int k;
