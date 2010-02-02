@@ -152,7 +152,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 	return 0;
 }
 
-static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
+static int get_crash_memory_ranges(int *ranges)
 {
 	const char *iomem = proc_iomem();
         char line[MAX_LINE];
@@ -236,7 +236,7 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 	size_t size;
 	void *tmp;
 	if (info->kexec_flags & KEXEC_ON_CRASH &&
-	    get_crash_memory_ranges(&mem_range, &nr_ranges) == 0) {
+	    get_crash_memory_ranges(&nr_ranges) == 0) {
 		int i;
 
 		info->kern_paddr_start = kernel_code_start;
