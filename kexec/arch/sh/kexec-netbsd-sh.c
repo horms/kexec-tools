@@ -26,7 +26,7 @@
 #include <arch/options.h>
 
 static const int probe_debug = 0;
-const extern unsigned char netbsd_booter[];
+extern const unsigned char netbsd_booter[];
 
 /*
  * netbsd_sh_probe - sanity check the elf image
