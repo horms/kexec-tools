@@ -40,7 +40,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		      unsigned long UNUSED(flags))
 {
 	char sys_ram[] = "System RAM\n";
-	char *iomem = proc_iomem();
+	const char *iomem = proc_iomem();
 	FILE *fp;
 	char line[80];
 	int current_range = 0;
