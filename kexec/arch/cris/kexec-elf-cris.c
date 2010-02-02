@@ -131,6 +131,6 @@ int elf_cris_load(int argc, char **argv, const char *buf, off_t len,
 					  4, 0, elf_max_addr(&ehdr), 1);
 	memcpy(trampoline_buf,
 	       cris_trampoline, cris_trampoline_size);
-	info->entry = trampoline_base;
+	info->entry = (void *)trampoline_base;
 	return 0;
 }
