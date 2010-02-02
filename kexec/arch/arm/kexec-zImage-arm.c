@@ -132,7 +132,7 @@ int atag_arm_load(struct kexec_info *info, unsigned long base,
 	char *buf;
 	off_t len;
 	struct tag *params;
-	uint32_t *initrd_start;
+	uint32_t *initrd_start = NULL;
 	
 	buf = xmalloc(getpagesize());
 	if (!buf) {
