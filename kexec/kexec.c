@@ -1041,6 +1041,8 @@ int main(int argc, char *argv[])
 	};
 	static const char short_options[] = KEXEC_OPT_STR;
 
+	arch_init();
+
 	opterr = 0; /* Don't complain about unrecognized options here */
 	while ((opt = getopt_long(argc, argv, short_options,
 				  options, 0)) != -1) {

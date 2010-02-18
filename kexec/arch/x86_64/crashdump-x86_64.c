@@ -36,15 +36,6 @@
 #include "crashdump-x86_64.h"
 #include <x86/x86-linux.h>
 
-static struct crash_elf_info elf_info =
-{
-	class: ELFCLASS64,
-	data: ELFDATA2LSB,
-	machine: EM_X86_64,
-	backup_src_start: BACKUP_SRC_START,
-	backup_src_end: BACKUP_SRC_END,
-	page_offset: PAGE_OFFSET,
-};
 
 /* Forward Declaration. */
 static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
@@ -603,6 +594,16 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	unsigned long sz, elfcorehdr;
 	int nr_ranges, align = 1024, i;
 	struct memory_range *mem_range, *memmap_p;
+
+	struct crash_elf_info elf_info =
+	{
+		class: ELFCLASS64,
+		data: ELFDATA2LSB,
+		machine: EM_X86_64,
+		backup_src_start: BACKUP_SRC_START,
+		backup_src_end: BACKUP_SRC_END,
+		page_offset: page_offset,
+	};
 
 	if (get_kernel_paddr(info))
 		return -1;

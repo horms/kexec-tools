@@ -13,6 +13,8 @@ x86_64_KEXEC_SRCS += kexec/arch/x86_64/kexec-x86_64.c
 x86_64_KEXEC_SRCS += kexec/arch/x86_64/kexec-elf-x86_64.c
 x86_64_KEXEC_SRCS += kexec/arch/x86_64/kexec-elf-rel-x86_64.c
 
+x86_64_ARCH_INIT = kexec/arch/x86_64/arch_init.c
+
 dist += kexec/arch/x86_64/Makefile $(x86_64_KEXEC_SRCS)			\
 	kexec/arch/x86_64/kexec-x86_64.h kexec/arch/x86_64/crashdump-x86_64.h \
 	kexec/arch/x86_64/include/arch/options.h
