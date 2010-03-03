@@ -22,6 +22,7 @@
 #define LINUX_REBOOT_CMD_KEXEC_OLD2	0x18263645
 #define LINUX_REBOOT_CMD_KEXEC		0x45584543
 
+#ifndef __NR_kexec_load
 #ifdef __i386__
 #define __NR_kexec_load		283
 #endif
@@ -60,6 +61,7 @@
 #ifndef __NR_kexec_load
 #error Unknown processor architecture.  Needs a kexec_load syscall number.
 #endif
+#endif /*ifndef __NR_kexec_load*/
 
 struct kexec_segment;
 

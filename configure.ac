@@ -39,7 +39,7 @@ case $target_cpu in
 	sh4|sh4a|sh3|sh )
 		ARCH="sh"
 		;;
-	mips|mipsel )
+	mips* )
 		ARCH="mips"
 		;;
 	cris|crisv32 )
