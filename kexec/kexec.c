@@ -1007,9 +1007,9 @@ char *concat_cmdline(const char *base, const char *append)
 	char *cmdline;
 	if (!base && !append)
 		return NULL;
-	if (append)
+	if (append && !base)
 		return xstrdup(append);
-	if (base)
+	if (base && !append)
 		return xstrdup(base);
 	cmdline = xmalloc(strlen(base) + 1 + strlen(append) + 1);
 	strcpy(cmdline, base);
