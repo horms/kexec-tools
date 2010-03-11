@@ -695,17 +695,19 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 			}
 		}
 	}
+	/* Figure out our native architecture before load */
+	native_arch = physical_arch();
+	if (native_arch < 0) {
+		return -1;
+	}
+	info.kexec_flags |= native_arch;
+
 	if (file_type[i].load(argc, argv, kernel_buf,
 			      kernel_size, &info) < 0) {
 		fprintf(stderr, "Cannot load %s\n", kernel);
 		return -1;
 	}
 	/* If we are not in native mode setup an appropriate trampoline */
-	native_arch = physical_arch();
-	if (native_arch < 0) {
-		return -1;
-	}
-	info.kexec_flags |= native_arch;
 	if (arch_compat_trampoline(&info) < 0) {
 		return -1;
 	}
