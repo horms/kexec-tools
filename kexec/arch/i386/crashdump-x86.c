@@ -509,7 +509,7 @@ static struct crash_elf_info elf_info32 =
 static enum coretype get_core_type(struct kexec_info *info,
 				   struct memory_range *range, int ranges)
 {
-	if (info->kexec_flags & KEXEC_ARCH_X86_64)
+	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64)
 		return CORE_TYPE_ELF64;
 	else {
 		/* fall back to default */
@@ -534,6 +534,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	unsigned long sz, elfcorehdr;
 	int nr_ranges, align = 1024;
 	struct memory_range *mem_range, *memmap_p;
+	unsigned machine;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges,
 				    info->kexec_flags) < 0)
@@ -546,6 +547,12 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	if (arch_options.core_header_type == CORE_TYPE_UNDEF) {
 		arch_options.core_header_type =
 			get_core_type(info, mem_range, nr_ranges);
+	}
+
+        /* Get the elf architecture of the running kernel */
+	machine = EM_386;
+	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
+		machine = EM_X86_64;
 	}
 
 	/* Memory regions which panic kernel can safely use to boot into */
@@ -571,6 +578,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	/* Create elf header segment and store crash image data. */
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		elf_info64.machine = machine;
 		if (crash_create_elf64_headers(info, &elf_info64,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz,
@@ -578,6 +586,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 			return -1;
 	}
 	else {
+		elf_info32.machine = machine;
 		if (crash_create_elf32_headers(info, &elf_info32,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz,
