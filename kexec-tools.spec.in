@@ -2,7 +2,7 @@ Summary: Load one kernel from another
 Name: kexec-tools
 Version: 
 Release: 0
-Copyright: GPL
+License: GPL
 Group: Development/Tools
 Source0:%{name}-%{version}.tar.gz
 Packager: Eric Biederman <ebiederman@xmission.com>
