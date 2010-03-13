@@ -58,7 +58,7 @@ static unsigned long long parse_numeric_sysfs(const char *filename)
 {
 	FILE *fp;
 	char linebuffer[BUFSIZ];
-	unsigned long long retval;
+	unsigned long long retval = ULLONG_MAX;
 
 	fp = fopen(filename, "r");
 	if (!fp) {
@@ -67,12 +67,15 @@ static unsigned long long parse_numeric_sysfs(const char *filename)
 		return ULLONG_MAX;
 	}
 
-	fgets(linebuffer, BUFSIZ, fp);
+	if (!fgets(linebuffer, BUFSIZ, fp))
+		goto err;
+
 	linebuffer[BUFSIZ-1] = 0;
 
 	/* let strtoll() detect the base */
 	retval = strtoll(linebuffer, NULL, 0);
 
+err:
 	fclose(fp);
 
 	return retval;
@@ -100,7 +103,11 @@ static char *parse_string_sysfs(const char *filename)
 		return NULL;
 	}
 
-	fgets(linebuffer, BUFSIZ, fp);
+	if (!fgets(linebuffer, BUFSIZ, fp)) {
+		fclose(fp);
+		return NULL;
+	}
+
 	linebuffer[BUFSIZ-1] = 0;
 
 	/* truncate trailing newline(s) */
