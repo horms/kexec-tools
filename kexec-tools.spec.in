@@ -30,6 +30,8 @@ make install DESTDIR=${RPM_BUILD_ROOT}
 %files
 %defattr(-,root,root)
 %{_sbindir}/kexec
+%{_sbindir}/kdump
+%{_libdir}/%{name}/kexec_test
 %doc News
 %doc COPYING
 %doc TODO
