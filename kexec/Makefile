@@ -32,6 +32,7 @@ dist += kexec/Makefile $(KEXEC_SRCS) $(KEXEC_GENERATED_SRCS)	\
 	kexec/crashdump.h kexec/firmware_memmap.h		\
 	kexec/kexec-elf-boot.h					\
 	kexec/kexec-elf.h kexec/kexec-sha256.h			\
+	kexec/kexec-zlib.h kexec/kexec-lzma.h			\
 	kexec/kexec-syscall.h kexec/kexec.h kexec/kexec.8
 
 $(ARCH)_PROC_IOMEM		= kexec/proc_iomem.c

@@ -6,6 +6,7 @@ dist += include/Makefile		\
 	include/x86/mb_header.h		\
 	include/elf.h			\
 	include/image.h			\
+	include/unused.h		\
 	include/boot/linuxbios_tables.h	\
 	include/boot/beoboot.h		\
 	include/boot/elf_boot.h
