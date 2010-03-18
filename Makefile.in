@@ -202,7 +202,7 @@ $(TARBALL.gz): $(TARBALL)
 	gzip -c < $^ > $@
 
 RPMDIR=rpm
-rpm: $(TARBALL)
+rpm: $(TARBALL.gz)
 	$(MKDIR) -p $(RPMDIR)/RPM $(RPMDIR)/SRPM $(RPMDIR)/BUILD \
 		$(RPMDIR)/SPECS $(RPMDIR)/TMP $(RPMDIR)/SOURCES
 	unset MAKEFLAGS MAKELEVEL; \
@@ -213,7 +213,7 @@ rpm: $(TARBALL)
 		--define '_specdir $(RPMDIR)/SPECS' \
 		--define '_tmppath $(RPMDIR)/TMP' \
 		--define '_sourcedir $(RPMDIR)/SOURCES' \
-		$(TARBALL)
+		$(TARBALL.gz)
 
 $(SPEC): kexec-tools.spec.in Makefile
 	$(SED) -e 's,^Version: $$,Version: $(PACKAGE_VERSION),' $< > $@
