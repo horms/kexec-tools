@@ -200,19 +200,9 @@ $(TARBALL): $(SRCS) $(GENERATED_SRCS)
 $(TARBALL.gz): $(TARBALL)
 	gzip -c < $^ > $@
 
-RPMDIR=rpm
 rpm: $(TARBALL.gz)
-	$(MKDIR) -p $(RPMDIR)/RPM $(RPMDIR)/SRPM $(RPMDIR)/BUILD \
-		$(RPMDIR)/SPECS $(RPMDIR)/TMP $(RPMDIR)/SOURCES
-	unset MAKEFLAGS MAKELEVEL; \
-	$(RPMBUILD) -ta \
-		--define '_rpmdir $(RPMDIR)/RPM' \
-		--define '_srcrpmdir $(RPMDIR)/SRPM' \
-		--define '_builddir $(RPMDIR)/BUILD' \
-		--define '_specdir $(RPMDIR)/SPECS' \
-		--define '_tmppath $(RPMDIR)/TMP' \
-		--define '_sourcedir $(RPMDIR)/SOURCES' \
-		$(TARBALL.gz)
+	unset MAKEFLAGS MAKELEVEL;
+	$(RPMBUILD) -ta $(TARBALL.gz)
 
 $(SPEC): kexec-tools.spec.in Makefile
 	$(SED) -e 's,^Version: $$,Version: $(PACKAGE_VERSION),' $< > $@
@@ -227,7 +217,7 @@ echo::
 
 clean:
 	$(RM) -f $(clean)
-	$(RM) -rf rpm build
+	$(RM) -rf build
 	$(RM) -f $(TARBALL) $(TARBALL.gz)
 
 distclean: dist-clean
