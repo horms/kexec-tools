@@ -110,7 +110,11 @@ struct tag * atag_read_tags(void)
 		return NULL;
 	}
 
-	fread(buf, sizeof(buf[1]), BOOT_PARAMS_SIZE, fp);
+	if (!fread(buf, sizeof(buf[1]), BOOT_PARAMS_SIZE, fp)) {
+		fclose(fp);
+		return NULL;
+	}
+
 	if (ferror(fp)) {
 		fprintf(stderr, "Cannot read %s: %s\n",
 			fn, strerror(errno));
