@@ -9,7 +9,7 @@ AC_CONFIG_AUX_DIR(./config)
 AC_CONFIG_HEADERS([include/config.h])
 AC_LANG(C)
 
-AC_DEFINE_UNQUOTED(PACKAGE_DATE, "13th August 2009",
+AC_DEFINE_UNQUOTED(PACKAGE_DATE, "`date '+%d %B %Y'`",
 		[Define to the release date of this package])
 
 
