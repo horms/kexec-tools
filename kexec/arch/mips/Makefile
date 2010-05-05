@@ -14,5 +14,3 @@ dist += kexec/arch/mips/Makefile $(mips_KEXEC_SRCS)			\
 	kexec/arch/mips/kexec-mips.h					\
 	kexec/arch/mips/crashdump-mips.h				\
 	kexec/arch/mips/include/arch/options.h
-
-CFLAGS +=-Wall -Werror
