@@ -104,8 +104,3 @@ int arch_compat_trampoline(struct kexec_info *UNUSED(info))
 void arch_update_purgatory(struct kexec_info *UNUSED(info))
 {
 }
-
-int is_crashkernel_mem_reserved(void)
-{
-	return 0; /* kdump is not supported on this platform (yet) */
-}

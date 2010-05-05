@@ -12,10 +12,12 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <getopt.h>
+#include <unistd.h>
 #include <arch/options.h>
 #include "../../kexec.h"
+#include "../../kexec-syscall.h"
+#include "crashdump-arm.h"
 
-#define COMMAND_LINE_SIZE 1024
 #define BOOT_PARAMS_SIZE 1536
 
 struct tag_header {
@@ -213,6 +215,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
 	unsigned int offset = 0x8000;      /* 32k offset from memory start */
 	const char *command_line;
+	char *modified_cmdline = NULL;
 	off_t command_line_len;
 	const char *ramdisk;
 	char *ramdisk_buf;
@@ -266,7 +269,47 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
 	}
 
-	base = locate_hole(info,len+offset,0,0,ULONG_MAX,INT_MAX);
+	/*
+	 * If we are loading a dump capture kernel, we need to update kernel
+	 * command line and also add some additional segments.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		uint64_t start, end;
+
+		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
+		if (!modified_cmdline)
+			return -1;
+
+		if (command_line) {
+			(void) strncpy(modified_cmdline, command_line,
+				       COMMAND_LINE_SIZE);
+			modified_cmdline[COMMAND_LINE_SIZE - 1] = '\0';
+		}
+
+		if (load_crashdump_segments(info, modified_cmdline) < 0) {
+			free(modified_cmdline);
+			return -1;
+		}
+
+		command_line = modified_cmdline;
+		command_line_len = strlen(command_line) + 1;
+
+		/*
+		 * We put the dump capture kernel at the start of crashkernel
+		 * reserved memory.
+		 */
+		if (parse_iomem_single("Crash kernel\n", &start, &end)) {
+			/*
+			 * No crash kernel memory reserved. We cannot do more
+			 * but just bail out.
+			 */
+			return -1;
+		}
+		base = start;
+	} else {
+		base = locate_hole(info,len+offset,0,0,ULONG_MAX,INT_MAX);
+	}
+
 	if (base == ULONG_MAX)
 		return -1;
 
