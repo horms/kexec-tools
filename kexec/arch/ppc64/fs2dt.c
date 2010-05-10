@@ -35,13 +35,14 @@
 
 #define MAXPATH 1024		/* max path name length */
 #define NAMESPACE 16384		/* max bytes for property names */
-#define TREEWORDS 65536		/* max 32 bit words for property values */
+#define INIT_TREE_WORDS 65536	/* Initial num words for prop values */
 #define MEMRESERVE 256		/* max number of reserved memory blocks */
 #define MAX_MEMORY_RANGES 1024
 
 static char pathname[MAXPATH], *pathstart;
 static char propnames[NAMESPACE] = { 0 };
-static unsigned dtstruct[TREEWORDS] __attribute__ ((aligned (8))), *dt;
+static unsigned *dt_base, *dt;
+static unsigned int dt_cur_size;
 static unsigned long long mem_rsrv[2*MEMRESERVE] = { 0, 0 };
 
 static int crash_param = 0;
@@ -49,6 +50,28 @@ static char local_cmdline[COMMAND_LINE_SIZE] = { "" };
 extern mem_rgns_t usablemem_rgns;
 static struct bootblock bb[1];
 extern int my_debug;
+
+/* Before we add something to the dt, reserve N words using this.
+ * If there isn't enough room, it's realloced -- and you don't overflow and
+ * splat bits of your heap. 
+ */
+void dt_reserve(unsigned **dt_ptr, unsigned words)
+{
+	if (((*dt_ptr - dt_base) + words) >= dt_cur_size) {
+		int offset;
+		unsigned int new_size = dt_cur_size + INIT_TREE_WORDS;
+		unsigned *new_dt = realloc(dt_base, new_size*4);
+
+		if (!new_dt)
+			die("unrecoverable error: Can't realloc %d bytes for "
+			    "device tree\n", new_size*4);
+		offset = *dt_ptr - dt_base;
+		dt_base = new_dt;
+		dt_cur_size = new_size;
+		*dt_ptr = dt_base + offset;
+		memset(*dt_ptr, 0, (new_size - offset)*4);
+	}
+}
 
 void reserve(unsigned long long where, unsigned long long length)
 {
@@ -181,6 +204,7 @@ static void add_dyn_reconf_usable_mem_property(int fd)
 	/*
 	 * Add linux,drconf-usable-memory property.
 	 */
+	dt_reserve(&dt, 4+((rlen + 3)/4));
 	*dt++ = 3;
 	*dt++ = rlen;
 	*dt++ = propnum("linux,drconf-usable-memory");
@@ -253,6 +277,7 @@ static void add_usable_mem_property(int fd, size_t len)
 	/*
 	 * No add linux,usable-memory property.
 	 */
+	dt_reserve(&dt, 4+((rlen + 3)/4));
 	*dt++ = 3;
 	*dt++ = rlen;
 	*dt++ = propnum("linux,usable-memory");
@@ -317,6 +342,7 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 
 		len = statbuf.st_size;
 
+		dt_reserve(&dt, 4+((len + 3)/4));
 		*dt++ = 3;
 		*dt++ = len;
 		*dt++ = propnum(fn);
@@ -388,13 +414,17 @@ static void putnode(void)
 	struct dirent **namelist;
 	int numlist, i;
 	struct stat statbuf;
+	int plen;
 
+	plen = *pathstart ? strlen(pathstart) : 1;
+	/* Reserve space for string packed to words; e.g. string length 10 
+	 * occupies 3 words, length 12 occupies 4 (for terminating \0s).  
+	 * So round up & include the \0:
+	 */
+	dt_reserve(&dt, 1+((plen + 4)/4));
 	*dt++ = 1;
 	strcpy((void *)dt, *pathstart ? pathstart : "/");
-	while(*dt)
-		dt++;
-	if (dt[-1] & 0xff)
-		dt++;
+	dt += ((plen + 4)/4);
 
 	numlist = scandir(pathname, &namelist, 0, comparefunc);
 	if (numlist < 0)
@@ -415,6 +445,8 @@ static void putnode(void)
 	if (initrd_base && !strcmp(basename,"/chosen/")) {
 		int len = 8;
 		unsigned long long initrd_end;
+
+		dt_reserve(&dt, 12); /* both props, of 6 words ea. */
 		*dt++ = 3;
 		*dt++ = len;
 		*dt++ = propnum("linux,initrd-start");
@@ -487,6 +519,7 @@ static void putnode(void)
 		cmd_len = cmd_len + 1;
 
 		/* add new bootargs */
+		dt_reserve(&dt, 4+((cmd_len+3)/4));
 		*dt++ = 3;
 		*dt++ = cmd_len;
 		*dt++ = propnum("bootargs");
@@ -571,6 +604,7 @@ no_debug:
 			putnode();
 	}
 
+	dt_reserve(&dt, 1);
 	*dt++ = 2;
 	dn[-1] = '\0';
 	free(namelist);
@@ -588,12 +622,21 @@ int create_flatten_tree(char **bufp, off_t *sizep, char *cmdline)
 	strcpy(pathname, "/proc/device-tree/");
 
 	pathstart = pathname + strlen(pathname);
-	dt = dtstruct;
+
+	dt_cur_size = INIT_TREE_WORDS;
+	dt_base = malloc(dt_cur_size*4);
+	if (!dt_base) {
+		die("Can't malloc %d bytes for dt struct!\n", dt_cur_size*4);
+	}
+	memset(dt_base, 0, dt_cur_size*4);
+
+	dt = dt_base;
 
 	if (cmdline)
 		strcpy(local_cmdline, cmdline);
 
 	putnode();
+	dt_reserve(&dt, 1);
 	*dt++ = 9;
 
 	len = sizeof(bb[0]);
@@ -608,7 +651,7 @@ int create_flatten_tree(char **bufp, off_t *sizep, char *cmdline)
 
 	bb->off_dt_struct = bb->off_mem_rsvmap + len;
 
-	len = dt - dtstruct;
+	len = dt - dt_base;
 	len *= sizeof(unsigned);
 	bb->off_dt_strings = bb->off_dt_struct + len;
 
@@ -628,10 +671,11 @@ int create_flatten_tree(char **bufp, off_t *sizep, char *cmdline)
 	tlen = bb->off_mem_rsvmap;
 	memcpy(buf+tlen, mem_rsrv, bb->off_dt_struct - bb->off_mem_rsvmap);
 	tlen = tlen + (bb->off_dt_struct - bb->off_mem_rsvmap);
-	memcpy(buf+tlen, dtstruct,  bb->off_dt_strings - bb->off_dt_struct);
+	memcpy(buf+tlen, dt_base,  bb->off_dt_strings - bb->off_dt_struct);
 	tlen = tlen +  (bb->off_dt_strings - bb->off_dt_struct);
 	memcpy(buf+tlen, propnames,  bb->totalsize - bb->off_dt_strings);
 	tlen = tlen + bb->totalsize - bb->off_dt_strings;
 	*sizep = tlen;
+	free(dt_base);
 	return 0;
 }
