@@ -21,6 +21,7 @@
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-ppc.h"
+#include "crashdump-powerpc.h"
 #include <arch/options.h>
 
 #include "config.h"
@@ -45,13 +46,14 @@ static int get_memory_ranges_gc(struct memory_range **range, int *ranges,
 }
 #else
 static int use_new_dtb;
-static int max_memory_ranges;
+int max_memory_ranges;
 static int nr_memory_ranges, nr_exclude_ranges;
 static struct memory_range *exclude_range;
 static struct memory_range *memory_range;
 static struct memory_range *base_memory_range;
 static uint64_t memory_max;
 uint64_t rmo_top;
+unsigned long long crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
 
 /*
@@ -174,6 +176,40 @@ static int sort_base_ranges(void)
 
 #define MAXBYTES 128
 
+static int realloc_memory_ranges(void)
+{
+	size_t memory_range_len;
+
+	max_memory_ranges++;
+	memory_range_len = sizeof(struct memory_range) * max_memory_ranges;
+
+	memory_range = (struct memory_range *) malloc(memory_range_len);
+	if (!memory_range)
+		goto err;
+
+	base_memory_range = (struct memory_range *) realloc(memory_range,
+			memory_range_len);
+	if (!base_memory_range)
+		goto err;
+
+	exclude_range = (struct memory_range *) realloc(exclude_range,
+			memory_range_len);
+	if (!exclude_range)
+		goto err;
+
+	usablemem_rgns.ranges = (struct memory_range *)
+				realloc(usablemem_rgns.ranges,
+						memory_range_len);
+	if (!(usablemem_rgns.ranges))
+		goto err;
+
+	return 0;
+
+err:
+	fprintf(stderr, "memory range structure re-allocation failure\n");
+	return -1;
+}
+
 /* Get base memory ranges */
 static int get_base_ranges(void)
 {
@@ -219,8 +255,10 @@ static int get_base_ranges(void)
 				return -1;
 			}
 			if (local_memory_ranges >= max_memory_ranges) {
-				fclose(file);
-				break;
+				if (realloc_memory_ranges() < 0){
+					fclose(file);
+					break;
+				}
 			}
 			base_memory_range[local_memory_ranges].start =
 				((uint32_t *)buf)[0];
@@ -250,16 +288,23 @@ static int get_base_ranges(void)
 /* Get devtree details and create exclude_range array
  * Also create usablemem_ranges for KEXEC_ON_CRASH
  */
-static int get_devtree_details(unsigned long UNUSED(kexec_flags))
+static int get_devtree_details(unsigned long kexec_flags)
 {
 	uint64_t rmo_base;
-	char buf[MAXBYTES];
+	unsigned long long tce_base;
+	unsigned int tce_size;
+	unsigned long long htab_base, htab_size;
+	unsigned long long kernel_end;
+	unsigned long long initrd_start, initrd_end;
+	char buf[MAXBYTES-1];
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
 	DIR *dir, *cdir;
 	FILE *file;
 	struct dirent *dentry;
+	struct stat fstat;
 	int n, i = 0;
+	unsigned long tmp_long;
 
 	if ((dir = opendir(device_tree)) == NULL) {
 		perror(device_tree);
@@ -269,10 +314,10 @@ static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 	while ((dentry = readdir(dir)) != NULL) {
 		if (strncmp(dentry->d_name, "chosen", 6) &&
 				strncmp(dentry->d_name, "memory@", 7) &&
-				strcmp(dentry->d_name, "memory") &&
+				strncmp(dentry->d_name, "memory", 6) &&
+				strncmp(dentry->d_name, "pci@", 4) &&
 				strncmp(dentry->d_name, "rtas", 4))
 			continue;
-
 		strcpy(fname, device_tree);
 		strcat(fname, dentry->d_name);
 		if ((cdir = opendir(fname)) == NULL) {
@@ -280,13 +325,172 @@ static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 			goto error_opendir;
 		}
 
+		if (strncmp(dentry->d_name, "chosen", 6) == 0) {
+			strcat(fname, "/linux,kernel-end");
+			file = fopen(fname, "r");
+			if (!file) {
+				perror(fname);
+				goto error_opencdir;
+			}
+			if (fread(&tmp_long, sizeof(unsigned long), 1, file)
+					!= 1) {
+				perror(fname);
+				goto error_openfile;
+			}
+			kernel_end = tmp_long;
+			fclose(file);
+
+			/* Add kernel memory to exclude_range */
+			exclude_range[i].start = 0x0UL;
+			exclude_range[i].end = kernel_end;
+			i++;
+			if (i >= max_memory_ranges)
+				realloc_memory_ranges();
+			if (kexec_flags & KEXEC_ON_CRASH) {
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,crashkernel-base");
+				file = fopen(fname, "r");
+				if (!file) {
+					perror(fname);
+					goto error_opencdir;
+				}
+				if (fread(&tmp_long, sizeof(unsigned long), 1,
+						file) != 1) {
+					perror(fname);
+					goto error_openfile;
+				}
+				crash_base = tmp_long;
+				fclose(file);
+
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,crashkernel-size");
+				file = fopen(fname, "r");
+				if (!file) {
+					perror(fname);
+					goto error_opencdir;
+				}
+				if (fread(&tmp_long, sizeof(unsigned long), 1,
+						file) != 1) {
+					perror(fname);
+					goto error_openfile;
+				}
+				crash_size = tmp_long;
+
+				if (crash_base > mem_min)
+					mem_min = crash_base;
+				if (crash_base + crash_size < mem_max)
+					mem_max = crash_base + crash_size;
+
+				add_usable_mem_rgns(0, crash_base + crash_size);
+				reserve(KDUMP_BACKUP_LIMIT,
+						crash_base-KDUMP_BACKUP_LIMIT);
+			}
+			memset(fname, 0, sizeof(fname));
+			strcpy(fname, device_tree);
+			strcat(fname, dentry->d_name);
+			strcat(fname, "/linux,htab-base");
+			file = fopen(fname, "r");
+			if (!file) {
+				closedir(cdir);
+				if (errno == ENOENT) {
+					/* Non LPAR */
+					errno = 0;
+					continue;
+				}
+				perror(fname);
+				goto error_opendir;
+			}
+			if (fread(&htab_base, sizeof(unsigned long), 1, file)
+					!= 1) {
+				perror(fname);
+				goto error_openfile;
+			}
+			memset(fname, 0, sizeof(fname));
+			strcpy(fname, device_tree);
+			strcat(fname, dentry->d_name);
+			strcat(fname, "/linux,htab-size");
+			file = fopen(fname, "r");
+			if (!file) {
+				perror(fname);
+				goto error_opencdir;
+			}
+			if (fread(&htab_size, sizeof(unsigned long), 1, file)
+					!= 1) {
+				perror(fname);
+				goto error_openfile;
+			}
+			/* Add htab address to exclude_range - NON-LPAR only */
+			exclude_range[i].start = htab_base;
+			exclude_range[i].end = htab_base + htab_size;
+			i++;
+			if (i >= max_memory_ranges)
+				realloc_memory_ranges();
+
+			/* reserve the initrd_start and end locations. */
+			if (reuse_initrd) {
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,initrd-start");
+				file = fopen(fname, "r");
+				if (!file) {
+					perror(fname);
+					goto error_opencdir;
+				}
+				/* check for 4 and 8 byte initrd offset sizes */
+				if (stat(fname, &fstat) != 0) {
+					perror(fname);
+					goto error_openfile;
+				}
+				if (fread(&initrd_start, fstat.st_size, 1, file)
+						!= 1) {
+					perror(fname);
+					goto error_openfile;
+				}
+				fclose(file);
+
+				memset(fname, 0, sizeof(fname));
+				strcpy(fname, device_tree);
+				strcat(fname, dentry->d_name);
+				strcat(fname, "/linux,initrd-end");
+				file = fopen(fname, "r");
+				if (!file) {
+					perror(fname);
+					goto error_opencdir;
+				}
+				/* check for 4 and 8 byte initrd offset sizes */
+				if (stat(fname, &fstat) != 0) {
+					perror(fname);
+					goto error_openfile;
+				}
+				if (fread(&initrd_end, fstat.st_size, 1, file)
+						!= 1) {
+					perror(fname);
+					goto error_openfile;
+				}
+				fclose(file);
+
+				/* Add initrd address to exclude_range */
+				exclude_range[i].start = initrd_start;
+				exclude_range[i].end = initrd_end;
+				i++;
+				if (i >= max_memory_ranges)
+					realloc_memory_ranges();
+			}
+		} /* chosen */
+
 		if (strncmp(dentry->d_name, "rtas", 4) == 0) {
 			strcat(fname, "/linux,rtas-base");
 			if ((file = fopen(fname, "r")) == NULL) {
 				perror(fname);
 				goto error_opencdir;
 			}
-			if (fread(&rtas_base, sizeof(unsigned int), 1, file) != 1) {
+			if (fread(&rtas_base, sizeof(unsigned int), 1, file)
+					!= 1) {
 				perror(fname);
 				goto error_openfile;
 			}
@@ -298,7 +502,8 @@ static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 				perror(fname);
 				goto error_opencdir;
 			}
-			if (fread(&rtas_size, sizeof(unsigned int), 1, file) != 1) {
+			if (fread(&rtas_size, sizeof(unsigned int), 1, file)
+					!= 1) {
 				perror(fname);
 				goto error_openfile;
 			}
@@ -307,6 +512,8 @@ static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 			exclude_range[i].start = rtas_base;
 			exclude_range[i].end = rtas_base + rtas_size;
 			i++;
+			if (kexec_flags & KEXEC_ON_CRASH)
+				add_usable_mem_rgns(rtas_base, rtas_size);
 		} /* rtas */
 
 		if (!strncmp(dentry->d_name, "memory@", 7) ||
@@ -336,6 +543,48 @@ static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 			fclose(file);
 			closedir(cdir);
 		} /* memory */
+
+		if (strncmp(dentry->d_name, "pci@", 4) == 0) {
+			strcat(fname, "/linux,tce-base");
+			file = fopen(fname, "r");
+			if (!file) {
+				closedir(cdir);
+				if (errno == ENOENT) {
+					/* Non LPAR */
+					errno = 0;
+					continue;
+				}
+				perror(fname);
+				goto error_opendir;
+			}
+			if (fread(&tce_base, sizeof(unsigned long), 1, file)
+					!= 1) {
+				perror(fname);
+				goto error_openfile;
+				return -1;
+			}
+			memset(fname, 0, sizeof(fname));
+			strcpy(fname, device_tree);
+			strcat(fname, dentry->d_name);
+			strcat(fname, "/linux,tce-size");
+			file = fopen(fname, "r");
+			if (!file) {
+				perror(fname);
+				goto error_opencdir;
+			}
+			if (fread(&tce_size, sizeof(unsigned int), 1, file)
+					!= 1) {
+				perror(fname);
+				goto error_openfile;
+			}
+			/* Add tce to exclude_range - NON-LPAR only */
+			exclude_range[i].start = tce_base;
+			exclude_range[i].end = tce_base + tce_size;
+			i++;
+			if (kexec_flags & KEXEC_ON_CRASH)
+				add_usable_mem_rgns(tce_base, tce_size);
+			closedir(cdir);
+		} /* pci */
 	}
 	closedir(dir);
 
@@ -347,8 +596,8 @@ static int get_devtree_details(unsigned long UNUSED(kexec_flags))
 	int k;
 	for (k = 0; k < i; k++)
 		fprintf(stderr, "exclude_range sorted exclude_range[%d] "
-				"start:%llx, end:%llx\n", k, exclude_range[k].start,
-				exclude_range[k].end);
+			"start:%llx, end:%llx\n", k, exclude_range[k].start,
+			exclude_range[k].end);
 #endif
 	return 0;
 
@@ -515,7 +764,3 @@ void arch_update_purgatory(struct kexec_info *UNUSED(info))
 {
 }
 
-int is_crashkernel_mem_reserved(void)
-{
-	return 0; /* kdump is not supported on this platform (yet) */
-}

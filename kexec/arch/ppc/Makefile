@@ -11,6 +11,8 @@ ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-uImage-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-simple.S
 ppc_KEXEC_SRCS += kexec/arch/ppc/ppc-setup-dol.S
 ppc_KEXEC_SRCS += kexec/arch/ppc/fixup_dtb.c
+ppc_KEXEC_SRCS += kexec/arch/ppc/fs2dt.c
+ppc_KEXEC_SRCS += kexec/arch/ppc/crashdump-powerpc.c
 ppc_KEXEC_SRCS += kexec/kexec-uImage.c
 
 libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
