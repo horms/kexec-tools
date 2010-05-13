@@ -26,6 +26,11 @@
 
 #include "config.h"
 
+uint64_t rmo_top;
+unsigned long long crash_base, crash_size;
+unsigned int rtas_base, rtas_size;
+int max_memory_ranges;
+
 #ifdef WITH_GAMECUBE
 #define MAX_MEMORY_RANGES  64
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
@@ -46,15 +51,11 @@ static int get_memory_ranges_gc(struct memory_range **range, int *ranges,
 }
 #else
 static int use_new_dtb;
-int max_memory_ranges;
 static int nr_memory_ranges, nr_exclude_ranges;
 static struct memory_range *exclude_range;
 static struct memory_range *memory_range;
 static struct memory_range *base_memory_range;
 static uint64_t memory_max;
-uint64_t rmo_top;
-unsigned long long crash_base, crash_size;
-unsigned int rtas_base, rtas_size;
 
 /*
  * Count the memory nodes under /proc/device-tree and populate the

@@ -162,17 +162,9 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	unsigned long max_addr, hole_addr;
 	struct mem_phdr *phdr;
 	size_t size;
-	unsigned long long *rsvmap_ptr;
-	struct bootblock *bb_ptr;
-	unsigned int nr_segments;
-	unsigned long my_kernel, my_dt_offset;
-	unsigned long my_stack, my_backup_start;
 #ifdef CONFIG_PPC64
 	unsigned long toc_addr;
 #endif
-	unsigned int slave_code[256 / sizeof(unsigned int)], master_entry;
-	unsigned char *seg_buf = NULL;
-	off_t seg_size = 0;
 #ifdef WITH_GAMECUBE
 	int target_is_gamecube = 1;
 	char *arg_buf;
@@ -183,13 +175,21 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	unsigned char *setup_start;
 	uint32_t setup_size;
 #else
+	unsigned long long *rsvmap_ptr;
+	struct bootblock *bb_ptr;
+	unsigned int nr_segments;
+	unsigned long my_kernel, my_dt_offset;
+	unsigned long my_stack, my_backup_start;
+	unsigned int slave_code[256 / sizeof(unsigned int)], master_entry;
+	unsigned char *seg_buf = NULL;
+	off_t seg_size = 0;
 	int target_is_gamecube = 0;
 	unsigned int addr;
 	unsigned long dtb_addr;
+#endif
 #define FIXUP_ENTRYS	(20)
 	char *fixup_nodes[FIXUP_ENTRYS + 1];
 	int cur_fixup = 0;
-#endif
 	int opt;
 
 	command_line = NULL;
