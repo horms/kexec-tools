@@ -180,29 +180,14 @@ void arch_usage(void)
 
 int arch_process_options(int argc, char **argv)
 {
-	static const struct option options[] = {
-		KEXEC_ARCH_OPTIONS
-		{ 0, 0, NULL, 0 },
-	};
-	static const char short_options[] = KEXEC_ARCH_OPT_STR;
-	int opt;
+	/* This doesn't belong here!  Some sort of arch_init() ? */
 
 	/* execute from monarch processor */
-        cpu_set_t affinity;
+	cpu_set_t affinity;
 	CPU_ZERO(&affinity);
 	CPU_SET(0, &affinity);
-        sched_setaffinity(0, sizeof(affinity), &affinity);
+	sched_setaffinity(0, sizeof(affinity), &affinity);
 
-	opterr = 0; /* Don't complain about unrecognized options here */
-	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
-		switch(opt) {
-		default:
-			break;
-		}
-	}
-	/* Reset getopt for the next pass; called in other source modules */
-	opterr = 1;
-	optind = 1;
 	return 0;
 }
 
