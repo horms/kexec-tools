@@ -335,8 +335,8 @@ int dol_ppc_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	unsigned long lowest_start;
 	int i, j, k;
 	int opt;
-#define OPT_APPEND      (OPT_ARCH_MAX+0)
 
+	/* See options.h -- add any more there, too. */
         static const struct option options[] = {
                 KEXEC_ARCH_OPTIONS
                 {"debug",        0, 0, OPT_DEBUG},
@@ -344,7 +344,7 @@ int dol_ppc_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
                 {"append",       1, 0, OPT_APPEND},
                 {0, 0, 0, 0},
         };
-	static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
+	static const char short_options[] = KEXEC_ARCH_OPT_STR;
 
 	/*
 	 * Parse the command line arguments

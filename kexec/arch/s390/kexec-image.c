@@ -19,9 +19,7 @@
 #include <getopt.h>
 #include "../../kexec.h"
 #include "kexec-s390.h"
-
-#define OPT_APPEND     OPT_MAX+0
-#define OPT_RAMDISK    OPT_MAX+1
+#include <arch/options.h>
 
 int
 image_s390_load(int argc, char **argv, const char *kernel_buf,

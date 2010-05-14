@@ -35,7 +35,6 @@ static const int probe_debug = 0;
 #define BOOTLOADER         "kexec"
 #define MAX_COMMAND_LINE   256
 #define UPSZ(X) ((sizeof(X) + 3) & ~3)
-#define OPT_APPEND	(OPT_ARCH_MAX+0)
 static char cmdline_buf[256] = "kexec ";
 
 int elf_mips_probe(const char *buf, off_t len)
@@ -82,6 +81,8 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long cmdline_addr;
 	size_t i;
 	unsigned long bss_start = 0, bss_size = 0;
+
+	/* See options.h if adding any more options. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{"command-line", 1, 0, OPT_APPEND},

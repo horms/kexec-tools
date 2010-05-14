@@ -157,10 +157,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	uint32_t u;
 	int opt;
 	int modules, mod_command_line_space;
-#define OPT_CL  		(OPT_ARCH_MAX+0)
-#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+1)
-#define OPT_MOD 		(OPT_ARCH_MAX+2)
-#define OPT_VGA 		(OPT_ARCH_MAX+3)
+	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",		1, 0, OPT_CL },

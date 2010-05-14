@@ -1057,17 +1057,17 @@ int main(int argc, char *argv[])
 	int result = 0;
 	int fileind;
 	static const struct option options[] = {
-		KEXEC_ARCH_OPTIONS
+		KEXEC_ALL_OPTIONS
 		{ 0, 0, 0, 0},
 	};
-	static const char short_options[] = KEXEC_OPT_STR;
+	static const char short_options[] = KEXEC_ALL_OPT_STR;
 
 	arch_init();
 
-	opterr = 0; /* Don't complain about unrecognized options here */
 	while ((opt = getopt_long(argc, argv, short_options,
 				  options, 0)) != -1) {
 		switch(opt) {
+		case '?':
 		case OPT_HELP:
 			usage();
 			return 0;

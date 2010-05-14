@@ -93,11 +93,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	uint32_t my_run_at_load;
 	unsigned int slave_code[256/sizeof (unsigned int)], master_entry;
 
-#define OPT_APPEND     (OPT_ARCH_MAX+0)
-#define OPT_RAMDISK     (OPT_ARCH_MAX+1)
-#define OPT_DEVICETREEBLOB     (OPT_ARCH_MAX+2)
-#define OPT_ARGS_IGNORE		(OPT_ARCH_MAX+3)
-
+	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",       1, NULL, OPT_APPEND },
@@ -347,5 +343,11 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 
 void elf_ppc64_usage(void)
 {
+	fprintf(stderr, "     --command-line=<Command line> command line to append.\n");
+	fprintf(stderr, "     --append=<Command line> same as --command-line.\n");
+	fprintf(stderr, "     --ramdisk=<filename> Initial RAM disk.\n");
+	fprintf(stderr, "     --initrd=<filename> same as --ramdisk.\n");
+	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
+
 	fprintf(stderr, "elf support is still broken\n");
 }

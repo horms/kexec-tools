@@ -84,7 +84,8 @@ int beoboot_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	int debug, real_mode_entry;
 	int opt;
 	int result;
-#define OPT_REAL_MODE	(OPT_ARCH_MAX+0)
+
+	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "debug",		0, 0, OPT_DEBUG },

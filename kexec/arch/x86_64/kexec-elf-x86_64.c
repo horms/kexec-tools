@@ -98,13 +98,8 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 #define ARG_STYLE_LINUX 1
 #define ARG_STYLE_NONE  2
 	int opt;
-#define OPT_APPEND		(OPT_ARCH_MAX+0)
-#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+1)
-#define OPT_RAMDISK		(OPT_ARCH_MAX+2)
-#define OPT_ARGS_ELF		(OPT_ARCH_MAX+3)
-#define OPT_ARGS_LINUX		(OPT_ARCH_MAX+4)
-#define OPT_ARGS_NONE		(OPT_ARCH_MAX+5)
 
+	/* See options.h and add any new options there too! */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",	1, NULL, OPT_APPEND },

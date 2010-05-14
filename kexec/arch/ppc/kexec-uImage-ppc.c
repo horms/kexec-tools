@@ -14,9 +14,7 @@
 #include "fixup_dtb.h"
 #include <kexec-uImage.h>
 
-#define OPT_APPEND      (OPT_ARCH_MAX+0)
-#define OPT_DTB         (OPT_ARCH_MAX+1)
-#define OPT_NODES       (OPT_ARCH_MAX+2)
+/* See options.h -- add any more there, too. */
 static const struct option options[] = {
 	KEXEC_ARCH_OPTIONS
 	{"command-line",	1, 0, OPT_APPEND},
@@ -25,7 +23,7 @@ static const struct option options[] = {
 	{"reuse-node",	1, 0, OPT_NODES},
 	{0, 0, 0, 0},
 };
-static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
+static const char short_options[] = KEXEC_ARCH_OPT_STR;
 
 void uImage_ppc_usage(void)
 {

@@ -341,10 +341,8 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	int debug, real_mode_entry;
 	int opt;
 	int result;
-#define OPT_APPEND		(OPT_ARCH_MAX+0)
-#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+1)
-#define OPT_RAMDISK		(OPT_ARCH_MAX+2)
-#define OPT_REAL_MODE		(OPT_ARCH_MAX+3)
+
+	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "debug",		0, 0, OPT_DEBUG },

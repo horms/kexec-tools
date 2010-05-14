@@ -222,8 +222,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	off_t ramdisk_length;
 	off_t ramdisk_offset;
 	int opt;
-#define OPT_APPEND	'a'
-#define OPT_RAMDISK	'r'
+	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
 		{ "command-line",	1, 0, OPT_APPEND },

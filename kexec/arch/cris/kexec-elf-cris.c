@@ -40,8 +40,6 @@
 #include <arch/options.h>
 #include "kexec-cris.h"
 
-#define OPT_APPEND      (OPT_ARCH_MAX+0)
-
 int elf_cris_probe(const char *buf, off_t len)
 {
 	struct mem_ehdr ehdr;
@@ -89,8 +87,10 @@ int elf_cris_load(int argc, char **argv, const char *buf, off_t len,
 		unsigned int regs[16];
 	} cris_regframe;
 
+	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
+		{"append", 1, 0, OPT_APPEND},
 		{ 0, 0, 0, 0 },
 	};
 

@@ -97,8 +97,13 @@ void arch_usage(void)
 
 int arch_process_options(int argc, char **argv)
 {
+	/* The common options amongst loaders (e.g. --append) should be read
+	 * here, and the loader-specific options (e.g. NetBSD stuff) should
+	 * then be re-parsed in the loader.
+	 * (e.g. in kexec-netbsd-sh.c, for example.)
+	 */
 	static const struct option options[] = {
-		KEXEC_ARCH_OPTIONS
+		KEXEC_ALL_OPTIONS
 		{ 0, 			0, NULL, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR;

@@ -735,11 +735,6 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 void arch_usage(void)
 {
-	fprintf(stderr, "     --command-line=<Command line> command line to append.\n");
-	fprintf(stderr, "     --append=<Command line> same as --command-line.\n");
-	fprintf(stderr, "     --ramdisk=<filename> Initial RAM disk.\n");
-	fprintf(stderr, "     --initrd=<filename> same as --ramdisk.\n");
-	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
 	fprintf(stderr, "     --elf64-core-headers Prepare core headers in ELF64 format\n");
 }
 
@@ -749,11 +744,14 @@ struct arch_options_t arch_options = {
 
 int arch_process_options(int argc, char **argv)
 {
+	/* We look for all options so getopt_long doesn't start reordering
+	 * argv[] before file_type[n].load() gets a look in.
+	 */
 	static const struct option options[] = {
-		KEXEC_ARCH_OPTIONS
+		KEXEC_ALL_OPTIONS
 		{ 0, 0, NULL, 0 },
 	};
-	static const char short_options[] = KEXEC_ARCH_OPT_STR;
+	static const char short_options[] = KEXEC_ALL_OPT_STR;
 	int opt;
 
 	opterr = 0; /* Don't complain about unrecognized options here */
