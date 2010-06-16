@@ -591,7 +591,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 				unsigned long max_addr, unsigned long min_base)
 {
 	void *tmp;
-	unsigned long sz, elfcorehdr;
+	unsigned long sz, bufsz, memsz, elfcorehdr;
 	int nr_ranges, align = 1024, i;
 	struct memory_range *mem_range, *memmap_p;
 
@@ -637,9 +637,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	/* Create elf header segment and store crash image data. */
 	if (crash_create_elf64_headers(info, &elf_info,
 				       crash_memory_range, nr_ranges,
-				       &tmp, &sz,
+				       &tmp, &bufsz,
 				       ELF_CORE_HEADER_ALIGN) < 0)
 		return -1;
+	/* the size of the elf headers allocated is returned in 'bufsz' */
 
 	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),
 	 * vmlinux program headers show a gap of two pages between bss segment
@@ -648,9 +649,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 * elf core header segment to 16K to avoid being placed in such gaps.
 	 * This is a makeshift solution until it is fixed in kernel.
 	 */
-	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
+	if (bufsz < (16*1024))
+		/* bufsize is big enough for all the PT_NOTE's and PT_LOAD's */
+		memsz = 16*1024;
+		/* memsz will be the size of the memory hole we look for */
+	else
+		memsz = bufsz;
+	elfcorehdr = add_buffer(info, tmp, bufsz, memsz, align, min_base,
 							max_addr, -1);
-	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
+	if (delete_memmap(memmap_p, elfcorehdr, memsz) < 0)
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
