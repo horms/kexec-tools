@@ -161,6 +161,8 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 		range->type = RANGE_RAM;
 	else if (strcmp(type, "ACPI Tables") == 0)
 		range->type = RANGE_ACPI;
+	else if (strcmp(type, "Unusable memory") == 0)
+		range->type = RANGE_RESERVED;
 	else if (strcmp(type, "reserved") == 0)
 		range->type = RANGE_RESERVED;
 	else if (strcmp(type, "ACPI Non-volatile Storage") == 0)
