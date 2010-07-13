@@ -13,4 +13,5 @@ ppc64_PURGATORY_EXTRA_ASFLAGS += -m64 -mcall-aixdesc
 ppc64_PURGATORY_EXTRA_LDFLAGS += -melf64ppc
 
 dist += purgatory/arch/ppc64/Makefile $(ppc64_PURGATORY_SRCS)		\
+	purgatory/arch/ppc64/hvCall.h					\
 	purgatory/arch/ppc64/purgatory-ppc64.h
