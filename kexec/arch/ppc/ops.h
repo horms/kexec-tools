@@ -147,5 +147,4 @@ static inline char *get_path(const void *phandle, char *buf, int len)
 
 #define fatal(args...) { printf(args); exit(1); }
 
-char *fixup_dtb_nodes(char *blob_buf, off_t *blob_size, char *nodes[], char *cmdline);
 #endif /* _PPC_BOOT_OPS_H_ */

@@ -17,6 +17,9 @@
 #include "crashdump-powerpc.h"
 #include <limits.h>
 
+int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
+			char *);
+
 /* See options.h -- add any more there, too. */
 static const struct option options[] = {
 	KEXEC_ARCH_OPTIONS
@@ -57,6 +60,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	char *dtb;
 	unsigned int addr;
 	unsigned long dtb_addr;
+	unsigned long dtb_addr_actual;
 #define FIXUP_ENTRYS    (20)
 	char *fixup_nodes[FIXUP_ENTRYS + 1];
 	int cur_fixup = 0;
@@ -66,6 +70,8 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	off_t seg_size = 0;
 	unsigned long long hole_addr;
 	unsigned long max_addr;
+	char *blob_buf = NULL;
+	off_t blob_size = 0;
 
 	cmdline_buf = NULL;
 	command_line = NULL;
@@ -155,49 +161,58 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 			sizeof(crash_cmdline) -
 			strlen(crash_cmdline) - 1);
 
-	if (ramdisk)
-	{
+	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
+				purgatory_size, 0, -1, -1, 0);
+
+	/* Here we need to initialize the device tree, and find out where
+	 * it is going to live so we can place it directly after the
+	 * kernel image */
+	if (dtb) {
+		/* Grab device tree from buffer */
+		blob_buf = slurp_file(dtb, &blob_size);
+	} else {
+		create_flatten_tree(info, (unsigned char **)&blob_buf,
+				(unsigned long *)&blob_size, cmdline_buf);
+	}
+	if (!blob_buf || !blob_size)
+		die("Device tree seems to be an empty file.\n");
+
+	/* initial fixup for device tree */
+	blob_buf = fixup_dtb_init(info, blob_buf, &blob_size, load_addr, &dtb_addr);
+
+	if (ramdisk) {
 		seg_buf = slurp_file(ramdisk, &seg_size);
+		/* Load ramdisk at top of memory */
 		hole_addr = add_buffer(info, seg_buf, seg_size, seg_size,
-			0, 0, max_addr, 1);
+				0, dtb_addr + blob_size, max_addr, -1);
 		ramdisk_base = hole_addr;
 		ramdisk_size = seg_size;
 	}
-	if (reuse_initrd)
-	{
+	if (reuse_initrd) {
 		ramdisk_base = initrd_base;
 		ramdisk_size = initrd_size;
 	}
 
 	if (info->kexec_flags & KEXEC_ON_CRASH && ramdisk_base != 0) {
 		if ( (ramdisk_base < crash_base) ||
-		     (ramdisk_base > crash_base + crash_size) )
-		{
+		     (ramdisk_base > crash_base + crash_size) ) {
 			printf("WARNING: ramdisk is above crashkernel region!\n");
 		}
-		else if (ramdisk_base + ramdisk_size > crash_base + crash_size)
-		{
+		else if (ramdisk_base + ramdisk_size > crash_base + crash_size) {
 			printf("WARNING: ramdisk overflows crashkernel region!\n");
 		}
 	}
 
-	if (dtb) {
-		char *blob_buf;
-		off_t blob_size = 0;
-
-		/* Grab device tree from buffer */
-		blob_buf = slurp_file(dtb, &blob_size);
-		if (!blob_buf || !blob_size)
-			die("Device tree seems to be an empty file.\n");
-		blob_buf = fixup_dtb_nodes(blob_buf, &blob_size, fixup_nodes, cmdline_buf);
-		dtb_addr = add_buffer(info, blob_buf, blob_size, blob_size, 0, load_addr,
-				load_addr + KERNEL_ACCESS_TOP, -1);
-	} else {
-		dtb_addr = 0;
+	/* Perform final fixup on devie tree, i.e. everything beside what
+	 * was done above */
+	fixup_dtb_finalize(info, blob_buf, &blob_size, fixup_nodes,
+			cmdline_buf);
+	dtb_addr_actual = add_buffer(info, blob_buf, blob_size, blob_size, 0, dtb_addr,
+			load_addr + KERNEL_ACCESS_TOP, 1);
+	if (dtb_addr_actual != dtb_addr) {
+		printf("dtb_addr_actual: %lx, dtb_addr: %lx\n", dtb_addr_actual, dtb_addr);
+		die("Error device tree not loadded to address it was expecting to be loaded too!\n");
 	}
-
-	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
-			purgatory_size, 0, -1, -1, 0);
 
 	/* set various variables for the purgatory */
 	addr = ep;

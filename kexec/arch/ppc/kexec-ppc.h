@@ -64,6 +64,7 @@ typedef struct mem_rgns {
 } mem_rgns_t;
 extern mem_rgns_t usablemem_rgns;
 extern int max_memory_ranges;
+extern unsigned long long crash_base, crash_size;
 extern unsigned long long initrd_base, initrd_size;
 extern unsigned long long ramdisk_base, ramdisk_size;
 extern unsigned char reuse_initrd;
