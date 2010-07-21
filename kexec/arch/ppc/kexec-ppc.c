@@ -27,10 +27,17 @@
 #include "config.h"
 
 uint64_t rmo_top;
-unsigned long long crash_base, crash_size;
-unsigned long long initrd_base, initrd_size;
+unsigned long long crash_base = 0, crash_size = 0;
+unsigned long long initrd_base = 0, initrd_size = 0;
+unsigned long long ramdisk_base = 0, ramdisk_size = 0;
 unsigned int rtas_base, rtas_size;
 int max_memory_ranges;
+const char *ramdisk;
+
+void arch_reuse_initrd(void)
+{
+	reuse_initrd = 1;
+}
 
 #ifdef WITH_GAMECUBE
 #define MAX_MEMORY_RANGES  64

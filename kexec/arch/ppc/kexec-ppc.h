@@ -65,7 +65,9 @@ typedef struct mem_rgns {
 extern mem_rgns_t usablemem_rgns;
 extern int max_memory_ranges;
 extern unsigned long long initrd_base, initrd_size;
+extern unsigned long long ramdisk_base, ramdisk_size;
 extern unsigned char reuse_initrd;
+extern const char *ramdisk;
 #define COMMAND_LINE_SIZE	512 /* from kernel */
 /*fs2dt*/
 void reserve(unsigned long long where, unsigned long long length);

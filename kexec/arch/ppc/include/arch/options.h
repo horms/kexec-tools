@@ -8,6 +8,7 @@
 #define OPT_GAMECUBE    (OPT_ARCH_MAX+1)
 #define OPT_DTB         (OPT_ARCH_MAX+2)
 #define OPT_NODES       (OPT_ARCH_MAX+3)
+#define OPT_RAMDISK	(OPT_ARCH_MAX+4)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -35,6 +36,8 @@
 	KEXEC_ARCH_OPTIONS \
 	{"command-line", 1, 0, OPT_APPEND},\
 	{"append",	 1, 0, OPT_APPEND},\
+	{"ramdisk",	 1, 0, OPT_APPEND},\
+	{"initrd",	 1, 0, OPT_APPEND},\
 	{"gamecube",	 1, 0, OPT_GAMECUBE},\
 	{"dtb",	    1, 0, OPT_DTB},\
 	{"reuse-node",	   1, 0, OPT_NODES},\

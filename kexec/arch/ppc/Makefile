@@ -17,6 +17,7 @@ ppc_KEXEC_SRCS += kexec/kexec-uImage.c
 
 libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
 libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/arch/ppc/libfdt/%)
+ppc_ARCH_REUSE_INITRD =
 
 CPPFLAGS+=-I$(srcdir)/kexec/arch/$(ARCH)/libfdt
 

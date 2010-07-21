@@ -127,6 +127,8 @@ static const struct option options[] = {
 	KEXEC_ARCH_OPTIONS
 	{"command-line", 1, 0, OPT_APPEND},
 	{"append",       1, 0, OPT_APPEND},
+	{"ramdisk",	 1, 0, OPT_RAMDISK},
+	{"initrd",	 1, 0, OPT_RAMDISK},
 	{"gamecube",     1, 0, OPT_GAMECUBE},
 	{"dtb",     1, 0, OPT_DTB},
 	{"reuse-node",     1, 0, OPT_NODES},
@@ -139,10 +141,12 @@ void elf_ppc_usage(void)
 	printf(
 	     "    --command-line=STRING Set the kernel command line to STRING.\n"
 	     "    --append=STRING       Set the kernel command line to STRING.\n"
+	     "    --ramdisk=<filename>  Initial RAM disk.\n"
+	     "    --initrd=<filename>   same as --ramdisk\n"
 	     "    --gamecube=1|0        Enable/disable support for ELFs with changed\n"
 	     "                          addresses suitable for the GameCube.\n"
-	     "     --dtb=<filename>     Specify device tree blob file.\n"
-	     "     --reuse-node=node    Specify nodes which should be taken from /proc/device-tree.\n"
+	     "    --dtb=<filename>	   Specify device tree blob file.\n"
+	     "    --reuse-node=node	   Specify nodes which should be taken from /proc/device-tree.\n"
 	     "                          Can be set multiple times.\n"
 	     );
 }
@@ -177,7 +181,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	unsigned long my_kernel, my_dt_offset;
 	unsigned long my_stack, my_backup_start;
 	unsigned int slave_code[256 / sizeof(unsigned int)], master_entry;
-	unsigned char *seg_buf = NULL;
+	char *seg_buf = NULL;
 	off_t seg_size = 0;
 	int target_is_gamecube = 0;
 	unsigned int addr;
@@ -193,6 +197,8 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	dtb = NULL;
 	max_addr = LONG_MAX;
 	hole_addr = 0;
+	kernel_addr = 0;
+	ramdisk = 0;
 
 	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch (opt) {
@@ -206,6 +212,9 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 			return -1;
 		case OPT_APPEND:
 			command_line = optarg;
+			break;
+		case OPT_RAMDISK:
+			ramdisk = optarg;
 			break;
 		case OPT_GAMECUBE:
 			target_is_gamecube = atoi(optarg);
@@ -233,6 +242,9 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 		command_line = get_command_line();
 		command_line_len = strlen(command_line) + 1;
 	}
+
+	if (ramdisk && reuse_initrd)
+		die("Can't specify --ramdisk or --initrd with --reuseinitrd\n");
 
 	fixup_nodes[cur_fixup] = NULL;
 
@@ -338,6 +350,32 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 #else
 	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
 			purgatory_size, 0, elf_max_addr(&ehdr), 1, 0);
+
+	if (ramdisk)
+	{
+		seg_buf = slurp_file(ramdisk, &seg_size);
+		hole_addr = add_buffer(info, seg_buf, seg_size, seg_size,
+			0, 0, max_addr, 1);
+		ramdisk_base = hole_addr;
+		ramdisk_size = seg_size;
+	}
+	if (reuse_initrd)
+	{
+		ramdisk_base = initrd_base;
+		ramdisk_size = initrd_size;
+	}
+
+	if (info->kexec_flags & KEXEC_ON_CRASH && ramdisk_base != 0) {
+		if ( (ramdisk_base < crash_base) ||
+			(ramdisk_base > crash_base + crash_size) )
+		{
+			printf("WARNING: ramdisk is above crashkernel region!\n");
+		}
+		else if (ramdisk_base + initrd_size > crash_base + crash_size)
+		{
+			printf("WARNING: ramdisk overflows crashkernel region!\n");
+		}
+	}
 
 	if (dtb) {
 		char *blob_buf;
