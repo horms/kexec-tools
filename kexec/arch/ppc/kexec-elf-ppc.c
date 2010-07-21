@@ -183,6 +183,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	unsigned int addr;
 	unsigned long dtb_addr;
 #endif
+	unsigned long kernel_addr;
 #define FIXUP_ENTRYS	(20)
 	char *fixup_nodes[FIXUP_ENTRYS + 1];
 	int cur_fixup = 0;
@@ -228,6 +229,9 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	command_line_len = 0;
 	if (command_line) {
 		command_line_len = strlen(command_line) + 1;
+	} else {
+		command_line = get_command_line();
+		command_line_len = strlen(command_line) + 1;
 	}
 
 	fixup_nodes[cur_fixup] = NULL;
@@ -264,11 +268,11 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	if (size > phdr->p_memsz)
 		size = phdr->p_memsz;
 
-	hole_addr = locate_hole(info, size, 0, 0, max_addr, 1);
+	kernel_addr = locate_hole(info, size, 0, 0, max_addr, 1);
 #ifdef CONFIG_PPC64
-	ehdr.e_phdr[0].p_paddr = (Elf64_Addr)hole_addr;
+	ehdr.e_phdr[0].p_paddr = (Elf64_Addr)kernel_addr;
 #else
-	ehdr.e_phdr[0].p_paddr = hole_addr;
+	ehdr.e_phdr[0].p_paddr = kernel_addr;
 #endif
 
 	/* Load the Elf data */
@@ -343,10 +347,11 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 		blob_buf = slurp_file(dtb, &blob_size);
 		if (!blob_buf || !blob_size)
 			die("Device tree seems to be an empty file.\n");
+
 		blob_buf = fixup_dtb_nodes(blob_buf, &blob_size, fixup_nodes,
 				cmdline_buf);
-		dtb_addr = add_buffer(info, blob_buf, blob_size, blob_size, 0, 0,
-				KERNEL_ACCESS_TOP, -1);
+		dtb_addr = add_buffer(info, blob_buf, blob_size, blob_size, 0, kernel_addr,
+				kernel_addr + KERNEL_ACCESS_TOP, -1);
 	} else {
 		/* create from fs2dt */
 		seg_buf = NULL;
@@ -364,17 +369,14 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 
 
 	if (dtb) {
-		/* set various variables for the purgatory */
-		addr = ehdr.e_entry;
+		/* set various variables for the purgatory  ehdr.e_entry is a
+		 * virtual address, we can use kernel_addr which
+		 * should be the physical start address of the kernel */
+		addr = kernel_addr;
 		elf_rel_set_symbol(&info->rhdr, "kernel", &addr, sizeof(addr));
 
 		addr = dtb_addr;
 		elf_rel_set_symbol(&info->rhdr, "dt_offset",
-						&addr, sizeof(addr));
-
-		addr = rmo_top;
-
-		elf_rel_set_symbol(&info->rhdr, "mem_size",
 						&addr, sizeof(addr));
 
 #define PUL_STACK_SIZE	(16 * 1024)
