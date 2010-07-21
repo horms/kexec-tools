@@ -261,11 +261,25 @@ static int get_base_ranges(void)
 					break;
 				}
 			}
-			base_memory_range[local_memory_ranges].start =
-				((uint32_t *)buf)[0];
-			base_memory_range[local_memory_ranges].end  =
-				base_memory_range[local_memory_ranges].start +
-				((uint32_t *)buf)[1];
+
+			if (n == 8) {
+				base_memory_range[local_memory_ranges].start =
+					((uint32_t *)buf)[0];
+				base_memory_range[local_memory_ranges].end  =
+					base_memory_range[local_memory_ranges].start +
+					((uint32_t *)buf)[1];
+			}
+			else if (n == 16) {
+				base_memory_range[local_memory_ranges].start =
+                                        ((uint64_t *)buf)[0];
+                                base_memory_range[local_memory_ranges].end  =
+                                        base_memory_range[local_memory_ranges].start +
+                                        ((uint64_t *)buf)[1];
+			}
+			else {
+				fprintf(stderr, "Mem node has invalid size: %d\n", n);
+				return -1;
+			}
 			base_memory_range[local_memory_ranges].type = RANGE_RAM;
 			local_memory_ranges++;
 			dbgprintf("%016llx-%016llx : %x\n",
@@ -327,27 +341,28 @@ static int get_devtree_details(unsigned long kexec_flags)
 		}
 
 		if (strncmp(dentry->d_name, "chosen", 6) == 0) {
-			strcat(fname, "/linux,kernel-end");
-			file = fopen(fname, "r");
-			if (!file) {
-				perror(fname);
-				goto error_opencdir;
-			}
-			if (fread(&tmp_long, sizeof(unsigned long), 1, file)
-					!= 1) {
-				perror(fname);
-				goto error_openfile;
-			}
-			kernel_end = tmp_long;
-			fclose(file);
-
-			/* Add kernel memory to exclude_range */
-			exclude_range[i].start = 0x0UL;
-			exclude_range[i].end = kernel_end;
-			i++;
-			if (i >= max_memory_ranges)
-				realloc_memory_ranges();
+			/* only reserve kernel region if we are doing a crash kernel */
 			if (kexec_flags & KEXEC_ON_CRASH) {
+				strcat(fname, "/linux,kernel-end");
+				file = fopen(fname, "r");
+				if (!file) {
+					perror(fname);
+					goto error_opencdir;
+				}
+				if (fread(&tmp_long, sizeof(unsigned long), 1, file)
+						!= 1) {
+					perror(fname);
+					goto error_openfile;
+				}
+				kernel_end = tmp_long;
+				fclose(file);
+
+				/* Add kernel memory to exclude_range */
+				exclude_range[i].start = 0x0UL;
+				exclude_range[i].end = kernel_end;
+				i++;
+				if (i >= max_memory_ranges)
+					realloc_memory_ranges();
 				memset(fname, 0, sizeof(fname));
 				strcpy(fname, device_tree);
 				strcat(fname, dentry->d_name);

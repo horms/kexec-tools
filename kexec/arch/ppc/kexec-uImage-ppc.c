@@ -133,13 +133,10 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	addr = dtb_addr;
 	elf_rel_set_symbol(&info->rhdr, "dt_offset", &addr, sizeof(addr));
 
-	addr = rmo_top;
-	elf_rel_set_symbol(&info->rhdr, "mem_size", &addr, sizeof(addr));
-
 #define PUL_STACK_SIZE  (16 * 1024)
 	addr = locate_hole(info, PUL_STACK_SIZE, 0, 0, -1, 1);
 	addr += PUL_STACK_SIZE;
-	elf_rel_set_symbol(&info->rhdr, "pul_stack", &addr, sizeof(addr));
+	elf_rel_set_symbol(&info->rhdr, "stack", &addr, sizeof(addr));
 	/* No allocation past here in order not to overwrite the stack */
 #undef PUL_STACK_SIZE
 

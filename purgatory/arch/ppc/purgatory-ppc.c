@@ -39,3 +39,8 @@ void post_verification_setup_arch(void)
 	if (panic_kernel)
 		crashdump_backup_memory();
 }
+
+void crashdump_backup_memory(void)
+{
+	return;
+}
