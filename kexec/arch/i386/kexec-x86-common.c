@@ -129,6 +129,78 @@ static int get_memory_ranges_sysfs(struct memory_range **range, int *ranges)
 	return 0;
 }
 
+static void remove_range(struct memory_range *range, int nr_ranges, int index)
+{
+	int i, j;
+
+	for (i = index; i < (nr_ranges-1); i++) {
+		j = i+1;
+		range[i] = range[j];
+	}
+}
+
+/**
+ * Verifies and corrects any overlapping ranges.
+ * The ranges array is assumed to be sorted already.
+ *
+ * @param[out] range pointer that will be set to an array that holds the
+ *             memory ranges
+ * @param[out] ranges number of ranges valid in @p range
+ *
+ * @return 0 on success, any other value on failure.
+ */
+static int fixup_memory_ranges_sysfs(struct memory_range **range, int *ranges)
+{
+	int i;
+	int j;
+	int change_made;
+	int nr_ranges = *ranges;
+	struct memory_range *rp = *range;
+
+again:
+	change_made = 0;
+	for (i = 0; i < (nr_ranges-1); i++) {
+		j = i+1;
+		if (rp[i].start > rp[j].start) {
+			fprintf(stderr, "sysfs memory out of order!!\n");
+			return 1;
+		}
+
+		if (rp[i].type != rp[j].type)
+			continue;
+
+		if (rp[i].start == rp[j].start) {
+			if (rp[i].end >= rp[j].end) {
+				remove_range(rp, nr_ranges, j);
+				nr_ranges--;
+				change_made++;
+			} else {
+				remove_range(rp, nr_ranges, i);
+				nr_ranges--;
+				change_made++;
+			}
+		} else {
+			if (rp[i].end > rp[j].start) {
+				if (rp[i].end < rp[j].end) {
+					rp[j].start = rp[i].end;
+					change_made++;
+				} else if (rp[i].end >= rp[j].end) {
+					remove_range(rp, nr_ranges, j);
+					nr_ranges--;
+					change_made++;
+				}
+			}
+		}
+	}
+
+	/* fixing/removing an entry may make it wrong relative to the next */
+	if (change_made)
+		goto again;
+
+	*ranges = nr_ranges;
+	return 0;
+}
+
 /**
  * Return a sorted list of memory ranges.
  *
@@ -155,9 +227,11 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	 * even if we have /sys/firmware/memmap. Without that, /proc/vmcore
 	 * is empty in the kdump kernel.
 	 */
-	if (!xen_present() && have_sys_firmware_memmap())
+	if (!xen_present() && have_sys_firmware_memmap()) {
 		ret = get_memory_ranges_sysfs(range, ranges);
-	else
+		if (!ret)
+			ret = fixup_memory_ranges_sysfs(range, ranges);
+	} else
 		ret = get_memory_ranges_proc_iomem(range, ranges);
 
 	/*
