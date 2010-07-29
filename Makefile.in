@@ -104,15 +104,7 @@ PKGDATADIR=$(DATADIR)/$(PACKAGE_NAME)
 PKGLIBDIR=$(LIBDIR)/$(PACKAGE_NAME)
 PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE_NAME)
 
-MAN_PAGES:= kexec/kexec.8
-MAN_PAGES+= kdump/kdump.8
-BINARIES_i386:=  $(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
-BINARIES_x86_64:=$(SBINDIR)/kexec $(PKGLIBDIR)/kexec_test
-BINARIES:=$(SBINDIR)/kexec $(SBINDIR)/kdump $(BINARIES_$(ARCH))
-
-TARGETS:=$(BINARIES) $(MAN_PAGES)
-
-all: $(TARGETS)
+all: targets
 
 # generic build rules
 %.o: %.c
@@ -178,6 +170,15 @@ TARBALL.gz=$(TARBALL).gz
 SRCS:= $(dist)
 PSRCS:=$(foreach s, $(SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 PGSRCS:=$(foreach s, $(GENERATED_SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
+
+MAN_PAGES:=$(KEXEC_MANPAGE) $(KDUMP_MANPAGE)
+BINARIES_i386:=$(KEXEC_TEST) $(KEXEC_TEST)
+BINARIES_x86_64:=$(KEXEC) $(KDUMP) $(BINARIES_$(ARCH))
+BINARIES:=$(KEXEC) $(KDUMP) $(BINARIES_$(ARCH))
+
+TARGETS:=$(BINARIES) $(MAN_PAGES)
+
+targets: $(TARGETS)
 
 Makefile: Makefile.in config.status
 	./config.status
@@ -315,5 +316,5 @@ install: $(TARGETS)
 		fi; \
 	done
 
-.PHONY: echo install all clean dist-clean distclean maintainer-clean 	\
-	maintainerclean tarball rpm
+.PHONY: echo install all targets clean dist-clean distclean \
+	maintainer-clean maintainerclean tarball rpm
