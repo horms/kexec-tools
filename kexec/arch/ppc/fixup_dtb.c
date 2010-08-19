@@ -139,6 +139,7 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf, off_t
 {
 	int ret, i;
 	int nodeoffset;
+	u64 val = 0;
 
 	/* If this is a KEXEC kernel we add all regions since they will
 	 * all need to be saved */
@@ -175,20 +176,25 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf, off_t
 	while (nodeoffset != -FDT_ERR_NOTFOUND) {
 		const void *buf;
 		int sz, ret;
-		u64 val = 0;
+		u64 tmp;
 
 		buf = fdt_getprop(blob_buf, nodeoffset, "cpu-release-addr", &sz);
-		if (sz == 4) {
-			val = *(u32 *)buf;
-		} else if (sz == 8) {
-			val = *(u64 *)buf;
-		}
 
-		if (val) {
-			ret = fdt_add_mem_rsv(blob_buf, PAGE_ALIGN(val-PAGE_SIZE), PAGE_SIZE);
-			if (ret)
-				printf("%s: Unable to add reserve for cpu-release-addr!\n",
-					fdt_strerror(ret));
+		if (buf) {
+			if (sz == 4) {
+				tmp = *(u32 *)buf;
+			} else if (sz == 8) {
+				tmp = *(u64 *)buf;
+			}
+
+			/* crude check to see if last value is repeated */
+			if (_ALIGN_DOWN(tmp, PAGE_SIZE) != _ALIGN_DOWN(val, PAGE_SIZE)) {
+				val = tmp;
+				ret = fdt_add_mem_rsv(blob_buf, _ALIGN_DOWN(val, PAGE_SIZE), PAGE_SIZE);
+				if (ret)
+					printf("%s: Unable to add reserve for cpu-release-addr!\n",
+						fdt_strerror(ret));
+			}
 		}
 
 		nodeoffset = fdt_node_offset_by_prop_value(blob_buf, nodeoffset,
