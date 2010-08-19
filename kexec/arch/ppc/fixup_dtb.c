@@ -311,7 +311,7 @@ static void fixup_initrd(char *blob_buf)
 				return;
 		}
 
-		tmp = ramdisk_base + ramdisk_size + 1;
+		tmp = ramdisk_base + ramdisk_size;
 		err = fdt_setprop(blob_buf, nodeoffset,
 			"linux,initrd-end", &tmp, sizeof(tmp));
 		if (err < 0) {

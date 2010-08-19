@@ -481,7 +481,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 
 			if ((initrd_end - initrd_start) != 0 ) {
 				initrd_base = initrd_start;
-				initrd_size = initrd_end - initrd_start + 1;
+				initrd_size = initrd_end - initrd_start;
 			}
 
 			if (reuse_initrd) {
