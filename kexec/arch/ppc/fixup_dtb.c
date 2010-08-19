@@ -160,7 +160,7 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf, off_t
 				goto out;
 			}
 		}
-	} else {
+	} else if (ramdisk || reuse_initrd) {
 		/* Otherwise we just add back the ramdisk and the device tree
 		 * is already in the list */
 		ret = fdt_add_mem_rsv(blob_buf, ramdisk_base, ramdisk_size);
@@ -300,13 +300,16 @@ static void fixup_initrd(char *blob_buf)
 
 	nodeoffset = fdt_path_offset(blob_buf, "/chosen");
 
-	if ((reuse_initrd || ramdisk) &&
-		((ramdisk_base != 0) && (ramdisk_size != 0))) {
-		if (nodeoffset < 0) {
-			printf("fdt_initrd: %s\n", fdt_strerror(nodeoffset));
-			return;
-		}
+	if (nodeoffset < 0) {
+		printf("fdt_initrd: %s\n", fdt_strerror(nodeoffset));
+		return;
+	}
 
+	fdt_delprop(blob_buf, nodeoffset, "linux,initrd-start");
+	fdt_delprop(blob_buf, nodeoffset, "linux,initrd-end");
+
+	if ((reuse_initrd || ramdisk) &&
+	   ((ramdisk_base != 0) && (ramdisk_size != 0))) {
 		tmp = ramdisk_base;
 		err = fdt_setprop(blob_buf, nodeoffset,
 			"linux,initrd-start", &tmp, sizeof(tmp));
@@ -325,9 +328,6 @@ static void fixup_initrd(char *blob_buf)
 				fdt_strerror(err));
 				return;
 		}
-	} else {
-		fdt_delprop(blob_buf, nodeoffset, "linux,initrd-start");
-		fdt_delprop(blob_buf, nodeoffset, "linux,initrd-end");
 	}
 }
 
