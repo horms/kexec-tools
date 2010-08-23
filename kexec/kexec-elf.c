@@ -8,6 +8,7 @@
 #include <boot/elf_boot.h>
 #include "kexec.h"
 #include "kexec-elf.h"
+#include "crashdump.h"
 
 static const int probe_debug = 0;
 
@@ -389,6 +390,9 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 	phdr_size *= ehdr->e_phnum;
 	if ((uintmax_t)(ehdr->e_phoff + phdr_size) > (uintmax_t)len) {
 		/* The program header did not fit in the file buffer */
+		fprintf(stderr, "%d segments require a %ld-byte buffer\n",
+			ehdr->e_phnum, ehdr->e_phoff + phdr_size);
+		fprintf(stderr, "KCORE_ELF_HEADERS_SIZE %d too small\n",				KCORE_ELF_HEADERS_SIZE);
 		if (probe_debug) {
 			fprintf(stderr, "ELF program segment truncated\n");
 		}
