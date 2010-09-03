@@ -80,7 +80,6 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	int result;
 	unsigned long cmdline_addr;
 	size_t i;
-	unsigned long bss_start = 0, bss_size = 0;
 
 	/* See options.h if adding any more options. */
 	static const struct option options[] = {
@@ -133,37 +132,12 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 			phdr->p_paddr = virt_to_phys(phdr->p_paddr);
 	}
 
-	for (i = 0; i < ehdr.e_shnum; i++) {
-		struct mem_shdr *shdr;
-		unsigned char *strtab;
-		strtab = (unsigned char *)ehdr.e_shdr[ehdr.e_shstrndx].sh_data;
-
-		shdr = &ehdr.e_shdr[i];
-		if (shdr->sh_size &&
-				strcmp((char *)&strtab[shdr->sh_name],
-					".bss") == 0) {
-			bss_start = virt_to_phys(shdr->sh_addr);
-			bss_size = shdr->sh_size;
-			break;
-		}
-
-	}
-
 	/* Load the Elf data */
 	result = elf_exec_load(&ehdr, info);
 	if (result < 0)
 		die("ELF exec load failed\n");
 
 	info->entry = (void *)virt_to_phys(ehdr.e_entry);
-
-	/* Put cmdline right after bss for crash*/
-	if (info->kexec_flags & KEXEC_ON_CRASH)
-		cmdline_addr = bss_start + bss_size;
-	else
-		cmdline_addr = 0;
-
-	if (!bss_size)
-		die("No .bss segment present\n");
 
 	if (command_line)
 		command_line_len = strlen(command_line) + 1;
@@ -183,6 +157,15 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 		strncat(cmdline_buf, crash_cmdline,
 				sizeof(crash_cmdline) -
 				strlen(crash_cmdline) - 1);
+
+	if (info->kexec_flags & KEXEC_ON_CRASH)
+		/* In case of crashdump segment[0] is kernel.
+		 * Put cmdline just after it. */
+		cmdline_addr = info->segment[0].mem +
+				info->segment[0].memsz;
+	else
+		cmdline_addr = 0;
+
 	add_buffer(info, cmdline_buf, sizeof(cmdline_buf),
 			sizeof(cmdline_buf), sizeof(void *),
 			cmdline_addr, 0x0fffffff, 1);
