@@ -59,7 +59,7 @@ int elf_x86_probe(const char *buf, off_t len)
 	if ((ehdr.e_machine != EM_386) && (ehdr.e_machine != EM_486)) {
 		/* for a different architecture */
 		if (probe_debug) {
-			fprintf(stderr, "Not x86_64 ELF executable\n");
+			fprintf(stderr, "Not i386 ELF executable\n");
 		}
 		result = -1;
 		goto out;
