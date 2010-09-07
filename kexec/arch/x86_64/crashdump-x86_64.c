@@ -62,7 +62,8 @@ static int get_kernel_page_offset(struct kexec_info *info,
 
 /* Read kernel physical load addr from the file returned by proc_iomem()
  * (Kernel Code) and store in kexec_info */
-static int get_kernel_paddr(struct kexec_info *info)
+static int get_kernel_paddr(struct kexec_info *info,
+			    struct crash_elf_info *elf_info)
 {
 	uint64_t start;
 
@@ -70,7 +71,7 @@ static int get_kernel_paddr(struct kexec_info *info)
 		return 0;
 
 	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
-		info->kern_paddr_start = start;
+		elf_info->kern_paddr_start = start;
 #ifdef DEBUG
 		printf("kernel load physical addr start = 0x%016Lx\n", start);
 #endif
@@ -88,7 +89,8 @@ static int get_kernel_paddr(struct kexec_info *info)
  * hard codes the values to remain backward compatible. Once things stablize
  * we should get rid of backward compatible code. */
 
-static int get_kernel_vaddr_and_size(struct kexec_info *info)
+static int get_kernel_vaddr_and_size(struct kexec_info *info,
+				     struct crash_elf_info *elf_info)
 {
 	int result;
 	const char kcore[] = "/proc/kcore";
@@ -135,11 +137,11 @@ static int get_kernel_vaddr_and_size(struct kexec_info *info)
 			if ((saddr >= __START_KERNEL_map) &&
 			    (eaddr <= __START_KERNEL_map + KERNEL_TEXT_SIZE)) {
 				saddr = (saddr) & (~(KERN_VADDR_ALIGN - 1));
-				info->kern_vaddr_start = saddr;
+				elf_info->kern_vaddr_start = saddr;
 				size = eaddr - saddr;
 				/* Align size to page size boundary. */
 				size = (size + align - 1) & (~(align - 1));
-				info->kern_size = size;
+				elf_info->kern_size = size;
 #ifdef DEBUG
 			printf("kernel vaddr = 0x%lx size = 0x%lx\n",
 					saddr, size);
@@ -625,10 +627,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	if (get_kernel_page_offset(info, &elf_info))
 		return -1;
 
-	if (get_kernel_paddr(info))
+	if (get_kernel_paddr(info, &elf_info))
 		return -1;
 
-	if (get_kernel_vaddr_and_size(info))
+	if (get_kernel_vaddr_and_size(info, &elf_info))
 		return -1;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges,

@@ -27,6 +27,9 @@ struct crash_elf_info {
 	unsigned long backup_src_end;
 
 	unsigned long long page_offset;
+	unsigned long long kern_vaddr_start;
+	unsigned long long kern_paddr_start;
+	unsigned long kern_size;
 	unsigned long lowmem_limit;
 
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);

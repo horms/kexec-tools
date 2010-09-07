@@ -68,7 +68,7 @@ int FUNC(struct kexec_info *info,
 	/*
 	 * Certain architectures such as x86_64 and ia64 require a separate
 	 * PT_LOAD program header for the kernel. This is controlled through
-	 * info->kern_size.
+	 * elf_info->kern_size.
 	 *
 	 * The separate PT_LOAD program header is required either because the
 	 * kernel is mapped at a different location than the rest of the
@@ -85,7 +85,7 @@ int FUNC(struct kexec_info *info,
 	 * PT_LOAD program header and in the physical RAM program headers.
 	 */
 
-	if (info->kern_size && !xen_present()) {
+	if (elf_info->kern_size && !xen_present()) {
 		sz += sizeof(PHDR);
 	}
 
@@ -195,17 +195,17 @@ int FUNC(struct kexec_info *info,
 	}
 
 	/* Setup an PT_LOAD type program header for the region where
-	 * Kernel is mapped if info->kern_size is non-zero.
+	 * Kernel is mapped if elf_info->kern_size is non-zero.
 	 */
 
-	if (info->kern_size && !xen_present()) {
+	if (elf_info->kern_size && !xen_present()) {
 		phdr = (PHDR *) bufp;
 		bufp += sizeof(PHDR);
 		phdr->p_type	= PT_LOAD;
 		phdr->p_flags	= PF_R|PF_W|PF_X;
-		phdr->p_offset	= phdr->p_paddr = info->kern_paddr_start;
-		phdr->p_vaddr	= info->kern_vaddr_start;
-		phdr->p_filesz	= phdr->p_memsz	= info->kern_size;
+		phdr->p_offset	= phdr->p_paddr = elf_info->kern_paddr_start;
+		phdr->p_vaddr	= elf_info->kern_vaddr_start;
+		phdr->p_filesz	= phdr->p_memsz	= elf_info->kern_size;
 		phdr->p_align	= 0;
 		(elf->e_phnum)++;
 		dbgprintf_phdr("Kernel text Elf header", phdr);
