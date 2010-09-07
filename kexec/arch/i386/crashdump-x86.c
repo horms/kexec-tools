@@ -482,30 +482,6 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 		return get_crash_notes_per_cpu(cpu, addr, len);
 }
 
-static struct crash_elf_info elf_info64 =
-{
-	class: ELFCLASS64,
-	data: ELFDATA2LSB,
-	machine: EM_386,
-	backup_src_start: BACKUP_SRC_START,
-	backup_src_end: BACKUP_SRC_END,
-	page_offset: PAGE_OFFSET,
-	lowmem_limit: MAXMEM,
-	get_note_info: get_crash_notes,
-};
-
-static struct crash_elf_info elf_info32 =
-{
-	class: ELFCLASS32,
-	data: ELFDATA2LSB,
-	machine: EM_386,
-	backup_src_start: BACKUP_SRC_START,
-	backup_src_end: BACKUP_SRC_END,
-	page_offset: PAGE_OFFSET,
-	lowmem_limit: MAXMEM,
-	get_note_info: get_crash_notes,
-};
-
 static enum coretype get_core_type(struct kexec_info *info,
 				   struct memory_range *range, int ranges)
 {
@@ -534,11 +510,17 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	unsigned long sz, elfcorehdr;
 	int nr_ranges, align = 1024;
 	struct memory_range *mem_range, *memmap_p;
-	unsigned machine;
+	struct crash_elf_info elf_info;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges,
 				    info->kexec_flags) < 0)
 		return -1;
+
+	/* Constant parts of the elf_info */
+	elf_info.data             = ELFDATA2LSB;
+	elf_info.backup_src_start = BACKUP_SRC_START;
+	elf_info.backup_src_end   = BACKUP_SRC_END;
+	elf_info.page_offset      = PAGE_OFFSET;
 
 	/*
 	 * if the core type has not been set on command line, set it here
@@ -548,11 +530,19 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		arch_options.core_header_type =
 			get_core_type(info, mem_range, nr_ranges);
 	}
+	/* Get the elf class... */
+	elf_info.class = ELFCLASS32;
+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		elf_info.class = ELFCLASS64;
+	}
 
         /* Get the elf architecture of the running kernel */
-	machine = EM_386;
 	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
-		machine = EM_X86_64;
+		elf_info.machine = EM_X86_64;
+	} else {
+		elf_info.machine       = EM_386;
+		elf_info.lowmem_limit  = MAXMEM;
+		elf_info.get_note_info = get_crash_notes;
 	}
 
 	/* Memory regions which panic kernel can safely use to boot into */
@@ -578,16 +568,14 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	/* Create elf header segment and store crash image data. */
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
-		elf_info64.machine = machine;
-		if (crash_create_elf64_headers(info, &elf_info64,
+		if (crash_create_elf64_headers(info, &elf_info,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz,
 					       ELF_CORE_HEADER_ALIGN) < 0)
 			return -1;
 	}
 	else {
-		elf_info32.machine = machine;
-		if (crash_create_elf32_headers(info, &elf_info32,
+		if (crash_create_elf32_headers(info, &elf_info,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz,
 					       ELF_CORE_HEADER_ALIGN) < 0)
