@@ -2,6 +2,7 @@
  * kexec: Linux boots Linux
  *
  * Created by: Vivek Goyal (vgoyal@in.ibm.com)
+ * old x86_64 version Created by: Murali M Chakravarthy (muralim@in.ibm.com)
  * Copyright (C) IBM Corporation, 2005. All rights reserved
  *
  * This program is free software; you can redistribute it and/or modify
