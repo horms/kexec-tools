@@ -8,9 +8,8 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 
 #define __START_KERNEL_map      0xffffffff80000000UL
 
-extern unsigned long page_offset;
-
-#define __pa(x)                 (((unsigned long)(x)>=__START_KERNEL_map)?(unsigned long)(x) - (unsigned long)__START_KERNEL_map:(unsigned long)(x) - page_offset)
+#define PAGE_OFFSET_PRE_2_6_27	0xffff810000000000UL
+#define PAGE_OFFSET		0xffff880000000000UL
 
 #define MAXMEM           0x3fffffffffffUL
 

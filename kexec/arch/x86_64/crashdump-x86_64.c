@@ -40,6 +40,24 @@
 /* Forward Declaration. */
 static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
 
+static int get_kernel_page_offset(struct kexec_info *info,
+				  struct crash_elf_info *elf_info)
+{
+	int kv;
+
+	kv = kernel_version();
+	if (kv < 0)
+		return -1;
+
+	if (kv < KERNEL_VERSION(2, 6, 27))
+		elf_info->page_offset = PAGE_OFFSET_PRE_2_6_27;
+	else
+		elf_info->page_offset = PAGE_OFFSET;
+
+	return 0;
+}
+
+
 #define KERN_VADDR_ALIGN	0x100000	/* 1MB */
 
 /* Read kernel physical load addr from the file returned by proc_iomem()
@@ -602,8 +620,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		machine: EM_X86_64,
 		backup_src_start: BACKUP_SRC_START,
 		backup_src_end: BACKUP_SRC_END,
-		page_offset: page_offset,
 	};
+
+	if (get_kernel_page_offset(info, &elf_info))
+		return -1;
 
 	if (get_kernel_paddr(info))
 		return -1;
