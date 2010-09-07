@@ -48,8 +48,6 @@ $(ARCH)_ADD_BUFFER		= kexec/add_buffer.c
 KEXEC_SRCS += $($(ARCH)_ADD_BUFFER)
 $(ARCH)_ARCH_REUSE_INITRD	= kexec/arch_reuse_initrd.c
 KEXEC_SRCS += $($(ARCH)_ARCH_REUSE_INITRD)
-$(ARCH)_ARCH_INIT		= kexec/arch_init.c
-KEXEC_SRCS += $($(ARCH)_ARCH_INIT)
 
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
