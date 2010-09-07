@@ -36,6 +36,131 @@
 
 extern struct arch_options_t arch_options;
 
+static int get_kernel_page_offset(struct kexec_info *info,
+				  struct crash_elf_info *elf_info)
+{
+	int kv;
+
+	if (elf_info->machine == EM_X86_64) {
+		kv = kernel_version();
+		if (kv < 0)
+			return -1;
+
+		if (kv < KERNEL_VERSION(2, 6, 27))
+			elf_info->page_offset = X86_64_PAGE_OFFSET_PRE_2_6_27;
+		else
+			elf_info->page_offset = X86_64_PAGE_OFFSET;
+	}
+	else if (elf_info->machine == EM_386) {
+		elf_info->page_offset = X86_PAGE_OFFSET;
+	}
+
+	return 0;
+}
+
+#define X86_64_KERN_VADDR_ALIGN	0x100000	/* 1MB */
+
+/* Read kernel physical load addr from the file returned by proc_iomem()
+ * (Kernel Code) and store in kexec_info */
+static int get_kernel_paddr(struct kexec_info *info,
+			    struct crash_elf_info *elf_info)
+{
+	uint64_t start;
+
+	if (elf_info->machine != EM_X86_64)
+		return 0;
+
+	if (xen_present()) /* Kernel not entity mapped under Xen */
+		return 0;
+
+	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
+		elf_info->kern_paddr_start = start;
+#ifdef DEBUG
+		printf("kernel load physical addr start = 0x%016Lx\n", start);
+#endif
+		return 0;
+	}
+
+	fprintf(stderr, "Cannot determine kernel physical load addr\n");
+	return -1;
+}
+
+/* Retrieve info regarding virtual address kernel has been compiled for and
+ * size of the kernel from /proc/kcore. Current /proc/kcore parsing from
+ * from kexec-tools fails because of malformed elf notes. A kernel patch has
+ * been submitted. For the folks using older kernels, this function
+ * hard codes the values to remain backward compatible. Once things stablize
+ * we should get rid of backward compatible code. */
+
+static int get_kernel_vaddr_and_size(struct kexec_info *info,
+				     struct crash_elf_info *elf_info)
+{
+	int result;
+	const char kcore[] = "/proc/kcore";
+	char *buf;
+	struct mem_ehdr ehdr;
+	struct mem_phdr *phdr, *end_phdr;
+	int align;
+	unsigned long size;
+	uint32_t elf_flags = 0;
+
+	if (elf_info->machine != EM_X86_64)
+		return 0;
+
+	if (xen_present()) /* Kernel not entity mapped under Xen */
+		return 0;
+
+	align = getpagesize();
+	size = KCORE_ELF_HEADERS_SIZE;
+	buf = slurp_file_len(kcore, size);
+	if (!buf) {
+		fprintf(stderr, "Cannot read %s: %s\n", kcore, strerror(errno));
+		return -1;
+	}
+
+	/* Don't perform checks to make sure stated phdrs and shdrs are
+	 * actually present in the core file. It is not practical
+	 * to read the GB size file into a user space buffer, Given the
+	 * fact that we don't use any info from that.
+	 */
+	elf_flags |= ELF_SKIP_FILESZ_CHECK;
+	result = build_elf_core_info(buf, size, &ehdr, elf_flags);
+	if (result < 0) {
+		/* Perhaps KCORE_ELF_HEADERS_SIZE is too small? */
+		fprintf(stderr, "ELF core (kcore) parse failed\n");
+		return -1;
+	}
+
+	/* Traverse through the Elf headers and find the region where
+	 * kernel is mapped. */
+	end_phdr = &ehdr.e_phdr[ehdr.e_phnum];
+	for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
+		if (phdr->p_type == PT_LOAD) {
+			unsigned long long saddr = phdr->p_vaddr;
+			unsigned long long eaddr = phdr->p_vaddr + phdr->p_memsz;
+			unsigned long long size;
+
+			/* Look for kernel text mapping header. */
+			if ((saddr >= X86_64__START_KERNEL_map) &&
+			    (eaddr <= X86_64__START_KERNEL_map + X86_64_KERNEL_TEXT_SIZE)) {
+				saddr = (saddr) & (~(X86_64_KERN_VADDR_ALIGN - 1));
+				elf_info->kern_vaddr_start = saddr;
+				size = eaddr - saddr;
+				/* Align size to page size boundary. */
+				size = (size + align - 1) & (~(align - 1));
+				elf_info->kern_size = size;
+#ifdef DEBUG
+				printf("kernel vaddr = 0x%lx size = 0x%llx\n",
+					saddr, size);
+#endif
+				return 0;
+			}
+		}
+	}
+	fprintf(stderr, "Can't find kernel text map area from kcore\n");
+	return -1;
+}
+
 /* Forward Declaration. */
 static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
 
@@ -569,7 +694,6 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	elf_info.data             = ELFDATA2LSB;
 	elf_info.backup_src_start = BACKUP_SRC_START;
 	elf_info.backup_src_end   = BACKUP_SRC_END;
-	elf_info.page_offset      = X86_PAGE_OFFSET;
 
         /* Get the elf architecture of the running kernel */
 	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
@@ -598,6 +722,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
 		elf_info.class = ELFCLASS64;
 	}
+
+	if (get_kernel_page_offset(info, &elf_info))
+		return -1;
+
+	if (get_kernel_paddr(info, &elf_info))
+		return -1;
+
+	if (get_kernel_vaddr_and_size(info, &elf_info))
+		return -1;
 
 	/* Memory regions which panic kernel can safely use to boot into */
 	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));
