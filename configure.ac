@@ -159,6 +159,15 @@ if test "$with_xen" = yes ; then
 		AC_MSG_NOTICE([Xen support disabled])))
 fi
 
+dnl new toolchains
+if test "$ARCH" = ppc; then
+AC_ARG_WITH([oldtoolchain],
+		AC_HELP_STRING([--with-oldtoolchain],[compile without crt.S
+			required for new toolchains]),
+		AC_DEFINE(PPC_OLDTOOLCHAIN, 1,
+			[Define to compile with old toolchains]))
+fi
+
 dnl ---Sanity checks
 if test "$CC"      = "no"; then AC_MSG_ERROR([cc not found]); fi
 if test "$CPP"     = "no"; then AC_MSG_ERROR([cpp not found]); fi
