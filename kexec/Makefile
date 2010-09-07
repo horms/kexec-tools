@@ -22,6 +22,7 @@ KEXEC_SRCS += kexec/firmware_memmap.c
 KEXEC_SRCS += kexec/crashdump.c
 KEXEC_SRCS += kexec/crashdump-xen.c
 KEXEC_SRCS += kexec/phys_arch.c
+KEXEC_SRCS += kexec/kernel_version.c
 KEXEC_SRCS += kexec/lzma.c
 KEXEC_SRCS += kexec/zlib.c
 
