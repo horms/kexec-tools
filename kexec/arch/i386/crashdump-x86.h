@@ -5,11 +5,20 @@ struct kexec_info;
 int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 				unsigned long max_addr, unsigned long min_base);
 
-#define PAGE_OFFSET	0xc0000000
-#define __pa(x)		((unsigned long)(x)-PAGE_OFFSET)
+#define X86_PAGE_OFFSET	0xc0000000
+#define x86__pa(x)		((unsigned long)(x)-X86_PAGE_OFFSET)
 
-#define __VMALLOC_RESERVE       (128 << 20)
-#define MAXMEM                  (-PAGE_OFFSET-__VMALLOC_RESERVE)
+#define X86__VMALLOC_RESERVE       (128 << 20)
+#define X86_MAXMEM                  (-X86_PAGE_OFFSET-X86__VMALLOC_RESERVE)
+
+#define X86_64__START_KERNEL_map	0xffffffff80000000ULL
+#define X86_64_PAGE_OFFSET_PRE_2_6_27	0xffff810000000000ULL
+#define X86_64_PAGE_OFFSET		0xffff880000000000ULL
+
+#define X86_64_MAXMEM        		0x3fffffffffffUL
+
+/* Kernel text size */
+#define X86_64_KERNEL_TEXT_SIZE  (512UL*1024*1024)
 
 #define CRASH_MAX_MEMMAP_NR	(KEXEC_MAX_SEGMENTS + 1)
 #define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)

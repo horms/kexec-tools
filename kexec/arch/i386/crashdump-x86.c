@@ -120,11 +120,11 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		memory_ranges++;
 
 		/* Segregate linearly mapped region. */
-		if ((MAXMEM - 1) >= start && (MAXMEM - 1) <= end) {
-			crash_memory_range[memory_ranges-1].end = MAXMEM -1;
+		if ((X86_MAXMEM - 1) >= start && (X86_MAXMEM - 1) <= end) {
+			crash_memory_range[memory_ranges-1].end = X86_MAXMEM -1;
 
 			/* Add segregated region. */
-			crash_memory_range[memory_ranges].start = MAXMEM;
+			crash_memory_range[memory_ranges].start = X86_MAXMEM;
 			crash_memory_range[memory_ranges].end = end;
 			crash_memory_range[memory_ranges].type = type;
 			memory_ranges++;
@@ -472,7 +472,7 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 						strerror(errno));
 		}
 
-		*addr = __pa(vaddr + (cpu * MAX_NOTE_BYTES));
+		*addr = x86__pa(vaddr + (cpu * MAX_NOTE_BYTES));
 		*len = MAX_NOTE_BYTES;
 #if 0
 		printf("crash_notes addr = %Lx\n", *addr);
@@ -520,7 +520,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	elf_info.data             = ELFDATA2LSB;
 	elf_info.backup_src_start = BACKUP_SRC_START;
 	elf_info.backup_src_end   = BACKUP_SRC_END;
-	elf_info.page_offset      = PAGE_OFFSET;
+	elf_info.page_offset      = X86_PAGE_OFFSET;
 
 	/*
 	 * if the core type has not been set on command line, set it here
@@ -541,7 +541,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		elf_info.machine = EM_X86_64;
 	} else {
 		elf_info.machine       = EM_386;
-		elf_info.lowmem_limit  = MAXMEM;
+		elf_info.lowmem_limit  = X86_MAXMEM;
 		elf_info.get_note_info = get_crash_notes;
 	}
 
