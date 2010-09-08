@@ -507,7 +507,7 @@ static int build_mem_elf32_shdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 		break;
 	}
 	if (!size_ok) {
-		fprintf(stderr, "Bad section header(%x) entsize: %ld\n",
+		fprintf(stderr, "Bad section header(%x) entsize: %lld\n",
 			shdr->sh_type, shdr->sh_entsize);
 		return -1;
 	}
@@ -576,7 +576,7 @@ static int build_mem_elf64_shdr(const char *buf, struct mem_ehdr *ehdr, int idx)
 		break;
 	}
 	if (!size_ok) {
-		fprintf(stderr, "Bad section header(%x) entsize: %ld\n",
+		fprintf(stderr, "Bad section header(%x) entsize: %lld\n",
 			shdr->sh_type, shdr->sh_entsize);
 		return -1;
 	}
