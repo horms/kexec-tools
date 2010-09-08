@@ -120,6 +120,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *info,
 	elf_flags |= ELF_SKIP_FILESZ_CHECK;
 	result = build_elf_core_info(buf, size, &ehdr, elf_flags);
 	if (result < 0) {
+		/* Perhaps KCORE_ELF_HEADERS_SIZE is too small? */
 		fprintf(stderr, "ELF core (kcore) parse failed\n");
 		return -1;
 	}
