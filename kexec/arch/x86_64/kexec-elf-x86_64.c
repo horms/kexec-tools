@@ -37,7 +37,7 @@
 #include "../../kexec-elf-boot.h"
 #include "../i386/x86-linux-setup.h"
 #include "kexec-x86_64.h"
-#include "crashdump-x86_64.h"
+#include "../i386/crashdump-x86.h"
 #include <arch/options.h>
 
 static const int probe_debug = 0;
