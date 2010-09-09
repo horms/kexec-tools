@@ -29,7 +29,7 @@
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
 #include "kexec-x86_64.h"
-#include "crashdump-x86_64.h"
+#include "../i386/crashdump-x86.h"
 #include <arch/options.h>
 
 struct file_type file_type[] = {
@@ -55,14 +55,7 @@ void arch_usage(void)
 		);
 }
 
-static struct {
-	uint8_t  reset_vga;
-	uint16_t serial_base;
-	uint32_t serial_baud;
-	uint8_t  console_vga;
-	uint8_t  console_serial;
-	int core_header_type;
-} arch_options = {
+struct arch_options_t arch_options = {
 	.reset_vga   = 0,
 	.serial_base = 0x3f8,
 	.serial_baud = 0,

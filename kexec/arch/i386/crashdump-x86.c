@@ -2,6 +2,7 @@
  * kexec: Linux boots Linux
  *
  * Created by: Vivek Goyal (vgoyal@in.ibm.com)
+ * old x86_64 version Created by: Murali M Chakravarthy (muralim@in.ibm.com)
  * Copyright (C) IBM Corporation, 2005. All rights reserved
  *
  * This program is free software; you can redistribute it and/or modify
@@ -36,8 +37,133 @@
 
 extern struct arch_options_t arch_options;
 
+static int get_kernel_page_offset(struct kexec_info *info,
+				  struct crash_elf_info *elf_info)
+{
+	int kv;
+
+	if (elf_info->machine == EM_X86_64) {
+		kv = kernel_version();
+		if (kv < 0)
+			return -1;
+
+		if (kv < KERNEL_VERSION(2, 6, 27))
+			elf_info->page_offset = X86_64_PAGE_OFFSET_PRE_2_6_27;
+		else
+			elf_info->page_offset = X86_64_PAGE_OFFSET;
+	}
+	else if (elf_info->machine == EM_386) {
+		elf_info->page_offset = X86_PAGE_OFFSET;
+	}
+
+	return 0;
+}
+
+#define X86_64_KERN_VADDR_ALIGN	0x100000	/* 1MB */
+
+/* Read kernel physical load addr from the file returned by proc_iomem()
+ * (Kernel Code) and store in kexec_info */
+static int get_kernel_paddr(struct kexec_info *info,
+			    struct crash_elf_info *elf_info)
+{
+	uint64_t start;
+
+	if (elf_info->machine != EM_X86_64)
+		return 0;
+
+	if (xen_present()) /* Kernel not entity mapped under Xen */
+		return 0;
+
+	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
+		elf_info->kern_paddr_start = start;
+#ifdef DEBUG
+		printf("kernel load physical addr start = 0x%016Lx\n", start);
+#endif
+		return 0;
+	}
+
+	fprintf(stderr, "Cannot determine kernel physical load addr\n");
+	return -1;
+}
+
+/* Retrieve info regarding virtual address kernel has been compiled for and
+ * size of the kernel from /proc/kcore. Current /proc/kcore parsing from
+ * from kexec-tools fails because of malformed elf notes. A kernel patch has
+ * been submitted. For the folks using older kernels, this function
+ * hard codes the values to remain backward compatible. Once things stablize
+ * we should get rid of backward compatible code. */
+
+static int get_kernel_vaddr_and_size(struct kexec_info *info,
+				     struct crash_elf_info *elf_info)
+{
+	int result;
+	const char kcore[] = "/proc/kcore";
+	char *buf;
+	struct mem_ehdr ehdr;
+	struct mem_phdr *phdr, *end_phdr;
+	int align;
+	unsigned long size;
+	uint32_t elf_flags = 0;
+
+	if (elf_info->machine != EM_X86_64)
+		return 0;
+
+	if (xen_present()) /* Kernel not entity mapped under Xen */
+		return 0;
+
+	align = getpagesize();
+	size = KCORE_ELF_HEADERS_SIZE;
+	buf = slurp_file_len(kcore, size);
+	if (!buf) {
+		fprintf(stderr, "Cannot read %s: %s\n", kcore, strerror(errno));
+		return -1;
+	}
+
+	/* Don't perform checks to make sure stated phdrs and shdrs are
+	 * actually present in the core file. It is not practical
+	 * to read the GB size file into a user space buffer, Given the
+	 * fact that we don't use any info from that.
+	 */
+	elf_flags |= ELF_SKIP_FILESZ_CHECK;
+	result = build_elf_core_info(buf, size, &ehdr, elf_flags);
+	if (result < 0) {
+		/* Perhaps KCORE_ELF_HEADERS_SIZE is too small? */
+		fprintf(stderr, "ELF core (kcore) parse failed\n");
+		return -1;
+	}
+
+	/* Traverse through the Elf headers and find the region where
+	 * kernel is mapped. */
+	end_phdr = &ehdr.e_phdr[ehdr.e_phnum];
+	for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
+		if (phdr->p_type == PT_LOAD) {
+			unsigned long long saddr = phdr->p_vaddr;
+			unsigned long long eaddr = phdr->p_vaddr + phdr->p_memsz;
+			unsigned long long size;
+
+			/* Look for kernel text mapping header. */
+			if ((saddr >= X86_64__START_KERNEL_map) &&
+			    (eaddr <= X86_64__START_KERNEL_map + X86_64_KERNEL_TEXT_SIZE)) {
+				saddr = (saddr) & (~(X86_64_KERN_VADDR_ALIGN - 1));
+				elf_info->kern_vaddr_start = saddr;
+				size = eaddr - saddr;
+				/* Align size to page size boundary. */
+				size = (size + align - 1) & (~(align - 1));
+				elf_info->kern_size = size;
+#ifdef DEBUG
+				printf("kernel vaddr = 0x%lx size = 0x%llx\n",
+					saddr, size);
+#endif
+				return 0;
+			}
+		}
+	}
+	fprintf(stderr, "Can't find kernel text map area from kcore\n");
+	return -1;
+}
+
 /* Forward Declaration. */
-static int exclude_crash_reserve_region(int *nr_ranges);
+static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
 
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
  * A separate program header is created for backup region */
@@ -58,13 +184,14 @@ static struct memory_range crash_reserved_mem;
  * be zone data structures exported from kernel.
  */
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
-				   int kexec_flags)
+				   int kexec_flags, unsigned long lowmem_limit)
 {
 	const char *iomem = proc_iomem();
-	int memory_ranges = 0;
+	int memory_ranges = 0, gart = 0;
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end;
+	uint64_t gart_start = 0, gart_end = 0;
 
 	fp = fopen(iomem, "r");
 	if (!fp) {
@@ -85,6 +212,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 	while(fgets(line, sizeof(line), fp) != 0) {
 		char *str;
 		int type, consumed, count;
+
 		if (memory_ranges >= CRASH_MAX_MEMORY_RANGES)
 			break;
 		count = sscanf(line, "%Lx-%Lx : %n",
@@ -92,7 +220,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		if (count != 2)
 			continue;
 		str = line + consumed;
-#if 0
+#ifdef DEBUG
 		printf("%016Lx-%016Lx : %s",
 			start, end, str);
 #endif
@@ -106,6 +234,22 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 				crash_reserved_mem.end = end;
 				crash_reserved_mem.type = RANGE_RAM;
 				continue;
+		} else if (memcmp(str, "ACPI Tables\n", 12) == 0) {
+			/*
+			 * ACPI Tables area need to be passed to new
+			 * kernel with appropriate memmap= option. This
+			 * is needed so that x86_64 kernel creates linear
+			 * mapping for this region which is required for
+			 * initializing acpi tables in second kernel.
+			 */
+			type = RANGE_ACPI;
+		} else if(memcmp(str,"ACPI Non-volatile Storage\n",26) == 0 ) {
+			type = RANGE_ACPI_NVS;
+		} else if (memcmp(str, "GART\n", 5) == 0) {
+			gart_start = start;
+			gart_end = end;
+			gart = 1;
+			continue;
 		} else {
 			continue;
 		}
@@ -120,11 +264,12 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		memory_ranges++;
 
 		/* Segregate linearly mapped region. */
-		if ((MAXMEM - 1) >= start && (MAXMEM - 1) <= end) {
-			crash_memory_range[memory_ranges-1].end = MAXMEM -1;
+		if (lowmem_limit &&
+		    (lowmem_limit - 1) >= start && (lowmem_limit - 1) <= end) {
+			crash_memory_range[memory_ranges-1].end = lowmem_limit -1;
 
 			/* Add segregated region. */
-			crash_memory_range[memory_ranges].start = MAXMEM;
+			crash_memory_range[memory_ranges].start = lowmem_limit;
 			crash_memory_range[memory_ranges].end = end;
 			crash_memory_range[memory_ranges].type = type;
 			memory_ranges++;
@@ -148,11 +293,17 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		crash_reserved_mem.end = mem_max;
 		crash_reserved_mem.type = RANGE_RAM;
 	}
-	if (exclude_crash_reserve_region(&memory_ranges) < 0)
+	if (exclude_region(&memory_ranges, crash_reserved_mem.start,
+				crash_reserved_mem.end) < 0)
 		return -1;
+	if (gart) {
+		/* exclude GART region if the system has one */
+		if (exclude_region(&memory_ranges, gart_start, gart_end) < 0)
+			return -1;
+	}
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
-#if 0
+#ifdef DEBUG
 	int i;
 	printf("CRASH MEMORY RANGES\n");
 	for(i = 0; i < memory_ranges; i++) {
@@ -167,32 +318,28 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 /* Removes crash reserve region from list of memory chunks for whom elf program
  * headers have to be created. Assuming crash reserve region to be a single
  * continuous area fully contained inside one of the memory chunks */
-static int exclude_crash_reserve_region(int *nr_ranges)
+static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end)
 {
 	int i, j, tidx = -1;
-	unsigned long long cstart, cend;
 	struct memory_range temp_region = {0, 0, 0};
 
-	/* Crash reserved region. */
-	cstart = crash_reserved_mem.start;
-	cend = crash_reserved_mem.end;
 
 	for (i = 0; i < (*nr_ranges); i++) {
 		unsigned long long mstart, mend;
 		mstart = crash_memory_range[i].start;
 		mend = crash_memory_range[i].end;
-		if (cstart < mend && cend > mstart) {
-			if (cstart != mstart && cend != mend) {
+		if (start < mend && end > mstart) {
+			if (start != mstart && end != mend) {
 				/* Split memory region */
-				crash_memory_range[i].end = cstart - 1;
-				temp_region.start = cend + 1;
+				crash_memory_range[i].end = start - 1;
+				temp_region.start = end + 1;
 				temp_region.end = mend;
 				temp_region.type = RANGE_RAM;
 				tidx = i+1;
-			} else if (cstart != mstart)
-				crash_memory_range[i].end = cstart - 1;
+			} else if (start != mstart)
+				crash_memory_range[i].end = start - 1;
 			else
-				crash_memory_range[i].start = cend + 1;
+				crash_memory_range[i].start = end + 1;
 		}
 	}
 	/* Insert split memory region, if any. */
@@ -251,7 +398,7 @@ static int add_memmap(struct memory_range *memmap_p, unsigned long long addr,
 			memmap_p[j+1] = memmap_p[j];
 		memmap_p[tidx].start = addr;
 		memmap_p[tidx].end = addr + size - 1;
-#if 0
+#ifdef DEBUG
 	printf("Memmap after adding segment\n");
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
 		mstart = memmap_p[i].start;
@@ -337,7 +484,7 @@ static int delete_memmap(struct memory_range *memmap_p, unsigned long long addr,
 			memmap_p[j-1] = memmap_p[j];
 		memmap_p[j-1].start = memmap_p[j-1].end = 0;
 	}
-#if 0
+#ifdef DEBUG
 	printf("Memmap after deleting segment\n");
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
 		mstart = memmap_p[i].start;
@@ -412,8 +559,7 @@ static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 			die("Command line overflow\n");
 		strcat(cmdline, str_mmap);
 	}
-
-#if 0
+#ifdef DEBUG
 		printf("Command line after adding memmap\n");
 		printf("%s\n", cmdline);
 #endif
@@ -441,7 +587,7 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
-#if 0
+#ifdef DEBUG
 		printf("Command line after adding elfcorehdr\n");
 		printf("%s\n", cmdline);
 #endif
@@ -472,39 +618,15 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 						strerror(errno));
 		}
 
-		*addr = __pa(vaddr + (cpu * MAX_NOTE_BYTES));
+		*addr = x86__pa(vaddr + (cpu * MAX_NOTE_BYTES));
 		*len = MAX_NOTE_BYTES;
-#if 0
+#ifdef DEBUG
 		printf("crash_notes addr = %Lx\n", *addr);
 #endif
 		return 0;
 	} else
 		return get_crash_notes_per_cpu(cpu, addr, len);
 }
-
-static struct crash_elf_info elf_info64 =
-{
-	class: ELFCLASS64,
-	data: ELFDATA2LSB,
-	machine: EM_386,
-	backup_src_start: BACKUP_SRC_START,
-	backup_src_end: BACKUP_SRC_END,
-	page_offset: PAGE_OFFSET,
-	lowmem_limit: MAXMEM,
-	get_note_info: get_crash_notes,
-};
-
-static struct crash_elf_info elf_info32 =
-{
-	class: ELFCLASS32,
-	data: ELFDATA2LSB,
-	machine: EM_386,
-	backup_src_start: BACKUP_SRC_START,
-	backup_src_end: BACKUP_SRC_END,
-	page_offset: PAGE_OFFSET,
-	lowmem_limit: MAXMEM,
-	get_note_info: get_crash_notes,
-};
 
 static enum coretype get_core_type(struct kexec_info *info,
 				   struct memory_range *range, int ranges)
@@ -523,6 +645,39 @@ static enum coretype get_core_type(struct kexec_info *info,
 	}
 }
 
+/* Appends memmap=X#Y commandline for ACPI to command line*/
+static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
+					unsigned long end)
+{
+	int cmdlen, len, align = 1024;
+	unsigned long startk, endk;
+	char str_mmap[256], str_tmp[20];
+
+	if (!(end - start))
+		return 0;
+
+	startk = start/1024;
+	endk = (end + align - 1)/1024;
+	strcpy (str_mmap, " memmap=");
+	ultoa((endk - startk), str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K#");
+	ultoa(startk, str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K");
+	len = strlen(str_mmap);
+	cmdlen = strlen(cmdline) + len;
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str_mmap);
+
+#ifdef DEBUG
+		printf("Command line after adding acpi memmap\n");
+		printf("%s\n", cmdline);
+#endif
+	return 0;
+}
+
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
@@ -531,13 +686,28 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 				unsigned long max_addr, unsigned long min_base)
 {
 	void *tmp;
-	unsigned long sz, elfcorehdr;
-	int nr_ranges, align = 1024;
+	unsigned long sz, bufsz, memsz, elfcorehdr;
+	int nr_ranges, align = 1024, i;
 	struct memory_range *mem_range, *memmap_p;
-	unsigned machine;
+	struct crash_elf_info elf_info;
+
+	/* Constant parts of the elf_info */
+	elf_info.data             = ELFDATA2LSB;
+	elf_info.backup_src_start = BACKUP_SRC_START;
+	elf_info.backup_src_end   = BACKUP_SRC_END;
+
+        /* Get the elf architecture of the running kernel */
+	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
+		elf_info.machine = EM_X86_64;
+	} else {
+		elf_info.machine       = EM_386;
+		elf_info.lowmem_limit  = X86_MAXMEM;
+		elf_info.get_note_info = get_crash_notes;
+	}
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges,
-				    info->kexec_flags) < 0)
+				    info->kexec_flags,
+				    elf_info.lowmem_limit) < 0)
 		return -1;
 
 	/*
@@ -548,12 +718,20 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		arch_options.core_header_type =
 			get_core_type(info, mem_range, nr_ranges);
 	}
-
-        /* Get the elf architecture of the running kernel */
-	machine = EM_386;
-	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
-		machine = EM_X86_64;
+	/* Get the elf class... */
+	elf_info.class = ELFCLASS32;
+	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
+		elf_info.class = ELFCLASS64;
 	}
+
+	if (get_kernel_page_offset(info, &elf_info))
+		return -1;
+
+	if (get_kernel_paddr(info, &elf_info))
+		return -1;
+
+	if (get_kernel_vaddr_and_size(info, &elf_info))
+		return -1;
 
 	/* Memory regions which panic kernel can safely use to boot into */
 	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));
@@ -578,21 +756,20 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	/* Create elf header segment and store crash image data. */
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
-		elf_info64.machine = machine;
-		if (crash_create_elf64_headers(info, &elf_info64,
+		if (crash_create_elf64_headers(info, &elf_info,
 					       crash_memory_range, nr_ranges,
-					       &tmp, &sz,
+					       &tmp, &bufsz,
 					       ELF_CORE_HEADER_ALIGN) < 0)
 			return -1;
 	}
 	else {
-		elf_info32.machine = machine;
-		if (crash_create_elf32_headers(info, &elf_info32,
+		if (crash_create_elf32_headers(info, &elf_info,
 					       crash_memory_range, nr_ranges,
-					       &tmp, &sz,
+					       &tmp, &bufsz,
 					       ELF_CORE_HEADER_ALIGN) < 0)
 			return -1;
 	}
+	/* the size of the elf headers allocated is returned in 'bufsz' */
 
 	/* Hack: With some ld versions (GNU ld version 2.14.90.0.4 20030523),
 	 * vmlinux program headers show a gap of two pages between bss segment
@@ -601,13 +778,31 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 * elf core header segment to 16K to avoid being placed in such gaps.
 	 * This is a makeshift solution until it is fixed in kernel.
 	 */
-	elfcorehdr = add_buffer(info, tmp, sz, 16*1024, align, min_base,
+	if (bufsz < (16*1024)) {
+		/* bufsize is big enough for all the PT_NOTE's and PT_LOAD's */
+		memsz = 16*1024;
+		/* memsz will be the size of the memory hole we look for */
+	} else {
+		memsz = bufsz;
+	}
+	elfcorehdr = add_buffer(info, tmp, bufsz, memsz, align, min_base,
 							max_addr, -1);
 	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
-	if (delete_memmap(memmap_p, elfcorehdr, sz) < 0)
+	if (delete_memmap(memmap_p, elfcorehdr, memsz) < 0)
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
+
+	/* Inform second kernel about the presence of ACPI tables. */
+	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
+		unsigned long start, end;
+		if ( !( mem_range[i].type == RANGE_ACPI
+			|| mem_range[i].type == RANGE_ACPI_NVS) )
+			continue;
+		start = mem_range[i].start;
+		end = mem_range[i].end;
+		cmdline_add_memmap_acpi(mod_cmdline, start, end);
+	}
 	return 0;
 }
 

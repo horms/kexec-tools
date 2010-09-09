@@ -238,7 +238,7 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 	    get_crash_memory_ranges(&nr_ranges) == 0) {
 		int i;
 
-		info->kern_paddr_start = kernel_code_start;
+		elf_info.kern_paddr_start = kernel_code_start;
 		for (i=0; i < nr_ranges; i++) {
 			unsigned long long mstart = crash_memory_range[i].start;
 			unsigned long long mend = crash_memory_range[i].end;
@@ -246,11 +246,11 @@ int load_crashdump_segments(struct kexec_info *info, struct mem_ehdr *ehdr,
 				continue;
 			if (kernel_code_start >= mstart &&
 			    kernel_code_start < mend) {
-				info->kern_vaddr_start = mstart + LOAD_OFFSET;
+				elf_info.kern_vaddr_start = mstart + LOAD_OFFSET;
 				break;
 			}
 		}
-		info->kern_size = kernel_code_end - kernel_code_start + 1;
+		elf_info.kern_size = kernel_code_end - kernel_code_start + 1;
 		if (crash_create_elf64_headers(info, &elf_info,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz, EFI_PAGE_SIZE) < 0)

@@ -122,9 +122,6 @@ struct kexec_info {
 	struct mem_ehdr rhdr;
 	unsigned long backup_start;
 	unsigned long kexec_flags;
-	unsigned long kern_vaddr_start;
-	unsigned long kern_paddr_start;
-	unsigned long kern_size;
 };
 
 struct arch_map_entry {
@@ -134,6 +131,10 @@ struct arch_map_entry {
 
 extern const struct arch_map_entry arches[];
 long physical_arch(void);
+
+#define KERNEL_VERSION(major, minor, patch) \
+	(((major) << 16) | ((minor) << 8) | patch)
+long kernel_version(void);
 
 void usage(void);
 int get_memory_ranges(struct memory_range **range, int *ranges,
@@ -248,8 +249,6 @@ int kexec_iomem_for_each_line(char *match,
 			      void *data);
 int parse_iomem_single(char *str, uint64_t *start, uint64_t *end);
 const char * proc_iomem(void);
-
-int arch_init(void);
 
 extern int add_backup_segments(struct kexec_info *info,
 			       unsigned long backup_base,

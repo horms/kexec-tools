@@ -1,7 +1,7 @@
 /*
  * kexec: Linux boots Linux
  *
- * Copyright (C) 2003-2005  Eric Biederman (ebiederm@xmission.com)
+ * Copyright (C) 2003-2010  Eric Biederman (ebiederm@xmission.com)
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -217,7 +217,7 @@ int do_bzImage_load(struct kexec_info *info,
 		 * anywhere as we will be just reading command line.
 		 */
 		setup_base = add_buffer(info, real_mode, setup_size, setup_size,
-			16, 0x3000, -1, 1);
+			16, 0x3000, -1, -1);
 	}
 	else if (real_mode->protocol_version >= 0x0200) {
 		/* Careful setup_base must be greater than 8K */
