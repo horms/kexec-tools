@@ -99,4 +99,38 @@ static inline long kexec_reboot(void)
 
 #define KEXEC_MAX_SEGMENTS 16
 
+#ifdef __i386__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_386
+#endif
+#ifdef __sh__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_SH
+#endif
+#ifdef __cris__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_CRIS
+#endif
+#ifdef __ia64__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_IA_64
+#endif
+#ifdef __powerpc64__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_PPC64
+#endif
+#ifdef __powerpc__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_PPC
+#endif
+#ifdef __x86_64__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_X86_64
+#endif
+#ifdef __s390x__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_S390
+#endif
+#ifdef __s390__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_S390
+#endif
+#ifdef __arm__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_ARM
+#endif
+#if defined(__mips__)
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_MIPS
+#endif
+
 #endif /* KEXEC_SYSCALL_H */
