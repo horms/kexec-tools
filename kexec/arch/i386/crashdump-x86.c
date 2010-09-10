@@ -628,10 +628,10 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 		return get_crash_notes_per_cpu(cpu, addr, len);
 }
 
-static enum coretype get_core_type(struct kexec_info *info,
+static enum coretype get_core_type(struct crash_elf_info *elf_info,
 				   struct memory_range *range, int ranges)
 {
-	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64)
+	if ((elf_info->machine) == EM_X86_64)
 		return CORE_TYPE_ELF64;
 	else {
 		/* fall back to default */
@@ -690,19 +690,33 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	int nr_ranges, align = 1024, i;
 	struct memory_range *mem_range, *memmap_p;
 	struct crash_elf_info elf_info;
+	unsigned kexec_arch;
 
 	/* Constant parts of the elf_info */
+	memset(&elf_info, 0, sizeof(elf_info));
 	elf_info.data             = ELFDATA2LSB;
 	elf_info.backup_src_start = BACKUP_SRC_START;
 	elf_info.backup_src_end   = BACKUP_SRC_END;
 
+	/* Get the architecture of the running kernel */
+	kexec_arch = info->kexec_flags & KEXEC_ARCH_MASK;
+	if (kexec_arch == KEXEC_ARCH_DEFAULT)
+		kexec_arch = KEXEC_ARCH_NATIVE;
+	
         /* Get the elf architecture of the running kernel */
-	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
+	switch(kexec_arch) {
+	case KEXEC_ARCH_X86_64:
 		elf_info.machine = EM_X86_64;
-	} else {
+		break;
+	case KEXEC_ARCH_386:
 		elf_info.machine       = EM_386;
 		elf_info.lowmem_limit  = X86_MAXMEM;
 		elf_info.get_note_info = get_crash_notes;
+		break;
+	default:
+		fprintf(stderr, "unsupported crashdump architecture: %04x\n",
+			kexec_arch);
+		return -1;
 	}
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges,
@@ -716,7 +730,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 */
 	if (arch_options.core_header_type == CORE_TYPE_UNDEF) {
 		arch_options.core_header_type =
-			get_core_type(info, mem_range, nr_ranges);
+			get_core_type(&elf_info, mem_range, nr_ranges);
 	}
 	/* Get the elf class... */
 	elf_info.class = ELFCLASS32;
