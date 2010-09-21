@@ -354,7 +354,8 @@ char *fixup_dtb_init(struct kexec_info *info, char *blob_buf, off_t *blob_size,
 		printf("%s: Unable to pack flat device tree\n", fdt_strerror(ret));
 
 	/* info->nr_segments just a guide, will grow by at least EXPAND_GRANULARITY */
-	blob_buf = expand_buf(info->nr_segments, blob_buf, blob_size);
+	blob_buf = expand_buf(info->nr_segments * sizeof(struct fdt_reserve_entry),
+				 blob_buf, blob_size);
 
 	/* add reserve region for *THIS* fdt */
 	*dtb_addr = locate_hole(info, *blob_size, 0,
