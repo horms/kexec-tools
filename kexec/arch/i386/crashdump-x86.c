@@ -691,6 +691,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	struct memory_range *mem_range, *memmap_p;
 	struct crash_elf_info elf_info;
 
+	memset(&elf_info, 0x0, sizeof(elf_info));
+
 	/* Constant parts of the elf_info */
 	elf_info.data             = ELFDATA2LSB;
 	elf_info.backup_src_start = BACKUP_SRC_START;
