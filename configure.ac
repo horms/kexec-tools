@@ -1,5 +1,5 @@
 dnl 
-dnl configure.ac for mkelfImage
+dnl configure.ac for kexec-tools
 dnl 
 dnl 
 
