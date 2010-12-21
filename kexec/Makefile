@@ -24,6 +24,7 @@ KEXEC_SRCS += kexec/crashdump-xen.c
 KEXEC_SRCS += kexec/phys_arch.c
 KEXEC_SRCS += kexec/kernel_version.c
 KEXEC_SRCS += kexec/lzma.c
+KEXEC_SRCS += kexec/virt_to_phys.c
 KEXEC_SRCS += kexec/zlib.c
 
 KEXEC_GENERATED_SRCS += $(PURGATORY_HEX_C)
