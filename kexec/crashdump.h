@@ -35,6 +35,13 @@ struct crash_elf_info {
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);
 };
 
+typedef int(*crash_create_elf_headers_func)(struct kexec_info *info,
+					    struct crash_elf_info *elf_info,
+					    struct memory_range *range,
+					    int ranges,
+					    void **buf, unsigned long *size,
+					    unsigned long align);
+
 int crash_create_elf32_headers(struct kexec_info *info,
 			       struct crash_elf_info *elf_info,
 			       struct memory_range *range, int ranges,
