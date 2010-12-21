@@ -70,7 +70,8 @@ static int get_kernel_paddr(struct crash_elf_info *elf_info)
 	return -1;
 }
 
-static int get_kernel_vaddr_and_size(struct crash_elf_info *elf_info)
+static int get_kernel_vaddr_and_size(struct crash_elf_info *elf_info,
+				     unsigned long start_offset)
 {
 	uint64_t end;
 
@@ -78,7 +79,7 @@ static int get_kernel_vaddr_and_size(struct crash_elf_info *elf_info)
 		return -1;
 
 	elf_info->kern_vaddr_start = elf_info->kern_paddr_start |
-					0xffffffff80000000UL;
+					start_offset;
 	if (parse_iomem_single("Kernel data\n", NULL, &end) == 0) {
 		elf_info->kern_size = end - elf_info->kern_paddr_start;
 #ifdef DEBUG
@@ -358,18 +359,20 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	struct memory_range *mem_range;
 	crash_create_elf_headers_func crash_create = crash_create_elf32_headers;
 	struct crash_elf_info *elf_info = &elf_info32;
+	unsigned long start_offset = 0x80000000UL;
 
 #ifdef __mips64
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
 		elf_info = &elf_info64;
 		crash_create = crash_create_elf64;
+		start_offset = 0xffffffff80000000UL;
 	}
 #endif
 
 	if (get_kernel_paddr(elf_info))
 		return -1;
 
-	if (get_kernel_vaddr_and_size(elf_info))
+	if (get_kernel_vaddr_and_size(elf_info, start_offset))
 		return -1;
 
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
