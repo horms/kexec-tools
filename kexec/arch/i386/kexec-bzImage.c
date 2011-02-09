@@ -43,32 +43,32 @@ static const int probe_debug = 0;
 
 int bzImage_probe(const char *buf, off_t len)
 {
-	struct x86_linux_header header;
+	const struct x86_linux_header *header;
 	if ((uintmax_t)len < (uintmax_t)sizeof(header)) {
 		return -1;
 	}
-	memcpy(&header, buf, sizeof(header));
-	if (memcmp(header.header_magic, "HdrS", 4) != 0) {
+	header = (const struct x86_linux_header *)buf;
+	if (memcmp(header->header_magic, "HdrS", 4) != 0) {
 		if (probe_debug) {
 			fprintf(stderr, "Not a bzImage\n");
 		}
 		return -1;
 	}
-	if (header.boot_sector_magic != 0xAA55) {
+	if (header->boot_sector_magic != 0xAA55) {
 		if (probe_debug) {
 			fprintf(stderr, "No x86 boot sector present\n");
 		}
 		/* No x86 boot sector present */
 		return -1;
 	}
-	if (header.protocol_version < 0x0200) {
+	if (header->protocol_version < 0x0200) {
 		if (probe_debug) {
 			fprintf(stderr, "Must be at least protocol version 2.00\n");
 		}
 		/* Must be at least protocol version 2.00 */
 		return -1;
 	}
-	if ((header.loadflags & 1) == 0) {
+	if ((header->loadflags & 1) == 0) {
 		if (probe_debug) {
 			fprintf(stderr, "zImage not a bzImage\n");
 		}
