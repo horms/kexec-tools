@@ -7,8 +7,8 @@ extern int get_xen_vmcoreinfo(uint64_t *addr, uint64_t *len);
 
 /* Need to find a better way to determine per cpu notes section size. */
 #define MAX_NOTE_BYTES		1024
-/* Expecting ELF headers to fit in 16K. Increase it if you need more. */
-#define KCORE_ELF_HEADERS_SIZE  16384
+/* Expecting ELF headers to fit in 32K. Increase it if you need more. */
+#define KCORE_ELF_HEADERS_SIZE  32768
 /* The address of the ELF header is passed to the secondary kernel
  * using the kernel command line option memmap=nnn.
  * The smallest unit the kernel accepts is in kilobytes,
