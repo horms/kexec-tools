@@ -37,7 +37,7 @@
 
 extern struct arch_options_t arch_options;
 
-static int get_kernel_page_offset(struct kexec_info *info,
+static int get_kernel_page_offset(struct kexec_info *UNUSED(info),
 				  struct crash_elf_info *elf_info)
 {
 	int kv;
@@ -63,7 +63,7 @@ static int get_kernel_page_offset(struct kexec_info *info,
 
 /* Read kernel physical load addr from the file returned by proc_iomem()
  * (Kernel Code) and store in kexec_info */
-static int get_kernel_paddr(struct kexec_info *info,
+static int get_kernel_paddr(struct kexec_info *UNUSED(info),
 			    struct crash_elf_info *elf_info)
 {
 	uint64_t start;
@@ -93,7 +93,7 @@ static int get_kernel_paddr(struct kexec_info *info,
  * hard codes the values to remain backward compatible. Once things stablize
  * we should get rid of backward compatible code. */
 
-static int get_kernel_vaddr_and_size(struct kexec_info *info,
+static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 				     struct crash_elf_info *elf_info)
 {
 	int result;
