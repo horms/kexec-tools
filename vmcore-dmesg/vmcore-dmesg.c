@@ -113,10 +113,6 @@ static void read_elf32(int fd)
 			ehdr.e_phentsize, sizeof(Elf32_Phdr));
 		exit(12);
 	}
-	if (ehdr.e_phnum > ULONG_MAX/sizeof(Elf64_Phdr)) {
-		fprintf(stderr, "Too many elf program header entries\n");
-		exit(13);
-	}
 	phdrs32_size = ehdr.e_phnum * sizeof(Elf32_Phdr);
 	phdrs_size = ehdr.e_phnum * sizeof(Elf64_Phdr);
 	phdr32 = calloc(ehdr.e_phnum, sizeof(Elf32_Phdr));
@@ -188,10 +184,6 @@ static void read_elf64(int fd)
 		fprintf(stderr, "Bad Elf progra header size %u expected %zu\n",
 			ehdr.e_phentsize, sizeof(Elf64_Phdr));
 		exit(12);
-	}
-	if (ehdr.e_phnum > ULONG_MAX/sizeof(Elf64_Phdr)) {
-		fprintf(stderr, "Too many program header entries\n");
-		exit(13);
 	}
 	phdrs_size = ehdr.e_phnum * sizeof(Elf64_Phdr);
 	phdr64 = calloc(ehdr.e_phnum, sizeof(Elf64_Phdr));
