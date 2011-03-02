@@ -20,12 +20,14 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "../../../kexec/arch/i386/crashdump-x86.h"
 
 /* Backup region start gets set after /proc/iomem has been parsed. */
 /* We reuse the same code for x86_64 also so changing backup_start to
    unsigned long */
 unsigned long  backup_start = 0;
+
+unsigned long backup_src_start = 0;
+unsigned long backup_src_size = 0;
 
 /* Backup first 640K of memory to backup region as reserved by kexec.
  * Assuming first 640K has to be present on i386 machines and no address
@@ -34,11 +36,16 @@ unsigned long  backup_start = 0;
 void crashdump_backup_memory(void)
 {
 	void *dest, *src;
+	size_t size;
 
-	src = (void *) BACKUP_SRC_START;
+	src = (void *) backup_src_start;
+	size = (size_t) backup_src_size;
+
+	if (!size)
+		return;
 
 	if (backup_start) {
 		dest = (void *)(backup_start);
-		memcpy(dest, src, BACKUP_SRC_SIZE);
+		memcpy(dest, src, size);
 	}
 }

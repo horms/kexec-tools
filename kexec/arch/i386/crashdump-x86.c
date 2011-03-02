@@ -200,15 +200,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		return -1;
 	}
 
-	/* First entry is for first 640K region. Different bios report first
-	 * 640K in different manner hence hardcoding it */
-	if (!(kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
-		crash_memory_range[0].start = 0x00000000;
-		crash_memory_range[0].end = 0x0009ffff;
-		crash_memory_range[0].type = RANGE_RAM;
-		memory_ranges++;
-	}
-
 	while(fgets(line, sizeof(line), fp) != 0) {
 		char *str;
 		int type, consumed, count;
@@ -253,10 +244,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		} else {
 			continue;
 		}
-
-		/* First 640K already registered */
-		if (end <= 0x0009ffff)
-			continue;
 
 		crash_memory_range[memory_ranges].start = start;
 		crash_memory_range[memory_ranges].end = end;
@@ -678,6 +665,49 @@ static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
 	return 0;
 }
 
+static void get_backup_area(unsigned long *start, unsigned long *end)
+{
+	const char *iomem = proc_iomem();
+	char line[MAX_LINE];
+	FILE *fp;
+
+	fp = fopen(iomem, "r");
+	if (!fp) {
+		fprintf(stderr, "Cannot open %s: %s\n",
+			iomem, strerror(errno));
+		return;
+	}
+
+	while(fgets(line, sizeof(line), fp) != 0) {
+		char *str;
+		int count, consumed;
+		unsigned long mstart, mend;
+
+		count = sscanf(line, "%lx-%lx : %n",
+			&mstart, &mend, &consumed);
+		if (count != 2)
+			continue;
+		str = line + consumed;
+#ifdef DEBUG
+		printf("%016lx-%016lx : %s",
+			mstart, mend, str);
+#endif
+		/* Hopefully there is only one RAM region in the first 640K */
+		if (memcmp(str, "System RAM\n", 11) == 0 && mend <= 0xa0000 ) {
+#ifdef DEBUG
+			printf("%s: %016lx-%016lx : %s", __func__, mstart, mend, str);
+#endif
+			*start = mstart;
+			*end = mend;
+			fclose(fp);
+			return;
+		}
+	}
+	*start = BACKUP_SRC_START;
+	*end = BACKUP_SRC_END;
+	fclose(fp);
+}
+
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
@@ -695,8 +725,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	/* Constant parts of the elf_info */
 	elf_info.data             = ELFDATA2LSB;
-	elf_info.backup_src_start = BACKUP_SRC_START;
-	elf_info.backup_src_end   = BACKUP_SRC_END;
+	get_backup_area(&elf_info.backup_src_start, &elf_info.backup_src_end);
+	info->backup_src_start = elf_info.backup_src_start;
+	info->backup_src_size = elf_info.backup_src_end
+				- elf_info.backup_src_start + 1;
 
         /* Get the elf architecture of the running kernel */
 	if ((info->kexec_flags & KEXEC_ARCH_MASK) == KEXEC_ARCH_X86_64) {
@@ -739,13 +771,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));
 	memmap_p = xmalloc(sz);
 	memset(memmap_p, 0, sz);
-	add_memmap(memmap_p, BACKUP_SRC_START, BACKUP_SRC_SIZE);
+	add_memmap(memmap_p, elf_info.backup_src_start,
+		   elf_info.backup_src_end - elf_info.backup_src_start + 1);
 	sz = crash_reserved_mem.end - crash_reserved_mem.start +1;
 	add_memmap(memmap_p, crash_reserved_mem.start, sz);
 
 	/* Create a backup region segment to store backup data*/
 	if (!(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
-		sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
+		sz = (elf_info.backup_src_end - elf_info.backup_src_start + align)
+		     & ~(align - 1);
 		tmp = xmalloc(sz);
 		memset(tmp, 0, sz);
 		info->backup_start = add_buffer(info, tmp, sz, sz, align,

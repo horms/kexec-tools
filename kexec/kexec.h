@@ -122,6 +122,8 @@ struct kexec_info {
 	struct mem_ehdr rhdr;
 	unsigned long backup_start;
 	unsigned long kexec_flags;
+	unsigned long backup_src_start;
+	unsigned long backup_src_size;
 };
 
 struct arch_map_entry {
