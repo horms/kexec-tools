@@ -20,6 +20,7 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stddef.h>
 #include <errno.h>
 #include <limits.h>
 #include <sys/types.h>
@@ -396,12 +397,32 @@ out:
 		real_mode->eddbuf_entries);
 }
 
+#define BOOT_PARAMS_DBGFS	"/sys/kernel/debug/boot_params/data"
+
+void setup_subarch(struct x86_linux_param_header *real_mode)
+{
+	int data_file;
+	const off_t offset = offsetof(typeof(*real_mode), hardware_subarch);
+
+	data_file = open(BOOT_PARAMS_DBGFS, O_RDONLY);
+	if (data_file < 0)
+		return;
+	if (lseek(data_file, offset, SEEK_SET) < 0)
+		goto close;
+	read(data_file, &real_mode->hardware_subarch, sizeof(uint32_t));
+close:
+	close(data_file);
+}
+
 void setup_linux_system_parameters(struct x86_linux_param_header *real_mode,
 					unsigned long kexec_flags)
 {
 	/* Fill in information the BIOS would usually provide */
 	struct memory_range *range;
 	int i, ranges;
+
+	/* get subarch from running kernel */
+	setup_subarch(real_mode);
 	
 	/* Default screen size */
 	real_mode->orig_x = 0;
