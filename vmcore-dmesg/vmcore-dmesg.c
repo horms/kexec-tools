@@ -79,7 +79,7 @@ static void read_elf32(int fd)
 {
 	Elf32_Ehdr ehdr32;
 	Elf32_Phdr *phdr32;
-	size_t phdrs32_size, phdrs_size;
+	size_t phdrs32_size;
 	ssize_t ret, i;
 
 	ret = pread(fd, &ehdr32, sizeof(ehdr32), 0);
@@ -114,7 +114,6 @@ static void read_elf32(int fd)
 		exit(12);
 	}
 	phdrs32_size = ehdr.e_phnum * sizeof(Elf32_Phdr);
-	phdrs_size = ehdr.e_phnum * sizeof(Elf64_Phdr);
 	phdr32 = calloc(ehdr.e_phnum, sizeof(Elf32_Phdr));
 	if (!phdr32) {
 		fprintf(stderr, "Calloc of %u phdrs32 failed: %s\n",

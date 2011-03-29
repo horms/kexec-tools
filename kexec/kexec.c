@@ -815,9 +815,7 @@ static int my_shutdown(void)
  */
 static int my_exec(void)
 {
-	int result;
-
-	result = kexec_reboot();
+	kexec_reboot();
 	/* I have failed if I make it here */
 	fprintf(stderr, "kexec failed: %s\n", 
 		strerror(errno));
