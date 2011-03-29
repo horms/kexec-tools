@@ -127,7 +127,7 @@ static void read_elf32(int fd)
 		exit(15);
 	}
 	ret = pread(fd, phdr32, phdrs32_size, ehdr.e_phoff);
-	if (ret != phdrs32_size) {
+	if (ret < 0 || (size_t)ret != phdrs32_size) {
 		fprintf(stderr, "Read of program header @ 0x%llu for %zu bytes failed: %s\n",
 			(unsigned long long)ehdr.e_phoff, phdrs32_size, strerror(errno));
 		exit(16);
@@ -154,7 +154,7 @@ static void read_elf64(int fd)
 	ssize_t ret, i;
 
 	ret = pread(fd, &ehdr64, sizeof(ehdr64), 0);
-	if (ret != sizeof(ehdr)) {
+	if (ret < 0 || (size_t)ret != sizeof(ehdr)) {
 		fprintf(stderr, "Read of Elf header from %s failed: %s\n",
 			fname, strerror(errno));
 		exit(10);
@@ -198,7 +198,7 @@ static void read_elf64(int fd)
 		exit(15);
 	}
 	ret = pread(fd, phdr64, phdrs_size, ehdr.e_phoff);
-	if (ret != phdrs_size) {
+	if (ret < 0 || (size_t)ret != phdrs_size) {
 		fprintf(stderr, "Read of program header @ %llu for %zu bytes failed: %s\n",
 			(unsigned long long)(ehdr.e_phoff), phdrs_size, strerror(errno));
 		exit(16);
@@ -239,8 +239,7 @@ static void scan_vmcoreinfo(char *start, size_t size)
 	};
 
 	for (pos = start; pos <= last; pos = eol + 1) {
-		size_t len;
-		int i;
+		size_t len, i;
 		/* Find the end of the current line */
 		for (eol = pos; (eol <= last) && (*eol != '\n') ; eol++)
 			;
@@ -276,7 +275,7 @@ static void scan_notes(int fd, loff_t start, loff_t lsize)
 	size_t size;
 	ssize_t ret;
 
-	if (lsize > LONG_MAX) {
+	if (lsize > SSIZE_MAX) {
 		fprintf(stderr, "Unable to handle note section of %llu bytes\n",
 			(unsigned long long)lsize);
 		exit(20);
@@ -289,7 +288,7 @@ static void scan_notes(int fd, loff_t start, loff_t lsize)
 	}
 	last = buf + size - 1;
 	ret = pread(fd, buf, size, start);
-	if (ret != size) {
+	if (ret != (ssize_t)size) {
 		fprintf(stderr, "Cannot read note section @ 0x%llx of %zu bytes: %s\n",
 			(unsigned long long)start, size, strerror(errno));
 		exit(22);
