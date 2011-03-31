@@ -30,6 +30,7 @@
 #include <linux/fb.h>
 #include <unistd.h>
 #include <dirent.h>
+#include <mntent.h>
 #include <x86/x86-linux.h>
 #include "../../kexec.h"
 #include "kexec-x86.h"
@@ -397,14 +398,44 @@ out:
 		real_mode->eddbuf_entries);
 }
 
-#define BOOT_PARAMS_DBGFS	"/sys/kernel/debug/boot_params/data"
+/*
+ * This really only makes sense for virtual filesystems that are only expected
+ * to be mounted once (sysfs, debugsfs, proc), as it will return the first
+ * instance listed in mtab.
+ */
+char *find_mnt_by_fsname(char *fsname)
+{
+	FILE *mtab;
+	struct mntent *mnt;
+	char *mntdir;
+
+	mtab = setmntent("/etc/mtab", "r");
+	if (!mtab)
+		return NULL;
+	for(mnt = getmntent(mtab); mnt; mnt = getmntent(mtab)) {
+		if (strcmp(mnt->mnt_fsname, fsname) == 0)
+			break;
+	}
+	mntdir = mnt ? strdup(mnt->mnt_dir) : NULL;
+	endmntent(mtab);
+	return mntdir;
+}
 
 void setup_subarch(struct x86_linux_param_header *real_mode)
 {
 	int data_file;
 	const off_t offset = offsetof(typeof(*real_mode), hardware_subarch);
+	char *debugfs_mnt;
+	char filename[PATH_MAX];
 
-	data_file = open(BOOT_PARAMS_DBGFS, O_RDONLY);
+	debugfs_mnt = find_mnt_by_fsname("debugfs");
+	if (!debugfs_mnt)
+		return;
+	snprintf(filename, PATH_MAX, "%s/%s", debugfs_mnt, "boot_params/data");
+	filename[PATH_MAX-1] = 0;
+	free(debugfs_mnt);
+
+	data_file = open(filename, O_RDONLY);
 	if (data_file < 0)
 		return;
 	if (lseek(data_file, offset, SEEK_SET) < 0)
