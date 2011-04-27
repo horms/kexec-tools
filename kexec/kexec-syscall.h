@@ -113,9 +113,10 @@ static inline long kexec_reboot(void)
 #endif
 #ifdef __powerpc64__
 #define KEXEC_ARCH_NATIVE	KEXEC_ARCH_PPC64
-#endif
-#ifdef __powerpc__
-#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_PPC
+#else
+ #ifdef __powerpc__
+ #define KEXEC_ARCH_NATIVE	KEXEC_ARCH_PPC
+ #endif
 #endif
 #ifdef __x86_64__
 #define KEXEC_ARCH_NATIVE	KEXEC_ARCH_X86_64
