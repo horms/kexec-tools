@@ -192,11 +192,12 @@ static int realloc_memory_ranges(void)
 	max_memory_ranges++;
 	memory_range_len = sizeof(struct memory_range) * max_memory_ranges;
 
-	memory_range = (struct memory_range *) malloc(memory_range_len);
+	memory_range = (struct memory_range *) realloc(memory_range,
+						       memory_range_len);
 	if (!memory_range)
 		goto err;
 
-	base_memory_range = (struct memory_range *) realloc(memory_range,
+	base_memory_range = (struct memory_range *) realloc(base_memory_range,
 			memory_range_len);
 	if (!base_memory_range)
 		goto err;
@@ -319,7 +320,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 	unsigned long long htab_base, htab_size;
 	unsigned long long kernel_end;
 	unsigned long long initrd_start, initrd_end;
-	char buf[MAXBYTES-1];
+	char buf[MAXBYTES];
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
 	DIR *dir, *cdir;

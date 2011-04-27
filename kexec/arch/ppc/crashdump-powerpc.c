@@ -79,7 +79,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	int memory_ranges = 0;
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
-	char buf[MAXBYTES-1];
+	char buf[MAXBYTES];
 	DIR *dir, *dmem;
 	FILE *file;
 	struct dirent *dentry, *mentry;
