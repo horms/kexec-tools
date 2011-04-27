@@ -721,16 +721,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	struct memory_range *mem_range, *memmap_p;
 	struct crash_elf_info elf_info;
 	unsigned kexec_arch;
+	unsigned long tmp_backup_end = 0;
 
 	memset(&elf_info, 0x0, sizeof(elf_info));
 
 	/* Constant parts of the elf_info */
 	memset(&elf_info, 0, sizeof(elf_info));
 	elf_info.data             = ELFDATA2LSB;
-	get_backup_area(&elf_info.backup_src_start, &elf_info.backup_src_end);
-	info->backup_src_start = elf_info.backup_src_start;
-	info->backup_src_size = elf_info.backup_src_end
-				- elf_info.backup_src_start + 1;
+	get_backup_area(&info->backup_src_start, &tmp_backup_end);
+	info->backup_src_size = tmp_backup_end - info->backup_src_start + 1;
 
 	/* Get the architecture of the running kernel */
 	kexec_arch = info->kexec_flags & KEXEC_ARCH_MASK;
@@ -785,15 +784,13 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));
 	memmap_p = xmalloc(sz);
 	memset(memmap_p, 0, sz);
-	add_memmap(memmap_p, elf_info.backup_src_start,
-		   elf_info.backup_src_end - elf_info.backup_src_start + 1);
+	add_memmap(memmap_p, info->backup_src_start, info->backup_src_size);
 	sz = crash_reserved_mem.end - crash_reserved_mem.start +1;
 	add_memmap(memmap_p, crash_reserved_mem.start, sz);
 
 	/* Create a backup region segment to store backup data*/
 	if (!(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
-		sz = (elf_info.backup_src_end - elf_info.backup_src_start + align)
-		     & ~(align - 1);
+		sz = (info->backup_src_size + align) & ~(align - 1);
 		tmp = xmalloc(sz);
 		memset(tmp, 0, sz);
 		info->backup_start = add_buffer(info, tmp, sz, sz, align,

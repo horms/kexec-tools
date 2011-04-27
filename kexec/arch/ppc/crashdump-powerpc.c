@@ -21,8 +21,6 @@ static struct crash_elf_info elf_info64 = {
 class: ELFCLASS64,
 data: ELFDATA2MSB,
 machine: EM_PPC64,
-backup_src_start: BACKUP_SRC_START,
-backup_src_end: BACKUP_SRC_END,
 page_offset: PAGE_OFFSET,
 lowmem_limit: MAXMEM,
 };
@@ -35,8 +33,6 @@ machine: EM_PPC64,
 #else
 machine: EM_PPC,
 #endif
-backup_src_start: BACKUP_SRC_START,
-backup_src_end: BACKUP_SRC_END,
 page_offset: PAGE_OFFSET,
 lowmem_limit: MAXMEM,
 };

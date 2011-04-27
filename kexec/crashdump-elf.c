@@ -227,8 +227,8 @@ int FUNC(struct kexec_info *info,
 		phdr->p_flags	= PF_R|PF_W|PF_X;
 		phdr->p_offset	= mstart;
 
-		if (mstart == elf_info->backup_src_start
-		    && mend == elf_info->backup_src_end)
+		if (mstart == info->backup_src_start
+		    && (mend - mstart + 1) == info->backup_src_size)
 			phdr->p_offset	= info->backup_start;
 
 		/* We already prepared the header for kernel text. Map

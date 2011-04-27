@@ -23,9 +23,6 @@ struct crash_elf_info {
 	unsigned long data;
 	unsigned long machine;
 
-	unsigned long backup_src_start;
-	unsigned long backup_src_end;
-
 	unsigned long long page_offset;
 	unsigned long long kern_vaddr_start;
 	unsigned long long kern_paddr_start;
