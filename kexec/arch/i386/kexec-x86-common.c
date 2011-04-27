@@ -202,6 +202,28 @@ again:
 }
 
 /**
+ * Detect the add_efi_memmap kernel parameter.
+ *
+ * On some EFI-based systems, the e820 map is empty, or does not contain a
+ * complete memory map. The add_efi_memmap parameter adds these entries to
+ * the kernel's memory map, but does not add them under sysfs, which causes
+ * kexec to fail in a way similar to how it does not work on Xen.
+ *
+ * @return 1 if parameter is present, 0 if not or if an error occurs.
+ */
+int efi_map_added( void ) {
+	char buf[512], *res;
+	FILE *fp = fopen( "/proc/cmdline", "r" );
+	if( fp ) {
+		res = fgets( buf, 512, fp );
+		fclose( fp );
+		return strstr( buf, "add_efi_memmap" ) != NULL;
+	} else {
+		return 0;
+	}
+}
+
+/**
  * Return a sorted list of memory ranges.
  *
  * If we have the /sys/firmware/memmap interface, then use that. If not,
@@ -227,7 +249,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	 * even if we have /sys/firmware/memmap. Without that, /proc/vmcore
 	 * is empty in the kdump kernel.
 	 */
-	if (!xen_present() && have_sys_firmware_memmap()) {
+	if (!efi_map_added() && !xen_present() && have_sys_firmware_memmap()) {
 		ret = get_memory_ranges_sysfs(range, ranges);
 		if (!ret)
 			ret = fixup_memory_ranges_sysfs(range, ranges);
