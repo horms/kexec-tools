@@ -328,6 +328,8 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 	if (get_crash_memory_ranges(&mem_range, &nr_ranges) < 0)
 		return -1;
 
+	info->backup_src_start = BACKUP_SRC_START;
+	info->backup_src_size = BACKUP_SRC_SIZE;
 	/* Create a backup region segment to store backup data*/
 	sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
 	tmp = xmalloc(sz);
