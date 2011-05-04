@@ -25,14 +25,19 @@ struct crash_note_info {
 	unsigned long length;
 };
 
-int xen_phys_cpus = 0;
-struct crash_note_info *xen_phys_notes;
+static int xen_phys_cpus;
+static struct crash_note_info *xen_phys_notes;
+static int is_dom0;
 
 int xen_present(void)
 {
-	struct stat buf;
-
-	return stat("/proc/xen", &buf) == 0;
+	if (!is_dom0) {
+		if (access("/proc/xen/capabilities", F_OK) == 0)
+			is_dom0 = 1;
+		else
+			is_dom0 = -1;
+	}
+	return is_dom0 > 0;
 }
 
 unsigned long xen_architecture(struct crash_elf_info *elf_info)
