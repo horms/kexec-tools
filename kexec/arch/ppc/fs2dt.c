@@ -137,21 +137,11 @@ static void add_usable_mem_property(int fd, int len)
 	if (strncmp(bname, "/memory@", 8) && strcmp(bname, "/memory"))
 		return;
 
-	if (len < 2 * sizeof(unsigned long))
-		die("unrecoverable error: not enough data for mem property\n");
-	len = 2 * sizeof(unsigned long);
-
 	if (lseek(fd, 0, SEEK_SET) < 0)
 		die("unrecoverable error: error seeking in \"%s\": %s\n",
 		    pathname, strerror(errno));
-	if (read(fd, buf, len) != len)
-		die("unrecoverable error: error reading \"%s\": %s\n",
-		    pathname, strerror(errno));
-
-	if (~0ULL - buf[0] < buf[1])
-		die("unrecoverable error: mem property overflow\n");
-	base = buf[0];
-	end = base + buf[1];
+	if (read_memory_region_limits(fd, &base, &end) != 0)
+		die("unrecoverable error: error parsing memory/reg limits\n");
 
 	for (range = 0; range < usablemem_rgns.size; range++) {
 		loc_base = usablemem_rgns.ranges[range].start;

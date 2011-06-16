@@ -69,6 +69,12 @@ extern unsigned long long initrd_base, initrd_size;
 extern unsigned long long ramdisk_base, ramdisk_size;
 extern unsigned char reuse_initrd;
 extern const char *ramdisk;
+
+/* Method to parse the memory/reg nodes in device-tree */
+extern unsigned long dt_address_cells, dt_size_cells;
+extern int init_memory_region_info(void);
+extern int read_memory_region_limits(int fd, unsigned long long *start,
+					unsigned long long *end);
 #define COMMAND_LINE_SIZE	512 /* from kernel */
 /*fs2dt*/
 void reserve(unsigned long long where, unsigned long long length);

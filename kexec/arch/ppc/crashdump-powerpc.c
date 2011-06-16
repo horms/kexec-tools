@@ -81,7 +81,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	char fname[256];
 	char buf[MAXBYTES];
 	DIR *dir, *dmem;
-	FILE *file;
+	int fd;
 	struct dirent *dentry, *mentry;
 	int i, n, crash_rng_len = 0;
 	unsigned long long start, end, cstart, cend;
@@ -123,17 +123,16 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			if (strcmp(mentry->d_name, "reg"))
 				continue;
 			strcat(fname, "/reg");
-			file = fopen(fname, "r");
-			if (!file) {
+			fd = open(fname, O_RDONLY);
+			if (fd < 0) {
 				perror(fname);
 				closedir(dmem);
 				closedir(dir);
 				goto err;
 			}
-			n = fread(buf, 1, MAXBYTES, file);
-			if (n < 0) {
-				perror(fname);
-				fclose(file);
+			n = read_memory_region_limits(fd, &start, &end);
+			if (n != 0) {
+				close(fd);
 				closedir(dmem);
 				closedir(dir);
 				goto err;
@@ -146,24 +145,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				goto err;
 			}
 
-			/*
-			 * FIXME: This code fails on platforms that
-			 * have more than one memory range specified
-			 * in the device-tree's /memory/reg property.
-			 * or where the #address-cells and #size-cells
-			 * are not identical.
-			 *
-			 * We should interpret the /memory/reg property
-			 * based on the values of the #address-cells and
-			 * #size-cells properites.
-			 */
-			if (n == (sizeof(unsigned long) * 2)) {
-				start = ((unsigned long *)buf)[0];
-				end = start + ((unsigned long *)buf)[1];
-			} else {
-				start = ((unsigned long long *)buf)[0];
-				end = start + ((unsigned long long *)buf)[1];
-			}
 			if (start == 0 && end >= (BACKUP_SRC_END + 1))
 				start = BACKUP_SRC_END + 1;
 
@@ -212,7 +193,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 					= RANGE_RAM;
 				memory_ranges++;
 			}
-			fclose(file);
+			close(fd);
 		}
 		closedir(dmem);
 	}
