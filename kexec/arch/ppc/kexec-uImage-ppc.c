@@ -228,6 +228,23 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	/* No allocation past here in order not to overwrite the stack */
 #undef PUL_STACK_SIZE
 
+	/*
+	 * Fixup ThreadPointer(r2) for purgatory.
+	 * PPC32 ELF ABI expects :
+	 * ThreadPointer (TP) = TCB + 0x7000
+	 * We manually allocate a TCB space and set the TP
+	 * accordingly.
+	 */
+#define TCB_SIZE 	1024
+#define TCB_TP_OFFSET 	0x7000	/* PPC32 ELF ABI */
+	addr = locate_hole(info, TCB_SIZE, 0, 0,
+				((unsigned long)-1 - TCB_TP_OFFSET),
+				1);
+	addr += TCB_SIZE + TCB_TP_OFFSET;
+	elf_rel_set_symbol(&info->rhdr, "my_thread_ptr", &addr, sizeof(addr));
+#undef TCB_TP_OFFSET
+#undef TCB_SIZE
+
 	addr = elf_rel_get_addr(&info->rhdr, "purgatory_start");
 	info->entry = (void *)addr;
 
