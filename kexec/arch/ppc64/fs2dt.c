@@ -57,9 +57,14 @@ extern int my_debug;
  */
 void dt_reserve(unsigned **dt_ptr, unsigned words)
 {
+	unsigned int sz = INIT_TREE_WORDS;
+
+	if (sz < words)
+		sz = words;
+
 	if (((*dt_ptr - dt_base) + words) >= dt_cur_size) {
 		int offset;
-		unsigned int new_size = dt_cur_size + INIT_TREE_WORDS;
+		unsigned int new_size = dt_cur_size + sz;
 		unsigned *new_dt = realloc(dt_base, new_size*4);
 
 		if (!new_dt)
