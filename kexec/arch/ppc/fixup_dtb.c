@@ -18,7 +18,7 @@
 const char proc_dts[] = "/proc/device-tree";
 
 #ifdef DEBUG
-static void print_fdt_reserve_regions(char *blob_buf)
+static void print_fdt_reserve_regions(void)
 {
 	int i, num;
 
@@ -135,7 +135,7 @@ static char *expand_buf(int minexpand, char *blob_buf, off_t *blob_size)
 	return blob_buf;
 }
 
-static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf, off_t *blob_size)
+static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf)
 {
 	int ret, i;
 	int nodeoffset;
@@ -204,7 +204,7 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf, off_t
 out:	;
 
 #ifdef DEBUG
-	print_fdt_reserve_regions(blob_buf);
+	print_fdt_reserve_regions();
 #endif
 }
 
@@ -392,7 +392,7 @@ char *fixup_dtb_finalize(struct kexec_info *info, char *blob_buf, off_t *blob_si
 {
 	fixup_nodes(nodes);
 	fixup_cmdline(cmdline);
-	fixup_reserve_regions(info, blob_buf, blob_size);
+	fixup_reserve_regions(info, blob_buf);
 	fixup_memory(info, blob_buf);
 	fixup_initrd(blob_buf);
 	fixup_crashkernel(info, blob_buf);

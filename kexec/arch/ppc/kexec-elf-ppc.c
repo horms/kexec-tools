@@ -187,8 +187,6 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	char *fixup_nodes[FIXUP_ENTRYS + 1];
 	int cur_fixup = 0;
 	int opt;
-	char *blob_buf = NULL;
-	off_t blob_size = 0;
 
 	command_line = NULL;
 	dtb = NULL;
