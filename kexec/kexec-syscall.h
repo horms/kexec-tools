@@ -2,7 +2,6 @@
 #define KEXEC_SYSCALL_H
 
 #define __LIBRARY__
-#include <syscall.h>
 #include <sys/syscall.h>
 #include <unistd.h>
 
