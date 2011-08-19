@@ -1,9 +1,10 @@
 /*
  * kexec/arch/s390/kexec-s390.c
  *
- * (C) Copyright IBM Corp. 2005
+ * Copyright IBM Corp. 2005,2011
  *
  * Author(s): Rolf Adelsberger <adelsberger@de.ibm.com>
+ *            Michael Holzheu <holzheu@linux.vnet.ibm.com>
  *
  */
 
@@ -19,8 +20,55 @@
 #include "kexec-s390.h"
 #include <arch/options.h>
 
-#define MAX_MEMORY_RANGES 64
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
+
+/*
+ * Get memory ranges of type "System RAM" from /proc/iomem. If with_crashk=1
+ * then also type "Crash kernel" is added.
+ */
+int get_memory_ranges_s390(struct memory_range memory_range[], int *ranges,
+			   int with_crashk)
+{
+	char crash_kernel[] = "Crash kernel\n";
+	char sys_ram[] = "System RAM\n";
+	const char *iomem = proc_iomem();
+	FILE *fp;
+	char line[80];
+	int current_range = 0;
+
+	fp = fopen(iomem,"r");
+	if(fp == 0) {
+		fprintf(stderr,"Unable to open %s: %s\n",iomem,strerror(errno));
+		return -1;
+	}
+
+	/* Setup the compare string properly. */
+	while (fgets(line, sizeof(line), fp) != 0) {
+		unsigned long long start, end;
+		int cons;
+		char *str;
+
+		if (current_range == MAX_MEMORY_RANGES)
+			break;
+
+		sscanf(line,"%Lx-%Lx : %n", &start, &end, &cons);
+		str = line+cons;
+		if ((memcmp(str, sys_ram, strlen(sys_ram)) == 0) ||
+		    ((memcmp(str, crash_kernel, strlen(crash_kernel)) == 0) &&
+		     with_crashk)) {
+			memory_range[current_range].start = start;
+			memory_range[current_range].end = end;
+			memory_range[current_range].type = RANGE_RAM;
+			current_range++;
+		}
+		else {
+			continue;
+		}
+	}
+	fclose(fp);
+	*ranges = current_range;
+	return 0;
+}
 
 /*
  * get_memory_ranges:
@@ -37,45 +85,22 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
  */
 
 int get_memory_ranges(struct memory_range **range, int *ranges,
-		      unsigned long UNUSED(flags))
+		      unsigned long flags)
 {
-	char sys_ram[] = "System RAM\n";
-	const char *iomem = proc_iomem();
-	FILE *fp;
-	char line[80];
-	int current_range = 0;
+	uint64_t start, end;
 
-	fp = fopen(iomem,"r");
-	if(fp == 0) {
-		fprintf(stderr,"Unable to open %s: %s\n",iomem,strerror(errno));
+	if (get_memory_ranges_s390(memory_range, ranges,
+				   flags & KEXEC_ON_CRASH))
 		return -1;
-	}
-
-	/* Setup the compare string properly. */
-	while(fgets(line,sizeof(line),fp) != 0) {
-		unsigned long long start, end;
-		int cons;
-		char *str;
-
-		if (current_range == MAX_MEMORY_RANGES)
-			break;
-
-		sscanf(line,"%Lx-%Lx : %n", &start, &end, &cons);
-		str = line+cons;
-		if(memcmp(str,sys_ram,strlen(sys_ram)) == 0) {
-			memory_range[current_range].start = start;
-			memory_range[current_range].end = end;
-			memory_range[current_range].type = RANGE_RAM;
-			current_range++;
-		}
-		else {
-			continue;
-		}
-	}
-	fclose(fp);
 	*range = memory_range;
-	*ranges = current_range;
-
+	if ((flags & KEXEC_ON_CRASH) && !(flags & KEXEC_PRESERVE_CONTEXT)) {
+		if (parse_iomem_single("Crash kernel\n", &start, &end))
+			return -1;
+		if (start > mem_min)
+			mem_min = start;
+		if (end < mem_max)
+			mem_max = end;
+	}
 	return 0;
 }
 
@@ -112,5 +137,8 @@ void arch_update_purgatory(struct kexec_info *UNUSED(info))
 
 int is_crashkernel_mem_reserved(void)
 {
-	return 0; /* kdump is not supported on this platform (yet) */
+	uint64_t start, end;
+
+	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
+		(start != end) : 0;
 }
