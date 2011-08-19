@@ -9,7 +9,7 @@
 struct sha256_region sha256_regions[SHA256_REGIONS] = {};
 sha256_digest_t sha256_digest = { };
 
-void verify_sha256_digest(void)
+int verify_sha256_digest(void)
 {
 	struct sha256_region *ptr, *end;
 	sha256_digest_t digest;
@@ -34,16 +34,19 @@ void verify_sha256_digest(void)
 			printf("%hhx ", sha256_digest[i]);
 		}
 		printf("\n");
-		for(;;) {
-			/* loop forever */
-		}
+		return 1;
 	}
+	return 0;
 }
 
 void purgatory(void)
 {
 	printf("I'm in purgatory\n");
 	setup_arch();
-	verify_sha256_digest();
+	if (verify_sha256_digest()) {
+		for(;;) {
+			/* loop forever */
+		}
+	}
 	post_verification_setup_arch();
 }
