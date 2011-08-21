@@ -157,6 +157,9 @@ if test "$with_xen" = yes ; then
 	AC_CHECK_HEADER(xenctrl.h,
 		AC_CHECK_LIB(xenctrl, xc_version, ,
 		AC_MSG_NOTICE([Xen support disabled])))
+	if test "$ac_cv_lib_xenctrl_xc_version" = yes ; then
+		AC_CHECK_FUNCS(xc_get_machine_memory_map)
+	fi
 fi
 
 dnl ---Sanity checks
