@@ -179,18 +179,8 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 	return 0;
 }
 
-/**
- * Compares two memory ranges according to their start address. This function
- * can be used with qsort() as @c compar function.
- *
- * @param[in] first a pointer to the first memory range
- * @param[in] second a pointer to the second memory range
- * @return 0 if @p first and @p second have the same start address,
- *         a value less then 0 if the start address of @p first is less than
- *         the start address of @p second, and a value greater than 0 if
- *         the opposite is in case.
- */
-static int compare_ranges(const void *first, const void *second)
+/* documentation: firmware_memmap.h */
+int compare_ranges(const void *first, const void *second)
 {
 	const struct memory_range *first_range = first;
 	const struct memory_range *second_range = second;

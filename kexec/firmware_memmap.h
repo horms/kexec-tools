@@ -39,6 +39,19 @@
  */
 
 /**
+ * Compares two memory ranges according to their start address. This function
+ * can be used with qsort() as @c compar function.
+ *
+ * @param[in] first a pointer to the first memory range
+ * @param[in] second a pointer to the second memory range
+ * @return 0 if @p first and @p second have the same start address,
+ *         a value less then 0 if the start address of @p first is less than
+ *         the start address of @p second, and a value greater than 0 if
+ *         the opposite is in case.
+ */
+int compare_ranges(const void *first, const void *second);
+
+/**
  * Checks if the kernel provides the /sys/firmware/memmap interface.
  * It makes sense to use that function in advance before calling
  * get_firmware_memmap_ranges() because the latter function prints an error
