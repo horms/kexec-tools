@@ -126,19 +126,32 @@ unsigned long xen_architecture(struct crash_elf_info *elf_info)
 {
 	unsigned long machine = elf_info->machine;
 #ifdef HAVE_LIBXENCTRL
-	int xc, rc;
+	int rc;
 	xen_capabilities_info_t capabilities;
+#ifdef XENCTRL_HAS_XC_INTERFACE
+	xc_interface *xc;
+#else
+	int xc;
+#endif
 
 	if (!xen_present())
 		goto out;
 
 	memset(capabilities, '0', XEN_CAPABILITIES_INFO_LEN);
 
+#ifdef XENCTRL_HAS_XC_INTERFACE
+	xc = xc_interface_open(NULL, NULL, 0);
+	if ( !xc ) {
+		fprintf(stderr, "failed to open xen control interface.\n");
+		goto out;
+	}
+#else
 	xc = xc_interface_open();
 	if ( xc == -1 ) {
 		fprintf(stderr, "failed to open xen control interface.\n");
 		goto out;
 	}
+#endif
 
 	rc = xc_version(xc, XENVER_capabilities, &capabilities[0]);
 	if ( rc == -1 ) {
