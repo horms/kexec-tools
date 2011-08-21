@@ -149,7 +149,7 @@ static void remove_range(struct memory_range *range, int nr_ranges, int index)
  *
  * @return 0 on success, any other value on failure.
  */
-static int fixup_memory_ranges_sysfs(struct memory_range **range, int *ranges)
+static int fixup_memory_ranges(struct memory_range **range, int *ranges)
 {
 	int i;
 	int j;
@@ -162,7 +162,7 @@ again:
 	for (i = 0; i < (nr_ranges-1); i++) {
 		j = i+1;
 		if (rp[i].start > rp[j].start) {
-			fprintf(stderr, "sysfs memory out of order!!\n");
+			fprintf(stderr, "memory out of order!!\n");
 			return 1;
 		}
 
@@ -252,7 +252,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	if (!efi_map_added() && !xen_present() && have_sys_firmware_memmap()) {
 		ret = get_memory_ranges_sysfs(range, ranges);
 		if (!ret)
-			ret = fixup_memory_ranges_sysfs(range, ranges);
+			ret = fixup_memory_ranges(range, ranges);
 	} else
 		ret = get_memory_ranges_proc_iomem(range, ranges);
 
