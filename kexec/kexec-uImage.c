@@ -16,7 +16,7 @@
  * Basic uImage loader. Not rocket science.
  */
 
-int uImage_probe(const char *buf, off_t len, unsigned int arch)
+int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 {
 	struct image_header header;
 #ifdef HAVE_LIBZ
@@ -92,7 +92,7 @@ int uImage_probe(const char *buf, off_t len, unsigned int arch)
 #define COMMENT		0x10 /* bit 4 set: file comment present */
 #define RESERVED	0xE0 /* bits 5..7: reserved */
 
-static int uImage_gz_load(const char *buf, off_t len,
+static int uImage_gz_load(const unsigned char *buf, off_t len,
 		struct Image_info *image)
 {
 	int ret;
@@ -176,7 +176,7 @@ static int uImage_gz_load(const char *buf, off_t len,
 	} while (1);
 
 	inflateEnd(&strm);
-	image->buf = (char *)uncomp_buf;
+	image->buf = uncomp_buf;
 	image->len = mem_alloc - strm.avail_out;
 	return 0;
 }
@@ -188,10 +188,10 @@ static int uImage_gz_load(const char *UNUSED(buf), off_t UNUSED(len),
 }
 #endif
 
-int uImage_load(const char *buf, off_t len, struct Image_info *image)
+int uImage_load(const unsigned char *buf, off_t len, struct Image_info *image)
 {
 	const struct image_header *header = (const struct image_header *)buf;
-	const char *img_buf = buf + sizeof(struct image_header);
+	const unsigned char *img_buf = buf + sizeof(struct image_header);
 	off_t img_len = len - sizeof(struct image_header);
 
 	image->base = cpu_to_be32(header->ih_load);
