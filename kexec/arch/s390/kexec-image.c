@@ -61,6 +61,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		{
 			KEXEC_OPTIONS
 			{"command-line",     1, 0, OPT_APPEND},
+			{"append",           1, 0, OPT_APPEND},
 			{"initrd",           1, 0, OPT_RAMDISK},
 			{0,                  0, 0, 0},
 		};
@@ -160,7 +161,8 @@ image_s390_probe(const char *UNUSED(kernel_buf), off_t UNUSED(kernel_size))
 void
 image_s390_usage(void)
 {
-	printf("--command-line=STRING Pass a custom command line STRING to the kernel.\n"
+	printf("--command-line=STRING Set the kernel command line to STRING.\n"
+	       "--append=STRING       Set the kernel command line to STRING.\n"
 	       "--initrd=FILENAME     Use the file FILENAME as a ramdisk.\n"
 		);
 }

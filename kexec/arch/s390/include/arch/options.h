@@ -30,6 +30,7 @@
 #define KEXEC_ALL_OPTIONS				\
 	KEXEC_ARCH_OPTIONS				\
 	{"command-line",     1, 0, OPT_APPEND},		\
+	{"append",           1, 0, OPT_APPEND},		\
 	{"initrd",	     1, 0, OPT_RAMDISK},
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR
