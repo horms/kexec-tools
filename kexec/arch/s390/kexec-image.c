@@ -101,16 +101,20 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	/* We do want to change the kernel image */
 	krnl_buffer = (void *) kernel_buf + IMAGE_READ_OFFSET;
 
-	/* Load ramdisk if present */
+	/*
+	 * Load ramdisk if present: If image is larger than RAMDISK_ORIGIN_ADDR,
+	 * we load the ramdisk directly behind the image with 1 MiB alignment.
+	 */
 	if (ramdisk) {
 		rd_buffer = slurp_file(ramdisk, &ramdisk_len);
 		if (rd_buffer == NULL) {
 			fprintf(stderr, "Could not read ramdisk.\n");
 			return -1;
 		}
-		ramdisk_origin = RAMDISK_ORIGIN_ADDR;
+		ramdisk_origin = MAX(RAMDISK_ORIGIN_ADDR, kernel_size);
+		ramdisk_origin = ALIGN_UP(ramdisk_origin, 0x100000);
 		add_segment_check(info, rd_buffer, ramdisk_len,
-				  RAMDISK_ORIGIN_ADDR, ramdisk_len);
+				  ramdisk_origin, ramdisk_len);
 	}
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		if (load_crashdump_segments(info, crash_base, crash_end))

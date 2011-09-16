@@ -21,6 +21,9 @@
 #define COMMAND_LINESIZE      896
 #define MAX_MEMORY_RANGES     64
 
+#define ALIGN_UP(addr, size) (((addr) + ((size)-1)) & (~((size)-1)))
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+
 extern int image_s390_load(int, char **, const char *, off_t, struct kexec_info *);
 extern int image_s390_probe(const char *, off_t);
 extern void image_s390_usage(void);
