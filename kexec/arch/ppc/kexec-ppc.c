@@ -502,9 +502,14 @@ static int get_devtree_details(unsigned long kexec_flags)
 				if (crash_base + crash_size < mem_max)
 					mem_max = crash_base + crash_size;
 
+#ifndef CONFIG_BOOKE
 				add_usable_mem_rgns(0, crash_base + crash_size);
+				/* Reserve the region (KDUMP_BACKUP_LIMIT,crash_base) */
 				reserve(KDUMP_BACKUP_LIMIT,
 						crash_base-KDUMP_BACKUP_LIMIT);
+#else
+				add_usable_mem_rgns(crash_base, crash_size);
+#endif
 			}
 			/* reserve the initrd_start and end locations. */
 			memset(fname, 0, sizeof(fname));

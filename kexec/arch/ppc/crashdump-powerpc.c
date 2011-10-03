@@ -95,11 +95,13 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	}
 	memset(crash_memory_range, 0, crash_rng_len);
 
+#ifndef CONFIG_BOOKE
 	/* create a separate program header for the backup region */
 	crash_memory_range[0].start = BACKUP_SRC_START;
 	crash_memory_range[0].end = BACKUP_SRC_END + 1;
 	crash_memory_range[0].type = RANGE_RAM;
 	memory_ranges++;
+#endif
 
 	dir = opendir(device_tree);
 	if (!dir) {
@@ -143,9 +145,10 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 					" excedeed the max limit\n");
 				goto err;
 			}
-
+#ifndef CONFIG_BOOKE
 			if (start == 0 && end >= (BACKUP_SRC_END + 1))
 				start = BACKUP_SRC_END + 1;
+#endif
 
 			cstart = crash_base;
 			cend = crash_base + crash_size;
@@ -310,6 +313,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 
 	info->backup_src_start = BACKUP_SRC_START;
 	info->backup_src_size = BACKUP_SRC_SIZE;
+#ifndef CONFIG_BOOKE
 	/* Create a backup region segment to store backup data*/
 	sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
 	tmp = xmalloc(sz);
@@ -317,6 +321,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 	info->backup_start = add_buffer(info, tmp, sz, sz, align,
 					0, max_addr, 1);
 	reserve(info->backup_start, sz);
+#endif
 
 	/* On powerpc memory ranges in device-tree is denoted as start
 	 * and size rather than start and end, as is the case with

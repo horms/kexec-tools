@@ -36,8 +36,10 @@ void setup_arch(void)
 
 void post_verification_setup_arch(void)
 {
+#ifndef CONFIG_BOOKE
 	if (panic_kernel)
 		crashdump_backup_memory();
+#endif
 }
 
 void crashdump_backup_memory(void)

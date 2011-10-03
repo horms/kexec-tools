@@ -85,6 +85,11 @@ AC_ARG_WITH([lzma], AC_HELP_STRING([--without-lzma],[disable lzma support]),
 AC_ARG_WITH([xen], AC_HELP_STRING([--without-xen],
 	[disable extended xen support]), [ with_xen="$withval"], [ with_xen=yes ] )
 
+AC_ARG_WITH([booke],
+		AC_HELP_STRING([--with-booke],[build for booke]),
+		AC_DEFINE(CONFIG_BOOKE,1,
+			[Define to build for BookE]))
+
 dnl ---Programs
 dnl To specify a different compiler, just 'export CC=/path/to/compiler'
 

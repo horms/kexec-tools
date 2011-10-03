@@ -21,10 +21,18 @@ extern struct arch_options_t arch_options;
 #define __pa(x)		((unsigned long)(x)-PAGE_OFFSET)
 
 #define COMMAND_LINE_SIZE	512 /* from kernel */
+
+#ifdef CONFIG_BOOKE
+/* We don't need backup region in Book E */
+#define BACKUP_SRC_START	0x0000
+#define BACKUP_SRC_END		0x0000
+#define BACKUP_SRC_SIZE		0x0000
+#else
 /* Backup Region, First 64K of System RAM. */
 #define BACKUP_SRC_START	0x0000
 #define BACKUP_SRC_END		0xffff
 #define BACKUP_SRC_SIZE		(BACKUP_SRC_END - BACKUP_SRC_START + 1)
+#endif
 
 #define KDUMP_BACKUP_LIMIT	BACKUP_SRC_SIZE
 #define _ALIGN_UP(addr, size)	(((addr)+((size)-1))&(~((size)-1)))
