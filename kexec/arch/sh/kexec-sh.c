@@ -188,9 +188,8 @@ void kexec_sh_setup_zero_page(char *zero_page_buf, size_t zero_page_size,
 static int is_32bit(void)
 {
 	const char *cpuinfo = "/proc/cpuinfo";
-	char line[MAX_LINE], key[MAX_LINE], value[MAX_LINE];
+	char line[MAX_LINE];
 	FILE *fp;
-	int count;
 	int status = 0;
 
 	fp = fopen(cpuinfo, "r");
@@ -198,14 +197,17 @@ static int is_32bit(void)
 		die("Cannot open %s\n", cpuinfo);
 
 	while(fgets(line, sizeof(line), fp) != 0) {
-		count = sscanf(line, "%s : %s", key, value);
-		if (count != 2)
+		const char *key = "address sizes";
+		const char *value = " 32 bits physical";
+		char *p;
+		if (strncmp(line, key, strlen(key)))
 			continue;
-		if (!strcmp(key, "address sizes")) {
-			if (!strcmp(value, "32 bits physical"))
-				status = 1;
-			break;
-		}
+		p = strchr(line + strlen(key), ':');
+		if (!p)
+			continue;
+		if (!strncmp(p + 1, value, strlen(value)))
+			status = 1;
+		break;
 	}
 
 	fclose(fp);
