@@ -219,13 +219,15 @@ unsigned long virt_to_phys(unsigned long addr)
 {
 	unsigned long seg = addr & 0xe0000000;
 	unsigned long long start = 0;
+	int have_32bit = is_32bit();
 
-	if (seg != 0x80000000 && seg != 0xc0000000)
-		die("Virtual address %p is not in P1 or P2\n", (void *)addr);
+	if (seg != 0x80000000 && (have_32bit || seg != 0xc0000000))
+		die("Virtual address %p is not in P1%s\n", (void *)addr,
+		    have_32bit ? "" : " or P2");
 
 	/* If 32bit addressing is used then the base of system RAM
 	 * is an offset into physical memory. */
-	if (is_32bit()) {
+	if (have_32bit) {
 		unsigned long long end;
 		int ret;
 
