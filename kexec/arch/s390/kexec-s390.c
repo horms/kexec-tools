@@ -11,16 +11,135 @@
 #define _GNU_SOURCE
 #include <stddef.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <sys/types.h>
+#include <dirent.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-s390.h"
 #include <arch/options.h>
 
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
+
+/*
+ * Read string from file
+ */
+static void read_str(char *string, const char *path, size_t len)
+{
+	size_t rc;
+	FILE *fh;
+
+	fh = fopen(path, "rb");
+	if (fh == NULL)
+		die("Could not open \"%s\"", path);
+	rc = fread(string, 1, len - 1, fh);
+	if (rc == 0 && ferror(fh))
+		die("Could not read \"%s\"", path);
+	fclose(fh);
+	string[rc] = 0;
+	if (string[strlen(string) - 1] == '\n')
+		string[strlen(string) - 1] = 0;
+}
+
+/*
+ * Return number of memory chunks
+ */
+static int memory_range_cnt(struct memory_range chunks[])
+{
+	int i;
+
+	for (i = 0; i < MAX_MEMORY_RANGES; i++) {
+		if (chunks[i].end == 0)
+			break;
+	}
+	return i;
+}
+
+/*
+ * Create memory hole with given address and size
+ *
+ * lh = local hole
+ */
+static void add_mem_hole(struct memory_range chunks[], unsigned long addr,
+			 unsigned long size)
+{
+	unsigned long lh_start, lh_end, lh_size, chunk_cnt;
+	int i;
+
+	chunk_cnt = memory_range_cnt(chunks);
+
+	for (i = 0; i < chunk_cnt; i++) {
+		if (addr + size <= chunks[i].start)
+			break;
+		if (addr > chunks[i].end)
+			continue;
+		lh_start = MAX(addr, chunks[i].start);
+		lh_end = MIN(addr + size - 1, chunks[i].end);
+		lh_size = lh_end - lh_start + 1;
+		if (lh_start == chunks[i].start && lh_end == chunks[i].end) {
+			/* Remove chunk */
+			memmove(&chunks[i], &chunks[i + 1],
+				sizeof(struct memory_range) *
+				(MAX_MEMORY_RANGES - (i + 1)));
+			memset(&chunks[MAX_MEMORY_RANGES - 1], 0,
+			       sizeof(struct memory_range));
+			chunk_cnt--;
+			i--;
+		} else if (lh_start == chunks[i].start) {
+			/* Make chunk smaller at start */
+			chunks[i].start = chunks[i].start + lh_size;
+			break;
+		} else if (lh_end == chunks[i].end) {
+			/* Make chunk smaller at end */
+			chunks[i].end = lh_start - 1;
+		} else {
+			/* Split chunk into two */
+			if (chunk_cnt >= MAX_MEMORY_RANGES)
+				die("Unable to create memory hole: %i", i);
+			memmove(&chunks[i + 1], &chunks[i],
+				sizeof(struct memory_range) *
+				(MAX_MEMORY_RANGES - (i + 1)));
+			chunks[i + 1].start = lh_start + lh_size;
+			chunks[i].end = lh_start - 1;
+			break;
+		}
+	}
+}
+
+/*
+ * Remove offline memory from memory chunks
+ */
+static void remove_offline_memory(struct memory_range memory_range[])
+{
+	unsigned long block_size, chunk_nr;
+	struct dirent *dirent;
+	char path[PATH_MAX];
+	char str[64];
+	DIR *dir;
+
+	read_str(str, "/sys/devices/system/memory/block_size_bytes",
+		 sizeof(str));
+	sscanf(str, "%lx", &block_size);
+
+	dir = opendir("/sys/devices/system/memory");
+	if (!dir)
+		die("Could not read \"/sys/devices/system/memory\"");
+	while ((dirent = readdir(dir))) {
+		if (sscanf(dirent->d_name, "memory%ld\n", &chunk_nr) != 1)
+			continue;
+		sprintf(path, "/sys/devices/system/memory/%s/state",
+			dirent->d_name);
+		read_str(str, path, sizeof(str));
+		if (strncmp(str, "offline", 6) != 0)
+			continue;
+		add_mem_hole(memory_range, chunk_nr * block_size, block_size);
+	}
+	closedir(dir);
+}
 
 /*
  * Get memory ranges of type "System RAM" from /proc/iomem. If with_crashk=1
@@ -66,7 +185,8 @@ int get_memory_ranges_s390(struct memory_range memory_range[], int *ranges,
 		}
 	}
 	fclose(fp);
-	*ranges = current_range;
+	remove_offline_memory(memory_range);
+	*ranges = memory_range_cnt(memory_range);
 	return 0;
 }
 
