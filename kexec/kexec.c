@@ -203,10 +203,6 @@ unsigned long locate_hole(struct kexec_info *info,
 	/* Set an intial invalid value for the hole base */
 	hole_base = ULONG_MAX;
 
-	/* Ensure I have a sane alignment value */
-	if (hole_align == 0) {
-		hole_align = 1;
-	}
 	/* Align everything to at least a page size boundary */
 	if (hole_align < (unsigned long)getpagesize()) {
 		hole_align = getpagesize();
