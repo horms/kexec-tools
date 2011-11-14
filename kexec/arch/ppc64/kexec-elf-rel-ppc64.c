@@ -16,6 +16,7 @@ int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 	if (ehdr->e_machine != EM_PPC64) {
 		return 0;
 	}
+
 	return 1;
 }
 
@@ -23,13 +24,16 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 {
 	struct mem_shdr *shdr, *shdr_end;
 	unsigned char *strtab;
+
 	strtab = (unsigned char *)ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
 	shdr_end = &ehdr->e_shdr[ehdr->e_shnum];
-	for(shdr = ehdr->e_shdr; shdr != shdr_end; shdr++)
-		if ( shdr->sh_size &&
-			strcmp((char *)&strtab[shdr->sh_name],
-						".toc") == 0)
+	for (shdr = ehdr->e_shdr; shdr != shdr_end; shdr++) {
+		if (shdr->sh_size &&
+			strcmp((char *)&strtab[shdr->sh_name], ".toc") == 0) {
 			return shdr;
+		}
+	}
+
 	return NULL;
 }
 
@@ -39,10 +43,12 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 unsigned long my_r2(const struct mem_ehdr *ehdr)
 {
 	struct mem_shdr *shdr;
+
 	shdr = toc_section(ehdr);
 	if (!shdr) {
 		die("TOC reloc without a toc section?");
 	}
+
 	return shdr->sh_addr + 0x8000;
 }
 
@@ -84,14 +90,13 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 	case R_PPC64_REL24:
 		/* Convert value to relative */
 		value -= address;
-		if (value + 0x2000000 > 0x3ffffff || (value & 3) != 0){
-			die("REL24 %li out of range!\n",
-				(long int)value);
+		if (value + 0x2000000 > 0x3ffffff || (value & 3) != 0) {
+			die("REL24 %li out of range!\n", (long int)value);
 		}
 
 		/* Only replace bits 2 through 26 */
-		*(uint32_t *)location = (*(uint32_t *)location & ~0x03fffffc)
-					| (value & 0x03fffffc);
+		*(uint32_t *)location = (*(uint32_t *)location & ~0x03fffffc) |
+					(value & 0x03fffffc);
 		break;
 
 	case R_PPC64_ADDR16_LO:
@@ -99,23 +104,23 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		break;
 
 	case R_PPC64_ADDR16_HI:
-		*(uint16_t *)location = (value>>16) & 0xffff;
+		*(uint16_t *)location = (value >> 16) & 0xffff;
 		break;
 
 	case R_PPC64_ADDR16_HA:
-		*(uint16_t *)location = (((value+0x8000)>>16)  & 0xffff);
+		*(uint16_t *)location = (((value + 0x8000) >> 16) & 0xffff);
+		break;
+
+	case R_PPC64_ADDR16_HIGHER:
+		*(uint16_t *)location = (((uint64_t)value >> 32) & 0xffff);
 		break;
 
 	case R_PPC64_ADDR16_HIGHEST:
-		*(uint16_t *)location = (((uint64_t)value>>48)  & 0xffff);
-		break;
-	case R_PPC64_ADDR16_HIGHER:
-		*(uint16_t *)location = (((uint64_t)value>>32)  & 0xffff);
+		*(uint16_t *)location = (((uint64_t)value >> 48) & 0xffff);
 		break;
 
 	default:
 		die("Unknown rela relocation: %lu\n", r_type);
 		break;
 	}
-	return;
 }
