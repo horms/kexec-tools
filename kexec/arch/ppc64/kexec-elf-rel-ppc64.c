@@ -52,6 +52,19 @@ unsigned long my_r2(const struct mem_ehdr *ehdr)
 	return shdr->sh_addr + 0x8000;
 }
 
+static void do_relative_toc(unsigned long value, uint16_t *location,
+	unsigned long mask, int complain_signed)
+{
+	if (complain_signed && (value + 0x8000 > 0xffff)) {
+		die("TOC16 relocation overflows (%lu)\n", value);
+	}
+
+	if ((~mask & 0xffff) & value) {
+		die("bad TOC16 relocation (%lu)\n", value);
+	}
+
+	*location = (*location & ~mask) | (value & mask);
+}
 
 void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 	void *location, unsigned long address, unsigned long value)
@@ -76,15 +89,30 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		*(uint64_t *)location = my_r2(ehdr);
 		break;
 
+	case R_PPC64_TOC16:
+		do_relative_toc(value - my_r2(ehdr), location, 0xffff, 1);
+		break;
+
 	case R_PPC64_TOC16_DS:
-		/* Subtact TOC pointer */
-		value -= my_r2(ehdr);
-		if ((value & 3) != 0 || value + 0x8000 > 0xffff) {
-			die("bad TOC16_DS relocation (%lu)\n", value);
-		}
-		*((uint16_t *) location)
-			= (*((uint16_t *) location) & ~0xfffc)
-			| (value & 0xfffc);
+		do_relative_toc(value - my_r2(ehdr), location, 0xfffc, 1);
+		break;
+
+	case R_PPC64_TOC16_LO:
+		do_relative_toc(value - my_r2(ehdr), location, 0xffff, 0);
+		break;
+
+	case R_PPC64_TOC16_LO_DS:
+		do_relative_toc(value - my_r2(ehdr), location, 0xfffc, 0);
+		break;
+
+	case R_PPC64_TOC16_HI:
+		do_relative_toc((value - my_r2(ehdr)) >> 16, location,
+			0xffff, 0);
+		break;
+
+	case R_PPC64_TOC16_HA:
+		do_relative_toc((value - my_r2(ehdr) + 0x8000) >> 16, location,
+			0xffff, 0);
 		break;
 
 	case R_PPC64_REL24:
