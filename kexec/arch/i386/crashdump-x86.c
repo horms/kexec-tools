@@ -589,13 +589,12 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
  */
 static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 {
-	char crash_notes[PATH_MAX];
+	const char *crash_notes = "/sys/kernel/crash_notes";
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long vaddr;
 	int count;
 
-	sprintf(crash_notes, "/sys/kernel/crash_notes");
 	fp = fopen(crash_notes, "r");
 	if (fp) {
 		if (fgets(line, sizeof(line), fp) != 0) {
@@ -610,6 +609,7 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 #ifdef DEBUG
 		printf("crash_notes addr = %Lx\n", *addr);
 #endif
+		fclose(fp);
 		return 0;
 	} else
 		return get_crash_notes_per_cpu(cpu, addr, len);
