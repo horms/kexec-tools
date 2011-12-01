@@ -73,12 +73,14 @@ static int seg_comp(const void *a, const void *b)
  */
 static void add_loaded_segments_info(struct mem_ehdr *ehdr)
 {
-	 unsigned i;
-         for(i = 0; i < ehdr->e_phnum; i++) {
+	unsigned i = 0;
+	while(i < ehdr->e_phnum) {
                 struct mem_phdr *phdr;
                 phdr = &ehdr->e_phdr[i];
-                if (phdr->p_type != PT_LOAD)
+		if (phdr->p_type != PT_LOAD) {
+			i++;
                         continue;
+		}
 
 		loaded_segments[loaded_segments_num].start =
 			phdr->p_paddr & ~(ELF_PAGE_SIZE-1);
