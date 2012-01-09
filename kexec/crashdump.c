@@ -103,7 +103,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 	*addr = (uint64_t) temp;
 	*len = MAX_NOTE_BYTES; /* we should get this from the kernel instead */
 #ifdef DEBUG
-	printf("%s: crash_notes addr = %Lx\n", __function__, *addr);
+	printf("%s: crash_notes addr = %Lx\n", __FUNCTION__, *addr);
 #endif
 
 	fclose(fp);
