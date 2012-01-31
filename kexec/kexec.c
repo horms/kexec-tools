@@ -49,7 +49,7 @@
 
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
-unsigned long kexec_flags = 0;
+static unsigned long kexec_flags = 0;
 
 void die(char *fmt, ...)
 {
@@ -62,7 +62,7 @@ void die(char *fmt, ...)
 	exit(1);
 }
 
-char *xstrdup(const char *str)
+static char *xstrdup(const char *str)
 {
 	char *new = strdup(str);
 	if (!new)
@@ -765,7 +765,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	return result;
 }
 
-int k_unload (unsigned long kexec_flags)
+static int k_unload (unsigned long kexec_flags)
 {
 	int result;
 	long native_arch;
@@ -1006,7 +1006,7 @@ char *get_command_line(void)
 }
 
 /* check we retained the initrd */
-void check_reuse_initrd(void)
+static void check_reuse_initrd(void)
 {
 	char *line = get_command_line();
 
