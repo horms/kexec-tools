@@ -82,7 +82,7 @@ $(KEXEC): CPPFLAGS+=-I$(srcdir)/kexec/arch/$(ARCH)/include
 
 $(KEXEC_MANPAGE): kexec/kexec.8
 	@$(MKDIR) -p     $(MANDIR)/man8
-	cp kexec/kexec.8 $(KEXEC_MANPAGE)
+	cp $^ $(KEXEC_MANPAGE)
 echo::
 	@echo "KEXEC_SRCS $(KEXEC_SRCS)"
 	@echo "KEXEC_DEPS $(KEXEC_DEPS)"

@@ -1,7 +1,7 @@
 #
 # kexec ppc (linux booting linux)
 #
-include kexec/arch/ppc/libfdt/Makefile.libfdt
+include $(srcdir)/kexec/arch/ppc/libfdt/Makefile.libfdt
 
 ppc_KEXEC_SRCS =  kexec/arch/ppc/kexec-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-ppc.c

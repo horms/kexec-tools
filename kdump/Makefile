@@ -22,7 +22,7 @@ $(KDUMP): $(KDUMP_OBJS)
 
 $(KDUMP_MANPAGE): kdump/kdump.8
 	$(MKDIR) -p     $(MANDIR)/man8
-	cp kdump/kdump.8 $(KDUMP_MANPAGE)
+	cp $^ $(KDUMP_MANPAGE)
 echo::
 	@echo "KDUMP_SRCS $(KDUMP_SRCS)"
 	@echo "KDUMP_DEPS $(KDUMP_DEPS)"

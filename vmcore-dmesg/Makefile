@@ -21,7 +21,7 @@ $(VMCORE_DMESG): $(VMCORE_DMESG_OBJS)
 
 $(VMCORE_DMESG_MANPAGE): vmcore-dmesg/vmcore-dmesg.8
 	$(MKDIR) -p     $(MANDIR)/man8
-	cp vmcore-dmesg/vmcore-dmesg.8 $(VMCORE_DMESG_MANPAGE)
+	cp $^ $(VMCORE_DMESG_MANPAGE)
 echo::
 	@echo "VMCORE_DMESG_SRCS $(VMCORE_DMESG_SRCS)"
 	@echo "VMCORE_DMESG_DEPS $(VMCORE_DMESG_DEPS)"
