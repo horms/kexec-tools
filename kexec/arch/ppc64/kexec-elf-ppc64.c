@@ -149,8 +149,6 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	if (ramdisk && reuse_initrd)
 		die("Can't specify --ramdisk or --initrd with --reuseinitrd\n");
 
-	setup_memory_ranges(info->kexec_flags);
-
 	/* Need to append some command line parameters internally in case of
 	 * taking crash dumps.
 	 */
