@@ -219,7 +219,6 @@ static void cmdline_add_mem(char *cmdline, unsigned long size)
 	cmdline[COMMAND_LINE_SIZE - 1] = '\0';
 }
 
-#ifdef DEBUG
 static unsigned long long range_size(const struct memory_range *r)
 {
 	return r->end - r->start + 1;
@@ -228,6 +227,9 @@ static unsigned long long range_size(const struct memory_range *r)
 static void dump_memory_ranges(void)
 {
 	int i;
+
+	if (!kexec_debug)
+		return;
 
 	dbgprintf("crashkernel: [%#llx - %#llx] (%ldM)\n",
 		  crash_reserved_mem.start, crash_reserved_mem.end,
@@ -239,9 +241,6 @@ static void dump_memory_ranges(void)
 			  r->start, r->end, (unsigned long)range_size(r) >> 20);
 	}
 }
-#else
-static inline void dump_memory_ranges(void) {}
-#endif
 
 /**
  * load_crashdump_segments() - loads additional segments needed for kdump
