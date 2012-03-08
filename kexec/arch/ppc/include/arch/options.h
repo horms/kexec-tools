@@ -40,8 +40,7 @@
 	{"initrd",	 1, 0, OPT_APPEND},\
 	{"gamecube",	 1, 0, OPT_GAMECUBE},\
 	{"dtb",	    1, 0, OPT_DTB},\
-	{"reuse-node",	   1, 0, OPT_NODES},\
-	{"debug",	 0, 0, OPT_DEBUG},
+	{"reuse-node",	   1, 0, OPT_NODES},
 
 #define KEXEC_ALL_OPT_STR KEXEC_OPT_STR
 

@@ -95,6 +95,13 @@ do { \
 } while(0)
 
 extern unsigned long long mem_min, mem_max;
+extern int kexec_debug;
+
+#define dbgprintf(...) \
+do { \
+	if (kexec_debug) \
+		fprintf(stderr, __VA_ARGS__); \
+} while(0)
 
 struct kexec_segment {
 	const void *buf;
@@ -198,6 +205,7 @@ extern int file_types;
 	{ "mem-min",		1, 0, OPT_MEM_MIN }, \
 	{ "mem-max",		1, 0, OPT_MEM_MAX }, \
 	{ "reuseinitrd",	0, 0, OPT_REUSE_INITRD }, \
+	{ "debug",		0, 0, OPT_DEBUG }, \
 
 #define KEXEC_OPT_STR "hvdfxluet:p"
 
@@ -257,13 +265,6 @@ extern int add_backup_segments(struct kexec_info *info,
 			       unsigned long backup_size);
 
 #define MAX_LINE	160
-
-#ifdef DEBUG
-#define dbgprintf(_args...) do {printf(_args);} while(0)
-#else
-static inline int __attribute__ ((format (printf, 1, 2)))
-	dbgprintf(const char *UNUSED(fmt), ...) {return 0;}
-#endif
 
 char *concat_cmdline(const char *base, const char *append);
 

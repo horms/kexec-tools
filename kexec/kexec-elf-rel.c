@@ -363,8 +363,8 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 				name = ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
 				name += ehdr->e_shdr[sym.st_shndx].sh_name;
 			}
-#ifdef DEBUG
-			fprintf(stderr, "sym: %10s info: %02x other: %02x shndx: %lx value: %lx size: %lx\n",
+
+			dbgprintf("sym: %10s info: %02x other: %02x shndx: %lx value: %lx size: %lx\n",
 				name,
 				sym.st_info,
 				sym.st_other,
@@ -372,7 +372,6 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 				sym.st_value,
 				sym.st_size);
 
-#endif
 			if (sym.st_shndx == STN_UNDEF) {
 			/*
 			 * NOTE: ppc64 elf .ro shows up a  UNDEF section.
@@ -405,10 +404,10 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			value = sym.st_value;
 			value += sec_base;
 			value += rel.r_addend;
-#ifdef DEBUG
-			fprintf(stderr, "sym: %s value: %lx addr: %lx\n",
+
+			dbgprintf("sym: %s value: %lx addr: %lx\n",
 				name, value, address);
-#endif
+
 			machine_apply_elf_rel(ehdr, rel.r_type,
 				(void *)location, address, value);
 		}

@@ -13,7 +13,6 @@
  * GNU General Public License for more details.
  *
  */
-/* #define DEBUG 1 */
 #define _GNU_SOURCE
 #include <stdint.h>
 #include <stdio.h>

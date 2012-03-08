@@ -67,7 +67,6 @@
 	{ "args-elf",		0, NULL, OPT_ARGS_ELF },	\
 	{ "args-linux",		0, NULL, OPT_ARGS_LINUX },	\
 	{ "args-none",		0, NULL, OPT_ARGS_NONE },	\
-	{ "debug",		0, NULL, OPT_DEBUG },		\
 	{ "module",		1, 0, OPT_MOD },		\
 	{ "real-mode",		0, NULL, OPT_REAL_MODE },
 

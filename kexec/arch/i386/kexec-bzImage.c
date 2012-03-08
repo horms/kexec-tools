@@ -85,8 +85,7 @@ int bzImage_probe(const char *buf, off_t len)
 
 void bzImage_usage(void)
 {
-	printf(	"-d, --debug               Enable debugging to help spot a failure.\n"
-		"    --real-mode           Use the kernels real mode entry point.\n"
+	printf(	"    --real-mode           Use the kernels real mode entry point.\n"
 		"    --command-line=STRING Set the kernel command line to STRING.\n"
 		"    --append=STRING       Set the kernel command line to STRING.\n"
 		"    --reuse-cmdline       Use kernel command line from running system.\n"
@@ -100,7 +99,7 @@ int do_bzImage_load(struct kexec_info *info,
 	const char *kernel, off_t kernel_len,
 	const char *command_line, off_t command_line_len,
 	const char *initrd, off_t initrd_len,
-	int real_mode_entry, int debug)
+	int real_mode_entry)
 {
 	struct x86_linux_header setup_header;
 	struct x86_linux_param_header *real_mode;
@@ -297,7 +296,7 @@ int do_bzImage_load(struct kexec_info *info,
 		printf("Starting the kernel in real mode\n");
 		regs32.eip = elf_rel_get_addr(&info->rhdr, "entry16");
 	}
-	if (real_mode_entry && debug) {
+	if (real_mode_entry && kexec_debug) {
 		unsigned long entry16_debug, pre32, first32;
 		uint32_t old_first32;
 		/* Find the location of the symbols */
@@ -338,14 +337,13 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	char *ramdisk_buf;
 	off_t ramdisk_length;
 	int command_line_len;
-	int debug, real_mode_entry;
+	int real_mode_entry;
 	int opt;
 	int result;
 
 	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
-		{ "debug",		0, 0, OPT_DEBUG },
 		{ "command-line",	1, 0, OPT_APPEND },
 		{ "append",		1, 0, OPT_APPEND },
 		{ "reuse-cmdline",	0, 0, OPT_REUSE_CMDLINE },
@@ -356,10 +354,6 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
 
-	/*
-	 * Parse the command line arguments
-	 */
-	debug = 0;
 	real_mode_entry = 0;
 	ramdisk = 0;
 	ramdisk_length = 0;
@@ -373,8 +367,6 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 		case '?':
 			usage();
 			return -1;
-		case OPT_DEBUG:
-			debug = 1;
 			break;
 		case OPT_APPEND:
 			append = optarg;
@@ -403,7 +395,7 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 		buf, len,
 		command_line, command_line_len,
 		ramdisk_buf, ramdisk_length,
-		real_mode_entry, debug);
+		real_mode_entry);
 
 	free(command_line);
 	return result;

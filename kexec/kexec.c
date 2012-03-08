@@ -50,6 +50,7 @@
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
 static unsigned long kexec_flags = 0;
+int kexec_debug = 0;
 
 void die(char *fmt, ...)
 {
@@ -893,6 +894,7 @@ void usage(void)
 	       "                      context of current kernel during kexec.\n"
 	       "     --load-jump-back-helper Load a helper image to jump back\n"
 	       "                      to original kernel.\n"
+	       " -d, --debug           Enable debugging to help spot a failure.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
@@ -1066,6 +1068,8 @@ int main(int argc, char *argv[])
 		case OPT_VERSION:
 			version();
 			return 0;
+		case OPT_DEBUG:
+			kexec_debug = 1;
 		case OPT_NOIFDOWN:
 			do_ifdown = 0;
 			break;

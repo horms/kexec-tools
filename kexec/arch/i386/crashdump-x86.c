@@ -76,9 +76,7 @@ static int get_kernel_paddr(struct kexec_info *UNUSED(info),
 
 	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
 		elf_info->kern_paddr_start = start;
-#ifdef DEBUG
-		printf("kernel load physical addr start = 0x%016Lx\n", start);
-#endif
+		dbgprintf("kernel load physical addr start = 0x%016Lx\n", start);
 		return 0;
 	}
 
@@ -150,10 +148,8 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 				/* Align size to page size boundary. */
 				size = (size + align - 1) & (~(align - 1));
 				elf_info->kern_size = size;
-#ifdef DEBUG
-				printf("kernel vaddr = 0x%lx size = 0x%llx\n",
+				dbgprintf("kernel vaddr = 0x%lx size = 0x%llx\n",
 					saddr, size);
-#endif
 				return 0;
 			}
 		}
@@ -211,10 +207,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		if (count != 2)
 			continue;
 		str = line + consumed;
-#ifdef DEBUG
-		printf("%016Lx-%016Lx : %s",
+		dbgprintf("%016Lx-%016Lx : %s",
 			start, end, str);
-#endif
 		/* Only Dumping memory of type System RAM. */
 		if (memcmp(str, "System RAM\n", 11) == 0) {
 			type = RANGE_RAM;
@@ -290,15 +284,15 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 	}
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
-#ifdef DEBUG
+
 	int i;
-	printf("CRASH MEMORY RANGES\n");
+	dbgprintf("CRASH MEMORY RANGES\n");
 	for(i = 0; i < memory_ranges; i++) {
 		start = crash_memory_range[i].start;
 		end = crash_memory_range[i].end;
-		printf("%016Lx-%016Lx\n", start, end);
+		dbgprintf("%016Lx-%016Lx\n", start, end);
 	}
-#endif
+
 	return 0;
 }
 
@@ -385,17 +379,17 @@ static int add_memmap(struct memory_range *memmap_p, unsigned long long addr,
 			memmap_p[j+1] = memmap_p[j];
 		memmap_p[tidx].start = addr;
 		memmap_p[tidx].end = addr + size - 1;
-#ifdef DEBUG
-	printf("Memmap after adding segment\n");
+
+	dbgprintf("Memmap after adding segment\n");
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
 		mstart = memmap_p[i].start;
 		mend = memmap_p[i].end;
 		if (mstart == 0 && mend == 0)
 			break;
-		printf("%016llx - %016llx\n",
+		dbgprintf("%016llx - %016llx\n",
 			mstart, mend);
 	}
-#endif
+
 	return 0;
 }
 
@@ -471,18 +465,18 @@ static int delete_memmap(struct memory_range *memmap_p, unsigned long long addr,
 			memmap_p[j-1] = memmap_p[j];
 		memmap_p[j-1].start = memmap_p[j-1].end = 0;
 	}
-#ifdef DEBUG
-	printf("Memmap after deleting segment\n");
+
+	dbgprintf("Memmap after deleting segment\n");
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
 		mstart = memmap_p[i].start;
 		mend = memmap_p[i].end;
 		if (mstart == 0 && mend == 0) {
 			break;
 		}
-		printf("%016llx - %016llx\n",
+		dbgprintf("%016llx - %016llx\n",
 			mstart, mend);
 	}
-#endif
+
 	return 0;
 }
 
@@ -546,10 +540,10 @@ static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 			die("Command line overflow\n");
 		strcat(cmdline, str_mmap);
 	}
-#ifdef DEBUG
-		printf("Command line after adding memmap\n");
-		printf("%s\n", cmdline);
-#endif
+
+	dbgprintf("Command line after adding memmap\n");
+	dbgprintf("%s\n", cmdline);
+
 	return 0;
 }
 
@@ -574,10 +568,10 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
-#ifdef DEBUG
-		printf("Command line after adding elfcorehdr\n");
-		printf("%s\n", cmdline);
-#endif
+
+	dbgprintf("Command line after adding elfcorehdr\n");
+	dbgprintf("%s\n", cmdline);
+
 	return 0;
 }
 
@@ -606,9 +600,9 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 
 		*addr = x86__pa(vaddr + (cpu * MAX_NOTE_BYTES));
 		*len = MAX_NOTE_BYTES;
-#ifdef DEBUG
-		printf("crash_notes addr = %Lx\n", *addr);
-#endif
+
+		dbgprintf("crash_notes addr = %Lx\n", *addr);
+
 		fclose(fp);
 		return 0;
 	} else
@@ -658,10 +652,9 @@ static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
 		die("Command line overflow\n");
 	strcat(cmdline, str_mmap);
 
-#ifdef DEBUG
-		printf("Command line after adding acpi memmap\n");
-		printf("%s\n", cmdline);
-#endif
+	dbgprintf("Command line after adding acpi memmap\n");
+	dbgprintf("%s\n", cmdline);
+
 	return 0;
 }
 
@@ -688,15 +681,12 @@ static void get_backup_area(unsigned long *start, unsigned long *end)
 		if (count != 2)
 			continue;
 		str = line + consumed;
-#ifdef DEBUG
-		printf("%016lx-%016lx : %s",
+		dbgprintf("%016lx-%016lx : %s",
 			mstart, mend, str);
-#endif
+
 		/* Hopefully there is only one RAM region in the first 640K */
 		if (memcmp(str, "System RAM\n", 11) == 0 && mend <= 0xa0000 ) {
-#ifdef DEBUG
-			printf("%s: %016lx-%016lx : %s", __func__, mstart, mend, str);
-#endif
+			dbgprintf("%s: %016lx-%016lx : %s", __func__, mstart, mend, str);
 			*start = mstart;
 			*end = mend;
 			fclose(fp);
