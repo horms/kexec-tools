@@ -142,9 +142,9 @@ static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
-#if DEBUG
-	fprintf(stderr, "Command line after adding elfcorehdr: %s\n", cmdline);
-#endif
+
+	dbgprintf("Command line after adding elfcorehdr: %s\n", cmdline);
+
 	return 0;
 }
 
