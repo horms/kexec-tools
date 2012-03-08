@@ -60,9 +60,7 @@ static int get_kernel_paddr(struct crash_elf_info *elf_info)
 
 	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
 		elf_info->kern_paddr_start = start;
-#ifdef DEBUG
-		printf("kernel load physical addr start = 0x%lx\n", start);
-#endif
+		dbgprintf("kernel load physical addr start = 0x%lx\n", start);
 		return 0;
 	}
 
@@ -82,12 +80,10 @@ static int get_kernel_vaddr_and_size(struct crash_elf_info *elf_info,
 					start_offset;
 	if (parse_iomem_single("Kernel data\n", NULL, &end) == 0) {
 		elf_info->kern_size = end - elf_info->kern_paddr_start;
-#ifdef DEBUG
-		printf("kernel_vaddr= 0x%llx paddr %llx\n",
+		dbgprintf("kernel_vaddr= 0x%llx paddr %llx\n",
 				elf_info->kern_vaddr_start,
 				elf_info->kern_paddr_start);
-		printf("kernel size = 0x%llx\n", elf_info->kern_size);
-#endif
+		dbgprintf("kernel size = 0x%llx\n", elf_info->kern_size);
 		return 0;
 		}
 	fprintf(stderr, "Cannot determine kernel virtual load addr and  size\n");
@@ -400,11 +396,9 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 	cmdline_add_savemaxmem(mod_cmdline, saved_max_mem);
 
-#ifdef DEBUG
-	printf("CRASH MEMORY RANGES:\n");
-	printf("%016Lx-%016Lx\n", crash_reserved_mem.start,
+	dbgprintf("CRASH MEMORY RANGES:\n");
+	dbgprintf("%016Lx-%016Lx\n", crash_reserved_mem.start,
 			crash_reserved_mem.end);
-#endif
 	return 0;
 }
 
