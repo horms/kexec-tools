@@ -151,9 +151,6 @@ int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 		real_mode->rsvd_pos   = var.transp.offset;
 		real_mode->rsvd_size  = var.transp.length;
 	}
-	fprintf(stderr, "%s: %dx%dx%d @ %lx +%x\n", __FUNCTION__,
-		var.xres, var.yres, var.bits_per_pixel,
-		fix.smem_start, fix.smem_len);
 	return 0;
 
  out:
