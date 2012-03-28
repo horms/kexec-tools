@@ -57,6 +57,12 @@
 #error unknwon BYTE_ORDER
 #endif
 
+/*
+ * Document some of the reasons why crashdump may fail, so we can give
+ * better error messages
+ */
+#define EFAILED		-1	/* default error code */
+#define ENOCRASHKERNEL	-2	/* no memory reserved for crashkernel */
 
 /*
  * This function doesn't actually exist.  The idea is that when someone

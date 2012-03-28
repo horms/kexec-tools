@@ -776,7 +776,9 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	memset(memmap_p, 0, sz);
 	add_memmap(memmap_p, info->backup_src_start, info->backup_src_size);
 	sz = crash_reserved_mem.end - crash_reserved_mem.start +1;
-	add_memmap(memmap_p, crash_reserved_mem.start, sz);
+	if (add_memmap(memmap_p, crash_reserved_mem.start, sz) < 0) {
+		return ENOCRASHKERNEL;
+	}
 
 	/* Create a backup region segment to store backup data*/
 	if (!(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
@@ -788,7 +790,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		dbgprintf("Created backup segment at 0x%lx\n",
 			  info->backup_start);
 		if (delete_memmap(memmap_p, info->backup_start, sz) < 0)
-			return -1;
+			return EFAILED;
 	}
 
 	/* Create elf header segment and store crash image data. */
@@ -797,14 +799,14 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &bufsz,
 					       ELF_CORE_HEADER_ALIGN) < 0)
-			return -1;
+			return EFAILED;
 	}
 	else {
 		if (crash_create_elf32_headers(info, &elf_info,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &bufsz,
 					       ELF_CORE_HEADER_ALIGN) < 0)
-			return -1;
+			return EFAILED;
 	}
 	/* the size of the elf headers allocated is returned in 'bufsz' */
 

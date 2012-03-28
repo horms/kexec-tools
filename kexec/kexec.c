@@ -718,10 +718,20 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	}
 	info.kexec_flags |= native_arch;
 
-	if (file_type[i].load(argc, argv, kernel_buf,
-			      kernel_size, &info) < 0) {
-		fprintf(stderr, "Cannot load %s\n", kernel);
-		return -1;
+	result = file_type[i].load(argc, argv, kernel_buf, kernel_size, &info);
+	if (result < 0) {
+		switch (result) {
+		case ENOCRASHKERNEL:
+			fprintf(stderr,
+				"No crash kernel segment found in /proc/iomem\n"
+				"Please check the crashkernel= boot parameter.\n");
+			break;
+		case EFAILED:
+		default:
+			fprintf(stderr, "Cannot load %s\n", kernel);
+			break;
+		}
+		return result;
 	}
 	/* If we are not in native mode setup an appropriate trampoline */
 	if (arch_compat_trampoline(&info) < 0) {
