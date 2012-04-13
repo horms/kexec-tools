@@ -465,12 +465,24 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 			if (base < ustart && end > uend) {
 				usablemem_rgns.ranges[i].start = base;
 				usablemem_rgns.ranges[i].end = end;
+#ifdef DEBUG
+				fprintf(stderr, "usable memory rgn %u: new base:%llx new size:%llx\n",
+					i, base, size);
+#endif
 				return;
 			} else if (base < ustart) {
 				usablemem_rgns.ranges[i].start = base;
+#ifdef DEBUG
+				fprintf(stderr, "usable memory rgn %u: new base:%llx new size:%llx",
+					i, base, usablemem_rgns.ranges[i].end - base);
+#endif
 				return;
 			} else if (end > uend){
 				usablemem_rgns.ranges[i].end = end;
+#ifdef DEBUG
+				fprintf(stderr, "usable memory rgn %u: new end:%llx, new size:%llx",
+					i, end, end - usablemem_rgns.ranges[i].start);
+#endif
 				return;
 			}
 		}
