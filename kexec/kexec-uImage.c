@@ -72,7 +72,7 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 		return -1;
 	}
 #ifdef HAVE_LIBZ
-	crc = crc32(0, (void *)buf + sizeof(header), len - sizeof(header));
+	crc = crc32(0, (void *)buf + sizeof(header), be32_to_cpu(header.ih_size));
 	if (crc != be32_to_cpu(header.ih_dcrc)) {
 		printf("The data CRC does not match. Computed: %08x "
 				"expected %08x\n", crc,
