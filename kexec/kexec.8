@@ -71,7 +71,7 @@ It's also possible to invoke
 .B kexec
 without an option parameter. In that case, kexec loads the specified
 kernel and then invokes
-.BR shutdown (1).
+.BR shutdown (8).
 If the shutdown scripts of your Linux distribution support
 kexec-based rebooting, they then call
 .B kexec
@@ -105,13 +105,13 @@ command:
 .SH OPTIONS
 .TP
 .B \-e\ (\-\-exec)
-Run the currently loaded kernel.
+Run the currently loaded kernel. Note that it will reboot into the loaded kernel without calling shutdown(8).
 .TP
 .B \-f\ (\-\-force)
 Force an immediate
 .B kexec
 call, do not call
-.BR shutdown (1)
+.BR shutdown (8)
 (contrary to the default action without any option parameter). This option
 performs the same actions like executing
 .IR -l
