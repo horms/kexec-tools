@@ -594,13 +594,12 @@ static int get_devtree_details(unsigned long kexec_flags)
 
 	sort_ranges();
 
-#ifdef DEBUG
 	int k;
 	for (k = 0; k < i; k++)
-		fprintf(stderr, "exclude_range sorted exclude_range[%d] "
+		dbgprintf("exclude_range sorted exclude_range[%d] "
 			"start:%llx, end:%llx\n", k, exclude_range[k].start,
 			exclude_range[k].end);
-#endif
+
 	return 0;
 
 error_openfile:
@@ -687,13 +686,11 @@ int setup_memory_ranges(unsigned long kexec_flags)
 	}
 	nr_memory_ranges = j;
 
-#ifdef DEBUG
 	int k;
 	for (k = 0; k < j; k++)
-		fprintf(stderr, "setup_memory_ranges memory_range[%d] "
+		dbgprintf("setup_memory_ranges memory_range[%d] "
 			"start:%llx, end:%llx\n", k, memory_range[k].start,
 			memory_range[k].end);
-#endif
 	return 0;
 
 out:

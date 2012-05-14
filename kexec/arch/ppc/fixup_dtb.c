@@ -17,25 +17,26 @@
 
 const char proc_dts[] = "/proc/device-tree";
 
-#ifdef DEBUG
-static void print_fdt_reserve_regions(void)
+static void print_fdt_reserve_regions(char *blob_buf)
 {
 	int i, num;
 
+	if (!kexec_debug)
+		return;
 	/* Print out a summary of the final reserve regions */
 	num =  fdt_num_mem_rsv(blob_buf);
-	printf ("reserve regions: %d\n", num);
+	dbgprintf ("reserve regions: %d\n", num);
 	for (i = 0; i < num; i++) {
 		uint64_t offset, size;
 
 		if (fdt_get_mem_rsv(blob_buf, i, &offset, &size) == 0) {
-			printf("%d: offset: %llx, size: %llx\n", i, offset, size);
+			dbgprintf("%d: offset: %llx, size: %llx\n", i, offset, size);
 		} else {
-			printf("Error retreiving reserved region\n");
+			dbgprintf("Error retreiving reserved region\n");
 		}
 	}
 }
-#endif
+
 
 static void fixup_nodes(char *nodes[])
 {
@@ -201,11 +202,8 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf)
 				"device_type", "cpu", 4);
 	}
 
-out:	;
-
-#ifdef DEBUG
-	print_fdt_reserve_regions();
-#endif
+out:
+	print_fdt_reserve_regions(blob_buf);
 }
 
 static void fixup_memory(struct kexec_info *info, char *blob_buf)
@@ -369,23 +367,23 @@ char *fixup_dtb_init(struct kexec_info *info, char *blob_buf, off_t *blob_size,
 	return blob_buf;
 }
 
-#ifdef DEBUG
 static void save_fixed_up_dtb(char *blob_buf, off_t blob_size)
 {
 	FILE *fp;
 
+	if (!kexec_debug)
+		return;
 	fp = fopen("debug.dtb", "w");
 	if (fp) {
 		if ( blob_size == fwrite(blob_buf, sizeof(char), blob_size, fp)) {
-			printf("debug.dtb written\n");
+			dbgprintf("debug.dtb written\n");
 		} else {
-			printf("Unable to write debug.dtb\n");
+			dbgprintf("Unable to write debug.dtb\n");
 		}
 	} else {
-		printf("Unable to dump flat device tree to debug.dtb\n");
+		dbgprintf("Unable to dump flat device tree to debug.dtb\n");
 	}
 }
-#endif
 
 char *fixup_dtb_finalize(struct kexec_info *info, char *blob_buf, off_t *blob_size,
 			char *nodes[], char *cmdline)
@@ -400,9 +398,7 @@ char *fixup_dtb_finalize(struct kexec_info *info, char *blob_buf, off_t *blob_si
 	blob_buf = (char *)dt_ops.finalize();
 	*blob_size = fdt_totalsize(blob_buf);
 
-#ifdef DEBUG
 	save_fixed_up_dtb(blob_buf, *blob_size);
-#endif
 
 	return blob_buf;
 }

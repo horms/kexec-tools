@@ -27,15 +27,15 @@
 #include <page.h>
 #include <libfdt.h>
 #include "ops.h"
+#include "../../kexec.h"
 
-#define DEBUG	0
 #define BAD_ERROR(err)	(((err) < 0) \
 			 && ((err) != -FDT_ERR_NOTFOUND) \
 			 && ((err) != -FDT_ERR_EXISTS))
 
 #define check_err(err) \
 	({ \
-		if (BAD_ERROR(err) || ((err < 0) && DEBUG)) \
+		if (BAD_ERROR(err) || ((err < 0) && kexec_debug)) \
 			printf("%s():%d  %s\n\r", __func__, __LINE__, \
 			       fdt_strerror(err)); \
 		if (BAD_ERROR(err)) \

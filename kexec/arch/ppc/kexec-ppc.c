@@ -378,9 +378,9 @@ static int get_base_ranges(void)
 	nr_memory_ranges = local_memory_ranges;
 	sort_base_ranges();
 	memory_max = base_memory_range[nr_memory_ranges - 1].end;
-#ifdef DEBUG
-	fprintf(stderr, "get base memory ranges:%d\n", nr_memory_ranges);
-#endif
+
+	dbgprintf("get base memory ranges:%d\n", nr_memory_ranges);
+
 	return 0;
 }
 
@@ -716,13 +716,13 @@ static int get_devtree_details(unsigned long kexec_flags)
 
 	sort_ranges();
 
-#ifdef DEBUG
+
 	int k;
 	for (k = 0; k < i; k++)
-		fprintf(stderr, "exclude_range sorted exclude_range[%d] "
+		dbgprintf("exclude_range sorted exclude_range[%d] "
 			"start:%llx, end:%llx\n", k, exclude_range[k].start,
 			exclude_range[k].end);
-#endif
+
 	return 0;
 
 error_openfile:
@@ -812,13 +812,12 @@ static int setup_memory_ranges(unsigned long kexec_flags)
 	} else
 		nr_memory_ranges = j;
 
-#ifdef DEBUG
+
 	int k;
 	for (k = 0; k < j; k++)
-		fprintf(stderr, "setup_memory_ranges memory_range[%d] "
+		dbgprintf("setup_memory_ranges memory_range[%d] "
 				"start:%llx, end:%llx\n", k, memory_range[k].start,
 				memory_range[k].end);
-#endif
 	return 0;
 
 out:

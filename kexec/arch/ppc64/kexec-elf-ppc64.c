@@ -294,7 +294,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 
 	/* Set debug */
 	elf_rel_set_symbol(&info->rhdr, "debug", &my_debug, sizeof(my_debug));
-#ifdef DEBUG
+
 	my_kernel = 0;
 	my_dt_offset = 0;
 	my_panic_kernel = 0;
@@ -318,19 +318,18 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 				sizeof(toc_addr));
 	elf_rel_get_symbol(&info->rhdr, "debug", &my_debug, sizeof(my_debug));
 
-	fprintf(stderr, "info->entry is %p\n", info->entry);
-	fprintf(stderr, "kernel is %llx\n", (unsigned long long)my_kernel);
-	fprintf(stderr, "dt_offset is %llx\n",
+	dbgprintf("info->entry is %p\n", info->entry);
+	dbgprintf("kernel is %llx\n", (unsigned long long)my_kernel);
+	dbgprintf("dt_offset is %llx\n",
 		(unsigned long long)my_dt_offset);
-	fprintf(stderr, "run_at_load flag is %x\n", my_run_at_load);
-	fprintf(stderr, "panic_kernel is %x\n", my_panic_kernel);
-	fprintf(stderr, "backup_start is %llx\n",
+	dbgprintf("run_at_load flag is %x\n", my_run_at_load);
+	dbgprintf("panic_kernel is %x\n", my_panic_kernel);
+	dbgprintf("backup_start is %llx\n",
 		(unsigned long long)my_backup_start);
-	fprintf(stderr, "stack is %llx\n", (unsigned long long)my_stack);
-	fprintf(stderr, "toc_addr is %llx\n", (unsigned long long)toc_addr);
-	fprintf(stderr, "purgatory size is %zu\n", purgatory_size);
-	fprintf(stderr, "debug is %d\n", my_debug);
-#endif
+	dbgprintf("stack is %llx\n", (unsigned long long)my_stack);
+	dbgprintf("toc_addr is %llx\n", (unsigned long long)toc_addr);
+	dbgprintf("purgatory size is %zu\n", purgatory_size);
+	dbgprintf("debug is %d\n", my_debug);
 
 	for (i = 0; i < info->nr_segments; i++)
 		fprintf(stderr, "segment[%d].mem:%p memsz:%zu\n", i,

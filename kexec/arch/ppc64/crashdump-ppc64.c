@@ -304,15 +304,15 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
-#if DEBUG
+
 	int j;
-	printf("CRASH MEMORY RANGES\n");
+	dbgprintf("CRASH MEMORY RANGES\n");
 	for(j = 0; j < *ranges; j++) {
 		start = crash_memory_range[j].start;
 		end = crash_memory_range[j].end;
-		fprintf(stderr, "%016Lx-%016Lx\n", start, end);
+		dbgprintf("%016Lx-%016Lx\n", start, end);
 	}
-#endif
+
 	return 0;
 
 err:
@@ -367,9 +367,7 @@ static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
-#if DEBUG
-	fprintf(stderr, "Command line after adding elfcorehdr: %s\n", cmdline);
-#endif
+	dbgprintf("Command line after adding elfcorehdr: %s\n", cmdline);
 	return 0;
 }
 
@@ -490,10 +488,8 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 	usablemem_rgns.ranges[usablemem_rgns.size].start = base;
 	usablemem_rgns.ranges[usablemem_rgns.size++].end = end;
 
-#ifdef DEBUG
-	fprintf(stderr, "usable memory rgns size:%u base:%llx size:%llx\n",
+	dbgprintf("usable memory rgns size:%u base:%llx size:%llx\n",
 		usablemem_rgns.size, base, size);
-#endif
 }
 
 int is_crashkernel_mem_reserved(void)

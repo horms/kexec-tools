@@ -273,9 +273,9 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 			memcpy(dt, local_cmdline, cmd_len);
 			len = cmd_len;
 			*dt_len = cmd_len;
-#if	DEBUG
-			fprintf(stderr, "Modified cmdline:%s\n", local_cmdline);
-#endif
+
+			dbgprintf("Modified cmdline:%s\n", local_cmdline);
+
 		}
 
 		dt += (len + 3)/4;
