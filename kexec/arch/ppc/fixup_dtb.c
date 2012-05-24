@@ -172,6 +172,9 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf)
 		}
 	}
 
+#if 0
+	/* XXX: Do not reserve spin-table for CPUs. */
+
 	/* Add reserve regions for cpu-release-addr */
 	nodeoffset = fdt_node_offset_by_prop_value(blob_buf, -1, "device_type", "cpu", 4);
 	while (nodeoffset != -FDT_ERR_NOTFOUND) {
@@ -201,6 +204,7 @@ static void fixup_reserve_regions(struct kexec_info *info, char *blob_buf)
 		nodeoffset = fdt_node_offset_by_prop_value(blob_buf, nodeoffset,
 				"device_type", "cpu", 4);
 	}
+#endif
 
 out:
 	print_fdt_reserve_regions(blob_buf);

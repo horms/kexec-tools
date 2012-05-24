@@ -262,10 +262,19 @@ static void ulltoa(unsigned long long i, char *str)
 	}
 }
 
+/* Append str to cmdline */
+static void add_cmdline(char *cmdline, char *str)
+{
+	int cmdlen = strlen(cmdline) + strlen(str);
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str);
+}
+
 static int add_cmdline_param(char *cmdline, unsigned long long addr,
 				char *cmdstr, char *byte)
 {
-	int cmdlen, len, align = 1024;
+	int align = 1024;
 	char str[COMMAND_LINE_SIZE], *ptr;
 
 	/* Passing in =xxxK / =xxxM format. Saves space required in cmdline.*/
@@ -284,11 +293,8 @@ static int add_cmdline_param(char *cmdline, unsigned long long addr,
 	ptr += strlen(str);
 	ulltoa(addr, ptr);
 	strcat(str, byte);
-	len = strlen(str);
-	cmdlen = strlen(cmdline) + len;
-	if (cmdlen > (COMMAND_LINE_SIZE - 1))
-		die("Command line overflow\n");
-	strcat(cmdline, str);
+
+	add_cmdline(cmdline, str);
 
 	dbgprintf("Command line after adding elfcorehdr: %s\n", cmdline);
 
@@ -365,6 +371,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 	 */
 	add_cmdline_param(mod_cmdline, elfcorehdr, " elfcorehdr=", "K");
 	add_cmdline_param(mod_cmdline, saved_max_mem, " savemaxmem=", "M");
+	add_cmdline(mod_cmdline, " maxcpus=1");
 	return 0;
 }
 
