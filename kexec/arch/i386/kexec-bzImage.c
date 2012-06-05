@@ -44,7 +44,10 @@ static const int probe_debug = 0;
 int bzImage_probe(const char *buf, off_t len)
 {
 	const struct x86_linux_header *header;
-	if ((uintmax_t)len < (uintmax_t)sizeof(header)) {
+	if ((uintmax_t)len < (uintmax_t)(2 * 512)) {
+		if (probe_debug) {
+			fprintf(stderr, "File is too short to be a bzImage!\n");
+		}
 		return -1;
 	}
 	header = (const struct x86_linux_header *)buf;
@@ -118,7 +121,7 @@ int do_bzImage_load(struct kexec_info *info,
 	/*
 	 * Find out about the file I am about to load.
 	 */
-	if ((uintmax_t)kernel_len < (uintmax_t)sizeof(setup_header)) {
+	if ((uintmax_t)kernel_len < (uintmax_t)(2 * 512)) {
 		return -1;
 	}
 	memcpy(&setup_header, kernel, sizeof(setup_header));

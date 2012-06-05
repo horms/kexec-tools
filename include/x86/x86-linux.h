@@ -233,7 +233,6 @@ struct x86_linux_header {
 	uint32_t high_base;			/* 0x24C */
 	uint32_t high_memsz;			/* 0x250 */
 	uint32_t high_filesz;			/* 0x254 */
-	uint32_t tail[32*1024 - 0x258];		/* 0x258 */
 #else
 	uint32_t kernel_alignment;		/* 0x230 */
 	uint8_t  relocatable_kernel;		/* 0x234 */
@@ -241,7 +240,6 @@ struct x86_linux_header {
 	uint32_t cmdline_size;                  /* 0x238 */
 	uint32_t hardware_subarch;              /* 0x23C */
 	uint64_t hardware_subarch_data;         /* 0x240 */
-	uint8_t  tail[32*1024 - 0x248];		/* 0x248 */
 #endif
 } PACKED;
 
