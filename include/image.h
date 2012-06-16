@@ -129,6 +129,8 @@
 #define IH_TYPE_FILESYSTEM	7	/* Filesystem Image (any type)	*/
 #define IH_TYPE_FLATDT		8	/* Binary Flat Device Tree Blob	*/
 #define IH_TYPE_KWBIMAGE	9	/* Kirkwood Boot Image		*/
+#define IH_TYPE_KERNEL_NOLOAD	14	/* OS Kernel Image, can run     */
+					/* from any load address	*/
 
 /*
  * Compression Types

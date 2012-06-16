@@ -39,7 +39,11 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 		return -1;
 	}
 #endif
-	if (header.ih_type != IH_TYPE_KERNEL) {
+	switch (header.ih_type) {
+	case IH_TYPE_KERNEL:
+	case IH_TYPE_KERNEL_NOLOAD:
+		break;
+	default:
 		printf("uImage type %d unsupported\n", header.ih_type);
 		return -1;
 	}
