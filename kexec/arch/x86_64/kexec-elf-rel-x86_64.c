@@ -86,6 +86,6 @@ void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr), unsigned long r_type,
 	}
 	return;
  overflow:
-	die("overflow in relocation type %s val %Lx\n", 
+	die("overflow in relocation type %s val %lx\n",
 		reloc_name(r_type), value);
 }

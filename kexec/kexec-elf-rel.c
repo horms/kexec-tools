@@ -513,7 +513,7 @@ void elf_rel_set_symbol(struct mem_ehdr *ehdr,
 			name);
 	}
 	if (sym.st_size != size) {
-		die("Symbol: %s has size: %ld not %ld\n",
+		die("Symbol: %s has size: %lld not %ld\n",
 			name, sym.st_size, size);
 	}
 	shdr = &ehdr->e_shdr[sym.st_shndx];
@@ -534,10 +534,10 @@ void elf_rel_get_symbol(struct mem_ehdr *ehdr,
 
 	result = elf_rel_find_symbol(ehdr, name, &sym);
 	if (result < 0) {
-		die("Symbol: %s not found cannot get\n");
+		die("Symbol: %s not found cannot get\n", name);
 	}
 	if (sym.st_size != size) {
-		die("Symbol: %s has size: %ld not %ld\n",
+		die("Symbol: %s has size: %lld not %ld\n",
 			name, sym.st_size, size);
 	}
 	shdr = &ehdr->e_shdr[sym.st_shndx];

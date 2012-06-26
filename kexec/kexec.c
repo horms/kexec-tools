@@ -321,7 +321,7 @@ void add_segment_phys_virt(struct kexec_info *info,
 	 * thing.
 	 */
 	if (base & (pagesize -1)) {
-		die("Base address: %x is not page aligned\n", base);
+		die("Base address: %lx is not page aligned\n", base);
 	}
 
 	if (phys)

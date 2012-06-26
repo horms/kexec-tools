@@ -168,7 +168,7 @@ char *lzma_decompress_file(const char *filename, off_t *r_size)
 	}
 	fp = lzopen(filename, "rb");
 	if (fp == 0) {
-		die("Cannot open `%s': %s\n", filename);
+		die("Cannot open `%s'\n", filename);
 	}
 	size = 0;
 	allocated = 65536;
