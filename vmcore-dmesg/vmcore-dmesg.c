@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <elf.h>
+#include <stdbool.h>
 
 /* The 32bit and 64bit note headers make it clear we don't care */
 typedef Elf32_Nhdr Elf_Nhdr;
@@ -220,6 +221,9 @@ static void scan_vmcoreinfo(char *start, size_t size)
 {
 	char *last = start + size - 1;
 	char *pos, *eol;
+	char temp_buf[1024];
+	bool last_line = false;
+
 #define SYMBOL(sym) {					\
 	.str = "SYMBOL(" #sym  ")=",			\
 	.name = #sym,					\
@@ -243,7 +247,27 @@ static void scan_vmcoreinfo(char *start, size_t size)
 		/* Find the end of the current line */
 		for (eol = pos; (eol <= last) && (*eol != '\n') ; eol++)
 			;
-		len = eol - pos + 1;
+		if (eol > last) {
+			/*
+			 * We did not find \n and note ended. Currently kernel
+			 * is appending last field CRASH_TIME without \n. It
+			 * is ugly but handle it.
+			 */
+			eol = last;
+			len = eol - pos + 1;
+			if (len >= sizeof(temp_buf))
+				len = sizeof(temp_buf) - 1;
+			strncpy(temp_buf, pos, len);
+			temp_buf[len + 1] = '\0';
+
+			pos = temp_buf;
+			len = len + 1;
+			eol = pos + len -1;
+			last_line = true;
+		} else  {
+			len = eol - pos + 1;
+		}
+
 		/* Stomp the last character so I am guaranteed a terminating null */
 		*eol = '\0';
 		/* Copy OSRELEASE if I see it */
@@ -266,6 +290,9 @@ static void scan_vmcoreinfo(char *start, size_t size)
 			/* Remember the virtual address */
 			*symbol[i].vaddr = vaddr;
 		}
+
+		if (last_line)
+			break;
 	}
 }
 
