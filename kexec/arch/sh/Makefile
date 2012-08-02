@@ -9,7 +9,8 @@ sh_KEXEC_SRCS += kexec/arch/sh/kexec-elf-sh.c
 sh_KEXEC_SRCS += kexec/arch/sh/kexec-elf-rel-sh.c
 sh_KEXEC_SRCS += kexec/arch/sh/netbsd_booter.S
 sh_KEXEC_SRCS += kexec/arch/sh/crashdump-sh.c
-sh_KEXEC_SRCS += kexec/kexec-uImage.c
+
+sh_UIMAGE = kexec/kexec-uImage.c
 
 sh_ADD_BUFFER =
 sh_ADD_SEGMENT =

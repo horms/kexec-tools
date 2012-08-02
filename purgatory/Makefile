@@ -27,8 +27,6 @@ include $(srcdir)/purgatory/arch/s390/Makefile
 include $(srcdir)/purgatory/arch/sh/Makefile
 include $(srcdir)/purgatory/arch/x86_64/Makefile
 
-PURGATORY_SRCS+=$($(ARCH)_PURGATORY_SRCS)
-
 PURGATORY_OBJS = $(call objify, $(PURGATORY_SRCS)) purgatory/sha256.o
 PURGATORY_DEPS = $(call depify, $(PURGATORY_OBJS))
 
