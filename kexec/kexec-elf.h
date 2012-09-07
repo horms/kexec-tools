@@ -1,6 +1,9 @@
 #ifndef KEXEC_ELF_H
 #define KEXEC_ELF_H
 
+#include <stdint.h>
+#include <sys/types.h>
+
 struct kexec_info;
 
 struct mem_ehdr {
