@@ -9,6 +9,8 @@ extern "C" {
 #define PAGE_OFFSET		0xc0000000
 #define CRASH_MAX_MEMORY_RANGES	32
 
+extern struct memory_ranges usablemem_rgns;
+
 struct kexec_info;
 
 extern unsigned long phys_offset;

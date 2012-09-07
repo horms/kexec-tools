@@ -31,8 +31,16 @@
 #include "../../crashdump.h"
 #include "crashdump-arm.h"
 
+
+/*
+ * Used to save various memory ranges/regions needed for the captured
+ * kernel to boot. (lime memmap= option in other archs)
+ */
 static struct memory_range crash_memory_ranges[CRASH_MAX_MEMORY_RANGES];
-static int crash_memory_nr_ranges;
+struct memory_ranges usablemem_rgns = {
+    .size = 0,
+    .ranges = crash_memory_ranges,
+};
 
 /* memory range reserved for crashkernel */
 static struct memory_range crash_reserved_mem;
@@ -65,16 +73,16 @@ static int crash_range_callback(void *UNUSED(data), int UNUSED(nr),
 {
 	struct memory_range *range;
 
-	if (crash_memory_nr_ranges >= CRASH_MAX_MEMORY_RANGES)
+	if (usablemem_rgns.size >= CRASH_MAX_MEMORY_RANGES)
 		return 1;
 
-	range = &crash_memory_ranges[crash_memory_nr_ranges];
+	range = usablemem_rgns.ranges + usablemem_rgns.size;
 
 	if (strncmp(str, "System RAM\n", 11) == 0) {
 		range->start = base;
 		range->end = base + length - 1;
 		range->type = RANGE_RAM;
-		crash_memory_nr_ranges++;
+		usablemem_rgns.size++;
 	} else if (strncmp(str, "Crash kernel\n", 13) == 0) {
 		crash_reserved_mem.start = base;
 		crash_reserved_mem.end = base + length - 1;
@@ -95,22 +103,24 @@ static void crash_exclude_range(void)
 	const struct memory_range *range = &crash_reserved_mem;
 	int i;
 
-	for (i = 0; i < crash_memory_nr_ranges; i++) {
-		struct memory_range *r = &crash_memory_ranges[i];
+	for (i = 0; i < usablemem_rgns.size; i++) {
+		struct memory_range *r = usablemem_rgns.ranges + i;
 
 		/*
 		 * We assume that crash area is fully contained in
 		 * some larger memory area.
 		 */
 		if (r->start <= range->start && r->end >= range->end) {
+			struct memory_range *new;
 			/*
 			 * Let's split this area into 2 smaller ones and
 			 * remove excluded range from between. First create
 			 * new entry for the remaining area.
 			 */
-			crash_memory_ranges[crash_memory_nr_ranges].start = range->end + 1;
-			crash_memory_ranges[crash_memory_nr_ranges].end = r->end;
-			crash_memory_nr_ranges++;
+			new = usablemem_rgns.ranges + usablemem_rgns.size;
+			new->start = range->end + 1;
+			new->end = r->end;
+			usablemem_rgns.size++;
 			/*
 			 * Next update this area to end before excluded range.
 			 */
@@ -150,7 +160,7 @@ static int crash_get_memory_ranges(void)
 	 */
 	kexec_iomem_for_each_line(NULL, crash_range_callback, NULL);
 
-	if (crash_memory_nr_ranges < 1) {
+	if (usablemem_rgns.size < 1) {
 		errno = EINVAL;
 		return -1;
 	}
@@ -164,8 +174,8 @@ static int crash_get_memory_ranges(void)
 	/*
 	 * Make sure that the memory regions are sorted.
 	 */
-	qsort(crash_memory_ranges, crash_memory_nr_ranges,
-	      sizeof(crash_memory_ranges[0]), range_cmp);
+	qsort(usablemem_rgns.ranges, usablemem_rgns.size,
+	      sizeof(*usablemem_rgns.ranges), range_cmp);
 
 	return 0;
 }
@@ -235,8 +245,8 @@ static void dump_memory_ranges(void)
 		  crash_reserved_mem.start, crash_reserved_mem.end,
 		  (unsigned long)range_size(&crash_reserved_mem) >> 20);
 
-	for (i = 0; i < crash_memory_nr_ranges; i++) {
-		struct memory_range *r = &crash_memory_ranges[i];
+	for (i = 0; i < usablemem_rgns.size; i++) {
+		struct memory_range *r = usablemem_rgns.ranges + i;
 		dbgprintf("memory range: [%#llx - %#llx] (%ldM)\n",
 			  r->start, r->end, (unsigned long)range_size(r) >> 20);
 	}
@@ -272,11 +282,12 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	 * Now that we have memory regions sorted, we can use first memory
 	 * region as PHYS_OFFSET.
 	 */
-	phys_offset = crash_memory_ranges[0].start;
+	phys_offset = usablemem_rgns.ranges->start;
 	dbgprintf("phys_offset: %#lx\n", phys_offset);
 
-	err = crash_create_elf32_headers(info, &elf_info, crash_memory_ranges,
-					 crash_memory_nr_ranges, &buf, &bufsz,
+	err = crash_create_elf32_headers(info, &elf_info,
+					 usablemem_rgns.ranges,
+					 usablemem_rgns.size, &buf, &bufsz,
 					 ELF_CORE_HEADER_ALIGN);
 	if (err)
 		return err;
