@@ -13,12 +13,17 @@
 #include <unistd.h>
 #include <getopt.h>
 #include <unistd.h>
+#include <libfdt.h>
 #include <arch/options.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
+#include "kexec-arm.h"
+#include "../../fs2dt.h"
 #include "crashdump-arm.h"
 
 #define BOOT_PARAMS_SIZE 1536
+
+off_t initrd_base = 0, initrd_size = 0;
 
 struct tag_header {
 	uint32_t size;
@@ -96,6 +101,8 @@ void zImage_arm_usage(void)
 		"     --append=STRING       Set the kernel command line to STRING.\n"
 		"     --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
 		"     --ramdisk=FILE        Use FILE as the kernel's initial ramdisk.\n"
+		"     --dtb=FILE            Use FILE as the fdt blob.\n"
+		"     --atags               Use ATAGs instead of device-tree.\n"
 		);
 }
 
@@ -219,9 +226,13 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	off_t command_line_len;
 	const char *ramdisk;
 	char *ramdisk_buf;
-	off_t ramdisk_length;
-	off_t ramdisk_offset;
 	int opt;
+	int use_atags;
+	char *dtb_buf;
+	off_t dtb_length;
+	char *dtb_file;
+	off_t dtb_offset;
+
 	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
 		KEXEC_ARCH_OPTIONS
@@ -229,6 +240,8 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		{ "append",		1, 0, OPT_APPEND },
 		{ "initrd",		1, 0, OPT_RAMDISK },
 		{ "ramdisk",		1, 0, OPT_RAMDISK },
+		{ "dtb",		1, 0, OPT_DTB },
+		{ "atags",		0, 0, OPT_ATAGS },
 		{ 0, 			0, 0, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "a:r:";
@@ -240,7 +253,9 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	command_line_len = 0;
 	ramdisk = 0;
 	ramdisk_buf = 0;
-	ramdisk_length = 0;
+	initrd_size = 0;
+	use_atags = 0;
+	dtb_file = NULL;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch(opt) {
 		default:
@@ -257,15 +272,28 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		case OPT_RAMDISK:
 			ramdisk = optarg;
 			break;
+		case OPT_DTB:
+			dtb_file = optarg;
+			break;
+		case OPT_ATAGS:
+			use_atags = 1;
+			break;
 		}
 	}
+
+	if (use_atags && dtb_file) {
+		fprintf(stderr, "You can only use ATAGs if you don't specify a "
+		        "dtb file.\n");
+		return -1;
+	}
+
 	if (command_line) {
 		command_line_len = strlen(command_line) + 1;
 		if (command_line_len > COMMAND_LINE_SIZE)
 			command_line_len = COMMAND_LINE_SIZE;
 	}
 	if (ramdisk) {
-		ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
+		ramdisk_buf = slurp_file(ramdisk, &initrd_size);
 	}
 
 	/*
@@ -315,12 +343,53 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	/* assume the maximum kernel compression ratio is 4,
 	 * and just to be safe, place ramdisk after that
 	 */
-	ramdisk_offset = base + len * 4;
+	initrd_base = base + len * 4;
 
-	if (atag_arm_load(info, base + atag_offset,
-			 command_line, command_line_len,
-			 ramdisk_buf, ramdisk_length, ramdisk_offset) == -1)
-		return -1;
+	if (use_atags) {
+		/*
+		 * use ATAGs from /proc/atags
+		 */
+		if (atag_arm_load(info, base + atag_offset,
+		                  command_line, command_line_len,
+		                  ramdisk_buf, initrd_size, initrd_base) == -1)
+			return -1;
+	} else {
+		/*
+		 * Read a user-specified DTB file.
+		 */
+		if (dtb_file) {
+			dtb_buf = slurp_file(dtb_file, &dtb_length);
+		} else {
+			/*
+			 * Extract the DTB from /proc/device-tree.
+			 */
+			create_flatten_tree(&dtb_buf, &dtb_length, command_line);
+		}
+
+		if (fdt_check_header(dtb_buf) != 0) {
+			fprintf(stderr, "Invalid FDT buffer.\n");
+			return -1;
+		}
+
+		if (base + atag_offset + dtb_length > base + offset) {
+			fprintf(stderr, "DTB too large!\n");
+			return -1;
+		}
+
+		if (ramdisk) {
+			add_segment(info, ramdisk_buf, initrd_size,
+			            initrd_base, initrd_size);
+		}
+
+		/* Stick the dtb at the end of the initrd and page
+		 * align it.
+		 */
+		dtb_offset = initrd_base + initrd_size + getpagesize();
+		dtb_offset &= ~(getpagesize() - 1);
+
+		add_segment(info, dtb_buf, dtb_length,
+		            dtb_offset, dtb_length);
+	}
 
 	add_segment(info, buf, len, base + offset, len);
 

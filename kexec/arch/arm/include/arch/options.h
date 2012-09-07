@@ -5,6 +5,8 @@
 
 #define OPT_APPEND	'a'
 #define OPT_RAMDISK	'r'
+#define OPT_DTB     (OPT_ARCH_MAX+0)
+#define OPT_ATAGS   (OPT_ARCH_MAX+1)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -33,7 +35,9 @@
 	{ "command-line",	1, 0, OPT_APPEND },	\
 	{ "append",		1, 0, OPT_APPEND },	\
 	{ "initrd",		1, 0, OPT_RAMDISK },	\
-	{ "ramdisk",		1, 0, OPT_RAMDISK },
+	{ "ramdisk",		1, 0, OPT_RAMDISK },	\
+	{ "dtb",		1, 0, OPT_DTB }, 	\
+	{ "atags",		0, 0, OPT_ATAGS },
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR "a:r:"
 
