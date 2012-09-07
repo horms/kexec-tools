@@ -7,7 +7,7 @@ LIBFDT_INCLUDES = fdt.h libfdt.h
 LIBFDT_SRCS = fdt.c fdt_ro.c fdt_wip.c fdt_sw.c fdt_rw.c fdt_strerror.c
 LIBFDT_OBJS = $(LIBFDT_SRCS:%.c=%.o)
 
-dist += kexec/arch/ppc/libfdt/Makefile.libfdt				\
-	kexec/arch/ppc/libfdt/fdt.h kexec/arch/ppc/libfdt/libfdt.h	\
-	kexec/arch/ppc/libfdt/libfdt_env.h				\
-	kexec/arch/ppc/libfdt/libfdt_internal.h
+dist += kexec/libfdt/Makefile.libfdt			\
+	kexec/libfdt/fdt.h kexec/libfdt/libfdt.h	\
+	kexec/libfdt/libfdt_env.h			\
+	kexec/libfdt/libfdt_internal.h

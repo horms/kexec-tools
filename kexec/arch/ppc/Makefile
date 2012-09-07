@@ -1,7 +1,7 @@
 #
 # kexec ppc (linux booting linux)
 #
-include $(srcdir)/kexec/arch/ppc/libfdt/Makefile.libfdt
+include $(srcdir)/kexec/libfdt/Makefile.libfdt
 
 ppc_KEXEC_SRCS =  kexec/arch/ppc/kexec-ppc.c
 ppc_KEXEC_SRCS += kexec/arch/ppc/kexec-elf-ppc.c
@@ -16,13 +16,13 @@ ppc_KEXEC_SRCS += kexec/arch/ppc/crashdump-powerpc.c
 
 ppc_UIMAGE = kexec/kexec-uImage.c
 
-libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
-libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/arch/ppc/libfdt/%)
+ppc_libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
+libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/libfdt/%)
 ppc_ARCH_REUSE_INITRD =
 
-CPPFLAGS+=-I$(srcdir)/kexec/arch/$(ARCH)/libfdt
+CPPFLAGS+=-I$(srcdir)/kexec/libfdt
 
-ppc_KEXEC_SRCS += $(libfdt_SRCS)
+ppc_KEXEC_SRCS += $(libfdt_SRCS) $(ppc_libfdt_SRCS)
 
 dist += kexec/arch/ppc/Makefile $(ppc_KEXEC_SRCS)			\
 	kexec/arch/ppc/crashdump-powerpc.h kexec/arch/ppc/fixup_dtb.h	\
