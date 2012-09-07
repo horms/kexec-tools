@@ -126,6 +126,11 @@ struct memory_range {
 #define RANGE_UNCACHED	4
 };
 
+struct memory_ranges {
+        unsigned int size;
+        struct memory_range *ranges;
+};
+
 struct kexec_info {
 	struct kexec_segment *segment;
 	int nr_segments;

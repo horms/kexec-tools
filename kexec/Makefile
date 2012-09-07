@@ -64,6 +64,10 @@ dist				+= kexec/kexec-uImage.c
 $(ARCH)_UIMAGE			=
 KEXEC_SRCS			+= $($(ARCH)_UIMAGE)
 
+dist				+= kexec/fs2dt.c kexec/fs2dt.h
+$(ARCH)_FS2DT			=
+KEXEC_SRCS			+= $($(ARCH)_FS2DT)
+
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
 include $(srcdir)/kexec/arch/i386/Makefile
@@ -94,6 +98,8 @@ $(KEXEC): $(KEXEC_OBJS) $(UTIL_LIB)
 	$(LINK.o) -o $@ $^ $(CFLAGS) $(LIBS)
 
 $(KEXEC): CPPFLAGS+=-I$(srcdir)/kexec/arch/$(ARCH)/include
+
+kexec/fs2dt.o: CPPFLAGS+=$($(ARCH)_FS2DT_INCLUDE)
 
 $(KEXEC_MANPAGE): kexec/kexec.8
 	@$(MKDIR) -p     $(MANDIR)/man8
