@@ -151,7 +151,7 @@ static int get_memory_ranges_sysfs(struct memory_range **range, int *ranges)
 }
 
 #ifdef HAVE_LIBXENCTRL
-static unsigned e820_to_kexec_type(uint32_t type)
+unsigned xen_e820_to_kexec_type(uint32_t type)
 {
 	switch (type) {
 		case E820_RAM:
@@ -213,7 +213,7 @@ static int get_memory_ranges_xen(struct memory_range **range, int *ranges)
 	for (i = 0; i < rc; ++i) {
 		memory_range[i].start = e820entries[i].addr;
 		memory_range[i].end = e820entries[i].addr + e820entries[i].size;
-		memory_range[i].type = e820_to_kexec_type(e820entries[i].type);
+		memory_range[i].type = xen_e820_to_kexec_type(e820entries[i].type);
 	}
 
 	qsort(memory_range, rc, sizeof(struct memory_range), compare_ranges);
@@ -289,7 +289,7 @@ static int get_memory_ranges_xen(struct memory_range **range, int *ranges)
 	for (i = 0; i < xen_memory_map->nr_entries; ++i) {
 		memory_range[i].start = e820entries[i].addr;
 		memory_range[i].end = e820entries[i].addr + e820entries[i].size;
-		memory_range[i].type = e820_to_kexec_type(e820entries[i].type);
+		memory_range[i].type = xen_e820_to_kexec_type(e820entries[i].type);
 	}
 
 	qsort(memory_range, xen_memory_map->nr_entries, sizeof(struct memory_range), compare_ranges);

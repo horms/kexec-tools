@@ -81,4 +81,6 @@ int nbi_probe(const char *buf, off_t len);
 int nbi_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void nbi_usage(void);
+
+extern unsigned xen_e820_to_kexec_type(uint32_t type);
 #endif /* KEXEC_X86_H */
