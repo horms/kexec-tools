@@ -667,44 +667,28 @@ static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
 	return 0;
 }
 
-static void get_backup_area(unsigned long *start, unsigned long *end)
+static void get_backup_area(struct kexec_info *info,
+				struct memory_range *range, int ranges)
 {
-	const char *iomem = proc_iomem();
-	char line[MAX_LINE];
-	FILE *fp;
+	int i;
 
-	fp = fopen(iomem, "r");
-	if (!fp) {
-		fprintf(stderr, "Cannot open %s: %s\n",
-			iomem, strerror(errno));
+	/* Look for first 640 KiB RAM region. */
+	for (i = 0; i < ranges; ++i) {
+		if (range[i].type != RANGE_RAM || range[i].end > 0xa0000)
+			continue;
+
+		info->backup_src_start = range[i].start;
+		info->backup_src_size = range[i].end - range[i].start + 1;
+
+		dbgprintf("%s: %016llx-%016llx : System RAM\n", __func__,
+						range[i].start, range[i].end);
+
 		return;
 	}
 
-	while(fgets(line, sizeof(line), fp) != 0) {
-		char *str;
-		int count, consumed;
-		unsigned long mstart, mend;
-
-		count = sscanf(line, "%lx-%lx : %n",
-			&mstart, &mend, &consumed);
-		if (count != 2)
-			continue;
-		str = line + consumed;
-		dbgprintf("%016lx-%016lx : %s",
-			mstart, mend, str);
-
-		/* Hopefully there is only one RAM region in the first 640K */
-		if (memcmp(str, "System RAM\n", 11) == 0 && mend <= 0xa0000 ) {
-			dbgprintf("%s: %016lx-%016lx : %s", __func__, mstart, mend, str);
-			*start = mstart;
-			*end = mend;
-			fclose(fp);
-			return;
-		}
-	}
-	*start = BACKUP_SRC_START;
-	*end = BACKUP_SRC_END;
-	fclose(fp);
+	/* First 640 KiB RAM region not found. Assume defaults. */
+	info->backup_src_start = BACKUP_SRC_START;
+	info->backup_src_size = BACKUP_SRC_END - BACKUP_SRC_START + 1;
 }
 
 /* Loads additional segments in case of a panic kernel is being loaded.
@@ -720,15 +704,12 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	struct memory_range *mem_range, *memmap_p;
 	struct crash_elf_info elf_info;
 	unsigned kexec_arch;
-	unsigned long tmp_backup_end = 0;
 
 	memset(&elf_info, 0x0, sizeof(elf_info));
 
 	/* Constant parts of the elf_info */
 	memset(&elf_info, 0, sizeof(elf_info));
 	elf_info.data             = ELFDATA2LSB;
-	get_backup_area(&info->backup_src_start, &tmp_backup_end);
-	info->backup_src_size = tmp_backup_end - info->backup_src_start + 1;
 
 	/* Get the architecture of the running kernel */
 	kexec_arch = info->kexec_flags & KEXEC_ARCH_MASK;
@@ -755,6 +736,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 				    info->kexec_flags,
 				    elf_info.lowmem_limit) < 0)
 		return -1;
+
+	get_backup_area(info, mem_range, nr_ranges);
 
 	/*
 	 * if the core type has not been set on command line, set it here
