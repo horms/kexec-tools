@@ -212,13 +212,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		/* Only Dumping memory of type System RAM. */
 		if (memcmp(str, "System RAM\n", 11) == 0) {
 			type = RANGE_RAM;
-		} else if (memcmp(str, "Crash kernel\n", 13) == 0) {
-				/* Reserved memory region. New kernel can
-				 * use this region to boot into. */
-				crash_reserved_mem.start = start;
-				crash_reserved_mem.end = end;
-				crash_reserved_mem.type = RANGE_RAM;
-				continue;
 		} else if (memcmp(str, "ACPI Tables\n", 12) == 0) {
 			/*
 			 * ACPI Tables area need to be passed to new
@@ -849,6 +842,12 @@ int is_crashkernel_mem_reserved(void)
 {
 	uint64_t start, end;
 
-	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
-	  (start != end) : 0;
+	if (parse_iomem_single("Crash kernel\n", &start, &end) || start == end)
+		return 0;
+
+	crash_reserved_mem.start = start;
+	crash_reserved_mem.end = end;
+	crash_reserved_mem.type = RANGE_RAM;
+
+	return 1;
 }
