@@ -159,6 +159,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 }
 
 /* Forward Declaration. */
+static void segregate_lowmem_region(int *nr_ranges, unsigned long lowmem_limit);
 static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
 
 /* Stores a sorted list of RAM memory ranges for which to create elf headers.
@@ -235,19 +236,10 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		crash_memory_range[memory_ranges].start = start;
 		crash_memory_range[memory_ranges].end = end;
 		crash_memory_range[memory_ranges].type = type;
+
+		segregate_lowmem_region(&memory_ranges, lowmem_limit);
+
 		memory_ranges++;
-
-		/* Segregate linearly mapped region. */
-		if (lowmem_limit &&
-		    (lowmem_limit - 1) >= start && (lowmem_limit - 1) <= end) {
-			crash_memory_range[memory_ranges-1].end = lowmem_limit -1;
-
-			/* Add segregated region. */
-			crash_memory_range[memory_ranges].start = lowmem_limit;
-			crash_memory_range[memory_ranges].end = end;
-			crash_memory_range[memory_ranges].type = type;
-			memory_ranges++;
-		}
 	}
 	fclose(fp);
 	if (kexec_flags & KEXEC_PRESERVE_CONTEXT) {
@@ -287,6 +279,30 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 	}
 
 	return 0;
+}
+
+static void segregate_lowmem_region(int *nr_ranges, unsigned long lowmem_limit)
+{
+	unsigned long long end, start;
+	unsigned type;
+
+	start = crash_memory_range[*nr_ranges].start;
+	end = crash_memory_range[*nr_ranges].end;
+	type = crash_memory_range[*nr_ranges].type;
+
+	if (!(lowmem_limit && lowmem_limit > start && lowmem_limit < end))
+		return;
+
+	crash_memory_range[*nr_ranges].end = lowmem_limit - 1;
+
+	if (*nr_ranges >= CRASH_MAX_MEMORY_RANGES - 1)
+		return;
+
+	++*nr_ranges;
+
+	crash_memory_range[*nr_ranges].start = lowmem_limit;
+	crash_memory_range[*nr_ranges].end = end;
+	crash_memory_range[*nr_ranges].type = type;
 }
 
 /* Removes crash reserve region from list of memory chunks for whom elf program
