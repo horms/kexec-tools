@@ -4,13 +4,17 @@
 #define TENATIVE 0 /* Code that is tenatively correct but hasn't yet been officially accepted */
 
 #define E820MAP	0x2d0		/* our map */
-#define E820MAX	128		/* number of entries in E820MAP */
 #define E820NR	0x1e8		/* # entries in E820MAP */
+
+#ifndef E820MAX
+#define E820MAX	128		/* number of entries in E820MAP */
+#endif
 
 #ifndef ASSEMBLY
 
 #define PACKED __attribute__((packed))
 
+#ifndef E820_RAM
 struct e820entry {
 	uint64_t addr;	/* start of memory segment */
 	uint64_t size;	/* size of memory segment */
@@ -20,6 +24,7 @@ struct e820entry {
 #define E820_ACPI	3 /* usable as RAM once ACPI tables have been read */
 #define E820_NVS	4
 } PACKED;
+#endif
 
 /* FIXME expand on drive_info_)struct... */
 struct drive_info_struct {
