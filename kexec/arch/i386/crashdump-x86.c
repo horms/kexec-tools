@@ -270,14 +270,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
 
-	int i;
-	dbgprintf("CRASH MEMORY RANGES\n");
-	for(i = 0; i < memory_ranges; i++) {
-		start = crash_memory_range[i].start;
-		end = crash_memory_range[i].end;
-		dbgprintf("%016Lx-%016Lx\n", start, end);
-	}
-
 	return 0;
 }
 
@@ -738,6 +730,11 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		return -1;
 
 	get_backup_area(info, mem_range, nr_ranges);
+
+	dbgprintf("CRASH MEMORY RANGES\n");
+
+	for(i = 0; i < nr_ranges; ++i)
+		dbgprintf("%016Lx-%016Lx\n", mem_range[i].start, mem_range[i].end);
 
 	/*
 	 * if the core type has not been set on command line, set it here
