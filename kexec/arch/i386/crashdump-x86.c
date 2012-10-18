@@ -835,6 +835,40 @@ static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
 	return 0;
 }
 
+/* Appends 'acpi_rsdp=' commandline for efi boot crash dump */
+static void cmdline_add_efi(char *cmdline)
+{
+	FILE *fp;
+	int cmdlen, len;
+	char line[MAX_LINE], *s;
+	const char *acpis = " acpi_rsdp=";
+
+	fp = fopen("/sys/firmware/efi/systab", "r");
+	if (!fp)
+		return;
+
+	while(fgets(line, sizeof(line), fp) != 0) {
+		/* ACPI20= always goes before ACPI= */
+		if ((strstr(line, "ACPI20=")) || (strstr(line, "ACPI="))) {
+		        line[strlen(line) - 1] = '\0';
+			s = strchr(line, '=');
+			s += 1;
+			len = strlen(s) + strlen(acpis);
+			cmdlen = strlen(cmdline) + len;
+			if (cmdlen > (COMMAND_LINE_SIZE - 1))
+				die("Command line overflow\n");
+			strcat(cmdline, acpis);
+			strcat(cmdline, s);
+			dbgprintf("Command line after adding efi\n");
+			dbgprintf("%s\n", cmdline);
+
+			break;
+		}
+	}
+
+	fclose(fp);
+}
+
 static void get_backup_area(struct kexec_info *info,
 				struct memory_range *range, int ranges)
 {
@@ -998,6 +1032,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	if (delete_memmap(memmap_p, elfcorehdr, memsz) < 0)
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
+	cmdline_add_efi(mod_cmdline);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
 	/* Inform second kernel about the presence of ACPI tables. */
