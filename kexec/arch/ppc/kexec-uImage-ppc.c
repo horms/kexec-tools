@@ -130,13 +130,22 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	 * allocated from memtop down towards zero so we should never get too
 	 * close to the bss :)
 	 */
-	ret = valid_memory_range(info, load_addr, load_addr + (len + (1 * 1024 * 1024)));
-	if (!ret) {
-		printf("Can't add kernel to addr 0x%08x len %ld\n",
-				load_addr, len + (1 * 1024 * 1024));
-		return -1;
+#define _1MiB	(1 * 1024 * 1024)
+
+	/*
+	 * If the provided load_addr cannot be allocated, find a new
+	 * area.
+	 */
+	if (!valid_memory_range(info, load_addr, load_addr + (len + _1MiB))) {
+		load_addr = locate_hole(info, len + _1MiB, 0, 0, max_addr, 1);
+		if (load_addr == ULONG_MAX) {
+			printf("Can't allocate memory for kernel of len %ld\n",
+					len + _1MiB);
+			return -1;
+		}
 	}
-	add_segment(info, buf, len, load_addr, len + (1 * 1024 * 1024));
+
+	add_segment(info, buf, len, load_addr, len + _1MiB);
 
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
                 crash_cmdline = xmalloc(COMMAND_LINE_SIZE);
