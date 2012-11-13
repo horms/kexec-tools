@@ -89,6 +89,24 @@ static uint64_t vaddr_to_offset(uint64_t vaddr)
 	exit(30);
 }
 
+static unsigned machine_pointer_bits(void)
+{
+	uint8_t bits = 0;
+
+	/* Default to the size of the elf class */
+	switch(ehdr.e_ident[EI_CLASS]) {
+	case ELFCLASS32:        bits = 32; break;
+	case ELFCLASS64:        bits = 64; break;
+	}
+
+	/* Report the architectures pointer size */
+	switch(ehdr.e_machine) {
+	case EM_386:            bits = 32; break;
+	}
+
+        return bits;
+}
+
 static void read_elf32(int fd)
 {
 	Elf32_Ehdr ehdr32;
@@ -389,7 +407,8 @@ static uint64_t read_file_pointer(int fd, uint64_t addr)
 {
 	uint64_t result;
 	ssize_t ret;
-	if (ehdr.e_ident[EI_CLASS] == ELFCLASS64) {
+
+	if (machine_pointer_bits() == 64) {
 		uint64_t scratch;
 		ret = pread(fd, &scratch, sizeof(scratch), addr);
 		if (ret != sizeof(scratch)) {
