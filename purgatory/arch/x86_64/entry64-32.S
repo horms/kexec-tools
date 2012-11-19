@@ -24,13 +24,34 @@
 	.equ	CR0_PG,        0x80000000
 
 	.text
+	.balign 16
 	.globl entry32, entry32_regs
 entry32:
 	.code64
 
-	/* Setup a gdt that should that is generally usefully */
+	/* Setup the 4G offset of entry32 lm_exit code segment */
+	movq	$0x00CF9A000000ffff, %rax
+
+	leaq	entry32(%rip), %rbx	/* Low 24 bits */
+	andq	$0xffffff, %rbx
+	shlq	$16, %rbx
+	orq	%rbx, %rax
+
+	leaq	entry32(%rip), %rbx	/* High 8 bits */
+	movq	$0xff000000, %rdx
+	andq	%rdx, %rbx
+	shlq	$32, %rbx
+	orq	%rbx, %rax
+
+	movq	%rax, (gdt + 0x20)(%rip)
+
+	/* Setup a gdt that is generally usefully */
 	lgdt	gdt(%rip)
-		
+
+	/* Setup the far pointer to the entry point */
+	movl	eip(%rip), %eax
+	movl	%eax, entry32_addr(%rip)
+
 	/* Switch to 32bit compatiblity mode */
 	ljmp	*lm_exit_addr(%rip)
 lm_exit:
@@ -60,19 +81,19 @@ lm_exit:
 	movl	%eax, %gs
 
 	/* Load the registers */
-	movl	eax, %eax
-	movl	ecx, %ecx
-	movl	edx, %edx
-	movl	esi, %esi
-	movl	edi, %edi
-	movl	esp, %esp
-	movl	ebp, %ebp
-	movl	ebx, %ebx
+	movl	%cs:eax - entry32, %eax
+	movl	%cs:ecx - entry32, %ecx
+	movl	%cs:edx - entry32, %edx
+	movl	%cs:esi - entry32, %esi
+	movl	%cs:edi - entry32, %edi
+	movl	%cs:esp - entry32, %esp
+	movl	%cs:ebp - entry32, %ebp
+	movl	%cs:ebx - entry32, %ebx
 
 	/* Jump to the loaded image */
-	jmpl	*(eip)
+	ljmp	*%cs:entry32_addr - entry32
 
-	.section ".rodata"
+	.section ".data"
 	.balign 16
 gdt:	/* 0x00 unusable segment 
 	 * 0x08 unused
@@ -88,8 +109,8 @@ gdt:	/* 0x00 unusable segment
 	/* 0x18 4GB flat data segment */
 	.word	0xFFFF, 0x0000, 0x9200, 0x00CF
 
-	/* 0x20 dummy */
-	.word	0x0000, 0x0000, 0x0000, 0x000
+	/* 0x20 4GB flat code segment base at entry32 */
+	.word	0xFFFF, 0x0000, 0x9A00, 0x0CF
 	/* 0x28 dummy */
 	.word	0x0000, 0x0000, 0x0000, 0x000
 	/* 0x30 dummy */
@@ -115,9 +136,15 @@ gdt_end:
 	.section ".rodata"
 	.balign 4
 lm_exit_addr:
-	.long lm_exit
-	.long 0x10		
-	
+	.long lm_exit - entry32
+	.long 0x20
+
+	.section ".data"
+	.balign 4
+entry32_addr:
+	.long 0x00000000
+	.long 0x10
+
 	.section ".rodata"
 	.balign 4
 entry32_regs:  
@@ -129,6 +156,9 @@ esi:	.long 0x00000000
 edi:	.long 0x00000000
 esp:	.long 0x00000000
 ebp:	.long 0x00000000
-eip:	.long entry16
-	.size entry32_regs, . - entry32_regs
+eip:	.quad entry16	/* low 32 bits address
+			 * high 32bits zeros
+			 * uses 64bit reloc
+			 */
+	.size entry32_regs, (. - 4) - entry32_regs
 

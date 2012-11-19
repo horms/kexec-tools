@@ -37,9 +37,10 @@ entry64:
 	movl	%eax, %fs
 	movl	%eax, %gs
 
-	movq	$stack_init, %rsp
+	leaq	stack_init(%rip), %rsp
 	pushq	$0x10 /* CS */
-	pushq	$new_cs_exit
+	leaq	new_cs_exit(%rip), %rax
+	pushq	%rax
 	lretq
 new_cs_exit:
 

@@ -29,15 +29,20 @@
 	.balign 16
 entry16_debug:
 	.code32
-	/* Compute where I am running at */
-	movl	$entry16_debug, %ebx	
+	/* Compute where I am running at (assumes esp valid) */
+	call	1f
+1:	popl	%ebx
+	subl	$(1b - entry16_debug), %ebx
 
 	/* Fixup my real mode segment */
 	movl	%ebx, %eax
 	shrl	$4, %eax
-	movw	%ax, 2 + realptr
+	movw	%ax, (2 + realptr - entry16_debug)(%ebx)
 
 	/* Fixup the gdt */
+	leal	(gdt - entry16_debug)(%ebx), %eax
+	movl	%eax, (0x02 + gdt - entry16_debug)(%ebx)
+
 	movl	%ebx, %eax
 	shll	$16, %eax
 	
@@ -49,19 +54,19 @@ entry16_debug:
 	andl	$0xff000000, %edx
 	orl	%edx, %ecx
 
-	orl	%eax, 0x08 + gdt
-	orl	%ecx, 0x0c + gdt
-	orl	%eax, 0x10 + gdt
-	orl	%ecx, 0x14 + gdt	
+	orl	%eax, (0x08 + gdt - entry16_debug)(%ebx)
+	orl	%ecx, (0x0c + gdt - entry16_debug)(%ebx)
+	orl	%eax, (0x10 + gdt - entry16_debug)(%ebx)
+	orl	%ecx, (0x14 + gdt - entry16_debug)(%ebx)
 	
 	
 DEBUG_CHAR('a')
 	/* Setup the classic BIOS interrupt table at 0x0 */
-	lidt	idtptr
+	lidt	(idtptr - entry16_debug)(%ebx)
 
 DEBUG_CHAR('b')
 	/* Provide us with 16bit segments that we can use */
-	lgdt	gdt
+	lgdt	(gdt - entry16_debug)(%ebx)
 
 DEBUG_CHAR('c')
 	/* Note we don't disable the a20 line, (this shouldn't be required)
@@ -160,7 +165,7 @@ idtptr:
 gdt:
 	/* 0x00 unusable segment so used as the gdt ptr */
 	.word gdt_end - gdt - 1
-	.long gdt
+	.long 0 /* gdt */
 	.word 0
 
 	/* 0x08 16 bit real mode code segment */
