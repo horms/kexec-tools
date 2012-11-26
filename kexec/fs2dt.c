@@ -525,7 +525,7 @@ static void putnode(void)
 	putprops(dn, namelist, numlist);
 
 	/* Add initrd entries to the second kernel */
-	if (initrd_base && !strcmp(basename,"/chosen/")) {
+	if (initrd_base && !strcmp(basename,"chosen/")) {
 		int len = 8;
 		unsigned long long initrd_end;
 
@@ -554,7 +554,7 @@ static void putnode(void)
 
 	/* Add cmdline to the second kernel.  Check to see if the new
 	 * cmdline has a root=.  If not, use the old root= cmdline.  */
-	if (!strcmp(basename,"/chosen/")) {
+	if (!strcmp(basename,"chosen/")) {
 		size_t cmd_len = 0;
 		char *param = NULL;
 		char filename[MAXPATH];
