@@ -525,7 +525,7 @@ static void putnode(void)
 	putprops(dn, namelist, numlist);
 
 	/* Add initrd entries to the second kernel */
-	if (initrd_base && !strcmp(basename,"chosen/")) {
+	if (initrd_base && initrd_size && !strcmp(basename,"chosen/")) {
 		int len = 8;
 		unsigned long long initrd_end;
 
