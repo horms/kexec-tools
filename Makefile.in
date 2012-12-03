@@ -64,6 +64,7 @@ SED		= @SED@
 FIND		= @FIND@
 XARGS		= @XARGS@
 DIRNAME		= @DIRNAME@
+STRIP		= @STRIP@
 
 
 pkgdatadir = $(datadir)/$(PACKAGE_NAME)

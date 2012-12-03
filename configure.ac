@@ -142,6 +142,7 @@ AC_CHECK_PROG([SED],      sed,      sed,      "no", [$PATH])
 AC_CHECK_PROG([FIND],     find,     find,     "no", [$PATH])
 AC_CHECK_PROG([XARGS],    xargs,    xargs,    "no", [$PATH])
 AC_CHECK_PROG([DIRNAME],  dirname,  dirname,  "no", [$PATH])
+AC_CHECK_PROG([STRIP],    strip,    strip,    "no", [$PATH])
 
 dnl See if I have a usable copy of zlib available
 if test "$with_zlib" = yes ; then
@@ -185,6 +186,7 @@ if test "$SED"     = "no"; then AC_MSG_ERROR([ sed not found]); fi
 if test "$FIND"    = "no"; then AC_MSG_ERROR([ find not found]); fi
 if test "$XARGS"   = "no"; then AC_MSG_ERROR([ xargs not found]); fi
 if test "$DIRNAME" = "no"; then AC_MSG_ERROR([ dirname not found]); fi
+if test "$STRIP"   = "no"; then AC_MSG_ERROR([ strip not found]); fi
 
 dnl ---Output variables...
 AC_SUBST([BUILD_CC])
