@@ -24,6 +24,8 @@ CPPFLAGS+=-I$(srcdir)/kexec/libfdt
 
 ppc_KEXEC_SRCS += $(libfdt_SRCS) $(ppc_libfdt_SRCS)
 
+ASFLAGS	+= -Wa,--noexecstack
+
 dist += kexec/arch/ppc/Makefile $(ppc_KEXEC_SRCS)			\
 	kexec/arch/ppc/crashdump-powerpc.h kexec/arch/ppc/fixup_dtb.h	\
 	kexec/arch/ppc/kexec-ppc.h kexec/arch/ppc/ops.h			\
