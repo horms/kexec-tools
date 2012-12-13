@@ -194,7 +194,7 @@ int do_bzImage_load(struct kexec_info *info,
 	}
 
 	/* Load the trampoline.  This must load at a higher address
-	 * the the argument/parameter segment or the kernel will stomp
+	 * than the argument/parameter segment or the kernel will stomp
 	 * it's gdt.
 	 *
 	 * x86_64 purgatory code has got relocations type R_X86_64_32S
