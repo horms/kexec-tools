@@ -499,7 +499,7 @@ static void putnode(void)
 
 	basename = strrchr(pathname,'/');
 
-	strcat(pathname, "/");
+	strncat(pathname, "/", MAXPATH - strlen(pathname) - 1);
 	dn = pathname + strlen(pathname);
 
 	putprops(dn, namelist, numlist);
@@ -560,7 +560,7 @@ static void putnode(void)
 			char *old_param;
 
 			strcpy(filename, pathname);
-			strcat(filename, "bootargs");
+			strncat(filename, "bootargs", MAXPATH - strlen(filename) - 1);
 			fp = fopen(filename, "r");
 			if (fp) {
 				if (getline(&last_cmdline, &cmd_len, fp) == -1)
@@ -599,7 +599,7 @@ static void putnode(void)
 		 * pseries/hvcterminal is supported.
 		 */
 		strcpy(filename, pathname);
-		strncat(filename, "linux,stdout-path", MAXPATH);
+		strncat(filename, "linux,stdout-path", MAXPATH - strlen(filename) - 1);
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
 			printf("Unable to find %s, printing from purgatory is diabled\n",
@@ -623,8 +623,8 @@ static void putnode(void)
 		read(fd, buff, statbuf.st_size);
 		close(fd);
 		strncpy(filename, "/proc/device-tree/", MAXPATH);
-		strncat(filename, buff, MAXPATH);
-		strncat(filename, "/compatible", MAXPATH);
+		strncat(filename, buff, MAXPATH - strlen(filename) - 1);
+		strncat(filename, "/compatible", MAXPATH - strlen(filename) - 1);
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
 			printf("Unable to find %s printing from purgatory is diabled\n",
