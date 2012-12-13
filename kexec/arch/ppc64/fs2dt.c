@@ -602,13 +602,11 @@ static void putnode(void)
 		strncat(filename, "linux,stdout-path", MAXPATH - strlen(filename) - 1);
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
-			printf("Unable to find %s, printing from purgatory is diabled\n",
-														filename);
+			printf("Unable to find %s, printing from purgatory is disabled\n", filename);
 			goto no_debug;
 		}
 		if (fstat(fd, &statbuf)) {
-			printf("Unable to stat %s, printing from purgatory is diabled\n",
-														filename);
+			printf("Unable to stat %s, printing from purgatory is disabled\n", filename);
 			close(fd);
 			goto no_debug;
 
@@ -627,13 +625,11 @@ static void putnode(void)
 		strncat(filename, "/compatible", MAXPATH - strlen(filename) - 1);
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
-			printf("Unable to find %s printing from purgatory is diabled\n",
-														filename);
+			printf("Unable to find %s printing from purgatory is disabled\n", filename);
 			goto no_debug;
 		}
 		if (fstat(fd, &statbuf)) {
-			printf("Unable to stat %s printing from purgatory is diabled\n",
-														filename);
+			printf("Unable to stat %s printing from purgatory is disabled\n", filename);
 			close(fd);
 			goto no_debug;
 		}
