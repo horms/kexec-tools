@@ -382,7 +382,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 			(ramdisk_base > crash_base + crash_size) ) {
 			printf("WARNING: ramdisk is above crashkernel region!\n");
 		}
-		else if (ramdisk_base + initrd_size > crash_base + crash_size) {
+		else if (ramdisk_base + ramdisk_size > crash_base + crash_size) {
 			printf("WARNING: ramdisk overflows crashkernel region!\n");
 		}
 	}
