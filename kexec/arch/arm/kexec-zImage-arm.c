@@ -370,30 +370,21 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 				const char *prop_name = "bootargs";
 				int off;
 
+				dtb_length = fdt_totalsize(dtb_buf) + 1024 +
+					strlen(command_line);
+				dtb_buf = xrealloc(dtb_buf, dtb_length);
+				fdt_set_totalsize(dtb_buf, dtb_length);
+
 				/* check if a /choosen subnode already exists */
 				off = fdt_path_offset(dtb_buf, node_name);
 
-				if (off == -FDT_ERR_NOTFOUND) {
-					dtb_length = fdt_totalsize(dtb_buf)
-							+ strlen(node_name) + 1
-							+ sizeof(struct fdt_node_header)
-							+ FDT_TAGSIZE;
-					dtb_buf = xrealloc(dtb_buf, dtb_length);
-					fdt_set_totalsize(dtb_buf, dtb_length);
+				if (off == -FDT_ERR_NOTFOUND)
 					off = fdt_add_subnode(dtb_buf, off, node_name);
-				}
 
 				if (off < 0) {
 					fprintf(stderr, "FDT: Error adding %s node.\n", node_name);
 					return -1;
 				}
-
-				dtb_length = fdt_totalsize(dtb_buf)
-						+ strlen(prop_name)
-						+ strlen(command_line) + 1
-						+ sizeof(struct fdt_property);
-				dtb_buf = xrealloc(dtb_buf, dtb_length);
-				fdt_set_totalsize(dtb_buf, dtb_length);
 
 				if (fdt_setprop(dtb_buf, off, prop_name,
 						command_line, strlen(command_line) + 1) != 0) {
