@@ -16,7 +16,7 @@ arm_KEXEC_SRCS+= kexec/fs2dt.c
 
 libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/libfdt/%)
 
-CPPFLAGS+=-I$(srcdir)/kexec/libfdt
+arm_CPPFLAGS = -I$(srcdir)/kexec/libfdt
 
 arm_KEXEC_SRCS += $(libfdt_SRCS)
 

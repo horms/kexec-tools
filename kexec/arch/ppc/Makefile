@@ -20,11 +20,11 @@ ppc_libfdt_SRCS = kexec/arch/ppc/libfdt-wrapper.c
 libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/libfdt/%)
 ppc_ARCH_REUSE_INITRD =
 
-CPPFLAGS+=-I$(srcdir)/kexec/libfdt
+ppc_CPPFLAGS = -I$(srcdir)/kexec/libfdt
 
 ppc_KEXEC_SRCS += $(libfdt_SRCS) $(ppc_libfdt_SRCS)
 
-ASFLAGS	+= -Wa,--noexecstack
+ppc_ASFLAGS = -Wa,--noexecstack
 
 dist += kexec/arch/ppc/Makefile $(ppc_KEXEC_SRCS)			\
 	kexec/arch/ppc/crashdump-powerpc.h kexec/arch/ppc/fixup_dtb.h	\
