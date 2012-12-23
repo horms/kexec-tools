@@ -53,7 +53,7 @@ unsigned long long mem_max = ULONG_MAX;
 static unsigned long kexec_flags = 0;
 int kexec_debug = 0;
 
-void die(char *fmt, ...)
+void die(const char *fmt, ...)
 {
 	va_list args;
 	va_start(args, fmt);

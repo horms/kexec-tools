@@ -220,7 +220,7 @@ extern int file_types;
 
 #define KEXEC_OPT_STR "hvdfxluet:p"
 
-extern void die(char *fmt, ...)
+extern void die(const char *fmt, ...)
 	__attribute__ ((format (printf, 1, 2)));
 extern void *xmalloc(size_t size);
 extern void *xrealloc(void *ptr, size_t size);
