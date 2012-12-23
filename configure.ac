@@ -107,6 +107,7 @@ AC_CHECK_TOOL([LD], ld, "no", $PATH)
 AC_CHECK_TOOL([AS], as, "no", $PATH)
 AC_CHECK_TOOL([OBJCOPY], objcopy, "no", $PATH)
 AC_CHECK_TOOL([AR], ar, "", $PATH)
+AC_CHECK_TOOL([STRIP], strip, "no", $PATH)
 
 dnl Find compiler for target
 if test "${target}" != "${host}" ; then
@@ -142,7 +143,6 @@ AC_CHECK_PROG([SED],      sed,      sed,      "no", [$PATH])
 AC_CHECK_PROG([FIND],     find,     find,     "no", [$PATH])
 AC_CHECK_PROG([XARGS],    xargs,    xargs,    "no", [$PATH])
 AC_CHECK_PROG([DIRNAME],  dirname,  dirname,  "no", [$PATH])
-AC_CHECK_PROG([STRIP],    strip,    strip,    "no", [$PATH])
 
 dnl See if I have a usable copy of zlib available
 if test "$with_zlib" = yes ; then

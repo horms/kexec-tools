@@ -220,6 +220,7 @@ echo::
 	@echo CC=$(CC)
 	@echo AR=$(AR)
 	@echo LD=$(LD)
+	@echo STRIP=$(STRIP)
 
 clean:
 	$(RM) -f $(clean)
