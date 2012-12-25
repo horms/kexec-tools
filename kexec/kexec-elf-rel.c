@@ -364,7 +364,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 				name += ehdr->e_shdr[sym.st_shndx].sh_name;
 			}
 
-			dbgprintf("sym: %10s info: %02x other: %02x shndx: %lx value: %lx size: %lx\n",
+			dbgprintf("sym: %10s info: %02x other: %02x shndx: %x value: %llx size: %llx\n",
 				name,
 				sym.st_info,
 				sym.st_other,

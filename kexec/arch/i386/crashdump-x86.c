@@ -96,7 +96,8 @@ static int get_kernel_paddr(struct kexec_info *UNUSED(info),
 
 	if (parse_iomem_single("Kernel code\n", &start, NULL) == 0) {
 		elf_info->kern_paddr_start = start;
-		dbgprintf("kernel load physical addr start = 0x%016Lx\n", start);
+		dbgprintf("kernel load physical addr start = 0x%016Lx\n",
+			  (unsigned long long)start);
 		return 0;
 	}
 
@@ -168,7 +169,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 				/* Align size to page size boundary. */
 				size = (size + align - 1) & (~(align - 1));
 				elf_info->kern_size = size;
-				dbgprintf("kernel vaddr = 0x%lx size = 0x%llx\n",
+				dbgprintf("kernel vaddr = 0x%llx size = 0x%llx\n",
 					saddr, size);
 				return 0;
 			}
@@ -786,7 +787,8 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 		*addr = x86__pa(vaddr + (cpu * MAX_NOTE_BYTES));
 		*len = MAX_NOTE_BYTES;
 
-		dbgprintf("crash_notes addr = %Lx\n", *addr);
+		dbgprintf("crash_notes addr = %Lx\n",
+			  (unsigned long long)*addr);
 
 		fclose(fp);
 		return 0;
@@ -943,7 +945,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 {
 	void *tmp;
 	unsigned long sz, bufsz, memsz, elfcorehdr;
-	int nr_ranges, align = 1024, i;
+	int nr_ranges = 0, align = 1024, i;
 	struct memory_range *mem_range, *memmap_p;
 	struct crash_elf_info elf_info;
 	unsigned kexec_arch;
