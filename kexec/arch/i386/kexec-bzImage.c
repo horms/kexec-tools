@@ -245,10 +245,8 @@ int do_bzImage_load(struct kexec_info *info,
 		unsigned long kern_align = real_mode->kernel_alignment;
 		unsigned long kernel32_max_addr = DEFAULT_BZIMAGE_ADDR_MAX;
 
-		if (real_mode->protocol_version >= 0x0203) {
-			if (kernel32_max_addr > real_mode->initrd_addr_max)
-				kernel32_max_addr = real_mode->initrd_addr_max;
-		}
+		if (kernel32_max_addr > real_mode->initrd_addr_max)
+			kernel32_max_addr = real_mode->initrd_addr_max;
 
 		kernel32_load_addr = add_buffer(info, kernel + kern16_size,
 						size, size, kern_align,
