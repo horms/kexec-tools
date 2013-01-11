@@ -441,8 +441,8 @@ close:
 	close(data_file);
 }
 
-void setup_linux_system_parameters(struct x86_linux_param_header *real_mode,
-					unsigned long kexec_flags)
+void setup_linux_system_parameters(struct kexec_info *info,
+				   struct x86_linux_param_header *real_mode)
 {
 	/* Fill in information the BIOS would usually provide */
 	struct memory_range *range;
@@ -486,10 +486,8 @@ void setup_linux_system_parameters(struct x86_linux_param_header *real_mode,
 	/* another safe default */
 	real_mode->aux_device_info = 0;
 
-	/* Fill in the memory info */
-	if ((get_memory_ranges(&range, &ranges, kexec_flags) < 0) || ranges == 0) {
-		die("Cannot get memory information\n");
-	}
+	range = info->memory_range;
+	ranges = info->memory_ranges;
 	if (ranges > E820MAX) {
 		fprintf(stderr, "Too many memory ranges, truncating...\n");
 		ranges = E820MAX;

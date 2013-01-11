@@ -324,7 +324,7 @@ int do_bzImage_load(struct kexec_info *info,
 
 	/* Fill in the information BIOS calls would normally provide. */
 	if (!real_mode_entry) {
-		setup_linux_system_parameters(real_mode, info->kexec_flags);
+		setup_linux_system_parameters(info, real_mode);
 	}
 
 	return 0;

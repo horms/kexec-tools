@@ -248,11 +248,8 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	mbi->boot_loader_name = sizeof(*mbi) + command_line_len; 
 
 	/* Memory map */
-	if ((get_memory_ranges(&range, &ranges, info->kexec_flags) < 0)
-			|| ranges == 0) {
-		fprintf(stderr, "Cannot get memory information\n");
-		return -1;
-	}
+	range = info->memory_range;
+	ranges = info->memory_ranges;
 	mmap = xmalloc(ranges * sizeof(*mmap));
 	for (i=0; i<ranges; i++) {
 		unsigned long long length;
