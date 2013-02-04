@@ -78,7 +78,7 @@ static inline long kexec_load(void *entry, unsigned long nr_segments,
 #define KEXEC_ARCH_MIPS    ( 8 << 16)
 #define KEXEC_ARCH_CRIS    (76 << 16)
 
-#define KEXEC_MAX_SEGMENTS 16
+#define KEXEC_MAX_SEGMENTS 70
 
 #ifdef __i386__
 #define KEXEC_ARCH_NATIVE	KEXEC_ARCH_386

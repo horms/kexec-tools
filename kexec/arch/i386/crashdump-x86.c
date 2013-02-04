@@ -246,6 +246,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 			type = RANGE_ACPI;
 		} else if(memcmp(str,"ACPI Non-volatile Storage\n",26) == 0 ) {
 			type = RANGE_ACPI_NVS;
+		} else if(memcmp(str,"reserved\n", 9) == 0 ) {
+			type = RANGE_RESERVED;
 		} else if (memcmp(str, "GART\n", 5) == 0) {
 			gart_start = start;
 			gart_end = end;
@@ -899,6 +901,39 @@ static void get_backup_area(struct kexec_info *info,
 	info->backup_src_size = BACKUP_SRC_END - BACKUP_SRC_START + 1;
 }
 
+/* Appends memmap=X$Y commandline for reserved memory to command line*/
+static int cmdline_add_memmap_reserved(char *cmdline, unsigned long start,
+					unsigned long end)
+{
+	int cmdlen, len, align = 1024;
+	unsigned long startk, endk;
+	char str_mmap[256], str_tmp[20];
+
+	if (!(end - start))
+		return 0;
+
+	startk = start/1024;
+	endk = (end + align - 1)/1024;
+	strcpy (str_mmap, " memmap=");
+	ultoa((endk - startk), str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K$");
+	ultoa(startk, str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K");
+	len = strlen(str_mmap);
+	cmdlen = strlen(cmdline) + len;
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str_mmap);
+
+#ifdef DEBUG
+		printf("Command line after adding reserved memmap\n");
+		printf("%s\n", cmdline);
+#endif
+	return 0;
+}
+
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
@@ -1051,11 +1086,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 		unsigned long start, end;
 		if ( !( mem_range[i].type == RANGE_ACPI
-			|| mem_range[i].type == RANGE_ACPI_NVS) )
+			|| mem_range[i].type == RANGE_ACPI_NVS
+			|| mem_range[i].type == RANGE_RESERVED) )
 			continue;
 		start = mem_range[i].start;
 		end = mem_range[i].end;
-		cmdline_add_memmap_acpi(mod_cmdline, start, end);
+		if (mem_range[i].type == RANGE_RESERVED)
+			cmdline_add_memmap_reserved(mod_cmdline, start, end);
+		else
+			cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
 	return 0;
 }
