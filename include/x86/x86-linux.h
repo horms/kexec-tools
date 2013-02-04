@@ -197,7 +197,7 @@ struct x86_linux_param_header {
 	uint8_t _pad8[48];			/* 0xcd0 */
 	struct 	edd_info eddbuf[EDDMAXNR];	/* 0xd00 */
 						/* 0xeec */
-#define COMMAND_LINE_SIZE 2048
+#define COMMAND_LINE_SIZE (64*1024)
 };
 
 struct x86_linux_faked_param_header {
