@@ -132,8 +132,9 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				goto err;
 			}
 			n = read_memory_region_limits(fd, &start, &end);
+			/* We are done with fd, close it. */
+			close(fd);
 			if (n != 0) {
-				close(fd);
 				closedir(dmem);
 				closedir(dir);
 				goto err;
@@ -153,8 +154,16 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			cstart = crash_base;
 			cend = crash_base + crash_size;
 			/*
-			 * Exclude the region that lies within crashkernel
+			 * Exclude the region that lies within crashkernel.
+			 * If memory limit is set then exclude memory region
+			 * above it.
 			 */
+			if (memory_limit) {
+				if (start >= memory_limit)
+					continue;
+				if (end > memory_limit)
+					end = memory_limit;
+			}
 			if (cstart < end && cend > start) {
 				if (start < cstart && end > cend) {
 					crash_memory_range[memory_ranges].start
@@ -195,7 +204,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 					= RANGE_RAM;
 				memory_ranges++;
 			}
-			close(fd);
 		}
 		closedir(dmem);
 	}

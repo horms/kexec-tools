@@ -42,5 +42,6 @@ extern unsigned long long crash_base;
 extern unsigned long long crash_size;
 extern unsigned int rtas_base;
 extern unsigned int rtas_size;
+extern uint64_t memory_limit;
 
 #endif /* CRASHDUMP_POWERPC_H */
