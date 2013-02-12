@@ -84,10 +84,19 @@ static unsigned long long cstart, cend;
 static int memory_ranges;
 
 /*
- * Exclude the region that lies within crashkernel
+ * Exclude the region that lies within crashkernel and above the memory
+ * limit which is reflected by mem= kernel option.
  */
 static void exclude_crash_region(uint64_t start, uint64_t end)
 {
+	/* If memory_limit is set then exclude the memory region above it. */
+	if (memory_limit) {
+		if (start >= memory_limit)
+			return;
+		if (end > memory_limit)
+			end = memory_limit;
+	}
+
 	if (cstart < end && cend > start) {
 		if (start < cstart && end > cend) {
 			crash_memory_range[memory_ranges].start = start;

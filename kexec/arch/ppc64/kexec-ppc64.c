@@ -39,6 +39,7 @@ static struct memory_range *memory_range = NULL;
 static struct memory_range *base_memory_range = NULL;
 static uint64_t rmo_top;
 uint64_t memory_max = 0;
+uint64_t memory_limit;
 static int nr_memory_ranges, nr_exclude_ranges;
 uint64_t crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
@@ -407,6 +408,32 @@ static int get_devtree_details(unsigned long kexec_flags)
 				
 				add_usable_mem_rgns(0, crash_base + crash_size);
 				reserve(KDUMP_BACKUP_LIMIT, crash_base-KDUMP_BACKUP_LIMIT);
+			}
+			/*
+			 * Read the first kernel's memory limit.
+			 * If the first kernel is booted with mem= option then
+			 * it would export "linux,memory-limit" file
+			 * reflecting value for the same.
+			 */
+			memset(fname, 0, sizeof(fname));
+			strcpy(fname, device_tree);
+			strcat(fname, dentry->d_name);
+			strcat(fname, "/linux,memory-limit");
+			if ((file = fopen(fname, "r")) == NULL) {
+				if (errno != ENOENT) {
+					perror(fname);
+					goto error_opencdir;
+				}
+				errno = 0;
+				/*
+				 * File not present.
+				 * fall through. On older kernel this file
+				 * is not present.
+				 */
+			} else if (fread(&memory_limit, sizeof(uint64_t), 1,
+								file) != 1) {
+				perror(fname);
+				goto error_openfile;
 			}
 
 			memset(fname, 0, sizeof(fname));

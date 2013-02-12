@@ -27,6 +27,7 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 
 extern uint64_t crash_base;
 extern uint64_t crash_size;
+extern uint64_t memory_limit;
 extern unsigned int rtas_base;
 extern unsigned int rtas_size;
 
