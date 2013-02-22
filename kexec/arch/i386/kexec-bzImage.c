@@ -117,6 +117,8 @@ int do_bzImage_load(struct kexec_info *info,
 	unsigned long kernel32_load_addr;
 	char *modified_cmdline;
 	unsigned long cmdline_end;
+	unsigned long kern16_size_needed;
+	unsigned long heap_size = 0;
 
 	/*
 	 * Find out about the file I am about to load.
@@ -208,8 +210,29 @@ int do_bzImage_load(struct kexec_info *info,
 		elf_rel_build_load(info, &info->rhdr, purgatory, purgatory_size,
 					0x3000, 640*1024, -1, 0);
 	dbgprintf("Loaded purgatory at addr 0x%lx\n", info->rhdr.rel_addr);
+
 	/* The argument/parameter segment */
-	setup_size = kern16_size + command_line_len + PURGATORY_CMDLINE_SIZE;
+	if (real_mode_entry) {
+		/* need to include size for bss and heap etc */
+		if (setup_header.protocol_version >= 0x0201)
+			kern16_size_needed = setup_header.heap_end_ptr;
+		else
+			kern16_size_needed = kern16_size + 8192; /* bss */
+		if (kern16_size_needed < kern16_size)
+			kern16_size_needed = kern16_size;
+		if (kern16_size_needed > 0xfffc)
+			die("kern16_size_needed is more then 64k\n");
+		heap_size = 0xfffc - kern16_size_needed; /* less 64k */
+		heap_size &= ~(0x200 - 1);
+		kern16_size_needed += heap_size;
+	} else {
+		kern16_size_needed = kern16_size;
+		/* need to bigger than size of struct bootparams */
+		if (kern16_size_needed < 4096)
+			kern16_size_needed = 4096;
+	}
+	setup_size = kern16_size_needed + command_line_len +
+			 PURGATORY_CMDLINE_SIZE;
 	real_mode = xmalloc(setup_size);
 	memset(real_mode, 0, setup_size);
 	if (!real_mode_entry) {
@@ -275,11 +298,18 @@ int do_bzImage_load(struct kexec_info *info,
 
 	/* Tell the kernel what is going on */
 	setup_linux_bootloader_parameters(info, real_mode, setup_base,
-		kern16_size, command_line, command_line_len,
+		kern16_size_needed, command_line, command_line_len,
 		initrd, initrd_len);
 
+	if (real_mode_entry && real_mode->protocol_version >= 0x0201) {
+		real_mode->loader_flags |= 0x80; /* CAN_USE_HEAP */
+		real_mode->heap_end_ptr += heap_size - 0x200; /*stack*/
+	}
+
 	/* Get the initial register values */
-	elf_rel_get_symbol(&info->rhdr, "entry16_regs", &regs16, sizeof(regs16));
+	if (real_mode_entry)
+		elf_rel_get_symbol(&info->rhdr, "entry16_regs",
+					 &regs16, sizeof(regs16));
 	elf_rel_get_symbol(&info->rhdr, "entry32_regs", &regs32, sizeof(regs32));
 	/*
 
@@ -298,16 +328,18 @@ int do_bzImage_load(struct kexec_info *info,
 	/*
 	 * Initialize the 16bit start information.
 	 */
-	regs16.ds = regs16.es = regs16.fs = regs16.gs = setup_base >> 4;
-	regs16.cs = regs16.ds + 0x20;
-	regs16.ip = 0;
-	/* XXX: Documentation/i386/boot.txt says 'ss' must equal 'ds' */
-	regs16.ss = (elf_rel_get_addr(&info->rhdr, "stack_end") - 64*1024) >> 4;
-	/* XXX: Documentation/i386/boot.txt says 'sp' must equal heap_end */
-	regs16.esp = 0xFFFC;
 	if (real_mode_entry) {
+		regs16.ds = regs16.es = regs16.fs = regs16.gs = setup_base >> 4;
+		regs16.cs = regs16.ds + 0x20;
+		regs16.ip = 0;
+		/* XXX: Documentation/i386/boot.txt says 'ss' must equal 'ds' */
+		regs16.ss = (elf_rel_get_addr(&info->rhdr, "stack_end") - 64*1024) >> 4;
+		/* XXX: Documentation/i386/boot.txt says 'sp' must equal heap_end */
+		regs16.esp = 0xFFFC;
+
 		printf("Starting the kernel in real mode\n");
 		regs32.eip = elf_rel_get_addr(&info->rhdr, "entry16");
+		real_mode->kernel_start = kernel32_load_addr;
 	}
 	if (real_mode_entry && kexec_debug) {
 		unsigned long entry16_debug, pre32, first32;
@@ -327,10 +359,14 @@ int do_bzImage_load(struct kexec_info *info,
 	
 		regs32.eip = entry16_debug;
 	}
-	elf_rel_set_symbol(&info->rhdr, "entry16_regs", &regs16, sizeof(regs16));
-	elf_rel_set_symbol(&info->rhdr, "entry16_debug_regs", &regs16, sizeof(regs16));
+	if (real_mode_entry) {
+		elf_rel_set_symbol(&info->rhdr, "entry16_regs",
+					 &regs16, sizeof(regs16));
+		elf_rel_set_symbol(&info->rhdr, "entry16_debug_regs",
+					 &regs16, sizeof(regs16));
+	}
 	elf_rel_set_symbol(&info->rhdr, "entry32_regs", &regs32, sizeof(regs32));
-	cmdline_end = setup_base + kern16_size + command_line_len - 1;
+	cmdline_end = setup_base + kern16_size_needed + command_line_len - 1;
 	elf_rel_set_symbol(&info->rhdr, "cmdline_end", &cmdline_end,
 			   sizeof(unsigned long));
 
