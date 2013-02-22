@@ -46,11 +46,11 @@ void init_linux_parameters(struct x86_linux_param_header *real_mode)
 	real_mode->cmdline_size = COMMAND_LINE_SIZE;
 }
 
-void setup_linux_bootloader_parameters(
+void setup_linux_bootloader_parameters_high(
 	struct kexec_info *info, struct x86_linux_param_header *real_mode,
 	unsigned long real_mode_base, unsigned long cmdline_offset,
 	const char *cmdline, off_t cmdline_len,
-	const char *initrd_buf, off_t initrd_size)
+	const char *initrd_buf, off_t initrd_size, int initrd_high)
 {
 	char *cmdline_ptr;
 	unsigned long initrd_base, initrd_addr_max;
@@ -62,10 +62,15 @@ void setup_linux_bootloader_parameters(
 	real_mode->loader_flags = 0;
 
 	/* Find the maximum initial ramdisk address */
-	initrd_addr_max = DEFAULT_INITRD_ADDR_MAX;
-	if (real_mode->protocol_version >= 0x0203) {
-		initrd_addr_max = real_mode->initrd_addr_max;
-		dbgprintf("initrd_addr_max is 0x%lx\n", initrd_addr_max);
+	if (initrd_high)
+		initrd_addr_max = ULONG_MAX;
+	else {
+		initrd_addr_max = DEFAULT_INITRD_ADDR_MAX;
+		if (real_mode->protocol_version >= 0x0203) {
+			initrd_addr_max = real_mode->initrd_addr_max;
+			dbgprintf("initrd_addr_max is 0x%lx\n",
+					 initrd_addr_max);
+		}
 	}
 
 	/* Load the initrd if we have one */
@@ -81,8 +86,16 @@ void setup_linux_bootloader_parameters(
 	}
 
 	/* Ramdisk address and size */
-	real_mode->initrd_start = initrd_base;
-	real_mode->initrd_size  = initrd_size;
+	real_mode->initrd_start = initrd_base & 0xffffffffUL;
+	real_mode->initrd_size  = initrd_size & 0xffffffffUL;
+
+	if (real_mode->protocol_version >= 0x020c &&
+	    (initrd_base & 0xffffffffUL) != initrd_base)
+		real_mode->ext_ramdisk_image = initrd_base >> 32;
+
+	if (real_mode->protocol_version >= 0x020c &&
+	    (initrd_size & 0xffffffffUL) != initrd_size)
+		real_mode->ext_ramdisk_size = initrd_size >> 32;
 
 	/* The location of the command line */
 	/* if (real_mode_base == 0x90000) { */
@@ -91,7 +104,12 @@ void setup_linux_bootloader_parameters(
 		/* setup_move_size */
 	/* } */
 	if (real_mode->protocol_version >= 0x0202) {
-		real_mode->cmd_line_ptr = real_mode_base + cmdline_offset;
+		unsigned long cmd_line_ptr = real_mode_base + cmdline_offset;
+
+		real_mode->cmd_line_ptr = cmd_line_ptr & 0xffffffffUL;
+		if ((real_mode->protocol_version >= 0x020c) &&
+		    ((cmd_line_ptr & 0xffffffffUL) != cmd_line_ptr))
+			real_mode->ext_cmd_line_ptr = cmd_line_ptr >> 32;
 	}
 
 	/* Fill in the command line */

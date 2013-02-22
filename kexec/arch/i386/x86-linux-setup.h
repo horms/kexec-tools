@@ -2,11 +2,22 @@
 #define X86_LINUX_SETUP_H
 
 void init_linux_parameters(struct x86_linux_param_header *real_mode);
-void setup_linux_bootloader_parameters(
+void setup_linux_bootloader_parameters_high(
 	struct kexec_info *info, struct x86_linux_param_header *real_mode,
 	unsigned long real_mode_base, unsigned long cmdline_offset,
 	const char *cmdline, off_t cmdline_len,
-	const char *initrd_buf, off_t initrd_size);
+	const char *initrd_buf, off_t initrd_size, int initrd_high);
+static inline void setup_linux_bootloader_parameters(
+	struct kexec_info *info, struct x86_linux_param_header *real_mode,
+	unsigned long real_mode_base, unsigned long cmdline_offset,
+	const char *cmdline, off_t cmdline_len,
+	const char *initrd_buf, off_t initrd_size)
+{
+	setup_linux_bootloader_parameters_high(info,
+			real_mode, real_mode_base,
+			cmdline_offset, cmdline, cmdline_len,
+			initrd_buf, initrd_size, 0);
+}
 void setup_linux_system_parameters(struct kexec_info *info,
 	struct x86_linux_param_header *real_mode);
 
