@@ -56,7 +56,7 @@ void setup_linux_bootloader_parameters(
 	unsigned long initrd_base, initrd_addr_max;
 
 	/* Say I'm a boot loader */
-	real_mode->loader_type = LOADER_TYPE_UNKNOWN;
+	real_mode->loader_type = LOADER_TYPE_KEXEC << 4;
 
 	/* No loader flags */
 	real_mode->loader_flags = 0;

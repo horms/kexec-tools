@@ -142,6 +142,7 @@ struct x86_linux_param_header {
 #define LOADER_TYPE_BOOTSECT_LOADER 2
 #define LOADER_TYPE_SYSLINUX        3
 #define LOADER_TYPE_ETHERBOOT       4
+#define LOADER_TYPE_KEXEC           0x0D
 #define LOADER_TYPE_UNKNOWN         0xFF
 	uint8_t  loader_flags;			/* 0x211 */
 	uint8_t  reserved12[2];			/* 0x212 */
