@@ -32,7 +32,7 @@ struct drive_info_struct {
 };
 struct sys_desc_table {
 	uint16_t length;
-	uint8_t  table[318];
+	uint8_t  table[30];
 };
 
 struct apm_bios_info {
@@ -112,6 +112,10 @@ struct x86_linux_param_header {
 	struct apm_bios_info apm_bios_info;	/* 0x40 */
 	struct drive_info_struct drive_info;	/* 0x80 */
 	struct sys_desc_table sys_desc_table;	/* 0xa0 */
+	uint32_t ext_ramdisk_image;		/* 0xc0 */
+	uint32_t ext_ramdisk_size;		/* 0xc4 */
+	uint32_t ext_cmd_line_ptr;		/* 0xc8 */
+	uint8_t reserved4_1[0x1e0 - 0xcc];	/* 0xcc */
 	uint32_t alt_mem_k;			/* 0x1e0 */
 	uint8_t  reserved5[4];			/* 0x1e4 */
 	uint8_t  e820_map_nr;			/* 0x1e8 */
@@ -175,11 +179,18 @@ struct x86_linux_param_header {
 	/* 2.04+ */
 	uint32_t kernel_alignment;		/* 0x230 */
 	uint8_t  relocatable_kernel;		/* 0x234 */
-	uint8_t  reserved15[3];			/* 0x235 */
+	uint8_t  min_alignment;			/* 0x235 */
+	uint16_t xloadflags;			/* 0x236 */
 	uint32_t cmdline_size;			/* 0x238 */
 	uint32_t hardware_subarch;		/* 0x23C */
 	uint64_t hardware_subarch_data;		/* 0x240 */
-	uint8_t  reserved16[0x290 - 0x248];	/* 0x248 */
+	uint32_t payload_offset;		/* 0x248 */
+	uint32_t payload_length;		/* 0x24C */
+	uint64_t setup_data;			/* 0x250 */
+	uint64_t pref_address;			/* 0x258 */
+	uint32_t init_size;			/* 0x260 */
+	uint32_t handover_offset;		/* 0x264 */
+	uint8_t  reserved16[0x290 - 0x268];	/* 0x268 */
 	uint32_t edd_mbr_sig_buffer[EDD_MBR_SIG_MAX];	/* 0x290 */
 #endif
 	struct 	e820entry e820_map[E820MAX];	/* 0x2d0 */
@@ -196,7 +207,11 @@ struct x86_linux_faked_param_header {
 };
 
 struct x86_linux_header {
-	uint8_t  reserved1[0x1f1];		/* 0x000 */
+	uint8_t  reserved1[0xc0];		/* 0x000 */
+	uint32_t ext_ramdisk_image;		/* 0x0c0 */
+	uint32_t ext_ramdisk_size;		/* 0x0c4 */
+	uint32_t ext_cmd_line_ptr;		/* 0x0c8 */
+	uint8_t  reserved1_1[0x1f1-0xcc];	/* 0x0cc */
 	uint8_t  setup_sects;			/* 0x1f1 */
 	uint16_t root_flags;			/* 0x1f2 */
 	uint32_t syssize;			/* 0x1f4 */
@@ -229,7 +244,8 @@ struct x86_linux_header {
 
 	uint32_t kernel_alignment;		/* 0x230 */
 	uint8_t  relocatable_kernel;		/* 0x234 */
-	uint8_t  reserved6[3];			/* 0x235 */
+	uint8_t  min_alignment;			/* 0x235 */
+	uint16_t xloadflags;			/* 0x236 */
 	uint32_t cmdline_size;			/* 0x238 */
 	uint32_t hardware_subarch;		/* 0x23C */
 	uint64_t hardware_subarch_data;		/* 0x240 */
