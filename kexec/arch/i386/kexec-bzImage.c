@@ -211,7 +211,19 @@ int do_bzImage_load(struct kexec_info *info,
 	/* The argument/parameter segment */
 	setup_size = kern16_size + command_line_len + PURGATORY_CMDLINE_SIZE;
 	real_mode = xmalloc(setup_size);
-	memcpy(real_mode, kernel, kern16_size);
+	memset(real_mode, 0, setup_size);
+	if (!real_mode_entry) {
+		unsigned long setup_header_size = kernel[0x201] + 0x202 - 0x1f1;
+
+		/* only copy setup_header */
+		if (setup_header_size > 0x7f)
+			setup_header_size = 0x7f;
+		memcpy((unsigned char *)real_mode + 0x1f1, kernel + 0x1f1,
+			setup_header_size);
+	} else {
+		/* copy setup code and setup_header */
+		memcpy(real_mode, kernel, kern16_size);
+	}
 
 	if (info->kexec_flags & (KEXEC_ON_CRASH | KEXEC_PRESERVE_CONTEXT)) {
 		/* If using bzImage for capture kernel, then we will not be
