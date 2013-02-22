@@ -188,6 +188,8 @@ static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 
 /* Memory region reserved for storing panic kernel and other data. */
 static struct memory_range crash_reserved_mem;
+/* under 4G parts */
+static struct memory_range crash_reserved_low_mem;
 
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
@@ -281,6 +283,10 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 	}
 	if (exclude_region(&memory_ranges, crash_reserved_mem.start,
 				crash_reserved_mem.end) < 0)
+		return -1;
+	if (crash_reserved_low_mem.start &&
+	    exclude_region(&memory_ranges, crash_reserved_low_mem.start,
+				crash_reserved_low_mem.end) < 0)
 		return -1;
 	if (gart) {
 		/* exclude GART region if the system has one */
@@ -984,6 +990,12 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		return ENOCRASHKERNEL;
 	}
 
+	if (crash_reserved_low_mem.start) {
+		sz = crash_reserved_low_mem.end - crash_reserved_low_mem.start
+					 +1;
+		add_memmap(memmap_p, crash_reserved_low_mem.start, sz);
+	}
+
 	/* Create a backup region segment to store backup data*/
 	if (!(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
 		sz = (info->backup_src_size + align) & ~(align - 1);
@@ -1058,6 +1070,15 @@ int is_crashkernel_mem_reserved(void)
 	crash_reserved_mem.start = start;
 	crash_reserved_mem.end = end;
 	crash_reserved_mem.type = RANGE_RAM;
+
+	/* If there is no Crash low kernel, still can go on */
+	if (parse_iomem_single("Crash kernel low\n", &start, &end) ||
+					start == end)
+		return 1;
+
+	crash_reserved_low_mem.start = start;
+	crash_reserved_low_mem.end = end;
+	crash_reserved_low_mem.type = RANGE_RAM;
 
 	return 1;
 }
