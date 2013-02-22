@@ -29,6 +29,7 @@
 #define OPT_MOD 		(OPT_ARCH_MAX+7)
 #define OPT_VGA 		(OPT_ARCH_MAX+8)
 #define OPT_REAL_MODE		(OPT_ARCH_MAX+9)
+#define OPT_ENTRY_32BIT		(OPT_ARCH_MAX+10)
 
 /* Options relevant to the architecture (excluding loader-specific ones): */
 #define KEXEC_ARCH_OPTIONS \
@@ -68,7 +69,8 @@
 	{ "args-linux",		0, NULL, OPT_ARGS_LINUX },	\
 	{ "args-none",		0, NULL, OPT_ARGS_NONE },	\
 	{ "module",		1, 0, OPT_MOD },		\
-	{ "real-mode",		0, NULL, OPT_REAL_MODE },
+	{ "real-mode",		0, NULL, OPT_REAL_MODE },	\
+	{ "entry-32bit",	0, NULL, OPT_ENTRY_32BIT },
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR
 

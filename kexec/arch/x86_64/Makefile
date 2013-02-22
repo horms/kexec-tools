@@ -13,6 +13,7 @@ x86_64_KEXEC_SRCS += kexec/arch/i386/crashdump-x86.c
 x86_64_KEXEC_SRCS_native =  kexec/arch/x86_64/kexec-x86_64.c
 x86_64_KEXEC_SRCS_native += kexec/arch/x86_64/kexec-elf-x86_64.c
 x86_64_KEXEC_SRCS_native += kexec/arch/x86_64/kexec-elf-rel-x86_64.c
+x86_64_KEXEC_SRCS_native += kexec/arch/x86_64/kexec-bzImage64.c
 
 x86_64_KEXEC_SRCS += $(x86_64_KEXEC_SRCS_native)
 

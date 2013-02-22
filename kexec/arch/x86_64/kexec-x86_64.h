@@ -28,4 +28,9 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_x86_64_usage(void);
 
+int bzImage64_probe(const char *buf, off_t len);
+int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
+			struct kexec_info *info);
+void bzImage64_usage(void);
+
 #endif /* KEXEC_X86_64_H */
