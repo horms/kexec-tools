@@ -34,6 +34,7 @@
 #include "../../kexec.h"
 #include "kexec-x86.h"
 #include "x86-linux-setup.h"
+#include "../../kexec/kexec-syscall.h"
 
 void init_linux_parameters(struct x86_linux_param_header *real_mode)
 {
@@ -507,7 +508,13 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	range = info->memory_range;
 	ranges = info->memory_ranges;
 	if (ranges > E820MAX) {
-		fprintf(stderr, "Too many memory ranges, truncating...\n");
+		if (!(kexec_flags & KEXEC_ON_CRASH))
+			/*
+			 * this e820 not used for capture kernel, see
+			 * do_bzImage_load()
+			 */
+			fprintf(stderr,
+				"Too many memory ranges, truncating...\n");
 		ranges = E820MAX;
 	}
 	real_mode->e820_map_nr = ranges;
