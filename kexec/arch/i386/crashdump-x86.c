@@ -981,7 +981,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		return -1;
 
 	/* Memory regions which panic kernel can safely use to boot into */
-	sz = (sizeof(struct memory_range) * (KEXEC_MAX_SEGMENTS + 1));
+	sz = (sizeof(struct memory_range) * CRASH_MAX_MEMMAP_NR);
 	memmap_p = xmalloc(sz);
 	memset(memmap_p, 0, sz);
 	add_memmap(memmap_p, info->backup_src_start, info->backup_src_size);
