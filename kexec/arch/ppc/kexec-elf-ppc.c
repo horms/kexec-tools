@@ -397,10 +397,14 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 		die("Error device tree not loadded to address it was expecting to be loaded too!\n");
 	}
 
-	/* set various variables for the purgatory  ehdr.e_entry is a
-	 * virtual address, we can use kernel_addr which
-	 * should be the physical start address of the kernel */
-	addr = kernel_addr;
+	/* 
+	 * set various variables for the purgatory.
+	 * ehdr.e_entry is a virtual address. we know physical start
+	 * address of the kernel (kernel_addr). Find the offset of
+	 * e_entry from the virtual start address(e_phdr[0].p_vaddr)
+	 * and calculate the actual physical address of the 'kernel entry'.
+	 */
+	addr = kernel_addr + (ehdr.e_entry - ehdr.e_phdr[0].p_vaddr);
 	elf_rel_set_symbol(&info->rhdr, "kernel", &addr, sizeof(addr));
 
 	addr = dtb_addr;

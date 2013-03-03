@@ -134,15 +134,19 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 
 	/*
 	 * If the provided load_addr cannot be allocated, find a new
-	 * area.
+	 * area. Rebase the entry point based on the new load_addr.
 	 */
 	if (!valid_memory_range(info, load_addr, load_addr + (len + _1MiB))) {
+		int ep_offset = ep - load_addr;
+
 		load_addr = locate_hole(info, len + _1MiB, 0, 0, max_addr, 1);
 		if (load_addr == ULONG_MAX) {
 			printf("Can't allocate memory for kernel of len %ld\n",
 					len + _1MiB);
 			return -1;
 		}
+
+		ep = load_addr + ep_offset;
 	}
 
 	add_segment(info, buf, len, load_addr, len + _1MiB);
