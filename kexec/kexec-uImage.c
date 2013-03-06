@@ -208,14 +208,25 @@ int uImage_load(const unsigned char *buf, off_t len, struct Image_info *image)
 {
 	const struct image_header *header = (const struct image_header *)buf;
 	const unsigned char *img_buf = buf + sizeof(struct image_header);
-	off_t img_len = len - sizeof(struct image_header);
+	off_t img_len = header->ih_size;
+
+	/*
+	 * Prevent loading a modified image.
+	 * CRC check is perfomed only when zlib is compiled
+	 * in. This check will help us to detect
+	 * size related vulnerabilities. 	
+	 */
+ 	if (img_len != (len - sizeof(struct image_header))) {
+		printf("Image size doesn't match the header\n");
+		return -1;
+	}
 
 	image->base = cpu_to_be32(header->ih_load);
 	image->ep = cpu_to_be32(header->ih_ep);
 	switch (header->ih_comp) {
 	case IH_COMP_NONE:
 		image->buf = img_buf;
-		image->len = len;
+		image->len = img_len;
 		return 0;
 		break;
 
