@@ -48,7 +48,7 @@ void uImage_ppc_usage(void)
 
 int uImage_ppc_probe(const char *buf, off_t len)
 {
-	return uImage_probe(buf, len, IH_ARCH_PPC);
+	return uImage_probe_kernel(buf, len, IH_ARCH_PPC);
 }
 
 static int ppc_load_bare_bits(int argc, char **argv, const char *buf,

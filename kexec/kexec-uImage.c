@@ -16,6 +16,10 @@
  * Basic uImage loader. Not rocket science.
  */
 
+/*
+ * Returns the image type if everything goes well. This would
+ * allow the user to decide if the image is of their interest.
+ */
 int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 {
 	struct image_header header;
@@ -84,7 +88,15 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 		return -1;
 	}
 #endif
-	return 0;
+	return (int)header.ih_type;
+}
+
+int uImage_probe_kernel(const unsigned char *buf, off_t len, unsigned int arch)
+{
+	int type = uImage_probe(buf, len, arch);
+
+	return (type == IH_TYPE_KERNEL || type == IH_TYPE_KERNEL_NOLOAD) ? 
+			0 : -1;
 }
 
 #ifdef HAVE_LIBZ
