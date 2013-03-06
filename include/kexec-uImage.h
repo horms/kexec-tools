@@ -10,5 +10,6 @@ struct Image_info {
 
 int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch);
 int uImage_probe_kernel(const unsigned char *buf, off_t len, unsigned int arch);
+int uImage_probe_ramdisk(const unsigned char *buf, off_t len, unsigned int arch);
 int uImage_load(const unsigned char *buf, off_t len, struct Image_info *info);
 #endif

@@ -47,6 +47,8 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 	case IH_TYPE_KERNEL:
 	case IH_TYPE_KERNEL_NOLOAD:
 		break;
+	case IH_TYPE_RAMDISK:
+		break;
 	default:
 		printf("uImage type %d unsupported\n", header.ih_type);
 		return -1;
@@ -97,6 +99,12 @@ int uImage_probe_kernel(const unsigned char *buf, off_t len, unsigned int arch)
 
 	return (type == IH_TYPE_KERNEL || type == IH_TYPE_KERNEL_NOLOAD) ? 
 			0 : -1;
+}
+
+int uImage_probe_ramdisk(const unsigned char *buf, off_t len, unsigned int arch)
+{
+	int type = uImage_probe(buf, len, arch);
+	return (type == IH_TYPE_RAMDISK) ? 0 : -1;
 }
 
 #ifdef HAVE_LIBZ
@@ -231,7 +239,16 @@ int uImage_load(const unsigned char *buf, off_t len, struct Image_info *image)
 		break;
 
 	case IH_COMP_GZIP:
-		return uImage_gz_load(img_buf, img_len, image);
+		/*
+		 * uboot doesn't decompress the RAMDISK images.
+		 * Comply to the uboot behaviour.
+		 */
+		if (header->ih_type == IH_TYPE_RAMDISK) {
+			image->buf = img_buf;
+			image->len = img_len;
+			return 0;
+		} else
+			return uImage_gz_load(img_buf, img_len, image);
 		break;
 
 	default:
