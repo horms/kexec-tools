@@ -46,6 +46,31 @@ void uImage_ppc_usage(void)
 	);
 }
 
+/*
+ * Load the ramdisk into buffer.
+ *  If the supplied image is in uImage format use
+ *  uImage_load() to read the payload from the image.
+ */
+char *slurp_ramdisk_ppc(const char *filename, off_t *r_size)
+{
+	struct Image_info img;
+	off_t size;
+	const unsigned char *buf = slurp_file(filename, &size);
+
+	/* Check if this is a uImage RAMDisk */
+	if (buf &&
+	    uImage_probe_ramdisk(buf, size, IH_ARCH_PPC) == 0) {
+		if (uImage_load(buf, size, &img) != 0)
+			die("uImage: Reading %ld bytes from %s failed\n",
+				size, filename);
+		buf = img.buf;
+		size = img.len;
+	}
+
+	*r_size = size;
+	return buf;
+}
+	
 int uImage_ppc_probe(const char *buf, off_t len)
 {
 	return uImage_probe_kernel(buf, len, IH_ARCH_PPC);
@@ -194,7 +219,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	blob_buf = fixup_dtb_init(info, blob_buf, &blob_size, load_addr, &dtb_addr);
 
 	if (ramdisk) {
-		seg_buf = slurp_file(ramdisk, &seg_size);
+		seg_buf = slurp_ramdisk_ppc(ramdisk, &seg_size);
 		/* Load ramdisk at top of memory */
 		hole_addr = add_buffer(info, seg_buf, seg_size, seg_size,
 				0, dtb_addr + blob_size, max_addr, -1);
