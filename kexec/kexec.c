@@ -76,9 +76,9 @@ static char *xstrdup(const char *str)
 void *xmalloc(size_t size)
 {
 	void *buf;
-	buf = malloc(size);
 	if (!size)
 		return NULL;
+	buf = malloc(size);
 	if (!buf) {
 		die("Cannot malloc %ld bytes: %s\n",
 			size + 0UL, strerror(errno));
