@@ -197,7 +197,7 @@ static int do_bzImage64_load(struct kexec_info *info,
 	k_size = kernel_len - kern16_size;
 	/* need to use run-time size for buffer searching */
 	dbgprintf("kernel init_size 0x%x\n", real_mode->init_size);
-	size = (real_mode->init_size + (4096 - 1)) & ~(4096 - 1);
+	size = _ALIGN(real_mode->init_size, 4096);
 	align = real_mode->kernel_alignment;
 	addr = add_buffer(info, kernel + kern16_size, k_size,
 			  size, align, 0x100000, -1, -1);
