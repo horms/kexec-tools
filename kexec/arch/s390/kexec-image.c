@@ -112,7 +112,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 			return -1;
 		}
 		ramdisk_origin = MAX(RAMDISK_ORIGIN_ADDR, kernel_size);
-		ramdisk_origin = ALIGN_UP(ramdisk_origin, 0x100000);
+		ramdisk_origin = _ALIGN_UP(ramdisk_origin, 0x100000);
 		add_segment_check(info, rd_buffer, ramdisk_len,
 				  ramdisk_origin, ramdisk_len);
 	}

@@ -21,7 +21,6 @@
 #define COMMAND_LINESIZE      896
 #define MAX_MEMORY_RANGES     1024
 
-#define ALIGN_UP(addr, size) (((addr) + ((size)-1)) & (~((size)-1)))
 #define MAX(x, y) ((x) > (y) ? (x) : (y))
 #define MIN(x, y) ((x) < (y) ? (x) : (y))
 
