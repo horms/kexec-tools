@@ -414,7 +414,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		 * align it.
 		 */
 		dtb_offset = initrd_base + initrd_size + getpagesize();
-		dtb_offset &= ~(getpagesize() - 1);
+		dtb_offset = _ALIGN_DOWN(dtb_offset, getpagesize());
 
 		add_segment(info, dtb_buf, dtb_length,
 		            dtb_offset, dtb_length);
