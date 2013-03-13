@@ -34,7 +34,7 @@ static const int probe_debug = 0;
 
 #define BOOTLOADER         "kexec"
 #define MAX_COMMAND_LINE   256
-#define UPSZ(X) ((sizeof(X) + 3) & ~3)
+#define UPSZ(X) _ALIGN_UP(sizeof(X), 4)
 static char cmdline_buf[256] = "kexec ";
 
 int elf_mips_probe(const char *buf, off_t len)
