@@ -230,9 +230,8 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	 * module command lines
 	 * ==============
 	 */
-	mbi_bytes = (sizeof(*mbi) + command_line_len 
-		     + strlen (BOOTLOADER " " BOOTLOADER_VERSION) + 1
-		     + 3) & ~3;
+	mbi_bytes = _ALIGN(sizeof(*mbi) + command_line_len
+		     + strlen (BOOTLOADER " " BOOTLOADER_VERSION) + 1, 4);
 	mbi_buf = xmalloc(mbi_bytes);
 	mbi = mbi_buf;
 	memset(mbi, 0, sizeof(*mbi));

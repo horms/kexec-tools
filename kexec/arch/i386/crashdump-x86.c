@@ -163,11 +163,11 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 			/* Look for kernel text mapping header. */
 			if ((saddr >= X86_64__START_KERNEL_map) &&
 			    (eaddr <= X86_64__START_KERNEL_map + X86_64_KERNEL_TEXT_SIZE)) {
-				saddr = (saddr) & (~(X86_64_KERN_VADDR_ALIGN - 1));
+				saddr = _ALIGN_DOWN(saddr, X86_64_KERN_VADDR_ALIGN);
 				elf_info->kern_vaddr_start = saddr;
 				size = eaddr - saddr;
 				/* Align size to page size boundary. */
-				size = (size + align - 1) & (~(align - 1));
+				size = _ALIGN(size, align);
 				elf_info->kern_size = size;
 				dbgprintf("kernel vaddr = 0x%llx size = 0x%llx\n",
 					saddr, size);
@@ -1035,7 +1035,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	/* Create a backup region segment to store backup data*/
 	if (!(info->kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
-		sz = (info->backup_src_size + align) & ~(align - 1);
+		sz = _ALIGN(info->backup_src_size, align);
 		tmp = xmalloc(sz);
 		memset(tmp, 0, sz);
 		info->backup_start = add_buffer(info, tmp, sz, sz, align,

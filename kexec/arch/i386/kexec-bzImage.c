@@ -223,7 +223,7 @@ int do_bzImage_load(struct kexec_info *info,
 		if (kern16_size_needed > 0xfffc)
 			die("kern16_size_needed is more then 64k\n");
 		heap_size = 0xfffc - kern16_size_needed; /* less 64k */
-		heap_size &= ~(0x200 - 1);
+		heap_size = _ALIGN_DOWN(heap_size, 0x200);
 		kern16_size_needed += heap_size;
 	} else {
 		kern16_size_needed = kern16_size;
