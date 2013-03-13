@@ -67,12 +67,6 @@ static struct boot_notes {
 	},
 };
 
-static inline unsigned long align(unsigned long val, unsigned long align)
-{
-	return (val + align - 1) & ~(align - 1);
-
-}
-
 unsigned long elf_boot_notes(
 	struct kexec_info *info, unsigned long max_addr,
 	const char *cmdline, int cmdline_len)
@@ -80,7 +74,7 @@ unsigned long elf_boot_notes(
 	unsigned long note_bytes;
 	unsigned long note_base;
 	struct boot_notes *notes;
-	note_bytes = sizeof(*notes) + align(cmdline_len, 4);
+	note_bytes = sizeof(*notes) + _ALIGN(cmdline_len, 4);
 	notes = xmalloc(note_bytes);
 	memcpy(notes, &boot_notes, sizeof(boot_notes));
 	memcpy(notes->command_line, cmdline, cmdline_len);
