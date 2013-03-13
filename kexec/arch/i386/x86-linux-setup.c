@@ -508,7 +508,7 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	range = info->memory_range;
 	ranges = info->memory_ranges;
 	if (ranges > E820MAX) {
-		if (!(kexec_flags & KEXEC_ON_CRASH))
+		if (!(info->kexec_flags & KEXEC_ON_CRASH))
 			/*
 			 * this e820 not used for capture kernel, see
 			 * do_bzImage_load()
