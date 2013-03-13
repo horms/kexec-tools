@@ -20,8 +20,6 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 #define BACKUP_SRC_SIZE     (BACKUP_SRC_END - BACKUP_SRC_START + 1)
 
 #define KDUMP_BACKUP_LIMIT	BACKUP_SRC_SIZE
-#define _ALIGN_UP(addr,size)	(((addr)+((size)-1))&(~((size)-1)))
-#define _ALIGN_DOWN(addr,size)	((addr)&(~((size)-1)))
 
 #define KERNEL_RUN_AT_ZERO_MAGIC 0x72756e30	/* "run0" */
 
