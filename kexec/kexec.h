@@ -100,6 +100,18 @@ do { \
 	} \
 } while(0)
 
+#define _ALIGN_UP_MASK(addr, mask)   (((addr) + (mask)) & ~(mask))
+#define _ALIGN_DOWN_MASK(addr, mask) ((addr) & ~(mask))
+
+/* align addr on a size boundary - adjust address up/down if needed */
+#define _ALIGN_UP(addr, size)	     \
+	_ALIGN_UP_MASK(addr, (typeof(addr))(size) - 1)
+#define _ALIGN_DOWN(addr, size)	     \
+	_ALIGN_DOWN_MASK(addr, (typeof(addr))(size) - 1)
+
+/* align addr on a size boundary - adjust address up if needed */
+#define _ALIGN(addr, size)     _ALIGN_UP(addr, size)
+
 extern unsigned long long mem_min, mem_max;
 extern int kexec_debug;
 
