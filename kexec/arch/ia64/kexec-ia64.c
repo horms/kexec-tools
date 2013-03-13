@@ -50,8 +50,8 @@ static int split_range(int range, unsigned long start, unsigned long end)
 	unsigned int type = memory_range[range - 1].type;
 	int i;
 	//align end and start to page size of EFI
-	start = start & ~((1UL<<12) - 1);
-	end = (end + (1UL<<12) - 1)& ~((1UL<<12) - 1);
+	start = _ALIGN_DOWN(start, 1UL<<12);
+	end = _ALIGN(end, 1UL<<12);
 	for (i = 0; i < range; i++)
 		if(memory_range[i].start <= start && memory_range[i].end >=end)
 			break;
@@ -230,7 +230,7 @@ int update_loaded_segments(struct mem_ehdr *ehdr)
 	for (i = 0; i < memory_ranges; i++) {
 		if (memory_range[i].type != RANGE_RAM)
 			continue;
-		start = (memory_range[i].start + align - 1) & ~(align - 1);
+		start = _ALIGN(memory_range[i].start, align);
 		end = memory_range[i].end;
 		if (end > start && (end - start) > (end_addr - start_addr)) {
 		    move_loaded_segments(ehdr, start);

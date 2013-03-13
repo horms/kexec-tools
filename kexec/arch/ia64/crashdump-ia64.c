@@ -83,7 +83,7 @@ static void add_loaded_segments_info(struct mem_ehdr *ehdr)
 		}
 
 		loaded_segments[loaded_segments_num].start =
-			phdr->p_paddr & ~(ELF_PAGE_SIZE-1);
+			_ALIGN_DOWN(phdr->p_paddr, ELF_PAGE_SIZE);
                 loaded_segments[loaded_segments_num].end =
 			loaded_segments[loaded_segments_num].start;
 
@@ -97,8 +97,8 @@ static void add_loaded_segments_info(struct mem_ehdr *ehdr)
 	                if (phdr->p_type != PT_LOAD)
 	                        break;
 			loaded_segments[loaded_segments_num].end =
-				(phdr->p_paddr + phdr->p_memsz +
-				ELF_PAGE_SIZE - 1) & ~(ELF_PAGE_SIZE - 1);
+				_ALIGN(phdr->p_paddr + phdr->p_memsz,
+				       ELF_PAGE_SIZE);
 			i++;
 		}
 		loaded_segments_num++;
