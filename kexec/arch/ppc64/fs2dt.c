@@ -698,8 +698,7 @@ int create_flatten_tree(char **bufp, off_t *sizep, char *cmdline)
 	dt_reserve(&dt, 1);
 	*dt++ = 9;
 
-	len = sizeof(bb[0]);
-	len += 7; len &= ~7;
+	len = _ALIGN(sizeof(bb[0]), 8);
 
 	bb->off_mem_rsvmap = len;
 
@@ -714,8 +713,7 @@ int create_flatten_tree(char **bufp, off_t *sizep, char *cmdline)
 	len *= sizeof(unsigned);
 	bb->off_dt_strings = bb->off_dt_struct + len;
 
-	len = propnum("");
-	len +=  3; len &= ~3;
+	len = _ALIGN(propnum(""), 4);
 	bb->totalsize = bb->off_dt_strings + len;
 
 	bb->magic = 0xd00dfeed;

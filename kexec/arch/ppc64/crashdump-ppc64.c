@@ -298,7 +298,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		 * to the next page size boundary though, so makedumpfile can
 		 * read it safely without going south on us.
 		 */
-		cend = (cend + page_size - 1) & (~(page_size - 1));
+		cend = _ALIGN(cend, page_size);
 
 		crash_memory_range[memory_ranges].start = cstart;
 		crash_memory_range[memory_ranges++].end = cend;
@@ -400,7 +400,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	info->backup_src_start = BACKUP_SRC_START;
 	info->backup_src_size = BACKUP_SRC_SIZE;
 	/* Create a backup region segment to store backup data*/
-	sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
+	sz = _ALIGN(BACKUP_SRC_SIZE, align);
 	tmp = xmalloc(sz);
 	memset(tmp, 0, sz);
 	info->backup_start = add_buffer(info, tmp, sz, sz, align,
