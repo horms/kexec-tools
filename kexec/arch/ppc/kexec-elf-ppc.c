@@ -37,7 +37,7 @@ const char *ramdisk;
 int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
 			char *);
 
-#define UPSZ(X) ((sizeof(X) + 3) & ~3)
+#define UPSZ(X) _ALIGN_UP(sizeof(X), 4);
 #ifdef WITH_GAMECUBE
 static struct boot_notes {
 	Elf_Bhdr hdr;
@@ -327,14 +327,14 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 		setup_size = setup_simple_size;
 		setup_simple_regs.spr8 = ehdr.e_entry;	/* Link Register */
 	}
-	note_bytes = sizeof(elf_boot_notes) + ((command_line_len + 3) & ~3);
-	arg_bytes = note_bytes + ((setup_size + 3) & ~3);
+	note_bytes = sizeof(elf_boot_notes) + _ALIGN(command_line_len, 4);
+	arg_bytes = note_bytes + _ALIGN(setup_size, 4);
 
 	arg_buf = xmalloc(arg_bytes);
 	arg_base = add_buffer(info, 
 		arg_buf, arg_bytes, arg_bytes, 4, 0, elf_max_addr(&ehdr), 1);
 
-	notes = (struct boot_notes *)(arg_buf + ((setup_size + 3) & ~3));
+	notes = (struct boot_notes *)(arg_buf + _ALIGN(setup_size, 4));
 
 	memcpy(arg_buf, setup_start, setup_size);
 	memcpy(notes, &elf_boot_notes, sizeof(elf_boot_notes));

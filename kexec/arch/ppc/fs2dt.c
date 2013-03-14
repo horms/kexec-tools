@@ -407,8 +407,7 @@ int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
 	putnode();
 	*dt++ = 9;
 
-	len = sizeof(bb[0]);
-	len += 7; len &= ~7;
+	len = _ALIGN(sizeof(bb[0]), 8);
 
 	bb->off_mem_rsvmap = len;
 
@@ -426,7 +425,7 @@ int create_flatten_tree(struct kexec_info *info, unsigned char **bufp,
 
 	len = propnum("");
 	bb->dt_strings_size = len;
-	len +=  3; len &= ~3;
+	len = _ALIGN(len, 4);
 	bb->totalsize = bb->off_dt_strings + len;
 
 	bb->magic = 0xd00dfeed;

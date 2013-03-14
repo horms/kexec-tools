@@ -87,11 +87,11 @@ typedef struct {
 #define PAGE_SHIFT		12
 #define PAGE_SIZE		(1UL << PAGE_SHIFT)
 #define PAGE_MASK		(~((1 << PAGE_SHIFT) - 1))
-#define PAGE_ALIGN(addr)	(((addr) + PAGE_SIZE - 1) & PAGE_MASK)
+#define PAGE_ALIGN(addr)	_ALIGN(addr, PAGE_SIZE)
 
 #define MAX_COMMAND_LINE   256
 
-#define UPSZ(X) ((sizeof(X) + 3) & ~3)
+#define UPSZ(X) _ALIGN_UP(sizeof(X), 4)
 static struct boot_notes {
 	Elf_Bhdr hdr;
 	Elf_Nhdr bl_hdr;
@@ -442,14 +442,14 @@ int dol_ppc_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 	}
 
 	/* build the setup glue and argument segment (segment 0) */
-	note_bytes = sizeof(elf_boot_notes) + ((command_line_len + 3) & ~3);
-	arg_bytes = note_bytes + ((setup_dol_size + 3) & ~3);
+	note_bytes = sizeof(elf_boot_notes) + _ALIGN(command_line_len, 4);
+	arg_bytes = note_bytes + _ALIGN(setup_dol_size, 4);
 
 	arg_buf = xmalloc(arg_bytes);
 	arg_base = add_buffer(info,
 		arg_buf, arg_bytes, arg_bytes, 4, 0, 0xFFFFFFFFUL, 1);
 
-	notes = (struct boot_notes *)(arg_buf + ((setup_dol_size + 3) & ~3));
+	notes = (struct boot_notes *)(arg_buf + _ALIGN(setup_dol_size, 4));
 
 	notes->hdr.b_size = note_bytes;
 	notes->cmd_hdr.n_descsz = command_line_len;

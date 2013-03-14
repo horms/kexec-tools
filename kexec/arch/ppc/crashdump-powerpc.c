@@ -329,7 +329,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 	info->backup_src_size = BACKUP_SRC_SIZE;
 #ifndef CONFIG_BOOKE
 	/* Create a backup region segment to store backup data*/
-	sz = (BACKUP_SRC_SIZE + align - 1) & ~(align - 1);
+	sz = _ALIGN(BACKUP_SRC_SIZE, align);
 	tmp = xmalloc(sz);
 	memset(tmp, 0, sz);
 	info->backup_start = add_buffer(info, tmp, sz, sz, align,
