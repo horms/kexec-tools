@@ -16,7 +16,7 @@ purgatory_start:
 	larl	%r15,lstack_end
 	aghi	%r15,-160
 
-	clgfi	%r2,0
+	cghi	%r2,0
 	je	verify_checksums
 
 	brasl	%r14,purgatory
