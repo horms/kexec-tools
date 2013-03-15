@@ -96,8 +96,7 @@ int FUNC(struct kexec_info *info,
 		return -1;
 	}
 
-	sz += align - 1;
-	sz &= ~(align - 1);
+	sz = _ALIGN(sz, align);
 
 	bufp = xmalloc(sz);
 	memset(bufp, 0, sz);

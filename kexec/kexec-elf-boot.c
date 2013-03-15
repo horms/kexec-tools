@@ -31,7 +31,7 @@
 #include "kexec-elf-boot.h"
 
 
-#define UPSZ(X) ((sizeof(X) + 3) &~3)
+#define UPSZ(X) _ALIGN_UP(sizeof(X), 4)
 
 static struct boot_notes {
 	Elf_Bhdr hdr;

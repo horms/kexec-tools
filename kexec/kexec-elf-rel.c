@@ -225,7 +225,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 				buf_align = align;
 			}
 			/* Now align bufsz */
-			bufsz = (bufsz + (align - 1)) & ~(align - 1);
+			bufsz = _ALIGN(bufsz, align);
 			/* And now add our buffer */
 			bufsz += shdr->sh_size;
 		}
@@ -237,7 +237,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 				bss_align = align;
 			}
 			/* Now align bsssz */
-			bsssz = (bsssz + (align - 1)) & ~(align -1);
+			bsssz = _ALIGN(bsssz, align);
 			/* And now add our buffer */
 			bsssz += shdr->sh_size;
 		}
@@ -269,7 +269,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 		if (shdr->sh_type != SHT_NOBITS) {
 			unsigned long off;
 			/* Adjust the address */
-			data_addr = (data_addr + (align - 1)) & ~(align -1);
+			data_addr = _ALIGN(data_addr, align);
 
 			/* Update the section */
 			off = data_addr - buf_addr;
@@ -281,7 +281,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			data_addr += shdr->sh_size;
 		} else {
 			/* Adjust the address */
-			bss_addr = (bss_addr + (align - 1)) & ~(align -1);
+			bss_addr = _ALIGN(bss_addr, align);
 
 			/* Update the section */
 			shdr->sh_addr = bss_addr;

@@ -704,8 +704,8 @@ static int build_mem_notes(struct mem_ehdr *ehdr)
 		ElfNN_Nhdr hdr;
 		read_nhdr(ehdr, &hdr, note);
 		note_size  = sizeof(hdr);
-		note_size += (hdr.n_namesz + 3) & ~3;
-		note_size += (hdr.n_descsz + 3) & ~3;
+		note_size += _ALIGN(hdr.n_namesz, 4);
+		note_size += _ALIGN(hdr.n_descsz, 4);
 		ehdr->e_notenum += 1;
 	}
 	/* Now walk and normalize the notes */
@@ -716,9 +716,9 @@ static int build_mem_notes(struct mem_ehdr *ehdr)
 		read_nhdr(ehdr, &hdr, note);
 		note_size  = sizeof(hdr);
 		name       = note + note_size;
-		note_size += (hdr.n_namesz + 3) & ~3;
+		note_size += _ALIGN(hdr.n_namesz, 4);
 		desc       = note + note_size;
-		note_size += (hdr.n_descsz + 3) & ~3;
+		note_size += _ALIGN(hdr.n_descsz, 4);
 
 		if ((hdr.n_namesz != 0) && (name[hdr.n_namesz -1] != '\0')) {
 			/* If note name string is not null terminated, just

@@ -257,8 +257,7 @@ unsigned long locate_hole(struct kexec_info *info,
 		if (start < hole_min) {
 			start = hole_min;
 		}
-		start = (start + hole_align - 1) &
-			~((unsigned long long)hole_align - 1);
+		start = _ALIGN(start, hole_align);
 		if (end > mem_max) {
 			end = mem_max;
 		}
@@ -276,8 +275,8 @@ unsigned long locate_hole(struct kexec_info *info,
 				hole_base = start;
 				break;
 			} else {
-				hole_base = (end - hole_size) &
-					~((unsigned long long)hole_align - 1);
+				hole_base = _ALIGN_DOWN(end - hole_size,
+					hole_align);
 			}
 		}
 	}
@@ -313,7 +312,7 @@ void add_segment_phys_virt(struct kexec_info *info,
 
 	/* Round memsz up to a multiple of pagesize */
 	pagesize = getpagesize();
-	memsz = (memsz + (pagesize - 1)) & ~(pagesize - 1);
+	memsz = _ALIGN(memsz, pagesize);
 
 	/* Verify base is pagesize aligned.
 	 * Finding a way to cope with this problem
@@ -363,7 +362,7 @@ unsigned long add_buffer_phys_virt(struct kexec_info *info,
 
 	/* Round memsz up to a multiple of pagesize */
 	pagesize = getpagesize();
-	memsz = (memsz + (pagesize - 1)) & ~(pagesize - 1);
+	memsz = _ALIGN(memsz, pagesize);
 
 	base = locate_hole(info, memsz, buf_align, buf_min, buf_max, buf_end);
 	if (base == ULONG_MAX) {
@@ -457,8 +456,8 @@ int add_backup_segments(struct kexec_info *info, unsigned long backup_base,
 				return -1;
 			if (!find_segment_hole(info, &bkseg_base, &bkseg_size))
 				break;
-			start = (bkseg_base + pagesize - 1) & ~(pagesize - 1);
-			end = (bkseg_base + bkseg_size) & ~(pagesize - 1);
+			start = _ALIGN(bkseg_base, pagesize);
+			end = _ALIGN_DOWN(bkseg_base + bkseg_size, pagesize);
 			add_segment_phys_virt(info, NULL, 0,
 					      start, end-start, 0);
 			mem_size = mem_base + mem_size - \

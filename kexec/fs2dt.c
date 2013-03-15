@@ -697,8 +697,7 @@ static void add_boot_block(char **bufp, off_t *sizep)
 	unsigned long tlen, toff;
 	char *buf;
 
-	len = sizeof(bb[0]);
-	len += 7; len &= ~7;
+	len = _ALIGN(sizeof(bb[0]), 8);
 
 	bb->off_mem_rsvmap = cpu_to_be32(len);
 
@@ -721,7 +720,7 @@ static void add_boot_block(char **bufp, off_t *sizep)
 
 	len = propnum("");
 	bb->dt_strings_size = cpu_to_be32(len);
-	len +=  3; len &= ~3;
+	len = _ALIGN(len, 4);
 	bb->totalsize = cpu_to_be32(be32_to_cpu(bb->off_dt_strings) + len);
 
 	bb->magic = cpu_to_be32(0xd00dfeed);
