@@ -272,6 +272,7 @@ int arch_process_options(int argc, char **argv);
 int arch_compat_trampoline(struct kexec_info *info);
 void arch_update_purgatory(struct kexec_info *info);
 int is_crashkernel_mem_reserved(void);
+int get_max_crash_kernel_limit(uint64_t *start, uint64_t *end);
 char *get_command_line(void);
 
 int kexec_iomem_for_each_line(char *match,

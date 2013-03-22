@@ -188,9 +188,9 @@ static int exclude_region(int *nr_ranges, uint64_t start, uint64_t end);
 static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 
 /* Memory region reserved for storing panic kernel and other data. */
-static struct memory_range crash_reserved_mem;
-/* under 4G parts */
-static struct memory_range crash_reserved_low_mem;
+#define CRASH_RESERVED_MEM_NR	8
+static struct memory_range crash_reserved_mem[CRASH_RESERVED_MEM_NR];
+static int crash_reserved_mem_nr;
 
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
@@ -207,7 +207,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 				   int kexec_flags, unsigned long lowmem_limit)
 {
 	const char *iomem = proc_iomem();
-	int memory_ranges = 0, gart = 0;
+	int memory_ranges = 0, gart = 0, i;
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end;
@@ -268,29 +268,28 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 	}
 	fclose(fp);
 	if (kexec_flags & KEXEC_PRESERVE_CONTEXT) {
-		int i;
 		for (i = 0; i < memory_ranges; i++) {
 			if (crash_memory_range[i].end > 0x0009ffff) {
-				crash_reserved_mem.start = \
+				crash_reserved_mem[0].start = \
 					crash_memory_range[i].start;
 				break;
 			}
 		}
-		if (crash_reserved_mem.start >= mem_max) {
+		if (crash_reserved_mem[0].start >= mem_max) {
 			fprintf(stderr, "Too small mem_max: 0x%llx.\n",
 				mem_max);
 			return -1;
 		}
-		crash_reserved_mem.end = mem_max;
-		crash_reserved_mem.type = RANGE_RAM;
+		crash_reserved_mem[0].end = mem_max;
+		crash_reserved_mem[0].type = RANGE_RAM;
+		crash_reserved_mem_nr = 1;
 	}
-	if (exclude_region(&memory_ranges, crash_reserved_mem.start,
-				crash_reserved_mem.end) < 0)
-		return -1;
-	if (crash_reserved_low_mem.start &&
-	    exclude_region(&memory_ranges, crash_reserved_low_mem.start,
-				crash_reserved_low_mem.end) < 0)
-		return -1;
+
+	for (i = 0; i < crash_reserved_mem_nr; i++)
+		if (exclude_region(&memory_ranges, crash_reserved_mem[i].start,
+				crash_reserved_mem[i].end) < 0)
+			return -1;
+
 	if (gart) {
 		/* exclude GART region if the system has one */
 		if (exclude_region(&memory_ranges, gart_start, gart_end) < 0)
@@ -351,9 +350,10 @@ static int get_crash_memory_ranges_xen(struct memory_range **range,
 
 	qsort(*range, *ranges, sizeof(struct memory_range), compare_ranges);
 
-	if (exclude_region(ranges, crash_reserved_mem.start,
-						crash_reserved_mem.end) < 0)
-		goto err;
+	for (i = 0; i < crash_reserved_mem_nr; i++)
+		if (exclude_region(ranges, crash_reserved_mem[i].start,
+						crash_reserved_mem[i].end) < 0)
+			goto err;
 
 	ret = 0;
 
@@ -434,9 +434,10 @@ static int get_crash_memory_ranges_xen(struct memory_range **range,
 
 	qsort(*range, *ranges, sizeof(struct memory_range), compare_ranges);
 
-	if (exclude_region(ranges, crash_reserved_mem.start,
-						crash_reserved_mem.end) < 0)
-		goto err;
+	for (i = 0; i < crash_reserved_mem_nr; i++)
+		if (exclude_region(ranges, crash_reserved_mem[i].start,
+						crash_reserved_mem[i].end) < 0)
+			goto err;
 
 	ret = 0;
 
@@ -1014,15 +1015,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	memmap_p = xmalloc(sz);
 	memset(memmap_p, 0, sz);
 	add_memmap(memmap_p, info->backup_src_start, info->backup_src_size);
-	sz = crash_reserved_mem.end - crash_reserved_mem.start +1;
-	if (add_memmap(memmap_p, crash_reserved_mem.start, sz) < 0) {
-		return ENOCRASHKERNEL;
-	}
-
-	if (crash_reserved_low_mem.start) {
-		sz = crash_reserved_low_mem.end - crash_reserved_low_mem.start
-					 +1;
-		add_memmap(memmap_p, crash_reserved_low_mem.start, sz);
+	for (i = 0; i < crash_reserved_mem_nr; i++) {
+		sz = crash_reserved_mem[i].end - crash_reserved_mem[i].start +1;
+		if (add_memmap(memmap_p, crash_reserved_mem[i].start, sz) < 0)
+			return ENOCRASHKERNEL;
 	}
 
 	/* Create a backup region segment to store backup data*/
@@ -1093,25 +1089,46 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	return 0;
 }
 
-int is_crashkernel_mem_reserved(void)
+int get_max_crash_kernel_limit(uint64_t *start, uint64_t *end)
 {
-	uint64_t start, end;
+	int i, idx = -1;
+	unsigned long sz_max = 0, sz;
 
-	if (parse_iomem_single("Crash kernel\n", &start, &end) || start == end)
-		return 0;
+	if (!crash_reserved_mem_nr)
+		return -1;
 
-	crash_reserved_mem.start = start;
-	crash_reserved_mem.end = end;
-	crash_reserved_mem.type = RANGE_RAM;
+	for (i = crash_reserved_mem_nr - 1; i >= 0; i--) {
+		sz = crash_reserved_mem[i].end - crash_reserved_mem[i].start +1;
+		if (sz <= sz_max)
+			continue;
+		sz_max = sz;
+		idx = i;
+	}
 
-	/* If there is no Crash low kernel, still can go on */
-	if (parse_iomem_single("Crash kernel low\n", &start, &end) ||
-					start == end)
+	*start = crash_reserved_mem[idx].start;
+	*end = crash_reserved_mem[idx].end;
+
+	return 0;
+}
+
+static int crashkernel_mem_callback(void *UNUSED(data), int nr,
+                                          char *UNUSED(str),
+                                          unsigned long base,
+                                          unsigned long length)
+{
+	if (nr >= CRASH_RESERVED_MEM_NR)
 		return 1;
 
-	crash_reserved_low_mem.start = start;
-	crash_reserved_low_mem.end = end;
-	crash_reserved_low_mem.type = RANGE_RAM;
+	crash_reserved_mem[nr].start = base;
+	crash_reserved_mem[nr].end   = base + length - 1;
+	crash_reserved_mem[nr].type  = RANGE_RAM;
+	return 0;
+}
 
-	return 1;
+int is_crashkernel_mem_reserved(void)
+{
+	crash_reserved_mem_nr = kexec_iomem_for_each_line("Crash kernel\n",
+                                       crashkernel_mem_callback, NULL);
+
+	return !!crash_reserved_mem_nr;
 }
