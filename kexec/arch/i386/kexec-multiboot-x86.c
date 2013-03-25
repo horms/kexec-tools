@@ -153,7 +153,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	int ranges;
 	struct AddrRangeDesc *mmap;
 	int command_line_len;
-	int i;
+	int i, result;
 	uint32_t u;
 	int opt;
 	int modules, mod_command_line_space;
@@ -174,13 +174,12 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		fprintf(stderr, "Cannot find a loadable multiboot header.\n");
 		return -1;
 	}
-
 	
 	/* Parse the command line */
-	command_line = "";
 	command_line_len = 0;
 	modules = 0;
 	mod_command_line_space = 0;
+	result = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1)
 	{
 		switch(opt) {
@@ -207,8 +206,6 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	imagename = argv[optind];
 	command_line = concat_cmdline(command_line, append);
 	command_line_len = strlen(command_line) + strlen(imagename) + 2;
-
-
 	
 	/* Load the ELF executable */
 	elf_exec_build_load(info, &ehdr, buf, len, 0);
@@ -274,7 +271,6 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		mmap[i].Type = 0xbad;  /* Not RAM */
 	}
 
-
 	if (mbh->flags & MULTIBOOT_MEMORY_INFO) { 
 		/* Provide a copy of the memory map to the kernel */
 
@@ -294,7 +290,6 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 			
 		/* done */
 	}
-
 
 	/* Load modules */
 	if (modules) {
@@ -358,10 +353,10 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		
 	}
 
-
 	/* Find a place for the MBI to live */
 	if (sort_segments(info) < 0) {
-                return -1;
+                result = -1;
+		goto out;
         }
 	mbi_base = add_buffer(info,
 		mbi_buf, mbi_bytes, mbi_bytes, 4, 0, 0xFFFFFFFFUL, 1);
@@ -383,8 +378,9 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	regs.eip = ehdr.e_entry;
 	elf_rel_set_symbol(&info->rhdr, "entry32_regs", &regs, sizeof(regs));
 
+out:
 	free(command_line);
-	return 0;
+	return result;
 }
 
 /*
