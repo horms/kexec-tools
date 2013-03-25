@@ -98,6 +98,8 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 #define ARG_STYLE_LINUX 1
 #define ARG_STYLE_NONE  2
 	int opt;
+	int result = 0;
+	char *error_msg = NULL;
 
 	/* See options.h and add any new options there too! */
 	static const struct option options[] = {
@@ -208,7 +210,8 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		elf_rel_set_symbol(&info->rhdr, "entry64_regs", &regs, sizeof(regs));
 
 		if (ramdisk) {
-			die("Ramdisks not supported with generic elf arguments");
+			error_msg = "Ramdisks not supported with generic elf arguments";
+			goto out;
 		}
 	}
 	else if (arg_style == ARG_STYLE_LINUX) {
@@ -240,8 +243,10 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		if (info->kexec_flags & KEXEC_ON_CRASH) {
 			rc = load_crashdump_segments(info, modified_cmdline,
 							max_addr, 0);
-			if (rc < 0)
-				return -1;
+			if (rc < 0) {
+				result = -1;
+				goto out;
+			}
 			/* Use new command line. */
 			free(command_line);
 			command_line = modified_cmdline;
@@ -267,10 +272,13 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 		elf_rel_set_symbol(&info->rhdr, "entry64_regs", &regs, sizeof(regs));
 	}
 	else {
-		die("Unknown argument style\n");
+		error_msg = "Unknown argument style\n";
 	}
 
+out:
 	free(command_line);
 	free(modified_cmdline);
-	return 0;
+	if (error_msg)
+		die(error_msg);
+	return result;
 }
