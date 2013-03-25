@@ -147,7 +147,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long mbi_base;
 	struct entry32_regs regs;
 	size_t mbi_bytes, mbi_offset;
-	char *command_line = NULL;
+	char *command_line = NULL, *tmp_cmdline = NULL;
 	char *imagename, *cp, *append = NULL;;
 	struct memory_range *range;
 	int ranges;
@@ -195,7 +195,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
-			command_line = get_command_line();
+			tmp_cmdline = get_command_line();
 			break;
 		case OPT_MOD:
 			modules++;
@@ -204,7 +204,10 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		}
 	}
 	imagename = argv[optind];
-	command_line = concat_cmdline(command_line, append);
+	command_line = concat_cmdline(tmp_cmdline, append);
+	if (tmp_cmdline) {
+		free(tmp_cmdline);
+	}
 	command_line_len = strlen(command_line) + strlen(imagename) + 2;
 	
 	/* Load the ELF executable */
