@@ -1020,13 +1020,15 @@ char *get_command_line(void)
 /* check we retained the initrd */
 static void check_reuse_initrd(void)
 {
+	char *str = NULL;
 	char *line = get_command_line();
 
-	if (strstr(line, "retain_initrd") == NULL)
+	str = strstr(line, "retain_initrd");
+	free(line);
+
+	if (str == NULL)
 		die("unrecoverable error: current boot didn't "
 		    "retain the initrd for reuse.\n");
-
-	free(line);
 }
 
 char *concat_cmdline(const char *base, const char *append)
