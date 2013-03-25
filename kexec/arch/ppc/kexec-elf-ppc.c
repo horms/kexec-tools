@@ -156,6 +156,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 {
 	struct mem_ehdr ehdr;
 	char *command_line, *crash_cmdline, *cmdline_buf;
+	char *tmp_cmdline;
 	int command_line_len;
 	char *dtb;
 	int result;
@@ -191,7 +192,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	char *blob_buf = NULL;
 	off_t blob_size = 0;
 
-	command_line = NULL;
+	command_line = tmp_cmdline = NULL;
 	dtb = NULL;
 	max_addr = LONG_MAX;
 	hole_addr = 0;
@@ -211,7 +212,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 			usage();
 			return -1;
 		case OPT_APPEND:
-			command_line = optarg;
+			tmp_cmdline = optarg;
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -239,12 +240,12 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 		die("Can't specify --ramdisk or --initrd with --reuseinitrd\n");
 
 	command_line_len = 0;
-	if (command_line) {
-		command_line_len = strlen(command_line) + 1;
+	if (tmp_cmdline) {
+		command_line = tmp_cmdline;
 	} else {
 		command_line = get_command_line();
-		command_line_len = strlen(command_line) + 1;
 	}
+	command_line_len = strlen(command_line) + 1;
 
 	fixup_nodes[cur_fixup] = NULL;
 
@@ -450,6 +451,8 @@ out2:
 out:
 	free_elf_info(&ehdr);
 	free(crash_cmdline);
+	if (!tmp_cmdline)
+		free(command_line);
 	if (error_msg)
 		die(error_msg);
 
