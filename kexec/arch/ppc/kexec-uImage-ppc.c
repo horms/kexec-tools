@@ -81,6 +81,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 		unsigned int ep)
 {
 	char *command_line, *cmdline_buf, *crash_cmdline;
+	char *tmp_cmdline;
 	int command_line_len;
 	char *dtb;
 	unsigned int addr;
@@ -101,6 +102,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 
 	cmdline_buf = NULL;
 	command_line = NULL;
+	tmp_cmdline = NULL;
 	dtb = NULL;
 	max_addr = LONG_MAX;
 
@@ -115,7 +117,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 			usage();
 			return -1;
 		case OPT_APPEND:
-			command_line = optarg;
+			tmp_cmdline = optarg;
 			break;
 
 		case OPT_RAMDISK:
@@ -141,12 +143,12 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 		die("Can't specify --ramdisk or --initrd with --reuseinitrd\n");
 
 	command_line_len = 0;
-	if (command_line) {
-		command_line_len = strlen(command_line) + 1;
+	if (tmp_cmdline) {
+		command_line = tmp_cmdline;
 	} else {
 		command_line = get_command_line();
-		command_line_len = strlen(command_line) + 1;
 	}
+	command_line_len = strlen(command_line) + 1;
 
 	fixup_nodes[cur_fixup] = NULL;
 
@@ -295,6 +297,8 @@ out2:
 	free(cmdline_buf);
 out:
 	free(crash_cmdline);
+	if (!tmp_cmdline)
+		free(command_line);
 	if (error_msg)
 		die(error_msg);
 	return ret;
