@@ -232,7 +232,7 @@ static int do_bzImage64_load(struct kexec_info *info,
 int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
-	char *command_line = NULL;
+	char *command_line = NULL, *tmp_cmdline = NULL;
 	const char *ramdisk = NULL, *append = NULL;
 	char *ramdisk_buf;
 	off_t ramdisk_length = 0;
@@ -269,7 +269,7 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
-			command_line = get_command_line();
+			tmp_cmdline = get_command_line();
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -282,7 +282,9 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		}
 	}
-	command_line = concat_cmdline(command_line, append);
+	command_line = concat_cmdline(tmp_cmdline, append);
+	if (tmp_cmdline)
+		free(tmp_cmdline);
 	command_line_len = 0;
 	if (command_line)
 		command_line_len = strlen(command_line) + 1;
