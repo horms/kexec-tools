@@ -90,13 +90,14 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	char *fixup_nodes[FIXUP_ENTRYS + 1];
 	int cur_fixup = 0;
 	int opt;
-	int ret;
+	int ret = 0;
 	char *seg_buf = NULL;
 	off_t seg_size = 0;
 	unsigned long long hole_addr;
 	unsigned long max_addr;
 	char *blob_buf = NULL;
 	off_t blob_size = 0;
+	char *error_msg = NULL;
 
 	cmdline_buf = NULL;
 	command_line = NULL;
@@ -186,7 +187,8 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 		ret = load_crashdump_segments(info, crash_cmdline,
 						max_addr, 0);
 		if (ret < 0) {
-			return -1;
+			ret = -1;
+			goto out;
 		}
 	}
 
@@ -212,8 +214,10 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 		create_flatten_tree(info, (unsigned char **)&blob_buf,
 				(unsigned long *)&blob_size, cmdline_buf);
 	}
-	if (!blob_buf || !blob_size)
-		die("Device tree seems to be an empty file.\n");
+	if (!blob_buf || !blob_size) {
+		error_msg = "Device tree seems to be an empty file.\n";
+		goto out2;
+	}
 
 	/* initial fixup for device tree */
 	blob_buf = fixup_dtb_init(info, blob_buf, &blob_size, load_addr, &dtb_addr);
@@ -249,7 +253,8 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 			load_addr + KERNEL_ACCESS_TOP, 1);
 	if (dtb_addr_actual != dtb_addr) {
 		printf("dtb_addr_actual: %lx, dtb_addr: %lx\n", dtb_addr_actual, dtb_addr);
-		die("Error device tree not loadded to address it was expecting to be loaded too!\n");
+		error_msg = "Error device tree not loadded to address it was expecting to be loaded too!\n";
+		goto out2;
 	}
 
 	/* set various variables for the purgatory */
@@ -286,7 +291,13 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 	addr = elf_rel_get_addr(&info->rhdr, "purgatory_start");
 	info->entry = (void *)addr;
 
-	return 0;
+out2:
+	free(cmdline_buf);
+out:
+	free(crash_cmdline);
+	if (error_msg)
+		die(error_msg);
+	return ret;
 }
 
 int uImage_ppc_load(int argc, char **argv, const char *buf, off_t len,
