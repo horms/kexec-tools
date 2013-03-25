@@ -90,6 +90,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	struct mem_ehdr ehdr;
 	char *command_line = NULL, *modified_cmdline = NULL;
 	const char *append = NULL;
+	char *tmp_cmdline = NULL;
 	char *error_msg = NULL;
 	int result;
 	int command_line_len;
@@ -139,7 +140,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
-			command_line = get_command_line();
+			tmp_cmdline = get_command_line();
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -159,7 +160,10 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		}
 	}
-	command_line = concat_cmdline(command_line, append);
+	command_line = concat_cmdline(tmp_cmdline, append);
+	if (tmp_cmdline) {
+		free(tmp_cmdline);
+	}
 	command_line_len = 0;
 	if (command_line) {
 		command_line_len = strlen(command_line) +1;
