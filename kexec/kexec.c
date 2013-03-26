@@ -1123,7 +1123,7 @@ int main(int argc, char *argv[])
 			entry = (void *)strtoul(optarg, &endptr, 0);
 			if (*endptr) {
 				fprintf(stderr,
-					"Bad option value in --load-jump-back-helper=%s\n",
+					"Bad option value in --entry=%s\n",
 					optarg);
 				usage();
 				return 1;
