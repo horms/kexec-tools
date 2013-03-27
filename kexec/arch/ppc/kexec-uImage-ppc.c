@@ -130,8 +130,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 
 		case OPT_NODES:
 			if (cur_fixup >= FIXUP_ENTRYS) {
-				fprintf(stderr, "The number of entries for the fixup is too large\n");
-				exit(1);
+				die("The number of entries for the fixup is too large\n");
 			}
 			fixup_nodes[cur_fixup] = optarg;
 			cur_fixup++;

@@ -159,8 +159,7 @@ char *get_append(void)
         FILE *fp;
         int len;
         if((fp = fopen("/proc/cmdline", "r")) == NULL){
-              printf("/proc/cmdline file open error !!\n");
-              exit(1);
+              die("/proc/cmdline file open error !!\n");
         }
         fgets(append_buf, 256, fp);
         len = strlen(append_buf);

@@ -58,9 +58,7 @@ static void fixup_nodes(char *nodes[])
 
 		content = slurp_file(fname, &content_size);
 		if (!content) {
-			fprintf(stderr, "Can't open %s: %s\n",
-					fname, strerror(errno));
-			exit(1);
+			die("Can't open %s: %s\n", fname, strerror(errno));
 		}
 
 		prop_name = fname + len;
