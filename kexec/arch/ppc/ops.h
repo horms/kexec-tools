@@ -145,6 +145,4 @@ static inline char *get_path(const void *phandle, char *buf, int len)
 	return NULL;
 }
 
-#define fatal(args...) { printf(args); exit(1); }
-
 #endif /* _PPC_BOOT_OPS_H_ */

@@ -66,10 +66,10 @@ static void expand_buf(int minexpand)
 	size = _ALIGN(size + minexpand, EXPAND_GRANULARITY);
 	buf = realloc(buf, size);
 	if (!buf)
-		fatal("Couldn't find %d bytes to expand device tree\n\r", size);
+		die("Couldn't find %d bytes to expand device tree\n\r", size);
 	rc = fdt_open_into(fdt, buf, size);
 	if (rc != 0)
-		fatal("Couldn't expand fdt into new buffer: %s\n\r",
+		die("Couldn't expand fdt into new buffer: %s\n\r",
 		      fdt_strerror(rc));
 
 	fdt = buf;
@@ -159,7 +159,7 @@ static unsigned long fdt_wrapper_finalize(void)
 
 	rc = fdt_pack(fdt);
 	if (rc != 0)
-		fatal("Couldn't pack flat tree: %s\n\r",
+		die("Couldn't pack flat tree: %s\n\r",
 		      fdt_strerror(rc));
 	return (unsigned long)fdt;
 }
@@ -185,5 +185,5 @@ void fdt_init(void *blob)
 
 	err = fdt_open_into(fdt, fdt, bufsize);
 	if (err != 0)
-		fatal("fdt_init(): %s\n\r", fdt_strerror(err));
+		die("fdt_init(): %s\n\r", fdt_strerror(err));
 }
