@@ -685,13 +685,40 @@ static void ultoa(unsigned long i, char *str)
 	}
 }
 
+static void cmdline_add_memmap_internal(char *cmdline, unsigned long startk,
+					unsigned long endk, int type)
+{
+	int cmdlen, len;
+	char str_mmap[256], str_tmp[20];
+
+	strcpy (str_mmap, " memmap=");
+	ultoa((endk-startk), str_tmp);
+	strcat (str_mmap, str_tmp);
+
+	if (type == RANGE_RAM)
+		strcat (str_mmap, "K@");
+	else if (type == RANGE_RESERVED)
+		strcat (str_mmap, "K$");
+	else if (type == RANGE_ACPI || type == RANGE_ACPI_NVS)
+		strcat (str_mmap, "K#");
+
+	ultoa(startk, str_tmp);
+	strcat (str_mmap, str_tmp);
+	strcat (str_mmap, "K");
+	len = strlen(str_mmap);
+	cmdlen = strlen(cmdline) + len;
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str_mmap);
+}
+
 /* Adds the appropriate memmap= options to command line, indicating the
  * memory regions the new kernel can use to boot into. */
 static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 {
 	int i, cmdlen, len;
 	unsigned long min_sizek = 100;
-	char str_mmap[256], str_tmp[20];
+	char str_mmap[256];
 
 	/* Exact map */
 	strcpy(str_mmap, " memmap=exactmap");
@@ -713,18 +740,7 @@ static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 		 * up precious command line length. */
 		if ((endk - startk) < min_sizek)
 			continue;
-		strcpy (str_mmap, " memmap=");
-		ultoa((endk-startk), str_tmp);
-		strcat (str_mmap, str_tmp);
-		strcat (str_mmap, "K@");
-		ultoa(startk, str_tmp);
-		strcat (str_mmap, str_tmp);
-		strcat (str_mmap, "K");
-		len = strlen(str_mmap);
-		cmdlen = strlen(cmdline) + len;
-		if (cmdlen > (COMMAND_LINE_SIZE - 1))
-			die("Command line overflow\n");
-		strcat(cmdline, str_mmap);
+		cmdline_add_memmap_internal(cmdline, startk, endk, RANGE_RAM);
 	}
 
 	dbgprintf("Command line after adding memmap\n");
@@ -817,27 +833,15 @@ static enum coretype get_core_type(struct crash_elf_info *elf_info,
 static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
 					unsigned long end)
 {
-	int cmdlen, len, align = 1024;
+	int align = 1024;
 	unsigned long startk, endk;
-	char str_mmap[256], str_tmp[20];
 
 	if (!(end - start))
 		return 0;
 
 	startk = start/1024;
 	endk = (end + align - 1)/1024;
-	strcpy (str_mmap, " memmap=");
-	ultoa((endk - startk), str_tmp);
-	strcat (str_mmap, str_tmp);
-	strcat (str_mmap, "K#");
-	ultoa(startk, str_tmp);
-	strcat (str_mmap, str_tmp);
-	strcat (str_mmap, "K");
-	len = strlen(str_mmap);
-	cmdlen = strlen(cmdline) + len;
-	if (cmdlen > (COMMAND_LINE_SIZE - 1))
-		die("Command line overflow\n");
-	strcat(cmdline, str_mmap);
+	cmdline_add_memmap_internal(cmdline, startk, endk, RANGE_ACPI);
 
 	dbgprintf("Command line after adding acpi memmap\n");
 	dbgprintf("%s\n", cmdline);
@@ -907,27 +911,15 @@ static void get_backup_area(struct kexec_info *info,
 static int cmdline_add_memmap_reserved(char *cmdline, unsigned long start,
 					unsigned long end)
 {
-	int cmdlen, len, align = 1024;
+	int align = 1024;
 	unsigned long startk, endk;
-	char str_mmap[256], str_tmp[20];
 
 	if (!(end - start))
 		return 0;
 
 	startk = start/1024;
 	endk = (end + align - 1)/1024;
-	strcpy (str_mmap, " memmap=");
-	ultoa((endk - startk), str_tmp);
-	strcat (str_mmap, str_tmp);
-	strcat (str_mmap, "K$");
-	ultoa(startk, str_tmp);
-	strcat (str_mmap, str_tmp);
-	strcat (str_mmap, "K");
-	len = strlen(str_mmap);
-	cmdlen = strlen(cmdline) + len;
-	if (cmdlen > (COMMAND_LINE_SIZE - 1))
-		die("Command line overflow\n");
-	strcat(cmdline, str_mmap);
+	cmdline_add_memmap_internal(cmdline, startk, endk, RANGE_RESERVED);
 
 #ifdef DEBUG
 		printf("Command line after adding reserved memmap\n");
