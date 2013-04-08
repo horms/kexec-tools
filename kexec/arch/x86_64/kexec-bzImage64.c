@@ -286,8 +286,12 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 	if (tmp_cmdline)
 		free(tmp_cmdline);
 	command_line_len = 0;
-	if (command_line)
+	if (command_line) {
 		command_line_len = strlen(command_line) + 1;
+	} else {
+		command_line = strdup("\0");
+		command_line_len = 1;
+	}
 	ramdisk_buf = 0;
 	if (ramdisk)
 		ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
