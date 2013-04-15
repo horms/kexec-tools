@@ -101,6 +101,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		{ "ramdisk",            1, NULL, OPT_RAMDISK },
 		{ "initrd",             1, NULL, OPT_RAMDISK },
 		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
+		{ "dtb",                1, NULL, OPT_DEVICETREEBLOB },
 		{ "args-linux",		0, NULL, OPT_ARGS_IGNORE },
 		{ 0,                    0, NULL, 0 },
 	};
@@ -345,6 +346,7 @@ void elf_ppc64_usage(void)
 	fprintf(stderr, "     --ramdisk=<filename> Initial RAM disk.\n");
 	fprintf(stderr, "     --initrd=<filename> same as --ramdisk.\n");
 	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
+	fprintf(stderr, "     --dtb=<filename> same as --devicetreeblob.\n");
 
 	fprintf(stderr, "elf support is still broken\n");
 }

@@ -38,6 +38,7 @@
 	{ "ramdisk",            1, NULL, OPT_RAMDISK },	\
 	{ "initrd",             1, NULL, OPT_RAMDISK },		\
 	{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },	\
+	{ "dtb",                1, NULL, OPT_DEVICETREEBLOB },	\
 	{ "args-linux",         0, NULL, OPT_ARGS_IGNORE },
 
 #define KEXEC_ALL_OPT_STR KEXEC_OPT_STR
