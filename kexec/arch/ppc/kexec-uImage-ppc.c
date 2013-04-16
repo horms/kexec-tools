@@ -82,7 +82,7 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 {
 	char *command_line, *cmdline_buf, *crash_cmdline;
 	char *tmp_cmdline;
-	int command_line_len;
+	int command_line_len, crash_cmdline_len;
 	char *dtb;
 	unsigned int addr;
 	unsigned long dtb_addr;
@@ -178,29 +178,34 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 
 	add_segment(info, buf, len, load_addr, len + _1MiB);
 
+
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
                 crash_cmdline = xmalloc(COMMAND_LINE_SIZE);
                 memset((void *)crash_cmdline, 0, COMMAND_LINE_SIZE);
-        } else
-                crash_cmdline = NULL;
-
-	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		ret = load_crashdump_segments(info, crash_cmdline,
 						max_addr, 0);
 		if (ret < 0) {
 			ret = -1;
 			goto out;
 		}
+		crash_cmdline_len = strlen(crash_cmdline);
+	} else {
+		crash_cmdline = NULL;
+		crash_cmdline_len = 0;
+	}
+
+	if (crash_cmdline_len + command_line_len + 1 > COMMAND_LINE_SIZE) {
+		printf("Kernel command line exceeds maximum possible length\n");
+		return -1;
 	}
 
 	cmdline_buf = xmalloc(COMMAND_LINE_SIZE);
 	memset((void *)cmdline_buf, 0, COMMAND_LINE_SIZE);
+
 	if (command_line)
-		strncat(cmdline_buf, command_line, command_line_len);
+		strcpy(cmdline_buf, command_line);
 	if (crash_cmdline)
-		strncat(cmdline_buf, crash_cmdline,
-			sizeof(crash_cmdline) -
-			strlen(crash_cmdline) - 1);
+		strncat(cmdline_buf, crash_cmdline, crash_cmdline_len);
 
 	elf_rel_build_load(info, &info->rhdr, (const char *)purgatory,
 				purgatory_size, 0, -1, -1, 0);
