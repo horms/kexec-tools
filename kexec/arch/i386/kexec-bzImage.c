@@ -310,9 +310,8 @@ int do_bzImage_load(struct kexec_info *info,
 	if (real_mode_entry)
 		elf_rel_get_symbol(&info->rhdr, "entry16_regs",
 					 &regs16, sizeof(regs16));
-	elf_rel_get_symbol(&info->rhdr, "entry32_regs", &regs32, sizeof(regs32));
-	/*
 
+	/*
 	 * Initialize the 32bit start information.
 	 */
 	regs32.eax = 0; /* unused */
