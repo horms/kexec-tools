@@ -56,10 +56,15 @@ char *slurp_ramdisk_ppc(const char *filename, off_t *r_size)
 	struct Image_info img;
 	off_t size;
 	const unsigned char *buf = slurp_file(filename, &size);
+	int rc;
 
 	/* Check if this is a uImage RAMDisk */
-	if (buf &&
-	    uImage_probe_ramdisk(buf, size, IH_ARCH_PPC) == 0) {
+	if (!buf)
+		return buf;
+	rc = uImage_probe_ramdisk(buf, size, IH_ARCH_PPC); 
+	if (rc < 0)
+		die("uImage: Corrupted ramdisk file %s\n", filename);
+	else if (rc == 0) {
 		if (uImage_load(buf, size, &img) != 0)
 			die("uImage: Reading %ld bytes from %s failed\n",
 				size, filename);

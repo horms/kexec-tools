@@ -19,6 +19,10 @@
 /*
  * Returns the image type if everything goes well. This would
  * allow the user to decide if the image is of their interest.
+ *
+ * Returns -1 on a corrupted image
+ *
+ * Returns 0 if this is not a uImage
  */
 int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 {
@@ -33,7 +37,7 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 
 	memcpy(&header, buf, sizeof(header));
 	if (be32_to_cpu(header.ih_magic) != IH_MAGIC)
-		return -1;
+		return 0;
 #ifdef HAVE_LIBZ
 	hcrc = be32_to_cpu(header.ih_hcrc);
 	header.ih_hcrc = 0;
@@ -84,7 +88,7 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 #ifdef HAVE_LIBZ
 	crc = crc32(0, (void *)buf + sizeof(header), be32_to_cpu(header.ih_size));
 	if (crc != be32_to_cpu(header.ih_dcrc)) {
-		printf("The data CRC does not match. Computed: %08x "
+		printf("uImage: The data CRC does not match. Computed: %08x "
 				"expected %08x\n", crc,
 				be32_to_cpu(header.ih_dcrc));
 		return -1;
@@ -93,18 +97,33 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 	return (int)header.ih_type;
 }
 
+/* 
+ * To conform to the 'probe' routine in file_type struct,
+ * we return :
+ *  0		- If the image is valid 'type' image.
+ *
+ *  Now, we have to pass on the 'errors' in the image. So,
+ *
+ * -1		- If the image is corrupted.
+ *  1		- If the image is not a uImage.
+ */
+
 int uImage_probe_kernel(const unsigned char *buf, off_t len, unsigned int arch)
 {
 	int type = uImage_probe(buf, len, arch);
+	if (type < 0)
+		return -1;
 
-	return (type == IH_TYPE_KERNEL || type == IH_TYPE_KERNEL_NOLOAD) ? 
-			0 : -1;
+	return !(type == IH_TYPE_KERNEL || type == IH_TYPE_KERNEL_NOLOAD);
 }
 
 int uImage_probe_ramdisk(const unsigned char *buf, off_t len, unsigned int arch)
 {
 	int type = uImage_probe(buf, len, arch);
-	return (type == IH_TYPE_RAMDISK) ? 0 : -1;
+
+	if (type < 0)
+		return -1;
+	return !(type == IH_TYPE_RAMDISK);
 }
 
 #ifdef HAVE_LIBZ
