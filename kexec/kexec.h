@@ -285,10 +285,6 @@ int kexec_iomem_for_each_line(char *match,
 int parse_iomem_single(char *str, uint64_t *start, uint64_t *end);
 const char * proc_iomem(void);
 
-extern int add_backup_segments(struct kexec_info *info,
-			       unsigned long backup_base,
-			       unsigned long backup_size);
-
 #define MAX_LINE	160
 
 char *concat_cmdline(const char *base, const char *append);

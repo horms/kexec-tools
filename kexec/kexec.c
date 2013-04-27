@@ -434,8 +434,9 @@ static int find_segment_hole(struct kexec_info *info,
 	return *size;
 }
 
-int add_backup_segments(struct kexec_info *info, unsigned long backup_base,
-			unsigned long backup_size)
+static int add_backup_segments(struct kexec_info *info,
+			       unsigned long backup_base,
+			       unsigned long backup_size)
 {
 	unsigned long mem_base, mem_size, bkseg_base, bkseg_size, start, end;
 	unsigned long pagesize;
