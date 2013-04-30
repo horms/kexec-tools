@@ -65,6 +65,7 @@ unsigned long crash_architecture(struct crash_elf_info *elf_info)
 int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 {
 	char crash_notes[PATH_MAX];
+	char crash_notes_size[PATH_MAX];
 	char line[MAX_LINE];
 	FILE *fp;
 	struct stat cpu_stat;
@@ -101,12 +102,27 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 	if (count != 1)
 		die("Cannot parse %s: %s\n", crash_notes, strerror(errno));
 	*addr = (uint64_t) temp;
-	*len = MAX_NOTE_BYTES; /* we should get this from the kernel instead */
-
-	dbgprintf("%s: crash_notes addr = %Lx\n", __FUNCTION__,
-		  (unsigned long long)*addr);
-
 	fclose(fp);
+
+	*len = MAX_NOTE_BYTES;
+	sprintf(crash_notes_size,
+		"/sys/devices/system/cpu/cpu%d/crash_notes_size", cpu);
+	fp = fopen(crash_notes_size, "r");
+	if (fp) {
+		if (!fgets(line, sizeof(line), fp))
+			die("Cannot parse %s: %s\n",
+			    crash_notes_size, strerror(errno));
+		count = sscanf(line, "%Lu", &temp);
+		if (count != 1)
+			die("Cannot parse %s: %s\n",
+			    crash_notes_size, strerror(errno));
+		*len = (uint64_t) temp;
+		fclose(fp);
+	}
+
+	dbgprintf("%s: crash_notes addr = %Lx, size = %Lu\n", __FUNCTION__,
+		  (unsigned long long)*addr, (unsigned long long)*len);
+
 	return 0;
 }
 
