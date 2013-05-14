@@ -1175,7 +1175,8 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if ((kexec_flags & KEXEC_ON_CRASH) && !is_crashkernel_mem_reserved()) {
+	if (do_load && (kexec_flags & KEXEC_ON_CRASH) &&
+	    !is_crashkernel_mem_reserved()) {
 		die("Memory for crashkernel is not reserved\n"
 		    "Please reserve memory by passing"
 		    "\"crashkernel=X@Y\" parameter to kernel\n"
