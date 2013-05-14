@@ -1176,17 +1176,17 @@ int main(int argc, char *argv[])
 	}
 
 	if ((kexec_flags & KEXEC_ON_CRASH) && !is_crashkernel_mem_reserved()) {
-		printf("Memory for crashkernel is not reserved\n");
-		printf("Please reserve memory by passing ");
-		printf("\"crashkernel=X@Y\" parameter to the kernel\n");
-		die("Then try loading kdump kernel\n");
+		die("Memory for crashkernel is not reserved\n"
+		    "Please reserve memory by passing"
+		    "\"crashkernel=X@Y\" parameter to kernel\n"
+		    "Then try to loading kdump kernel\n");
 	}
 
 	if (do_load && (kexec_flags & KEXEC_PRESERVE_CONTEXT) &&
 	    mem_max == ULONG_MAX) {
-		printf("Please specify memory range used by kexeced kernel\n");
-		printf("to preserve the context of original kernel with \n");
-		die("\"--mem-max\" parameter\n");
+		die("Please specify memory range used by kexeced kernel\n"
+		    "to preserve the context of original kernel with \n"
+		    "\"--mem-max\" parameter\n");
 	}
 
 	fileind = optind;
