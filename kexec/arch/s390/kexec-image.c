@@ -21,7 +21,6 @@
 #include "../../kexec-syscall.h"
 #include "../../kexec/crashdump.h"
 #include "kexec-s390.h"
-#include "elf.h"
 #include <arch/options.h>
 
 static uint64_t crash_base, crash_end;
