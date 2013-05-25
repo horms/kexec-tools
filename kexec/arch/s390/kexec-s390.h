@@ -34,4 +34,4 @@ extern int get_memory_ranges_s390(struct memory_range range[], int *ranges,
 				  int with_crashk);
 extern int command_line_add(const char *str);
 
-#endif /* KEXEC_IA64_H */
+#endif /* KEXEC_S390_H */
