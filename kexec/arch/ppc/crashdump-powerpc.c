@@ -51,17 +51,6 @@ static int crash_max_memory_ranges;
  */
 mem_rgns_t usablemem_rgns = {0, NULL};
 
-/*
- * To store the memory size of the first kernel and this value will be
- * passed to the second kernel as command line (savemaxmem=xM).
- * The second kernel will be calculated saved_max_pfn based on this
- * variable.
- * Since we are creating/using usable-memory property, there is no way
- * we can determine the RAM size unless parsing the device-tree/memoy@/reg
- * property in the kernel.
- */
-unsigned long long saved_max_mem;
-
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
  * requirements are different in the case of normal kexec and crashdumps.
@@ -224,13 +213,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		crash_memory_range[memory_ranges].start = cstart;
 		crash_memory_range[memory_ranges++].end = cend;
 	}
-	/*
-	 * Can not trust the memory regions order that we read from
-	 * device-tree. Hence, get the MAX end value.
-	 */
-	for (i = 0; i < memory_ranges; i++)
-		if (saved_max_mem < crash_memory_range[i].end)
-			saved_max_mem = crash_memory_range[i].end;
 
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
@@ -378,7 +360,6 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 	 * read by flatten_device_tree and modified if required
 	 */
 	add_cmdline_param(mod_cmdline, elfcorehdr, " elfcorehdr=", "K");
-	add_cmdline_param(mod_cmdline, saved_max_mem, " savemaxmem=", "M");
 	add_cmdline(mod_cmdline, " maxcpus=1");
 	return 0;
 }
