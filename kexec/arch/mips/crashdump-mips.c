@@ -41,14 +41,6 @@ static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 /* Memory region reserved for storing panic kernel and other data. */
 static struct memory_range crash_reserved_mem;
 
-/*
- * To store the memory size of the first kernel and this value will be
- * passed to the second kernel as command line (savemaxmem=xM).
- * The second kernel will be calculated saved_max_pfn based on this
- * variable.
- */
-unsigned long long saved_max_mem;
-
 /* Read kernel physical load addr from the file returned by proc_iomem()
  * (Kernel Code) and store in kexec_info */
 static int get_kernel_paddr(struct crash_elf_info *elf_info)
@@ -220,10 +212,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	if (exclude_crash_reserve_region(&memory_ranges) < 0)
 		return -1;
 
-	for (i = 0; i < memory_ranges; i++)
-		if (saved_max_mem < crash_memory_range[i].end)
-			saved_max_mem = crash_memory_range[i].end + 1;
-
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
 	return 0;
@@ -291,27 +279,6 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	ptr += strlen(str);
 	ultoa(addr, ptr);
 	strcat(str, "K");
-	len = strlen(str);
-	cmdlen = strlen(cmdline) + len;
-	if (cmdlen > (COMMAND_LINE_SIZE - 1))
-		die("Command line overflow\n");
-	strcat(cmdline, str);
-	return 0;
-}
-
-/* Adds the savemaxmem= command line parameter to command line. */
-static int cmdline_add_savemaxmem(char *cmdline, unsigned long long addr)
-{
-	int cmdlen, len, align = 1024;
-	char str[30], *ptr;
-
-	/* Passing in savemaxmem=xxxM format. Saves space required in cmdline.*/
-	addr = addr/(align*align);
-	ptr = str;
-	strcpy(str, " savemaxmem=");
-	ptr += strlen(str);
-	ultoa(addr, ptr);
-	strcat(str, "M");
 	len = strlen(str);
 	cmdlen = strlen(cmdline) + len;
 	if (cmdlen > (COMMAND_LINE_SIZE - 1))
@@ -394,7 +361,6 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	cmdline_add_mem(mod_cmdline, crash_reserved_mem.start,
 		elfcorehdr - crash_reserved_mem.start);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
-	cmdline_add_savemaxmem(mod_cmdline, saved_max_mem);
 
 	dbgprintf("CRASH MEMORY RANGES:\n");
 	dbgprintf("%016Lx-%016Lx\n", crash_reserved_mem.start,
