@@ -590,7 +590,6 @@ static int get_devtree_details(unsigned long kexec_flags)
 			if (fread(&tce_base, sizeof(uint64_t), 1, file) != 1) {
 				perror(fname);
 				goto error_openfile;
-				return -1;
 			}
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);

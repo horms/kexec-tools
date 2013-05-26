@@ -736,7 +736,6 @@ static int get_devtree_details(unsigned long kexec_flags)
 					!= 1) {
 				perror(fname);
 				goto error_openfile;
-				return -1;
 			}
 			memset(fname, 0, sizeof(fname));
 			sprintf(fname, "%s%s%s",
