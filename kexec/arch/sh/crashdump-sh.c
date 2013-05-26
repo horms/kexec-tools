@@ -31,8 +31,6 @@
 #define CRASH_MAX_MEMORY_RANGES 64
 static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 
-uint64_t saved_max_mem;
-
 static int crash_sh_range_nr;
 static int crash_sh_memory_range_callback(void *UNUSED(data), int UNUSED(nr),
 					  char *str,
@@ -54,9 +52,6 @@ static int crash_sh_memory_range_callback(void *UNUSED(data), int UNUSED(nr),
 		range->end = base + length - 1;
 		range->type = RANGE_RAM;
 		crash_sh_range_nr++;
-
-		if (saved_max_mem < range->end)
-			saved_max_mem = range->end;
 	}
 
 	if (strncmp(str, "Crash kernel\n", 13) == 0) {
@@ -80,7 +75,6 @@ static int crash_sh_memory_range_callback(void *UNUSED(data), int UNUSED(nr),
 static int crash_get_memory_ranges(struct memory_range **range, int *ranges)
 {
 	crash_sh_range_nr = 0;
-	saved_max_mem = 0;
 
 	kexec_iomem_for_each_line(NULL, crash_sh_memory_range_callback, NULL);
 	*range = crash_memory_range;
