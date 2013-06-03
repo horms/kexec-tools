@@ -104,6 +104,9 @@ command:
 
 .SH OPTIONS
 .TP
+.B \-d\ (\-\-debug)
+Enable debugging messages.
+.TP
 .B \-e\ (\-\-exec)
 Run the currently loaded kernel. Note that it will reboot into the loaded kernel without calling shutdown(8).
 .TP
@@ -166,9 +169,6 @@ Pass ELF boot notes.
 .TP
 .B \-\-args\-linux
 Pass Linux kernel style options.
-.TP
-.B \-d \ (\-\-debug)
-Enable debugging messages.
 .TP
 .B \-\-real\-mode
 Use the kernel's real mode entry point.
