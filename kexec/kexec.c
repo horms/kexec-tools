@@ -905,6 +905,10 @@ void usage(void)
 	       "                      context of current kernel during kexec.\n"
 	       "     --load-jump-back-helper Load a helper image to jump back\n"
 	       "                      to original kernel.\n"
+	       "     --entry=<addr>   Specify jump back address.\n"
+	       "                      (0 means it's not jump back or\n"
+	       "                      preserve context)\n"
+	       "                      to original kernel.\n"
 	       " -d, --debug           Enable debugging to help spot a failure.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
