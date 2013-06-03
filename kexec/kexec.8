@@ -162,6 +162,16 @@ to load code into.
 .TP
 .BI \-\-entry= addr
 Specify the jump back address. (0 means it's not jump back or preserve context)
+.TP
+.BI \-\-load\-preserve\-context
+Load the new kernel and preserve context of current kernel during kexec.
+.TP
+.BI \-\-load\-jump\-back\-helper
+Load a helper image to jump back to original kernel.
+.TP
+.BI \-\-reuseinitrd
+Reuse initrd from first boot.
+
 
 .SH SUPPORTED KERNEL FILE TYPES AND OPTIONS
 .B Beoboot-x86
