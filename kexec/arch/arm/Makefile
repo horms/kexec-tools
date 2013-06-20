@@ -4,8 +4,8 @@
 include $(srcdir)/kexec/libfdt/Makefile.libfdt
 
 arm_FS2DT              = kexec/fs2dt.c
-arm_FS2DT_INCLUDE      = -include kexec/arch/arm/crashdump-arm.h \
-                         -include kexec/arch/arm/kexec-arm.h
+arm_FS2DT_INCLUDE      = -include $(srcdir)/kexec/arch/arm/crashdump-arm.h \
+                         -include $(srcdir)/kexec/arch/arm/kexec-arm.h
 
 arm_KEXEC_SRCS=  kexec/arch/arm/kexec-elf-rel-arm.c
 arm_KEXEC_SRCS+= kexec/arch/arm/kexec-zImage-arm.c
