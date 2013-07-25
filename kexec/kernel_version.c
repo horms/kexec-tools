@@ -31,21 +31,20 @@ long kernel_version(void)
 	}
 
 	minor = strtoul(p, &p, 10);
-	if (major == ULONG_MAX) {
+	if (minor == ULONG_MAX) {
 		fprintf(stderr, "strtoul failed: %s\n", strerror(errno));
 		return -1;
 	}
 
-	if (*p++ != '.') {
-		fprintf(stderr, "Unsupported utsname.release: %s\n",
-			utsname.release);
-		return -1;
-	}
-
-	patch = strtoul(p, &p, 10);
-	if (major == ULONG_MAX) {
-		fprintf(stderr, "strtoul failed: %s\n", strerror(errno));
-		return -1;
+	/* There may or may not be a patch level for this kernel */
+	if (*p++ == '.') {
+		patch = strtoul(p, &p, 10);
+		if (patch == ULONG_MAX) {
+			fprintf(stderr, "strtoul failed: %s\n",strerror(errno));
+			return -1;
+		}
+	} else {
+		patch = 0;
 	}
 
 	if (major >= 256 || minor >= 256 || patch >= 256) {
