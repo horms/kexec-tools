@@ -12,8 +12,6 @@
 
 #ifndef ASSEMBLY
 
-#define PACKED __attribute__((packed))
-
 #ifndef E820_RAM
 struct e820entry {
 	uint64_t addr;	/* start of memory segment */
@@ -23,7 +21,7 @@ struct e820entry {
 #define E820_RESERVED	2
 #define E820_ACPI	3 /* usable as RAM once ACPI tables have been read */
 #define E820_NVS	4
-} PACKED;
+} __attribute__((packed));
 #endif
 
 /* FIXME expand on drive_info_)struct... */
@@ -255,7 +253,7 @@ struct x86_linux_header {
 	uint64_t pref_address;			/* 0x258 */
 	uint32_t init_size;			/* 0x260 */
 	uint32_t handover_offset;		/* 0x264 */
-} PACKED;
+} __attribute__((packed));
 
 #endif /* ASSEMBLY */
 
