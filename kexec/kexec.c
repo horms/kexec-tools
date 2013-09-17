@@ -145,11 +145,11 @@ void print_segments(FILE *f, struct kexec_info *info)
 	for (i = 0; i < info->nr_segments; i++) {
 		fprintf(f, "segment[%d].buf   = %p\n",	i,
 			info->segment[i].buf);
-		fprintf(f, "segment[%d].bufsz = %zx\n", i,
+		fprintf(f, "segment[%d].bufsz = 0x%zx\n", i,
 			info->segment[i].bufsz);
 		fprintf(f, "segment[%d].mem   = %p\n",	i,
 			info->segment[i].mem);
-		fprintf(f, "segment[%d].memsz = %zx\n", i,
+		fprintf(f, "segment[%d].memsz = 0x%zx\n", i,
 			info->segment[i].memsz);
 	}
 }
@@ -283,12 +283,12 @@ unsigned long locate_hole(struct kexec_info *info,
 	free(mem_range);
 	if (hole_base == ULONG_MAX) {
 		fprintf(stderr, "Could not find a free area of memory of "
-			"%lx bytes...\n", hole_size);
+			"0x%lx bytes...\n", hole_size);
 		return ULONG_MAX;
 	}
 	if ((hole_base + hole_size)  > hole_max) {
 		fprintf(stderr, "Could not find a free area of memory below: "
-			"%lx...\n", hole_max);
+			"0x%lx...\n", hole_max);
 		return ULONG_MAX;
 	}
 	return hole_base;
@@ -321,7 +321,7 @@ void add_segment_phys_virt(struct kexec_info *info,
 	 * thing.
 	 */
 	if (base & (pagesize -1)) {
-		die("Base address: %lx is not page aligned\n", base);
+		die("Base address: 0x%lx is not page aligned\n", base);
 	}
 
 	if (phys)
@@ -670,7 +670,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	/* slurp in the input kernel */
 	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
 
-	dbgprintf("kernel: %p kernel_size: %lx\n",
+	dbgprintf("kernel: %p kernel_size: 0x%lx\n",
 		  kernel_buf, kernel_size);
 
 	if (get_memory_ranges(&info.memory_range, &info.memory_ranges,
@@ -759,7 +759,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	if (entry)
 		info.entry = entry;
 
-	dbgprintf("kexec_load: entry = %p flags = %lx\n",
+	dbgprintf("kexec_load: entry = %p flags = 0x%lx\n",
 		  info.entry, info.kexec_flags);
 	if (kexec_debug)
 		print_segments(stderr, &info);
@@ -770,7 +770,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		/* The load failed, print some debugging information */
 		fprintf(stderr, "kexec_load failed: %s\n", 
 			strerror(errno));
-		fprintf(stderr, "entry       = %p flags = %lx\n", 
+		fprintf(stderr, "entry       = %p flags = 0x%lx\n", 
 			info.entry, info.kexec_flags);
 		print_segments(stderr, &info);
 	}
