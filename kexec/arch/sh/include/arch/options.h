@@ -15,7 +15,7 @@
         {"empty-zero",     1, 0, OPT_APPEND}, \
         {"howto",          1, 0, OPT_NBSD_HOWTO}, \
         {"miniroot",       1, 0, OPT_NBSD_MROOT},
-/* These options seem to be loader-specific rather than cris-specific, so
+/* These options seem to be loader-specific rather than superh-specific, so
  * ought to be moved to KEXEC_ALL_OPTIONS below and parsed in the relevant
  * loader, e.g. kexec-netbsd-sh.c
  */
