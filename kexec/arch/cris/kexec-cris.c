@@ -74,7 +74,7 @@ void arch_update_purgatory(struct kexec_info *UNUSED(info))
 
 int is_crashkernel_mem_reserved(void)
 {
-	return 1;
+	return 0;
 }
 
 unsigned long virt_to_phys(unsigned long addr)
