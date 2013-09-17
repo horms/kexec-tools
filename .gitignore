@@ -8,12 +8,12 @@
 *.ro
 
 # generated files
-Makefile
-autom4te.cache/
-bin/
-build/
-config.log
-config.status
-configure
-include/config.h.in
-include/config.h
+/Makefile
+/autom4te.cache/
+/bin/
+/build/
+/config.log
+/config.status
+/configure
+/include/config.h.in
+/include/config.h
