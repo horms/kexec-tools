@@ -371,7 +371,7 @@ int elf_ppc_load(int argc, char **argv,	const char *buf, off_t len,
 	blob_buf = fixup_dtb_init(info, blob_buf, &blob_size, kernel_addr, &dtb_addr);
 
 	if (ramdisk) {
-		seg_buf = slurp_file(ramdisk, &seg_size);
+		seg_buf = slurp_ramdisk_ppc(ramdisk, &seg_size);
 		/* load the ramdisk *above* the device tree */
 		hole_addr = add_buffer(info, seg_buf, seg_size, seg_size,
 				0, dtb_addr + blob_size + 1,  max_addr, -1);

@@ -78,4 +78,7 @@ extern int read_memory_region_limits(int fd, unsigned long long *start,
 #define COMMAND_LINE_SIZE	512 /* from kernel */
 /*fs2dt*/
 void reserve(unsigned long long where, unsigned long long length);
+
+/* Defined kexec-uImage-ppc.c */
+extern char* slurp_ramdisk_ppc(const char *filename, off_t *r_size);
 #endif /* KEXEC_PPC_H */
