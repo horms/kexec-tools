@@ -336,7 +336,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 		}
 		rel_end = shdr->sh_data + shdr->sh_size;
 		for(ptr = shdr->sh_data; ptr < rel_end; ptr += rel_size) {
-			struct mem_rela rel;
+			struct mem_rela rel = {0};
 			struct mem_sym sym;
 			const void *location;
 			const unsigned char *name;
