@@ -230,7 +230,7 @@ extern int file_types;
 	{ "reuseinitrd",	0, 0, OPT_REUSE_INITRD }, \
 	{ "debug",		0, 0, OPT_DEBUG }, \
 
-#define KEXEC_OPT_STR "hvdfxluet:p"
+#define KEXEC_OPT_STR "h?vdfxluet:p"
 
 extern void die(const char *fmt, ...)
 	__attribute__ ((format (printf, 1, 2)));
