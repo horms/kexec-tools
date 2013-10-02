@@ -124,9 +124,6 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			/* Ignore core options */
 			if (opt < OPT_ARCH_MAX)
 				break;
-		case '?':
-			usage();
-			return -1;
 		case OPT_APPEND:
 			cmdline = optarg;
 			break;

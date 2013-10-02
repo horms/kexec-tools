@@ -118,9 +118,6 @@ static int ppc_load_bare_bits(int argc, char **argv, const char *buf,
 			if (opt < OPT_ARCH_MAX) {
 				break;
 			}
-		case '?':
-			usage();
-			return -1;
 		case OPT_APPEND:
 			tmp_cmdline = optarg;
 			break;

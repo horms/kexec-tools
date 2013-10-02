@@ -154,9 +154,6 @@ int elf_ia64_load(int argc, char **argv, const char *buf, off_t len,
 			if (opt < OPT_ARCH_MAX) {
 				break;
 			}
-		case '?':
-			usage();
-			return -1;
 		case OPT_APPEND:
 			command_line = optarg;
 			break;

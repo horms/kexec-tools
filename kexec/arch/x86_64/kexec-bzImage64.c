@@ -261,10 +261,6 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 			/* Ignore core options */
 			if (opt < OPT_ARCH_MAX)
 				break;
-		case '?':
-			usage();
-			return -1;
-			break;
 		case OPT_APPEND:
 			append = optarg;
 			break;

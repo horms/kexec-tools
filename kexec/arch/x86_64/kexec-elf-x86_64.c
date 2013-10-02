@@ -131,9 +131,6 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 				break;
 			}
 			fprintf(stderr, "Unknown option: opt: %d\n", opt);
-		case '?':
-			usage();
-			return -1;
 		case OPT_APPEND:
 			append = optarg;
 			break;

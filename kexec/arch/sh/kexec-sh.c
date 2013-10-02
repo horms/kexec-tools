@@ -117,9 +117,6 @@ int arch_process_options(int argc, char **argv)
 			if (opt < OPT_MAX) {
 				break;
 			}
-		case '?':
-		        usage();
-		  	return -1;
 		case OPT_APPEND:
 		case OPT_NBSD_HOWTO:
 		case OPT_NBSD_MROOT:
