@@ -270,7 +270,7 @@ unsigned long locate_hole(struct kexec_info *info,
 		}
 		/* Is there enough space left so we can use it? */
 		size = end - start;
-		if (size >= hole_size) {
+		if (!hole_size || size >= hole_size - 1) {
 			if (hole_end > 0) {
 				hole_base = start;
 				break;
@@ -286,7 +286,7 @@ unsigned long locate_hole(struct kexec_info *info,
 			"0x%lx bytes...\n", hole_size);
 		return ULONG_MAX;
 	}
-	if ((hole_base + hole_size)  > hole_max) {
+	if (hole_size && (hole_base + hole_size - 1)  > hole_max) {
 		fprintf(stderr, "Could not find a free area of memory below: "
 			"0x%lx...\n", hole_max);
 		return ULONG_MAX;
