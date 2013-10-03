@@ -639,6 +639,11 @@ static void putnode(void)
 		}
 		result = read(fd, buff, statbuf.st_size);
 		close(fd);
+		if (result <= 0) {
+			printf("Unable to read %s, printing from purgatory is diabled\n",
+														filename);
+			goto no_debug;
+		}
 		strncpy(filename, "/proc/device-tree/", MAXPATH);
 		strncat(filename, buff, MAXPATH);
 		strncat(filename, "/compatible", MAXPATH);
@@ -661,7 +666,8 @@ static void putnode(void)
 			goto no_debug;
 		}
 		result = read(fd, buff, statbuf.st_size);
-		if (!strcmp(buff, "hvterm1") || !strcmp(buff, "hvterm-protocol"))
+		if (result && (!strcmp(buff, "hvterm1")
+			|| !strcmp(buff, "hvterm-protocol")))
 			my_debug = 1;
 		close(fd);
 		free(buff);
