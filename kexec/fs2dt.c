@@ -555,6 +555,7 @@ static void putnode(void)
 	/* Add cmdline to the second kernel.  Check to see if the new
 	 * cmdline has a root=.  If not, use the old root= cmdline.  */
 	if (!strcmp(basename,"chosen/")) {
+		size_t result;
 		size_t cmd_len = 0;
 		char *param = NULL;
 		char filename[MAXPATH];
@@ -636,7 +637,7 @@ static void putnode(void)
 			close(fd);
 			goto no_debug;
 		}
-		read(fd, buff, statbuf.st_size);
+		result = read(fd, buff, statbuf.st_size);
 		close(fd);
 		strncpy(filename, "/proc/device-tree/", MAXPATH);
 		strncat(filename, buff, MAXPATH);
@@ -659,7 +660,7 @@ static void putnode(void)
 			close(fd);
 			goto no_debug;
 		}
-		read(fd, buff, statbuf.st_size);
+		result = read(fd, buff, statbuf.st_size);
 		if (!strcmp(buff, "hvterm1") || !strcmp(buff, "hvterm-protocol"))
 			my_debug = 1;
 		close(fd);
