@@ -84,7 +84,7 @@ static void dt_reserve(unsigned **dt_ptr, unsigned words)
 		offset = *dt_ptr - dt_base;
 		dt_base = new_dt;
 		dt_cur_size = new_size;
-		*dt_ptr = cpu_to_be32((unsigned)dt_base + offset);
+		*dt_ptr = dt_base + offset;
 		memset(*dt_ptr, 0, (new_size - offset)*4);
 	}
 }
@@ -112,19 +112,22 @@ static void checkprop(char *name, unsigned *data, int len)
 	if ((data == NULL) && (base || size || end))
 		die("unrecoverable error: no property data");
 	else if (!strcmp(name, "linux,rtas-base"))
-		base = *data;
+		base = be32_to_cpu(*data);
 	else if (!strcmp(name, "linux,tce-base"))
-		base = *(unsigned long long *) data;
+		base = be64_to_cpu(*(unsigned long long *) data);
 	else if (!strcmp(name, "rtas-size") ||
 			!strcmp(name, "linux,tce-size"))
-		size = *data;
+		size = be32_to_cpu(*data);
 	else if (reuse_initrd && !strcmp(name, "linux,initrd-start"))
 		if (len == 8)
-			base = *(unsigned long long *) data;
+			base = be64_to_cpu(*(unsigned long long *) data);
 		else
-			base = *data;
+			base = be32_to_cpu(*data);
 	else if (reuse_initrd && !strcmp(name, "linux,initrd-end"))
-		end = *(unsigned long long *) data;
+		if (len == 8)
+			end = be64_to_cpu(*(unsigned long long *) data);
+		else
+			end = be32_to_cpu(*data);
 
 	if (size && end)
 		die("unrecoverable error: size and end set at same time\n");
@@ -267,7 +270,7 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 	pad_structure_block(rlen);
 	memcpy(dt, ranges, rlen);
 	free(ranges);
-	dt += cpu_to_be32((rlen + 3)/4);
+	dt += (rlen + 3)/4;
 }
 
 static void add_dyn_reconf_usable_mem_property(struct dirent *dp, int fd)
