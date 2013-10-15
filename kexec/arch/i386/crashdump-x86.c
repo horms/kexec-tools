@@ -114,7 +114,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 	struct mem_ehdr ehdr;
 	struct mem_phdr *phdr, *end_phdr;
 	int align;
-	unsigned long size;
+	off_t size;
 	uint32_t elf_flags = 0;
 
 	if (elf_info->machine != EM_X86_64)
@@ -124,8 +124,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 		return 0;
 
 	align = getpagesize();
-	size = KCORE_ELF_HEADERS_SIZE;
-	buf = slurp_file_len(kcore, size);
+	buf = slurp_file_len(kcore, KCORE_ELF_HEADERS_SIZE, &size);
 	if (!buf) {
 		fprintf(stderr, "Cannot read %s: %s\n", kcore, strerror(errno));
 		return -1;

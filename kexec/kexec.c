@@ -537,7 +537,7 @@ char *slurp_file(const char *filename, off_t *r_size)
 /* This functions reads either specified number of bytes from the file or
    lesser if EOF is met. */
 
-char *slurp_file_len(const char *filename, off_t size)
+char *slurp_file_len(const char *filename, off_t size, off_t *nread)
 {
 	int fd;
 	char *buf;
@@ -575,6 +575,8 @@ char *slurp_file_len(const char *filename, off_t size)
 		die("Close of %s failed: %s\n",
 			filename, strerror(errno));
 	}
+	if (nread)
+		*nread = progress;
 	return buf;
 }
 
