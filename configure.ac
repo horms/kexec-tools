@@ -50,7 +50,7 @@ case $target_cpu in
 	cris|crisv32 )
 		ARCH="cris"
 		;;
-	ia64|x86_64|alpha )
+	ia64|x86_64|alpha|m68k )
 		ARCH="$target_cpu"
 		;;
 	* )

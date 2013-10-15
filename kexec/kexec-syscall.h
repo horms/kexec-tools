@@ -45,6 +45,9 @@
 #if defined(__mips__)
 #define __NR_kexec_load                4311
 #endif
+#ifdef __m68k__
+#define __NR_kexec_load                313
+#endif
 #ifndef __NR_kexec_load
 #error Unknown processor architecture.  Needs a kexec_load syscall number.
 #endif
@@ -67,6 +70,7 @@ static inline long kexec_load(void *entry, unsigned long nr_segments,
  */
 #define KEXEC_ARCH_DEFAULT ( 0 << 16)
 #define KEXEC_ARCH_386     ( 3 << 16)
+#define KEXEC_ARCH_68K     ( 4 << 16)
 #define KEXEC_ARCH_X86_64  (62 << 16)
 #define KEXEC_ARCH_PPC     (20 << 16)
 #define KEXEC_ARCH_PPC64   (21 << 16)
@@ -113,6 +117,9 @@ static inline long kexec_load(void *entry, unsigned long nr_segments,
 #endif
 #if defined(__mips__)
 #define KEXEC_ARCH_NATIVE	KEXEC_ARCH_MIPS
+#endif
+#ifdef __m68k__
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_68K
 #endif
 
 #endif /* KEXEC_SYSCALL_H */
