@@ -764,8 +764,12 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	if (kexec_debug)
 		print_segments(stderr, &info);
 
-	result = kexec_load(
-		info.entry, info.nr_segments, info.segment, info.kexec_flags);
+	if (xen_present())
+		result = xen_kexec_load(&info);
+	else
+		result = kexec_load(info.entry,
+				    info.nr_segments, info.segment,
+				    info.kexec_flags);
 	if (result != 0) {
 		/* The load failed, print some debugging information */
 		fprintf(stderr, "kexec_load failed: %s\n", 
@@ -789,10 +793,13 @@ static int k_unload (unsigned long kexec_flags)
 	}
 	kexec_flags |= native_arch;
 
-	result = kexec_load(NULL, 0, NULL, kexec_flags);
+	if (xen_present())
+		result = xen_kexec_unload(kexec_flags);
+	else
+		result = kexec_load(NULL, 0, NULL, kexec_flags);
 	if (result != 0) {
 		/* The unload failed, print some debugging information */
-		fprintf(stderr, "kexec_load (0 segments) failed: %s\n",
+		fprintf(stderr, "kexec unload failed: %s\n",
 			strerror(errno));
 	}
 	return result;
@@ -823,7 +830,10 @@ static int my_shutdown(void)
  */
 static int my_exec(void)
 {
-	reboot(LINUX_REBOOT_CMD_KEXEC);
+	if (xen_present())
+		xen_kexec_exec();
+	else
+		reboot(LINUX_REBOOT_CMD_KEXEC);
 	/* I have failed if I make it here */
 	fprintf(stderr, "kexec failed: %s\n", 
 		strerror(errno));
@@ -927,6 +937,10 @@ static int kexec_loaded(void)
 	FILE *fp;
 	char *p;
 	char line[3];
+
+	/* No way to tell if an image is loaded under Xen, assume it is. */
+	if (xen_present())
+		return 1;
 
 	fp = fopen("/sys/kernel/kexec_loaded", "r");
 	if (fp == NULL)

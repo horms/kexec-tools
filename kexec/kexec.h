@@ -289,4 +289,9 @@ const char * proc_iomem(void);
 
 char *concat_cmdline(const char *base, const char *append);
 
+int xen_present(void);
+int xen_kexec_load(struct kexec_info *info);
+int xen_kexec_unload(uint64_t kexec_flags);
+void xen_kexec_exec(void);
+
 #endif /* KEXEC_H */

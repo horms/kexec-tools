@@ -990,8 +990,24 @@ static int crashkernel_mem_callback(void *UNUSED(data), int nr,
 
 int is_crashkernel_mem_reserved(void)
 {
-	crash_reserved_mem_nr = kexec_iomem_for_each_line("Crash kernel\n",
-                                       crashkernel_mem_callback, NULL);
+	int ret;
+
+	if (xen_present()) {
+		uint64_t start, end;
+
+		ret = xen_get_crashkernel_region(&start, &end);
+		if (ret < 0)
+			return 0;
+
+		crash_reserved_mem[0].start = start;
+		crash_reserved_mem[0].end   = end;
+		crash_reserved_mem[0].type  = RANGE_RAM;
+		crash_reserved_mem_nr = 1;
+	} else {
+		ret = kexec_iomem_for_each_line("Crash kernel\n",
+						crashkernel_mem_callback, NULL);
+		crash_reserved_mem_nr = ret;
+	}
 
 	return !!crash_reserved_mem_nr;
 }

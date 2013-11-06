@@ -252,3 +252,37 @@ int xen_get_note(int cpu, uint64_t *addr, uint64_t *len)
 
 	return 0;
 }
+
+#ifdef HAVE_LIBXENCTRL
+int xen_get_crashkernel_region(uint64_t *start, uint64_t *end)
+{
+	uint64_t size;
+	xc_interface *xc;
+	int rc = -1;
+
+	xc = xc_interface_open(NULL, NULL, 0);
+	if (!xc) {
+		fprintf(stderr, "failed to open xen control interface.\n");
+		goto out;
+	}
+
+	rc = xc_kexec_get_range(xc, KEXEC_RANGE_MA_CRASH, 0, &size, start);
+	if (rc < 0) {
+		fprintf(stderr, "failed to get crash region from hypervisor.\n");
+		goto out_close;
+	}
+
+	*end = *start + size - 1;
+
+out_close:
+	xc_interface_close(xc);
+
+out:
+	return rc;
+}
+#else
+int xen_get_crashkernel_region(uint64_t *start, uint64_t *end)
+{
+	return -1;
+}
+#endif
