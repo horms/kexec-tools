@@ -164,6 +164,26 @@ unsigned long xen_architecture(struct crash_elf_info *elf_info)
 }
 
 #ifdef HAVE_LIBXENCTRL
+int get_xen_vmcoreinfo(uint64_t *addr, uint64_t *len)
+{
+	xc_interface *xc;
+	int ret = 0;
+
+	xc = xc_interface_open(NULL, NULL, 0);
+	if (!xc) {
+	        fprintf(stderr, "failed to open xen control interface.\n");
+	        return -1;
+	}
+
+	ret = xc_kexec_get_range(xc, KEXEC_RANGE_MA_VMCOREINFO, 0, len, addr);
+
+	xc_interface_close(xc);
+
+	if (ret < 0)
+	        return -1;
+	return 0;
+}
+
 int xen_get_nr_phys_cpus(void)
 {
 	xc_interface *xc;
@@ -206,6 +226,11 @@ out:
 	return cpu;
 }
 #else
+int get_xen_vmcoreinfo(uint64_t *addr, uint64_t *len)
+{
+	return -1;
+}
+
 int xen_get_nr_phys_cpus(void)
 {
 	return -1;

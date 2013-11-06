@@ -157,8 +157,3 @@ int get_kernel_vmcoreinfo(uint64_t *addr, uint64_t *len)
 {
 	return get_vmcoreinfo("/sys/kernel/vmcoreinfo", addr, len);
 }
-
-int get_xen_vmcoreinfo(uint64_t *addr, uint64_t *len)
-{
-	return get_vmcoreinfo("/sys/hypervisor/vmcoreinfo", addr, len);
-}
