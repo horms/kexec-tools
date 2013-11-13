@@ -81,9 +81,15 @@ struct file_type file_type[] = {
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
-
 void arch_usage(void)
 {
+	printf("     --image-size=<size>\n"
+	       "               Specify the assumed total image size of\n"
+	       "               the kernel that is about to be loaded,\n"
+	       "               including the .bss section, as reported\n"
+	       "               by 'arm-linux-size vmlinux'. If not\n"
+	       "               specified, this value is implicitly set\n"
+	       "               to the compressed images size * 4.\n");
 }
 
 int arch_process_options(int argc, char **argv)

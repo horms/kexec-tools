@@ -24,6 +24,7 @@
 #define BOOT_PARAMS_SIZE 1536
 
 off_t initrd_base = 0, initrd_size = 0;
+unsigned int kexec_arm_image_size = 0;
 
 struct tag_header {
 	uint32_t size;
@@ -232,6 +233,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	off_t dtb_length;
 	char *dtb_file;
 	off_t dtb_offset;
+	char *end;
 
 	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
@@ -242,6 +244,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		{ "ramdisk",		1, 0, OPT_RAMDISK },
 		{ "dtb",		1, 0, OPT_DTB },
 		{ "atags",		0, 0, OPT_ATAGS },
+		{ "image-size",		1, 0, OPT_IMAGE_SIZE },
 		{ 0, 			0, 0, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "a:r:";
@@ -274,6 +277,9 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_ATAGS:
 			use_atags = 1;
+			break;
+		case OPT_IMAGE_SIZE:
+			kexec_arm_image_size = strtoul(optarg, &end, 0);
 			break;
 		}
 	}
@@ -337,10 +343,16 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	if (base == ULONG_MAX)
 		return -1;
 
-	/* assume the maximum kernel compression ratio is 4,
-	 * and just to be safe, place ramdisk after that
-	 */
-	initrd_base = base + len * 4;
+	if (kexec_arm_image_size) {
+		/* If the image size was passed as command line argument,
+		 * use that value for determining the address for initrd,
+		 * atags and dtb images. page-align the given length.*/
+		initrd_base = base + _ALIGN(kexec_arm_image_size, 4096);
+	} else {
+		/* Otherwise, assume the maximum kernel compression ratio
+		 * is 4, and just to be safe, place ramdisk after that */
+		initrd_base = base + len * 4;
+	}
 
 	if (use_atags) {
 		/*
