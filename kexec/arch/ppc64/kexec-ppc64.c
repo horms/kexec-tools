@@ -532,6 +532,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			rtas_base = be32_to_cpu(rtas_base);
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
@@ -545,6 +546,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				goto error_openfile;
 			}
 			closedir(cdir);
+			rtas_size = be32_to_cpu(rtas_size);
 			/* Add rtas to exclude_range */
 			exclude_range[i].start = rtas_base;
 			exclude_range[i].end = rtas_base + rtas_size;
@@ -798,6 +800,7 @@ const struct arch_map_entry arches[] = {
 	 * So pass KEXEC_ARCH_PPC64 here
 	 */
 	{ "ppc64", KEXEC_ARCH_PPC64 },
+	{ "ppc64le", KEXEC_ARCH_PPC64 },
 	{ NULL, 0 },
 };
 

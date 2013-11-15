@@ -237,13 +237,13 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	 * entry is before this one
 	 */
 	bb_ptr = (struct bootblock *)(seg_buf);
-	rsvmap_ptr = (uint64_t *)(seg_buf + bb_ptr->off_mem_rsvmap);
+	rsvmap_ptr = (uint64_t *)(seg_buf + be32_to_cpu(bb_ptr->off_mem_rsvmap));
 	while (*rsvmap_ptr || *(rsvmap_ptr+1))
 		rsvmap_ptr += 2;
 	rsvmap_ptr -= 2;
-	*rsvmap_ptr = my_dt_offset;
+	*rsvmap_ptr = cpu_to_be64(my_dt_offset);
 	rsvmap_ptr++;
-	*rsvmap_ptr = bb_ptr->totalsize;
+	*rsvmap_ptr = cpu_to_be64((uint64_t)be32_to_cpu(bb_ptr->totalsize));
 #endif
 
 	/* Set kernel */

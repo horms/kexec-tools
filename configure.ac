@@ -29,6 +29,11 @@ case $target_cpu in
 		;;
 	powerpc64 )
 		ARCH="ppc64"
+		SUBARCH="BE"
+		;;
+	powerpc64le )
+		ARCH="ppc64"
+		SUBARCH="LE"
 		;;
 	arm* )
 		ARCH="arm"
@@ -197,6 +202,7 @@ AC_SUBST([TARGET_CFLAGS])
 AC_SUBST([ASFLAGS])
 
 AC_SUBST([ARCH])
+AC_SUBST([SUBARCH])
 AC_SUBST([OBJDIR])
 AC_SUBST([INSTALL])
 

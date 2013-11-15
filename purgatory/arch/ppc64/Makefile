@@ -11,7 +11,13 @@ ppc64_PURGATORY_SRCS += purgatory/arch/ppc64/misc.S
 
 ppc64_PURGATORY_EXTRA_CFLAGS += -m64 -mcall-aixdesc -msoft-float
 ppc64_PURGATORY_EXTRA_ASFLAGS += -m64 -mcall-aixdesc
-ppc64_PURGATORY_EXTRA_LDFLAGS += -melf64ppc
+ifeq ($(SUBARCH),BE)
+	ppc64_PURGATORY_EXTRA_LDFLAGS += -melf64ppc
+else
+	ppc64_PURGATORY_EXTRA_LDFLAGS += -melf64lppc
+	ppc64_PURGATORY_EXTRA_CFLAGS += -mlittle-endian
+	ppc64_PURGATORY_EXTRA_ASFLAGS += -mlittle-endian
+endif
 
 dist += purgatory/arch/ppc64/Makefile $(ppc64_PURGATORY_SRCS)		\
 	purgatory/arch/ppc64/hvCall.h					\

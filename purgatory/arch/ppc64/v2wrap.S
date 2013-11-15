@@ -46,6 +46,7 @@
 	ori     rn,rn,name##@l
 
 	.machine ppc64
+	.align 8
 	.globl purgatory_start
 purgatory_start:	b	master
 	.org purgatory_start + 0x5c     # ABI: possible run_at_load flag at 0x5c

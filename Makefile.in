@@ -22,6 +22,7 @@ includedir	= @includedir@
 
 # The target architecture
 ARCH		= @ARCH@
+SUBARCH		= @SUBARCH@
 OBJDIR		= @OBJDIR@
 target		= @target@
 host		= @host@

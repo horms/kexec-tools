@@ -7,9 +7,6 @@
 
 int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 {
-	if (ehdr->ei_data != ELFDATA2MSB) {
-		return 0;
-	}
 	if (ehdr->ei_class != ELFCLASS64) {
 		return 0;
 	}
