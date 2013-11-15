@@ -6,32 +6,25 @@
 #define CORE_TYPE_ELF32 1
 #define CORE_TYPE_ELF64 2
 
+#define BOOT_BLOCK_VERSION 2
+#define BOOT_BLOCK_LAST_COMP_VERSION 2
+#define NEED_STRUCTURE_BLOCK_EXTRA_PAD
+#define HAVE_DYNAMIC_MEMORY
+#define NEED_RESERVE_DTB
+
 int setup_memory_ranges(unsigned long kexec_flags);
 
 int elf_ppc64_probe(const char *buf, off_t len);
 int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_ppc64_usage(void);
-void reserve(unsigned long long where, unsigned long long length);
 
-int create_flatten_tree(char **, off_t *, char *);
+struct mem_ehdr;
 unsigned long my_r2(const struct mem_ehdr *ehdr);
 
 extern uint64_t initrd_base, initrd_size;
 extern int max_memory_ranges;
 extern unsigned char reuse_initrd;
-
-/* boot block version 2 as defined by the linux kernel */
-struct bootblock {
-	unsigned magic,
-		totalsize,
-		off_dt_struct,
-		off_dt_strings,
-		off_mem_rsvmap,
-		version,
-		last_comp_version,
-		boot_physid;
-};
 
 struct arch_options_t {
 	int core_header_type;

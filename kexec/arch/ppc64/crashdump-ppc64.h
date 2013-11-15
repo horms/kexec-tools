@@ -1,6 +1,9 @@
 #ifndef CRASHDUMP_PPC64_H
 #define CRASHDUMP_PPC64_H
 
+#include <stdint.h>
+#include <sys/types.h>
+
 struct kexec_info;
 int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 				uint64_t max_addr, unsigned long min_base);

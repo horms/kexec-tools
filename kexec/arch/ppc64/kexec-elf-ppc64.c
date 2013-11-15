@@ -35,6 +35,7 @@
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
 #include "kexec-ppc64.h"
+#include "../../fs2dt.h"
 #include "crashdump-ppc64.h"
 #include <arch/options.h>
 
@@ -82,8 +83,10 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	off_t seg_size = 0;
 	struct mem_phdr *phdr;
 	size_t size;
+#ifdef NEED_RESERVE_DTB
 	uint64_t *rsvmap_ptr;
 	struct bootblock *bb_ptr;
+#endif
 	int i;
 	int result, opt;
 	uint64_t my_kernel, my_dt_offset;
@@ -228,6 +231,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	my_dt_offset = add_buffer(info, seg_buf, seg_size, seg_size,
 				0, 0, max_addr, -1);
 
+#ifdef NEED_RESERVE_DTB
 	/* patch reserve map address for flattened device-tree
 	 * find last entry (both 0) in the reserve mem list.  Assume DT
 	 * entry is before this one
@@ -240,6 +244,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	*rsvmap_ptr = my_dt_offset;
 	rsvmap_ptr++;
 	*rsvmap_ptr = bb_ptr->totalsize;
+#endif
 
 	/* Set kernel */
 	elf_rel_set_symbol(&info->rhdr, "kernel", &my_kernel, sizeof(my_kernel));
