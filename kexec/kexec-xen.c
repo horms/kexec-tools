@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdlib.h>
 #include <elf.h>
 #include "kexec.h"
 #include "kexec-syscall.h"
@@ -120,14 +121,12 @@ void xen_kexec_exec(void)
 
 #else /* ! HAVE_LIBXENCTRL */
 
-int xen_kexec_load(uint64_t entry,
-		   uint32_t nr_segments, struct kexec_segment *segments,
-		   uint64_t kexec_flags)
+int xen_kexec_load(struct kexec_info *UNUSED(info))
 {
 	return -1;
 }
 
-int xen_kexec_unload(uin64_t kexec_flags);
+int xen_kexec_unload(uint64_t kexec_flags)
 {
 	return -1;
 }
