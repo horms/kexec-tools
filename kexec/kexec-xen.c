@@ -69,7 +69,7 @@ int xen_kexec_load(struct kexec_info *info)
 		: KEXEC_TYPE_DEFAULT;
 
 	arch = (info->kexec_flags & KEXEC_ARCH_MASK) >> 16;
-#if defined(_i386__) || defined(__x86_64__)
+#if defined(__i386__) || defined(__x86_64__)
 	if (!arch)
 		arch = EM_386;
 #endif
