@@ -305,7 +305,7 @@ static int get_crash_memory_ranges_xen(struct memory_range **range,
 
 	if (!xc) {
 		fprintf(stderr, "%s: Failed to open Xen control interface\n", __func__);
-		goto err;
+		return -1;
 	}
 
 	rc = xc_get_machine_memory_map(xc, e820entries, CRASH_MAX_MEMORY_RANGES);
