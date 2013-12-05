@@ -285,8 +285,8 @@ static void add_dyn_reconf_usable_mem_property(struct dirent *dp, int fd) {}
 static void add_usable_mem_property(int fd, size_t len)
 {
 	char fname[MAXPATH], *bname;
-	uint32_t buf[2];
-	uint32_t *ranges;
+	uint64_t buf[2];
+	uint64_t *ranges;
 	int ranges_size = MEM_RANGE_CHUNK_SZ;
 	uint64_t base, end, loc_base, loc_end;
 	size_t range;
@@ -311,8 +311,8 @@ static void add_usable_mem_property(int fd, size_t len)
 
 	if (~0ULL - buf[0] < buf[1])
 		die("unrecoverable error: mem property overflow\n");
-	base = be32_to_cpu(buf[0]);
-	end = base + be32_to_cpu(buf[1]);
+	base = be64_to_cpu(buf[0]);
+	end = base + be64_to_cpu(buf[1]);
 
 	ranges = malloc(ranges_size * sizeof(*ranges));
 	if (!ranges)
