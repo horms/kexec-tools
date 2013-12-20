@@ -42,6 +42,7 @@
 #include <arch/options.h>
 
 static const int probe_debug = 0;
+int bzImage_support_efi_boot;
 
 int bzImage64_probe(const char *buf, off_t len)
 {
@@ -82,6 +83,11 @@ int bzImage64_probe(const char *buf, off_t len)
 		/* Must be KERNEL_64 and CAN_BE_LOADED_ABOVE_4G */
 		return -1;
 	}
+
+#define XLF_EFI_KEXEC   (1 << 4)
+	if ((header->xloadflags & XLF_EFI_KEXEC) == XLF_EFI_KEXEC)
+		bzImage_support_efi_boot = 1;
+
 	/* I've got a relocatable bzImage64 */
 	if (probe_debug)
 		fprintf(stderr, "It's a relocatable bzImage64\n");

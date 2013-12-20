@@ -480,6 +480,13 @@ void setup_subarch(struct x86_linux_param_header *real_mode)
 	get_bootparam(&real_mode->hardware_subarch, offset, sizeof(uint32_t));
 }
 
+static void setup_efi_info(struct x86_linux_param_header *real_mode)
+{
+	off_t offset = offsetof(typeof(*real_mode), efi_info);
+
+	get_bootparam(&real_mode->efi_info, offset, 32);
+}
+
 void setup_linux_system_parameters(struct kexec_info *info,
 				   struct x86_linux_param_header *real_mode)
 {
@@ -489,6 +496,8 @@ void setup_linux_system_parameters(struct kexec_info *info,
 
 	/* get subarch from running kernel */
 	setup_subarch(real_mode);
+	if (bzImage_support_efi_boot)
+		setup_efi_info(real_mode);
 	
 	/* Default screen size */
 	real_mode->orig_x = 0;

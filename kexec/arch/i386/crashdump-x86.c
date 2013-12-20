@@ -41,6 +41,7 @@
 #include "../../crashdump.h"
 #include "kexec-x86.h"
 #include "crashdump-x86.h"
+#include "x86-linux-setup.h"
 
 #ifdef HAVE_LIBXENCTRL
 #include <xenctrl.h>
@@ -935,7 +936,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	if (delete_memmap(memmap_p, elfcorehdr, memsz) < 0)
 		return -1;
 	cmdline_add_memmap(mod_cmdline, memmap_p);
-	cmdline_add_efi(mod_cmdline);
+	if (!bzImage_support_efi_boot)
+		cmdline_add_efi(mod_cmdline);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
 	/* Inform second kernel about the presence of ACPI tables. */

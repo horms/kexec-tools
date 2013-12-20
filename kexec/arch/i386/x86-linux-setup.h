@@ -29,5 +29,6 @@ void setup_linux_system_parameters(struct kexec_info *info,
 
 /* command line parameter may be appended by purgatory */
 #define PURGATORY_CMDLINE_SIZE 64
+extern int bzImage_support_efi_boot;
 
 #endif /* X86_LINUX_SETUP_H */
