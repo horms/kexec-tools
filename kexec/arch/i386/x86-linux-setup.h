@@ -1,5 +1,6 @@
 #ifndef X86_LINUX_SETUP_H
 #define X86_LINUX_SETUP_H
+#include <x86/x86-linux.h>
 
 void init_linux_parameters(struct x86_linux_param_header *real_mode);
 void setup_linux_bootloader_parameters_high(
