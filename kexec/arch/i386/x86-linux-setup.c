@@ -436,28 +436,48 @@ char *find_mnt_by_fsname(char *fsname)
 	return mntdir;
 }
 
-void setup_subarch(struct x86_linux_param_header *real_mode)
+static int get_bootparam(void *buf, off_t offset, size_t size)
 {
 	int data_file;
-	const off_t offset = offsetof(typeof(*real_mode), hardware_subarch);
-	char *debugfs_mnt;
+	char *debugfs_mnt, *sysfs_mnt;
 	char filename[PATH_MAX];
+	int err, has_sysfs_params = 0;
 
-	debugfs_mnt = find_mnt_by_fsname("debugfs");
-	if (!debugfs_mnt)
-		return;
-	snprintf(filename, PATH_MAX, "%s/%s", debugfs_mnt, "boot_params/data");
-	filename[PATH_MAX-1] = 0;
-	free(debugfs_mnt);
+	sysfs_mnt = find_mnt_by_fsname("sysfs");
+	if (sysfs_mnt) {
+		snprintf(filename, PATH_MAX, "%s/%s", sysfs_mnt,
+			"kernel/boot_params/data");
+		free(sysfs_mnt);
+		err = access(filename, F_OK);
+		if (!err)
+			has_sysfs_params = 1;
+	}
+
+	if (!has_sysfs_params) {
+		debugfs_mnt = find_mnt_by_fsname("debugfs");
+		if (!debugfs_mnt)
+			return 1;
+		snprintf(filename, PATH_MAX, "%s/%s", debugfs_mnt,
+				"boot_params/data");
+		free(debugfs_mnt);
+	}
 
 	data_file = open(filename, O_RDONLY);
 	if (data_file < 0)
-		return;
+		return 1;
 	if (lseek(data_file, offset, SEEK_SET) < 0)
 		goto close;
-	read(data_file, &real_mode->hardware_subarch, sizeof(uint32_t));
+	read(data_file, buf, size);
 close:
 	close(data_file);
+	return 0;
+}
+
+void setup_subarch(struct x86_linux_param_header *real_mode)
+{
+	off_t offset = offsetof(typeof(*real_mode), hardware_subarch);
+
+	get_bootparam(&real_mode->hardware_subarch, offset, sizeof(uint32_t));
 }
 
 void setup_linux_system_parameters(struct kexec_info *info,
