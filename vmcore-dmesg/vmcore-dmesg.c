@@ -529,7 +529,7 @@ static inline uint32_t struct_val_u32(char *ptr, unsigned int offset)
 	return(file32_to_cpu(*(uint32_t *)(ptr + offset)));
 }
 
-static inline uint32_t struct_val_u64(char *ptr, unsigned int offset)
+static inline uint64_t struct_val_u64(char *ptr, unsigned int offset)
 {
 	return(file64_to_cpu(*(uint64_t *)(ptr + offset)));
 }
