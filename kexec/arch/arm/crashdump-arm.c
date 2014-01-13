@@ -31,6 +31,13 @@
 #include "../../crashdump.h"
 #include "crashdump-arm.h"
 
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+#define ELFDATANATIVE ELFDATA2LSB
+#elif __BYTE_ORDER == __BIG_ENDIAN
+#define ELFDATANATIVE ELFDATA2MSB
+#else
+#error "Unknown machine endian"
+#endif
 
 /*
  * Used to save various memory ranges/regions needed for the captured
@@ -47,7 +54,7 @@ static struct memory_range crash_reserved_mem;
 
 static struct crash_elf_info elf_info = {
 	.class		= ELFCLASS32,
-	.data		= ELFDATA2LSB,
+	.data		= ELFDATANATIVE,
 	.machine	= EM_ARM,
 	.page_offset	= PAGE_OFFSET,
 };
