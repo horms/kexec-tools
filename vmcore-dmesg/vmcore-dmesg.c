@@ -16,6 +16,7 @@
 #include <elf.h>
 #include <stdbool.h>
 #include <inttypes.h>
+#include <ctype.h>
 
 /* The 32bit and 64bit note headers make it clear we don't care */
 typedef Elf32_Nhdr Elf_Nhdr;
@@ -668,7 +669,7 @@ static void dump_dmesg_structured(int fd)
 		for (i = 0; i < text_len; i++) {
 			unsigned char c = log_text(msg)[i];
 
-			if (c < ' ' || c >= 128)
+			if (!isprint(c) && !isspace(c))
 				len += sprintf(out_buf + len, "\\x%02x", c);
 			else
 				out_buf[len++] = c;
