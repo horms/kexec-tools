@@ -258,10 +258,18 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		mmap[i].length_high    = length >> 32;
 		if (range[i].type == RANGE_RAM) {
 			mmap[i].Type = 1; /* RAM */
-			/* Is this the "low" memory? */
-			if ((range[i].start == 0)
-			    && (range[i].end > mem_lower))
+			/*
+                         * Is this the "low" memory?  Can't just test
+                         * against zero, because Linux protects (and
+                         * hides) the first few pages of physical
+                         * memory.
+                         */
+
+			if ((range[i].start <= 64*1024)
+			    && (range[i].end > mem_lower)) {
+                                range[i].start = 0;
 				mem_lower = range[i].end;
+                        }
 			/* Is this the "high" memory? */
 			if ((range[i].start <= 0x100000)
 			    && (range[i].end > mem_upper + 0x100000))
