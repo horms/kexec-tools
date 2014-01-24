@@ -95,6 +95,10 @@ master:
 	blt     80f
 	stw     17,28(3)        # save my cpu number as boot_cpu_phys
 80:
+	LOADADDR(6,opal_base)	# For OPAL early debug
+	ld      8,0(6)          # load the OPAL base address in r8
+	LOADADDR(6,opal_entry)	# For OPAL early debug
+	ld      9,0(6)          # load the OPAL entry address in r9
 	LOADADDR(6,kernel)
 	ld      4,0(6)          # load the kernel address
 	LOADADDR(6,run_at_load) # the load flag
