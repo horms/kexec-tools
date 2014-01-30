@@ -21,6 +21,9 @@
 
 #include <purgatory.h>
 #include "hvCall.h"
+#include <byteswap.h>
+#include <endian.h>
+#include <asm/byteorder.h>
 
 extern int debug;
 
@@ -36,6 +39,7 @@ void putchar(int c)
 		putchar('\r');
 
 	buff[0] = c;
-	plpar_hcall_norets(H_PUT_TERM_CHAR, 0, 1, lbuf[0], lbuf[1]);
+	plpar_hcall_norets(H_PUT_TERM_CHAR, 0, 1,
+			   __cpu_to_be64(lbuf[0]), __cpu_to_be64(lbuf[1]));
 	return;
 }
