@@ -167,7 +167,7 @@ static int get_dyn_reconf_base_ranges(void)
 	 * lmb_size, num_of_lmbs(global variables) are
 	 * initialized once here.
 	 */
-	lmb_size = ((uint64_t *)buf)[0];
+	lmb_size = be64_to_cpu(((uint64_t *)buf)[0]);
 	fclose(file);
 
 	strcpy(fname, "/proc/device-tree/");
@@ -183,7 +183,7 @@ static int get_dyn_reconf_base_ranges(void)
 		fclose(file);
 		return -1;
 	}
-	num_of_lmbs = ((unsigned int *)buf)[0];
+	num_of_lmbs = be32_to_cpu(((unsigned int *)buf)[0]);
 
 	for (i = 0; i < num_of_lmbs; i++) {
 		if ((n = fread(buf, 1, 24, file)) < 0) {
@@ -194,7 +194,7 @@ static int get_dyn_reconf_base_ranges(void)
 		if (nr_memory_ranges >= max_memory_ranges)
 			return -1;
 
-		start = ((uint64_t *)buf)[0];
+		start = be64_to_cpu(((uint64_t *)buf)[0]);
 		end = start + lmb_size;
 		add_base_memory_range(start, end);
 	}
@@ -278,8 +278,8 @@ static int get_base_ranges(void)
 				if (realloc_memory_ranges() < 0)
 					break;
 			}
-			start = ((uint64_t *)buf)[0];
-			end = start + ((uint64_t *)buf)[1];
+			start =  be64_to_cpu(((uint64_t *)buf)[0]);
+			end = start + be64_to_cpu(((uint64_t *)buf)[1]);
 			add_base_memory_range(start, end);
 			fclose(file);
 		}
@@ -363,6 +363,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				goto error_openfile;
 			}
 			fclose(file);
+			kernel_end = be64_to_cpu(kernel_end);
 
 			/* Add kernel memory to exclude_range */
 			exclude_range[i].start = 0x0UL;
@@ -386,6 +387,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 					goto error_openfile;
 				}
 				fclose(file);
+				crash_base = be64_to_cpu(crash_base);
 
 				memset(fname, 0, sizeof(fname));
 				strcpy(fname, device_tree);
@@ -400,6 +402,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 					perror(fname);
 					goto error_openfile;
 				}
+				fclose(file);
+				crash_size = be64_to_cpu(crash_size);
 
 				if (crash_base > mem_min)
 					mem_min = crash_base;
@@ -430,10 +434,14 @@ static int get_devtree_details(unsigned long kexec_flags)
 				 * fall through. On older kernel this file
 				 * is not present.
 				 */
-			} else if (fread(&memory_limit, sizeof(uint64_t), 1,
-								file) != 1) {
-				perror(fname);
-				goto error_openfile;
+			} else {
+				if (fread(&memory_limit, sizeof(uint64_t), 1,
+					  file) != 1) {
+					perror(fname);
+					goto error_openfile;
+				}
+				fclose(file);
+				memory_limit = be64_to_cpu(memory_limit);
 			}
 
 			memset(fname, 0, sizeof(fname));
@@ -454,6 +462,9 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			fclose(file);
+			htab_base = be64_to_cpu(htab_base);
+
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
@@ -466,6 +477,9 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			fclose(file);
+			htab_size = be64_to_cpu(htab_size);
+
 			/* Add htab address to exclude_range - NON-LPAR only */
 			exclude_range[i].start = htab_base;
 			exclude_range[i].end = htab_base + htab_size;
@@ -492,6 +506,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 					perror(fname);
 					goto error_openfile;
 				}
+				initrd_start = be64_to_cpu(initrd_start);
 				fclose(file);
 
 				memset(fname, 0, sizeof(fname));
@@ -511,6 +526,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 					perror(fname);
 					goto error_openfile;
 				}
+				initrd_end = be64_to_cpu(initrd_end);
 				fclose(file);
 
 				/* Add initrd address to exclude_range */
@@ -532,6 +548,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			fclose(file);
 			rtas_base = be32_to_cpu(rtas_base);
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
@@ -545,6 +562,7 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			fclose(file);
 			closedir(cdir);
 			rtas_size = be32_to_cpu(rtas_size);
 			/* Add rtas to exclude_range */
@@ -568,8 +586,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
-			rmo_base = ((uint64_t *)buf)[0];
-			rmo_top = rmo_base + ((uint64_t *)buf)[1];
+			rmo_base = be64_to_cpu(((uint64_t *)buf)[0]);
+			rmo_top = rmo_base + be64_to_cpu(((uint64_t *)buf)[1]);
 			if (rmo_top > 0x30000000UL)
 				rmo_top = 0x30000000UL;
 
@@ -593,6 +611,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			fclose(file);
+			tce_base = be64_to_cpu(tce_base);
 			memset(fname, 0, sizeof(fname));
 			strcpy(fname, device_tree);
 			strcat(fname, dentry->d_name);
@@ -605,6 +625,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
+			fclose(file);
+			tce_size = be32_to_cpu(tce_size);
 			/* Add tce to exclude_range - NON-LPAR only */
 			exclude_range[i].start = tce_base;
 			exclude_range[i].end = tce_base + tce_size;

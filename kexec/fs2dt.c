@@ -197,7 +197,7 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 			die("unrecoverable error: error reading \"%s\": %s\n",
 				pathname, strerror(errno));
 
-		base = (uint64_t) buf[0];
+		base = be64_to_cpu((uint64_t) buf[0]);
 		end = base + lmb_size;
 		if (~0ULL - base < end)
 			die("unrecoverable error: mem property overflow\n");
@@ -229,8 +229,8 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 						    " ranges.\n",
 						    ranges_size*8);
 				}
-				ranges[rlen++] = loc_base;
-				ranges[rlen++] = loc_end - loc_base;
+				ranges[rlen++] = cpu_to_be64(loc_base);
+				ranges[rlen++] = cpu_to_be64(loc_end - loc_base);
 				rngs_cnt++;
 			}
 		}
@@ -255,7 +255,7 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 			}
 		} else {
 			/* Store the count of (base, size) duple */
-			ranges[tmp_indx] = rngs_cnt;
+			ranges[tmp_indx] = cpu_to_be64((uint64_t) rngs_cnt);
 		}
 	}
 		
@@ -309,10 +309,11 @@ static void add_usable_mem_property(int fd, size_t len)
 		die("unrecoverable error: error reading \"%s\": %s\n",
 		    pathname, strerror(errno));
 
-	if (~0ULL - buf[0] < buf[1])
-		die("unrecoverable error: mem property overflow\n");
 	base = be64_to_cpu(buf[0]);
-	end = base + be64_to_cpu(buf[1]);
+	end = be64_to_cpu(buf[1]);
+	if (~0ULL - base < end)
+		die("unrecoverable error: mem property overflow\n");
+	end += base;
 
 	ranges = malloc(ranges_size * sizeof(*ranges));
 	if (!ranges)
@@ -342,8 +343,8 @@ static void add_usable_mem_property(int fd, size_t len)
 					    "%d bytes for ranges.\n",
 					    ranges_size*sizeof(*ranges));
 			}
-			ranges[rlen++] = loc_base;
-			ranges[rlen++] = loc_end - loc_base;
+			ranges[rlen++] = cpu_to_be64(loc_base);
+			ranges[rlen++] = cpu_to_be64(loc_end - loc_base);
 		}
 	}
 

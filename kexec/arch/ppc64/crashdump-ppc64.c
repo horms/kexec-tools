@@ -146,12 +146,12 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 			return -1;
 		}
 
-		start = ((uint64_t *)buf)[DRCONF_ADDR];
+		start = be64_to_cpu(((uint64_t *)buf)[DRCONF_ADDR]);
 		end = start + lmb_size;
 		if (start == 0 && end >= (BACKUP_SRC_END + 1))
 			start = BACKUP_SRC_END + 1;
 
-		flags = (*((uint32_t *)&buf[DRCONF_FLAGS]));
+		flags = be32_to_cpu((*((uint32_t *)&buf[DRCONF_FLAGS])));
 		/* skip this block if the reserved bit is set in flags (0x80)
 		   or if the block is not assigned to this partition (0x8) */
 		if ((flags & 0x80) || !(flags & 0x8))
@@ -252,8 +252,9 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				goto err;
 			}
 
-			start = ((unsigned long long *)buf)[0];
-			end = start + ((unsigned long long *)buf)[1];
+			start = be64_to_cpu(((unsigned long long *)buf)[0]);
+			end = start +
+				be64_to_cpu(((unsigned long long *)buf)[1]);
 			if (start == 0 && end >= (BACKUP_SRC_END + 1))
 				start = BACKUP_SRC_END + 1;
 
