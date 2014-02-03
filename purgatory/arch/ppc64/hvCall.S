@@ -9,12 +9,13 @@
  * as published by the Free Software Foundation; either version
  * 2 of the License, or (at your option) any later version.
  */
+#include "ppc64_asm.h"
 
 #define HVSC	.long 0x44000022
 .text
 	.machine ppc64
-.globl .plpar_hcall_norets
-.plpar_hcall_norets:
+.globl DOTSYM(plpar_hcall_norets)
+DOTSYM(plpar_hcall_norets):
 	or	6,6,6			# medium low priority
         mfcr	0
         stw	0,8(1)

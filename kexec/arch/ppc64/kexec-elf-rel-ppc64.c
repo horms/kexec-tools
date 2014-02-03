@@ -144,6 +144,33 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
 		*(uint16_t *)location = (((uint64_t)value >> 48) & 0xffff);
 		break;
 
+		/* R_PPC64_REL16_HA and R_PPC64_REL16_LO are handled to support
+		 * ABIv2 r2 assignment based on r12 for PIC executable.
+		 * Here address is know so replace
+		 *	0:	addis 2,12,.TOC.-0b@ha
+		 *		addi 2,2,.TOC.-0b@l
+		 * by
+		 *		lis 2,.TOC.@ha
+		 *		addi 2,2,.TOC.@l
+		 */
+	case R_PPC64_REL16_HA:
+		/* check that we are dealing with the addis 2,12 instruction */
+		if (((*(uint32_t*)location) & 0xffff0000) != 0x3c4c0000)
+			die("Unexpected instruction for  R_PPC64_REL16_HA");
+		value += my_r2(ehdr);
+		/* replacing by lis 2 */
+		*(uint32_t *)location = 0x3c400000 + ((value >> 16) & 0xffff);
+		break;
+
+	case R_PPC64_REL16_LO:
+		/* check that we are dealing with the addi 2,2 instruction */
+		if (((*(uint32_t*)location) & 0xffff0000) != 0x38420000)
+			die("Unexpected instruction for R_PPC64_REL16_LO");
+
+		value += my_r2(ehdr) - 4;
+		*(uint16_t *)location = value & 0xffff;
+		break;
+
 	default:
 		die("Unknown rela relocation: %lu\n", r_type);
 		break;

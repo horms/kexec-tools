@@ -1984,6 +1984,10 @@ typedef Elf32_Addr Elf32_Conflict;
 #define R_PPC64_DTPREL16_HIGHERA 104 /* half16	(sym+add)@dtprel@highera */
 #define R_PPC64_DTPREL16_HIGHEST 105 /* half16	(sym+add)@dtprel@highest */
 #define R_PPC64_DTPREL16_HIGHESTA 106 /* half16	(sym+add)@dtprel@highesta */
+#define R_PPC64_REL16           249 /* half16   (sym+add-.) */
+#define R_PPC64_REL16_LO        250 /* half16   (sym+add-.)@l */
+#define R_PPC64_REL16_HI        251 /* half16   (sym+add-.)@h */
+#define R_PPC64_REL16_HA        252 /* half16   (sym+add-.)@ha */
 
 /* Keep this the last entry.  */
 #define R_PPC64_NUM		107

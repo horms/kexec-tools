@@ -18,6 +18,8 @@
 #  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 #
 
+#include "ppc64_asm.h"
+
 # v2wrap.S
 # a wrapper to call purgatory code to backup first
 # 32kB of first kernel into the backup region
@@ -77,7 +79,7 @@ master:
 	ld      1,0(6)          #setup stack
 
 	subi    1,1,112
-	bl      .purgatory
+	bl      DOTSYM(purgatory)
 	nop
 
 	or	3,3,3		# ok now to high priority, lets boot
