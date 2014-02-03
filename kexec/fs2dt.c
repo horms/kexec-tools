@@ -619,8 +619,7 @@ static void putnode(void)
 		 * code can print 'I'm in purgatory' message. Currently only
 		 * pseries/hvcterminal is supported.
 		 */
-		strcpy(filename, pathname);
-		strncat(filename, "linux,stdout-path", MAXPATH);
+		snprintf(filename, MAXPATH, "%slinux,stdout-path", pathname);
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
 			printf("Unable to find %s, printing from purgatory is diabled\n",
@@ -648,9 +647,7 @@ static void putnode(void)
 														filename);
 			goto no_debug;
 		}
-		strncpy(filename, "/proc/device-tree/", MAXPATH);
-		strncat(filename, buff, MAXPATH);
-		strncat(filename, "/compatible", MAXPATH);
+		snprintf(filename, MAXPATH, "/proc/device-tree/%s/compatible", buff);
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
 			printf("Unable to find %s printing from purgatory is diabled\n",
