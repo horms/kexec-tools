@@ -23,4 +23,5 @@ endif
 
 dist += purgatory/arch/ppc64/Makefile $(ppc64_PURGATORY_SRCS)		\
 	purgatory/arch/ppc64/hvCall.h					\
+	purgatory/arch/ppc64/ppc64_asm.h				\
 	purgatory/arch/ppc64/purgatory-ppc64.h
