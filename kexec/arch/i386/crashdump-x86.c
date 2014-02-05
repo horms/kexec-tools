@@ -41,11 +41,12 @@
 #include "../../crashdump.h"
 #include "kexec-x86.h"
 #include "crashdump-x86.h"
-#include "x86-linux-setup.h"
 
 #ifdef HAVE_LIBXENCTRL
 #include <xenctrl.h>
 #endif /* HAVE_LIBXENCTRL */
+
+#include "x86-linux-setup.h"
 
 #include <x86/x86-linux.h>
 
