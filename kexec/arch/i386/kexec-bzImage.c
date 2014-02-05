@@ -40,6 +40,7 @@
 #include <arch/options.h>
 
 static const int probe_debug = 0;
+int bzImage_support_efi_boot = 0;
 
 int bzImage_probe(const char *buf, off_t len)
 {
