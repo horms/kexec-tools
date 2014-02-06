@@ -36,6 +36,7 @@
 int zImage_ppc64_probe(FILE *file)
 {
 	Elf32_Ehdr elf;
+	int valid;
 
 	if (fseek(file, 0, SEEK_SET) < 0) {
 		fprintf(stderr, "seek error: %s\n",
@@ -53,7 +54,7 @@ int zImage_ppc64_probe(FILE *file)
 		return -1;
 	}
 
-	return (elf.e_ident[EI_MAG0]  == ELFMAG0        &&
+	valid = (elf.e_ident[EI_MAG0]  == ELFMAG0        &&
 		elf.e_ident[EI_MAG1]  == ELFMAG1        &&
 		elf.e_ident[EI_MAG2]  == ELFMAG2        &&
 		elf.e_ident[EI_MAG3]  == ELFMAG3        &&
@@ -61,6 +62,8 @@ int zImage_ppc64_probe(FILE *file)
 		elf.e_ident[EI_DATA]  == ELFDATA2MSB &&
 		elf.e_type            == ET_EXEC        &&
 		elf.e_machine         == EM_PPC);
+
+	return valid ? 0 : -1;
 }
 
 int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
