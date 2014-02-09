@@ -43,6 +43,7 @@ uint64_t memory_limit;
 static int nr_memory_ranges, nr_exclude_ranges;
 uint64_t crash_base, crash_size;
 unsigned int rtas_base, rtas_size;
+uint64_t opal_base, opal_size;
 int max_memory_ranges;
 
 static void cleanup_memory_ranges(void)
@@ -343,7 +344,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 			strncmp(dentry->d_name, "memory@", 7) &&
 			strcmp(dentry->d_name, "memory") &&
 			strncmp(dentry->d_name, "pci@", 4) &&
-			strncmp(dentry->d_name, "rtas", 4)) 
+			strncmp(dentry->d_name, "rtas", 4) &&
+			strncmp(dentry->d_name, "ibm,opal", 8))
 			continue;
 		strcpy(fname, device_tree);
 		strcat(fname, dentry->d_name);
@@ -574,6 +576,46 @@ static int get_devtree_details(unsigned long kexec_flags)
 			if (kexec_flags & KEXEC_ON_CRASH)
 				add_usable_mem_rgns(rtas_base, rtas_size);
 		} /* rtas */
+
+		if (strncmp(dentry->d_name, "ibm,opal", 8) == 0) {
+			strcat(fname, "/opal-base-address");
+			file = fopen(fname, "r");
+			if (file == NULL) {
+				perror(fname);
+				goto error_opencdir;
+			}
+			if (fread(&opal_base, sizeof(uint64_t), 1, file) != 1) {
+				perror(fname);
+				goto error_openfile;
+			}
+			opal_base = be64_to_cpu(opal_base);
+			fclose(file);
+
+			memset(fname, 0, sizeof(fname));
+			strcpy(fname, device_tree);
+			strcat(fname, dentry->d_name);
+			strcat(fname, "/opal-runtime-size");
+			file = fopen(fname, "r");
+			if (file == NULL) {
+				perror(fname);
+				goto error_opencdir;
+			}
+			if (fread(&opal_size, sizeof(uint64_t), 1, file) != 1) {
+				perror(fname);
+				goto error_openfile;
+			}
+			fclose(file);
+			closedir(cdir);
+			opal_size = be64_to_cpu(opal_size);
+			/* Add OPAL to exclude_range */
+			exclude_range[i].start = opal_base;
+			exclude_range[i].end = opal_base + opal_size;
+			i++;
+			if (i >= max_memory_ranges)
+				realloc_memory_ranges();
+			if (kexec_flags & KEXEC_ON_CRASH)
+				add_usable_mem_rgns(opal_base, opal_size);
+		} /* ibm,opal */
 
 		if (!strncmp(dentry->d_name, "memory@", 7) ||
 			!strcmp(dentry->d_name, "memory")) {

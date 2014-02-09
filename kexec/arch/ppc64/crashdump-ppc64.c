@@ -294,6 +294,34 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		crash_memory_range[memory_ranges++].end = cend;
 	}
 
+	/*
+	 * If OPAL region is overlapped with crashkernel, need to create ELF
+	 * Program header for the overlapped memory.
+	 */
+	if (crash_base < opal_base + opal_size &&
+		opal_base < crash_base + crash_size) {
+		page_size = getpagesize();
+		cstart = opal_base;
+		cend = opal_base + opal_size;
+		if (cstart < crash_base)
+			cstart = crash_base;
+		if (cend > crash_base + crash_size)
+			cend = crash_base + crash_size;
+		/*
+		 * The opal section created here is formed by reading opal-base
+		 * and opal-size from /proc/device-tree/ibm,opal.  Unfortunately
+		 * opal-size is not required to be a multiple of PAGE_SIZE
+		 * The remainder of the page it ends on is just garbage, and is
+		 * safe to read, its just not accounted in opal-size.  Since
+		 * we're creating an elf section here though, lets round it up
+		 * to the next page size boundary though, so makedumpfile can
+		 * read it safely without going south on us.
+		 */
+		cend = _ALIGN(cend, page_size);
+
+		crash_memory_range[memory_ranges].start = cstart;
+		crash_memory_range[memory_ranges++].end = cend;
+	}
 	*range = crash_memory_range;
 	*ranges = memory_ranges;
 

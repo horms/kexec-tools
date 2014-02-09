@@ -113,6 +113,10 @@ static void checkprop(char *name, unsigned *data, int len)
 		die("unrecoverable error: no property data");
 	else if (!strcmp(name, "linux,rtas-base"))
 		base = be32_to_cpu(*data);
+	else if (!strcmp(name, "opal-base-address"))
+		base = be64_to_cpu(*(unsigned long long *)data);
+	else if (!strcmp(name, "opal-runtime-size"))
+		size = be64_to_cpu(*(unsigned long long *)data);
 	else if (!strcmp(name, "linux,tce-base"))
 		base = be64_to_cpu(*(unsigned long long *) data);
 	else if (!strcmp(name, "rtas-size") ||

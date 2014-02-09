@@ -31,6 +31,8 @@ extern uint64_t crash_size;
 extern uint64_t memory_limit;
 extern unsigned int rtas_base;
 extern unsigned int rtas_size;
+extern uint64_t opal_base;
+extern uint64_t opal_size;
 
 uint64_t lmb_size;
 unsigned int num_of_lmbs;
