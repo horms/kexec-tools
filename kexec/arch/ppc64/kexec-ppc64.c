@@ -31,6 +31,7 @@
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-ppc64.h"
+#include "../../fs2dt.h"
 #include "crashdump-ppc64.h"
 #include <arch/options.h>
 
@@ -314,6 +315,47 @@ static int sort_ranges(void)
 	return 0;
 }
 
+void scan_reserved_ranges(unsigned long kexec_flags, int *range_index)
+{
+	char fname[256], buf[16];
+	FILE *file;
+	int i = *range_index;
+
+	strcpy(fname, "/proc/device-tree/reserved-ranges");
+
+	file = fopen(fname, "r");
+	if (file == NULL) {
+		if (errno != ENOENT) {
+			perror(fname);
+			return;
+		}
+		errno = 0;
+		/* File not present. Non PowerKVM system. */
+		return;
+	}
+
+	/*
+	 * Each reserved range is an (address,size) pair, 2 cells each,
+	 * totalling 4 cells per range.
+	 */
+	while (fread(buf, sizeof(uint64_t) * 2, 1, file) == 1) {
+		uint64_t base, size;
+
+		base = be64_to_cpu(((uint64_t *)buf)[0]);
+		size = be64_to_cpu(((uint64_t *)buf)[1]);
+
+		exclude_range[i].start = base;
+		exclude_range[i].end = base + size;
+		i++;
+		if (i >= max_memory_ranges)
+			realloc_memory_ranges();
+
+		reserve(base, size);
+	}
+	fclose(file);
+	*range_index = i;
+}
+
 /* Get devtree details and create exclude_range array
  * Also create usablemem_ranges for KEXEC_ON_CRASH
  */
@@ -338,6 +380,8 @@ static int get_devtree_details(unsigned long kexec_flags)
 		perror(device_tree);
 		return -1;
 	}
+
+	scan_reserved_ranges(kexec_flags, &i);
 
 	while ((dentry = readdir(dir)) != NULL) {
 		if (strncmp(dentry->d_name, "chosen", 6) &&
