@@ -275,7 +275,7 @@ unsigned long locate_hole(struct kexec_info *info,
 				hole_base = start;
 				break;
 			} else {
-				hole_base = _ALIGN_DOWN(end - hole_size,
+				hole_base = _ALIGN_DOWN(end - hole_size + 1,
 					hole_align);
 			}
 		}
