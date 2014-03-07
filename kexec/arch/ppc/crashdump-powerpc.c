@@ -41,6 +41,7 @@ lowmem_limit: MAXMEM,
  * A separate program header is created for backup region
  */
 static struct memory_range *crash_memory_range;
+static int crash_nr_memory_ranges;
 
 /* Define a variable to replace the CRASH_MAX_MEMORY_RANGES macro */
 static int crash_max_memory_ranges;
@@ -50,6 +51,29 @@ static int crash_max_memory_ranges;
  * kernel to boot. (lime memmap= option in other archs)
  */
 mem_rgns_t usablemem_rgns = {0, NULL};
+
+/* Append a segment to crash_memory_range, splitting it into two if
+ * it contains both lowmem and highmem */
+static void add_crash_memory_range(unsigned long long start,
+		unsigned long long end)
+{
+#ifndef CONFIG_PPC64
+	if (start < elf_info32.lowmem_limit && end > elf_info32.lowmem_limit) {
+		add_crash_memory_range(start, elf_info32.lowmem_limit);
+		add_crash_memory_range(elf_info32.lowmem_limit, end);
+		return;
+	}
+#endif
+
+	if (crash_nr_memory_ranges < crash_max_memory_ranges) {
+		crash_memory_range[crash_nr_memory_ranges].start = start;
+		crash_memory_range[crash_nr_memory_ranges].end = end;
+		crash_memory_range[crash_nr_memory_ranges].type = RANGE_RAM;
+	}
+
+	crash_nr_memory_ranges++;
+}
+
 
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
@@ -65,13 +89,12 @@ mem_rgns_t usablemem_rgns = {0, NULL};
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
 
-	int memory_ranges = 0;
 	char device_tree[256] = "/proc/device-tree/";
 	char fname[256];
 	DIR *dir, *dmem;
 	int fd;
 	struct dirent *dentry, *mentry;
-	int i, n, crash_rng_len = 0;
+	int n, crash_rng_len = 0;
 	unsigned long long start, end, cstart, cend;
 
 	crash_max_memory_ranges = max_memory_ranges + 6;
@@ -83,13 +106,11 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		return -1;
 	}
 	memset(crash_memory_range, 0, crash_rng_len);
+	crash_nr_memory_ranges = 0;
 
 #ifndef CONFIG_BOOKE
 	/* create a separate program header for the backup region */
-	crash_memory_range[0].start = BACKUP_SRC_START;
-	crash_memory_range[0].end = BACKUP_SRC_END + 1;
-	crash_memory_range[0].type = RANGE_RAM;
-	memory_ranges++;
+	add_crash_memory_range(BACKUP_SRC_START, BACKUP_SRC_END + 1);
 #endif
 
 	dir = opendir(device_tree);
@@ -128,70 +149,37 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 				closedir(dir);
 				goto err;
 			}
-			if (memory_ranges >= (max_memory_ranges + 1)) {
-				/* No space to insert another element. */
-				fprintf(stderr,
-					"Error: Number of crash memory ranges"
-					" excedeed the max limit\n");
-				goto err;
-			}
 #ifndef CONFIG_BOOKE
 			if (start == 0 && end >= (BACKUP_SRC_END + 1))
 				start = BACKUP_SRC_END + 1;
 #endif
 
-			cstart = crash_base;
-			cend = crash_base + crash_size;
 			/*
 			 * Exclude the region that lies within crashkernel.
 			 * If memory limit is set then exclude memory region
 			 * above it.
 			 */
+
 			if (memory_limit) {
 				if (start >= memory_limit)
 					continue;
 				if (end > memory_limit)
 					end = memory_limit;
 			}
-			if (cstart < end && cend > start) {
-				if (start < cstart && end > cend) {
-					crash_memory_range[memory_ranges].start
-						= start;
-					crash_memory_range[memory_ranges].end
-						= cstart;
-					crash_memory_range[memory_ranges].type
-						= RANGE_RAM;
-					memory_ranges++;
-					crash_memory_range[memory_ranges].start
-						= cend;
-					crash_memory_range[memory_ranges].end
-						= end;
-					crash_memory_range[memory_ranges].type
-						= RANGE_RAM;
-					memory_ranges++;
-				} else if (start < cstart) {
-					crash_memory_range[memory_ranges].start
-						= start;
-					crash_memory_range[memory_ranges].end
-						= cstart;
-					crash_memory_range[memory_ranges].type
-						= RANGE_RAM;
-					memory_ranges++;
-				} else if (end > cend) {
-					crash_memory_range[memory_ranges].start
-						= cend;
-					crash_memory_range[memory_ranges].end
-						= end;
-					crash_memory_range[memory_ranges].type
-						= RANGE_RAM;
-					memory_ranges++;
-				}
-			} else {
-				crash_memory_range[memory_ranges].start = start;
-				crash_memory_range[memory_ranges].end  = end;
-				crash_memory_range[memory_ranges].type
-					= RANGE_RAM;
-				memory_ranges++;
+
+			/*
+			 * Exclure region used by crash kernel
+			 */
+			cstart = crash_base;
+			cend = crash_base + crash_size;
+
+			if (cstart >= end || cend <= start)
+				add_crash_memory_range(start, end);
+			else {
+				if (start < cstart)
+					add_crash_memory_range(start, cstart);
+				if (cend < end)
+					add_crash_memory_range(cend, end);
 			}
 		}
 		closedir(dmem);
@@ -210,12 +198,18 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			cstart = crash_base;
 		if (cend > crash_base + crash_size)
 			cend = crash_base + crash_size;
-		crash_memory_range[memory_ranges].start = cstart;
-		crash_memory_range[memory_ranges++].end = cend;
+		add_crash_memory_range(cstart, cend);
+	}
+
+	if (crash_nr_memory_ranges >= crash_max_memory_ranges) {
+		fprintf(stderr,
+			"Error: Number of crash memory ranges"
+			" excedeed the max limit\n");
+		goto err;
 	}
 
 	*range = crash_memory_range;
-	*ranges = memory_ranges;
+	*ranges = crash_nr_memory_ranges;
 
 	int j;
 	dbgprintf("CRASH MEMORY RANGES\n");
