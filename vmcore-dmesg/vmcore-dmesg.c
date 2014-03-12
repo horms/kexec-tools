@@ -674,7 +674,7 @@ static void dump_dmesg_structured(int fd)
 			else
 				out_buf[len++] = c;
 
-			if (len >= OUT_BUF_SIZE - 16) {
+			if (len >= OUT_BUF_SIZE - 64) {
 				write_to_stdout(out_buf, len);
 				len = 0;
 			}
