@@ -374,11 +374,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			mem_max = end;
 	}
 
-	dbgprintf("MEMORY RANGES\n");
-	for (i = 0; i < *ranges; i++) {
-		dbgprintf("%016Lx-%016Lx (%d)\n", (*range)[i].start,
-			  (*range)[i].end, (*range)[i].type);
-	}
+	dbgprint_mem_range("MEMORY RANGES", *range, *ranges);
 
 	return ret;
 }

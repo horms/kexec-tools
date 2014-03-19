@@ -232,6 +232,7 @@ extern int file_types;
 
 #define KEXEC_OPT_STR "h?vdfxluet:p"
 
+extern void dbgprint_mem_range(const char *prefix, struct memory_range *mr, int nr_mr);
 extern void die(const char *fmt, ...)
 	__attribute__ ((format (printf, 1, 2)));
 extern void *xmalloc(size_t size);
