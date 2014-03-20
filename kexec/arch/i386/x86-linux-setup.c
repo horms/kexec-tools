@@ -656,7 +656,8 @@ static int setup_efi_data(struct kexec_info *info,
 	size = nr_maps * sizeof(struct efi_mem_descriptor);
 	memmap_paddr = add_buffer(info, maps, size, size, getpagesize(),
 					0x100000, ULONG_MAX, INT_MAX);
-	ei->efi_memmap = memmap_paddr;
+	ei->efi_memmap = memmap_paddr & 0xffffffff;
+	ei->efi_memmap_hi = memmap_paddr >> 32;
 	ei->efi_memmap_size = size;
 	ei->efi_memdesc_size = sizeof(struct efi_mem_descriptor);
 
