@@ -347,11 +347,11 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		/* If the image size was passed as command line argument,
 		 * use that value for determining the address for initrd,
 		 * atags and dtb images. page-align the given length.*/
-		initrd_base = base + _ALIGN(kexec_arm_image_size, 4096);
+		initrd_base = base + _ALIGN(kexec_arm_image_size, getpagesize());
 	} else {
 		/* Otherwise, assume the maximum kernel compression ratio
 		 * is 4, and just to be safe, place ramdisk after that */
-		initrd_base = base + len * 4;
+		initrd_base = base + _ALIGN(len * 4, getpagesize());
 	}
 
 	if (use_atags) {
