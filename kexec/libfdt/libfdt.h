@@ -1073,4 +1073,28 @@ int fdt_del_node(void *fdt, int nodeoffset);
 
 const char *fdt_strerror(int errval);
 
+#define FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
+#define FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))
+
+/*
+ * if add a new subnode:
+ * see: fdt_add_subnode -> fdt_add_subnode_namelen
+ */
+static inline int fdt_node_len(const char* node_name)
+{
+	return sizeof(struct fdt_node_header) +
+		FDT_TAGALIGN(strlen(node_name) + 1) + FDT_TAGSIZE;
+}
+
+/*
+ * if add a new prop: (assume prop_name not exist in strtab)
+ * see: fdt_setprop -> _fdt_add_property
+ */
+static inline int fdt_prop_len(const char* prop_name, int len)
+{
+	return (strlen(prop_name) + 1) +
+		sizeof(struct fdt_property) +
+		FDT_TAGALIGN(len);
+}
+
 #endif /* _LIBFDT_H */

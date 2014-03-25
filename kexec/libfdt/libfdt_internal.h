@@ -52,9 +52,6 @@
  */
 #include <fdt.h>
 
-#define FDT_ALIGN(x, a)		(((x) + (a) - 1) & ~((a) - 1))
-#define FDT_TAGALIGN(x)		(FDT_ALIGN((x), FDT_TAGSIZE))
-
 #define FDT_CHECK_HEADER(fdt) \
 	{ \
 		int err; \
