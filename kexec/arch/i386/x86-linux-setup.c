@@ -687,17 +687,25 @@ static void setup_efi_info(struct kexec_info *info,
 	ret = get_bootparam(&real_mode->efi_info, offset, 32);
 	if (ret)
 		return;
+	if (((struct efi_info *)real_mode->efi_info)->efi_memmap_size == 0)
+		/* zero filled efi_info */
+		goto out;
 	desc_version = get_efi_mem_desc_version(real_mode);
 	if (desc_version != 1) {
 		fprintf(stderr,
 			"efi memory descriptor version %d is not supported!\n",
 			desc_version);
-		memset(&real_mode->efi_info, 0, 32);
-		return;
+		goto out;
 	}
 	ret = setup_efi_data(info, real_mode);
 	if (ret)
-		memset(&real_mode->efi_info, 0, 32);
+		goto out;
+
+	return;
+
+out:
+	memset(&real_mode->efi_info, 0, 32);
+	return;
 }
 
 void setup_linux_system_parameters(struct kexec_info *info,
