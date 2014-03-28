@@ -100,6 +100,36 @@ static int get_kernel_paddr(struct kexec_info *UNUSED(info),
 	return -1;
 }
 
+/* Retrieve kernel _stext symbol virtual address from /proc/kallsyms */
+static unsigned long long get_kernel_stext_sym(void)
+{
+	const char *kallsyms = "/proc/kallsyms";
+	const char *stext = "_stext";
+	char sym[128];
+	char line[128];
+	FILE *fp;
+	unsigned long long vaddr;
+	char type;
+
+	fp = fopen(kallsyms, "r");
+	if (!fp) {
+		fprintf(stderr, "Cannot open %s\n", kallsyms);
+		return 0;
+	}
+
+	while(fgets(line, sizeof(line), fp) != NULL) {
+		if (sscanf(line, "%Lx %c %s", &vaddr, &type, sym) != 3)
+			continue;
+		if (strcmp(sym, stext) == 0) {
+			dbgprintf("kernel symbol %s vaddr = %16llx\n", stext, vaddr);
+			return vaddr;
+		}
+	}
+
+	fprintf(stderr, "Cannot get kernel %s symbol address\n", stext);
+	return 0;
+}
+
 /* Retrieve info regarding virtual address kernel has been compiled for and
  * size of the kernel from /proc/kcore. Current /proc/kcore parsing from
  * from kexec-tools fails because of malformed elf notes. A kernel patch has
@@ -118,6 +148,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 	int align;
 	off_t size;
 	uint32_t elf_flags = 0;
+	uint64_t stext_sym;
 
 	if (elf_info->machine != EM_X86_64)
 		return 0;
@@ -145,9 +176,36 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 		return -1;
 	}
 
-	/* Traverse through the Elf headers and find the region where
-	 * kernel is mapped. */
 	end_phdr = &ehdr.e_phdr[ehdr.e_phnum];
+
+	/* Traverse through the Elf headers and find the region where
+	 * _stext symbol is located in. That's where kernel is mapped */
+	stext_sym = get_kernel_stext_sym();
+	for(phdr = ehdr.e_phdr; stext_sym && phdr != end_phdr; phdr++) {
+		if (phdr->p_type == PT_LOAD) {
+			unsigned long long saddr = phdr->p_vaddr;
+			unsigned long long eaddr = phdr->p_vaddr + phdr->p_memsz;
+			unsigned long long size;
+
+			/* Look for kernel text mapping header. */
+			if (saddr < stext_sym && eaddr > stext_sym) {
+				saddr = _ALIGN_DOWN(saddr, X86_64_KERN_VADDR_ALIGN);
+				elf_info->kern_vaddr_start = saddr;
+				size = eaddr - saddr;
+				/* Align size to page size boundary. */
+				size = _ALIGN(size, align);
+				elf_info->kern_size = size;
+				dbgprintf("kernel vaddr = 0x%llx size = 0x%llx\n",
+					saddr, size);
+				return 0;
+			}
+		}
+	}
+
+	/* If failed to retrieve kernel text mapping through
+	 * /proc/kallsyms, Traverse through the Elf headers again and
+	 * find the region where kernel is mapped using hard-coded
+	 * kernel mapping boundries */
 	for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
 		if (phdr->p_type == PT_LOAD) {
 			unsigned long long saddr = phdr->p_vaddr;
@@ -169,6 +227,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 			}
 		}
 	}
+
 	fprintf(stderr, "Can't find kernel text map area from kcore\n");
 	return -1;
 }
