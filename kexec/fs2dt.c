@@ -531,7 +531,7 @@ static void putnode(void)
 	/* Add initrd entries to the second kernel */
 	if (initrd_base && initrd_size && !strcmp(basename,"chosen/")) {
 		int len = 8;
-		unsigned long long initrd_end;
+		uint64_t bevalue;
 
 		dt_reserve(&dt, 12); /* both props, of 6 words ea. */
 		*dt++ = cpu_to_be32(3);
@@ -539,7 +539,8 @@ static void putnode(void)
 		*dt++ = cpu_to_be32(propnum("linux,initrd-start"));
 		pad_structure_block(len);
 
-		memcpy(dt,&initrd_base,len);
+		bevalue = cpu_to_be64(initrd_base);
+		memcpy(dt, &bevalue, len);
 		dt += (len + 3)/4;
 
 		len = 8;
@@ -547,10 +548,10 @@ static void putnode(void)
 		*dt++ = cpu_to_be32(len);
 		*dt++ = cpu_to_be32(propnum("linux,initrd-end"));
 
-		initrd_end = initrd_base + initrd_size;
+		bevalue = cpu_to_be64(initrd_base + initrd_size);
 		pad_structure_block(len);
 
-		memcpy(dt,&initrd_end,len);
+		memcpy(dt, &bevalue, len);
 		dt += (len + 3)/4;
 
 		reserve(initrd_base, initrd_size);
