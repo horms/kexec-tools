@@ -603,6 +603,22 @@ struct efi_info {
 };
 
 /*
+ * Add another instance to single linked list of struct setup_data.
+ * Please refer to kernel Documentation/x86/boot.txt for more details
+ * about setup_data structure.
+ */
+static void add_setup_data(struct kexec_info *info,
+			   struct x86_linux_param_header *real_mode,
+			   struct setup_data *sd)
+{
+	int sdsize = sizeof(struct setup_data) + sd->len;
+
+	sd->next = real_mode->setup_data;
+	real_mode->setup_data = add_buffer(info, sd, sdsize, sdsize, getpagesize(),
+			    0x100000, ULONG_MAX, INT_MAX);
+}
+
+/*
  * setup_efi_data will collect below data and pass them to 2nd kernel.
  * 1) SMBIOS, fw_vendor, runtime, config_table, they are passed via x86
  *    setup_data.
@@ -611,11 +627,11 @@ struct efi_info {
 static int setup_efi_data(struct kexec_info *info,
 			  struct x86_linux_param_header *real_mode)
 {
-	int64_t setup_data_paddr, memmap_paddr;
+	int64_t memmap_paddr;
 	struct setup_data *sd;
 	struct efi_setup_data *esd;
 	struct efi_mem_descriptor *maps;
-	int nr_maps, size, sdsize, ret = 0;
+	int nr_maps, size, ret = 0;
 	struct efi_info *ei = (struct efi_info *)real_mode->efi_info;
 
 	ret = access("/sys/firmware/efi/systab", F_OK);
@@ -648,10 +664,8 @@ static int setup_efi_data(struct kexec_info *info,
 	sd->len = sizeof(*esd);
 	memcpy(sd->data, esd, sizeof(*esd));
 	free(esd);
-	sdsize = sd->len + sizeof(struct setup_data);
-	setup_data_paddr = add_buffer(info, sd, sdsize, sdsize, getpagesize(),
-					0x100000, ULONG_MAX, INT_MAX);
-	real_mode->setup_data = setup_data_paddr;
+
+	add_setup_data(info, real_mode, sd);
 
 	size = nr_maps * sizeof(struct efi_mem_descriptor);
 	memmap_paddr = add_buffer(info, maps, size, size, getpagesize(),
