@@ -1006,12 +1006,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 
 	/* Inform second kernel about the presence of ACPI tables. */
 	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
-		unsigned long start, end;
+		unsigned long start, end, size, type;
 		if ( !( mem_range[i].type == RANGE_ACPI
 			|| mem_range[i].type == RANGE_ACPI_NVS) )
 			continue;
 		start = mem_range[i].start;
 		end = mem_range[i].end;
+		type = mem_range[i].type;
+		size = end - start + 1;
+		add_memmap(memmap_p, &nr_memmap, start, size, type);
 		cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
 	return 0;
