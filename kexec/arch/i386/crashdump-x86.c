@@ -979,7 +979,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
 	if (delete_memmap(memmap_p, &nr_memmap, elfcorehdr, memsz) < 0)
 		return -1;
-	cmdline_add_memmap(mod_cmdline, memmap_p);
+	if (arch_options.pass_memmap_cmdline)
+		cmdline_add_memmap(mod_cmdline, memmap_p);
 	if (!bzImage_support_efi_boot)
 		cmdline_add_efi(mod_cmdline);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
@@ -995,7 +996,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		type = mem_range[i].type;
 		size = end - start + 1;
 		add_memmap(memmap_p, &nr_memmap, start, size, type);
-		cmdline_add_memmap_acpi(mod_cmdline, start, end);
+		if (arch_options.pass_memmap_cmdline)
+			cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
 
 	/* Store 2nd kernel boot memory ranges for later reference in

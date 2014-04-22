@@ -36,8 +36,6 @@
 #include "x86-linux-setup.h"
 #include "../../kexec/kexec-syscall.h"
 
-#define SETUP_EFI	4
-
 void init_linux_parameters(struct x86_linux_param_header *real_mode)
 {
 	/* Fill in the values that are usually provided by the kernel. */
@@ -502,6 +500,11 @@ struct efi_setup_data {
 struct setup_data {
 	uint64_t next;
 	uint32_t type;
+#define SETUP_NONE	0
+#define SETUP_E820_EXT	1
+#define SETUP_DTB	2
+#define SETUP_PCI	3
+#define SETUP_EFI	4
 	uint32_t len;
 	uint8_t data[0];
 } __attribute__((packed));
@@ -684,6 +687,98 @@ out:
 	return ret;
 }
 
+static void add_e820_map_from_mr(struct x86_linux_param_header *real_mode,
+			struct e820entry *e820, struct memory_range *range, int nr_range)
+{
+	int i;
+
+	for (i = 0; i < nr_range; i++) {
+		e820[i].addr = range[i].start;
+		e820[i].size = range[i].end - range[i].start + 1;
+		switch (range[i].type) {
+			case RANGE_RAM:
+				e820[i].type = E820_RAM;
+				break;
+			case RANGE_ACPI:
+				e820[i].type = E820_ACPI;
+				break;
+			case RANGE_ACPI_NVS:
+				e820[i].type = E820_NVS;
+				break;
+			default:
+			case RANGE_RESERVED:
+				e820[i].type = E820_RESERVED;
+				break;
+		}
+		dbgprintf("%016lx-%016lx (%d)\n",
+				e820[i].addr,
+				e820[i].addr + e820[i].size - 1,
+				e820[i].type);
+
+		if (range[i].type != RANGE_RAM)
+			continue;
+		if ((range[i].start <= 0x100000) && range[i].end > 0x100000) {
+			unsigned long long mem_k = (range[i].end >> 10) - (0x100000 >> 10);
+			real_mode->ext_mem_k = mem_k;
+			real_mode->alt_mem_k = mem_k;
+			if (mem_k > 0xfc00) {
+				real_mode->ext_mem_k = 0xfc00; /* 64M */
+			}
+			if (mem_k > 0xffffffff) {
+				real_mode->alt_mem_k = 0xffffffff;
+			}
+		}
+	}
+}
+
+static void setup_e820_ext(struct kexec_info *info, struct x86_linux_param_header *real_mode,
+			   struct memory_range *range, int nr_range)
+{
+	struct setup_data *sd;
+	struct e820entry *e820;
+	int nr_range_ext;
+
+	nr_range_ext = nr_range - E820MAX;
+	sd = xmalloc(sizeof(struct setup_data) + nr_range_ext * sizeof(struct e820entry));
+	sd->next = 0;
+	sd->len = nr_range_ext * sizeof(struct e820entry);
+	sd->type = SETUP_E820_EXT;
+
+	e820 = (struct e820entry *) sd->data;
+	dbgprintf("Extended E820 via setup_data:\n");
+	add_e820_map_from_mr(real_mode, e820, range + E820MAX, nr_range_ext);
+	add_setup_data(info, real_mode, sd);
+}
+
+static void setup_e820(struct kexec_info *info, struct x86_linux_param_header *real_mode)
+{
+	struct memory_range *range;
+	int nr_range, nr_range_saved;
+
+
+	if (info->kexec_flags & KEXEC_ON_CRASH && !arch_options.pass_memmap_cmdline) {
+		range = info->crash_range;
+		nr_range = info->nr_crash_ranges;
+	} else {
+		range = info->memory_range;
+		nr_range = info->memory_ranges;
+	}
+
+	nr_range_saved = nr_range;
+	if (nr_range > E820MAX) {
+		nr_range = E820MAX;
+	}
+
+	real_mode->e820_map_nr = nr_range;
+	dbgprintf("E820 memmap:\n");
+	add_e820_map_from_mr(real_mode, real_mode->e820_map, range, nr_range);
+
+	if (nr_range_saved > E820MAX) {
+		dbgprintf("extra E820 memmap are passed via setup_data\n");
+		setup_e820_ext(info, real_mode, range, nr_range_saved);
+	}
+}
+
 static int
 get_efi_mem_desc_version(struct x86_linux_param_header *real_mode)
 {
@@ -725,10 +820,6 @@ out:
 void setup_linux_system_parameters(struct kexec_info *info,
 				   struct x86_linux_param_header *real_mode)
 {
-	/* Fill in information the BIOS would usually provide */
-	struct memory_range *range;
-	int i, ranges;
-
 	/* get subarch from running kernel */
 	setup_subarch(real_mode);
 	if (bzImage_support_efi_boot)
@@ -769,51 +860,7 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	/* another safe default */
 	real_mode->aux_device_info = 0;
 
-	range = info->memory_range;
-	ranges = info->memory_ranges;
-	if (ranges > E820MAX) {
-		if (!(info->kexec_flags & KEXEC_ON_CRASH))
-			/*
-			 * this e820 not used for capture kernel, see
-			 * do_bzImage_load()
-			 */
-			fprintf(stderr,
-				"Too many memory ranges, truncating...\n");
-		ranges = E820MAX;
-	}
-	real_mode->e820_map_nr = ranges;
-	for(i = 0; i < ranges; i++) {
-		real_mode->e820_map[i].addr = range[i].start;
-		real_mode->e820_map[i].size = range[i].end - range[i].start + 1;
-		switch (range[i].type) {
-		case RANGE_RAM:
-			real_mode->e820_map[i].type = E820_RAM; 
-			break;
-		case RANGE_ACPI:
-			real_mode->e820_map[i].type = E820_ACPI; 
-			break;
-		case RANGE_ACPI_NVS:
-			real_mode->e820_map[i].type = E820_NVS;
-			break;
-		default:
-		case RANGE_RESERVED:
-			real_mode->e820_map[i].type = E820_RESERVED; 
-			break;
-		}
-		if (range[i].type != RANGE_RAM)
-			continue;
-		if ((range[i].start <= 0x100000) && range[i].end > 0x100000) {
-			unsigned long long mem_k = (range[i].end >> 10) - (0x100000 >> 10);
-			real_mode->ext_mem_k = mem_k;
-			real_mode->alt_mem_k = mem_k;
-			if (mem_k > 0xfc00) {
-				real_mode->ext_mem_k = 0xfc00; /* 64M */
-			}
-			if (mem_k > 0xffffffff) {
-				real_mode->alt_mem_k = 0xffffffff;
-			}
-		}
-	}
+	setup_e820(info, real_mode);
 
 	/* fill the EDD information */
 	setup_edd_info(real_mode);
