@@ -997,6 +997,12 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		add_memmap(memmap_p, &nr_memmap, start, size, type);
 		cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
+
+	/* Store 2nd kernel boot memory ranges for later reference in
+	 * x86-setup-linux.c: setup_linux_system_parameters() */
+	info->crash_range = memmap_p;
+	info->nr_crash_ranges = nr_memmap;
+
 	return 0;
 }
 

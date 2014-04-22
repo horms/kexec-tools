@@ -148,6 +148,8 @@ struct kexec_info {
 	int nr_segments;
 	struct memory_range *memory_range;
 	int memory_ranges;
+	struct memory_range *crash_range;
+	int nr_crash_ranges;
 	void *entry;
 	struct mem_ehdr rhdr;
 	unsigned long backup_start;
