@@ -50,6 +50,7 @@ struct arch_options_t {
 	uint8_t  	console_vga;
 	uint8_t  	console_serial;
 	enum coretype	core_header_type;
+	uint8_t  	pass_memmap_cmdline;
 };
 
 int multiboot_x86_probe(const char *buf, off_t len);

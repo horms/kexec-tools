@@ -30,6 +30,7 @@
 #define OPT_VGA 		(OPT_ARCH_MAX+8)
 #define OPT_REAL_MODE		(OPT_ARCH_MAX+9)
 #define OPT_ENTRY_32BIT		(OPT_ARCH_MAX+10)
+#define OPT_PASS_MEMMAP_CMDLINE	(OPT_ARCH_MAX+11)
 
 /* Options relevant to the architecture (excluding loader-specific ones): */
 #define KEXEC_ARCH_OPTIONS \
@@ -41,6 +42,7 @@
 	{ "console-serial", 0, 0, OPT_CONSOLE_SERIAL }, \
 	{ "elf32-core-headers", 0, 0, OPT_ELF32_CORE }, \
 	{ "elf64-core-headers", 0, 0, OPT_ELF64_CORE }, \
+	{ "pass-memmap-cmdline", 0, 0, OPT_PASS_MEMMAP_CMDLINE }, \
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""
 
