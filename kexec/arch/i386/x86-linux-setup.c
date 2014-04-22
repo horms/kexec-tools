@@ -784,7 +784,7 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	real_mode->e820_map_nr = ranges;
 	for(i = 0; i < ranges; i++) {
 		real_mode->e820_map[i].addr = range[i].start;
-		real_mode->e820_map[i].size = range[i].end - range[i].start;
+		real_mode->e820_map[i].size = range[i].end - range[i].start + 1;
 		switch (range[i].type) {
 		case RANGE_RAM:
 			real_mode->e820_map[i].type = E820_RAM; 

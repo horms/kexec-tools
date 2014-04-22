@@ -79,7 +79,6 @@ static int get_memory_ranges_proc_iomem(struct memory_range **range, int *ranges
 		if (count != 2)
 			continue;
 		str = line + consumed;
-		end = end + 1;
 
 		dbgprintf("%016Lx-%016Lx : %s", start, end, str);
 
@@ -188,7 +187,7 @@ static int get_memory_ranges_xen(struct memory_range **range, int *ranges)
 
 	for (i = 0; i < rc; ++i) {
 		memory_range[i].start = e820entries[i].addr;
-		memory_range[i].end = e820entries[i].addr + e820entries[i].size;
+		memory_range[i].end = e820entries[i].addr + e820entries[i].size - 1;
 		memory_range[i].type = xen_e820_to_kexec_type(e820entries[i].type);
 	}
 

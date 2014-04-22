@@ -145,7 +145,6 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 	range->end = parse_numeric_sysfs(filename);
 	if (range->end == ULLONG_MAX)
 		return -1;
-	range->end++; /* inclusive vs. exclusive ranges */
 
 	/*
 	 * entry/type
