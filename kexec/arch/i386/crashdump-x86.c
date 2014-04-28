@@ -300,6 +300,9 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 			type = RANGE_ACPI;
 		} else if(memcmp(str,"ACPI Non-volatile Storage\n",26) == 0 ) {
 			type = RANGE_ACPI_NVS;
+		} else if(memcmp(str,"reserved\n",9) == 0 ) {
+			type = RANGE_RESERVED;
+		} else if (memcmp(str, "GART\n", 5) == 0) {
 		} else if (memcmp(str, "GART\n", 5) == 0) {
 			gart_start = start;
 			gart_end = end;
@@ -989,14 +992,15 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
 		unsigned long start, end, size, type;
 		if ( !( mem_range[i].type == RANGE_ACPI
-			|| mem_range[i].type == RANGE_ACPI_NVS) )
+			|| mem_range[i].type == RANGE_ACPI_NVS
+			|| mem_range[i].type == RANGE_RESERVED))
 			continue;
 		start = mem_range[i].start;
 		end = mem_range[i].end;
 		type = mem_range[i].type;
 		size = end - start + 1;
 		add_memmap(memmap_p, &nr_memmap, start, size, type);
-		if (arch_options.pass_memmap_cmdline)
+		if (arch_options.pass_memmap_cmdline || type != RANGE_RESERVED)
 			cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
 
