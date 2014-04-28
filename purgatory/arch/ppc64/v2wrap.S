@@ -90,10 +90,20 @@ master:
 	LOADADDR(16, dt_offset)
 	ld      3,0(16)         # load device-tree address
 	mr      16,3            # save dt address in reg16
+#ifdef __BIG_ENDIAN__
 	lwz     6,20(3)         # fetch version number
+#else
+	li	4,20
+	lwbrx	6,3,4		# fetch BE version number
+#endif
 	cmpwi   0,6,2           # v2 ?
 	blt     80f
+#ifdef __BIG_ENDIAN__
 	stw     17,28(3)        # save my cpu number as boot_cpu_phys
+#else
+	li	4,28
+	stwbrx	17,3,4		# Store my cpu as BE value
+#endif
 80:
 	LOADADDR(6,opal_base)	# For OPAL early debug
 	ld      8,0(6)          # load the OPAL base address in r8
