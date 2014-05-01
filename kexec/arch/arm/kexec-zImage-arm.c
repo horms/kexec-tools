@@ -282,7 +282,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 {
 	unsigned long base;
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
-	unsigned int offset = 0x8000;      /* 32k offset from memory start */
+	unsigned int extra_size = 0;
 	const char *command_line;
 	char *modified_cmdline = NULL;
 	off_t command_line_len;
@@ -360,6 +360,13 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		ramdisk_buf = slurp_file(ramdisk, &initrd_size);
 	}
 
+	if (dtb_file) {
+		dtb_buf = slurp_file(dtb_file, &dtb_length);
+		extra_size = _ALIGN(dtb_length, getpagesize());
+	} else if (use_atags) {
+		extra_size = 0x8000;	/* 32k should be plenty for ATAGs */
+	}
+
 	/*
 	 * If we are loading a dump capture kernel, we need to update kernel
 	 * command line and also add some additional segments.
@@ -398,7 +405,8 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		}
 		base = start;
 	} else {
-		base = locate_hole(info,len+offset,0,0,ULONG_MAX,INT_MAX);
+		base = locate_hole(info, len + extra_size, 0, 0,
+				   ULONG_MAX, INT_MAX);
 	}
 
 	if (base == ULONG_MAX)
@@ -428,8 +436,6 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		 * Read a user-specified DTB file.
 		 */
 		if (dtb_file) {
-			dtb_buf = slurp_file(dtb_file, &dtb_length);
-
 			if (fdt_check_header(dtb_buf) != 0) {
 				fprintf(stderr, "Invalid FDT buffer.\n");
 				return -1;
@@ -450,11 +456,6 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			 * Extract the DTB from /proc/device-tree.
 			 */
 			create_flatten_tree(&dtb_buf, &dtb_length, command_line);
-		}
-
-		if (base + atag_offset + dtb_length > base + offset) {
-			fprintf(stderr, "DTB too large!\n");
-			return -1;
 		}
 
 		if (ramdisk) {
@@ -485,9 +486,9 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		            dtb_offset, dtb_length);
 	}
 
-	add_segment(info, buf, len, base + offset, len);
+	add_segment(info, buf, len, base + extra_size, len);
 
-	info->entry = (void*)base + offset;
+	info->entry = (void*)base + extra_size;
 
 	return 0;
 }
