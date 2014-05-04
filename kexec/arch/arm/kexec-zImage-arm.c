@@ -373,6 +373,8 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		if (!modified_cmdline)
 			return -1;
 
+		memset(modified_cmdline, '\0', COMMAND_LINE_SIZE);
+
 		if (command_line) {
 			(void) strncpy(modified_cmdline, command_line,
 				       COMMAND_LINE_SIZE);
