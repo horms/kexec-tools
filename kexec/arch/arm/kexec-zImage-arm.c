@@ -282,7 +282,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 {
 	unsigned long base;
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
-	unsigned int extra_size = 0;
+	unsigned int extra_size = 0x8000; /* TEXT_OFFSET */
 	const char *command_line;
 	char *modified_cmdline = NULL;
 	off_t command_line_len;
@@ -356,16 +356,11 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		if (command_line_len > COMMAND_LINE_SIZE)
 			command_line_len = COMMAND_LINE_SIZE;
 	}
-	if (ramdisk) {
+	if (ramdisk)
 		ramdisk_buf = slurp_file(ramdisk, &initrd_size);
-	}
 
-	if (dtb_file) {
+	if (dtb_file)
 		dtb_buf = slurp_file(dtb_file, &dtb_length);
-		extra_size = _ALIGN(dtb_length, getpagesize());
-	} else if (use_atags) {
-		extra_size = 0x8000;	/* 32k should be plenty for ATAGs */
-	}
 
 	/*
 	 * If we are loading a dump capture kernel, we need to update kernel
@@ -456,6 +451,32 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			 * Extract the DTB from /proc/device-tree.
 			 */
 			create_flatten_tree(&dtb_buf, &dtb_length, command_line);
+		}
+
+		/*
+		 * Search in memory to make sure there is enough memory
+		 * to hold initrd and dtb.
+		 *
+		 * Even if no initrd is used, this check is still
+		 * required for dtb.
+		 *
+		 * Crash kernel use fixed address, no check is ok.
+		 */
+		if ((info->kexec_flags & KEXEC_ON_CRASH) == 0) {
+			unsigned long page_size = getpagesize();
+			/*
+			 * DTB size may be increase a little
+			 * when setup initrd size. Add a full page
+			 * for it is enough.
+			 */
+			unsigned long hole_size = _ALIGN_UP(initrd_size, page_size) +
+				_ALIGN(dtb_length + page_size, page_size);
+			unsigned long initrd_base_new = locate_hole(info,
+					hole_size, page_size,
+					initrd_base, ULONG_MAX, INT_MAX);
+			if (base == ULONG_MAX)
+				return -1;
+			initrd_base = initrd_base_new;
 		}
 
 		if (ramdisk) {
