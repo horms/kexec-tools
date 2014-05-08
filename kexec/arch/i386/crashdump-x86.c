@@ -1000,7 +1000,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		type = mem_range[i].type;
 		size = end - start + 1;
 		add_memmap(memmap_p, &nr_memmap, start, size, type);
-		if (arch_options.pass_memmap_cmdline || type != RANGE_RESERVED)
+		if (arch_options.pass_memmap_cmdline && type != RANGE_RESERVED)
 			cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
 
