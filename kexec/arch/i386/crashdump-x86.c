@@ -667,18 +667,31 @@ static int cmdline_add_memmap(char *cmdline, struct memory_range *memmap_p)
 	strcat(cmdline, str_mmap);
 
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
-		unsigned long startk, endk;
-		startk = (memmap_p[i].start/1024);
-		endk = ((memmap_p[i].end + 1)/1024);
+		unsigned long startk, endk, type;
+
+		startk = memmap_p[i].start/1024;
+		endk = (memmap_p[i].end + 1)/1024;
+		type = memmap_p[i].type;
+
+		/* Only adding memory regions of RAM and ACPI */
+		if (type != RANGE_RAM &&
+		    type != RANGE_ACPI &&
+		    type != RANGE_ACPI_NVS)
+			continue;
+
+		if (type == RANGE_ACPI || type == RANGE_ACPI_NVS)
+			endk = _ALIGN_UP(memmap_p[i].end + 1, 1024)/1024;
+
 		if (!startk && !endk)
 			/* All regions traversed. */
 			break;
 
-		/* A region is not worth adding if region size < 100K. It eats
-		 * up precious command line length. */
-		if ((endk - startk) < min_sizek)
+		/* A RAM region is not worth adding if region size < 100K.
+		 * It eats up precious command line length. */
+		if (type == RANGE_RAM && (endk - startk) < min_sizek)
 			continue;
-		cmdline_add_memmap_internal(cmdline, startk, endk, RANGE_RAM);
+		/* And do not add e820 reserved region either */
+		cmdline_add_memmap_internal(cmdline, startk, endk, type);
 	}
 
 	dbgprintf("Command line after adding memmap\n");
@@ -765,26 +778,6 @@ static enum coretype get_core_type(struct crash_elf_info *elf_info,
 		else
 			return CORE_TYPE_ELF32;
 	}
-}
-
-/* Appends memmap=X#Y commandline for ACPI to command line*/
-static int cmdline_add_memmap_acpi(char *cmdline, unsigned long start,
-					unsigned long end)
-{
-	int align = 1024;
-	unsigned long startk, endk;
-
-	if (!(end - start))
-		return 0;
-
-	startk = start/1024;
-	endk = (end + align - 1)/1024;
-	cmdline_add_memmap_internal(cmdline, startk, endk, RANGE_ACPI);
-
-	dbgprintf("Command line after adding acpi memmap\n");
-	dbgprintf("%s\n", cmdline);
-
-	return 0;
 }
 
 /* Appends 'acpi_rsdp=' commandline for efi boot crash dump */
@@ -981,8 +974,6 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
 	if (delete_memmap(memmap_p, &nr_memmap, elfcorehdr, memsz) < 0)
 		return -1;
-	if (arch_options.pass_memmap_cmdline)
-		cmdline_add_memmap(mod_cmdline, memmap_p);
 	if (!bzImage_support_efi_boot)
 		cmdline_add_efi(mod_cmdline);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
@@ -999,9 +990,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		type = mem_range[i].type;
 		size = end - start + 1;
 		add_memmap(memmap_p, &nr_memmap, start, size, type);
-		if (arch_options.pass_memmap_cmdline && type != RANGE_RESERVED)
-			cmdline_add_memmap_acpi(mod_cmdline, start, end);
 	}
+
+	if (arch_options.pass_memmap_cmdline)
+		cmdline_add_memmap(mod_cmdline, memmap_p);
 
 	/* Store 2nd kernel boot memory ranges for later reference in
 	 * x86-setup-linux.c: setup_linux_system_parameters() */
