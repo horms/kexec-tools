@@ -31,6 +31,7 @@
 #define OPT_REAL_MODE		(OPT_ARCH_MAX+9)
 #define OPT_ENTRY_32BIT		(OPT_ARCH_MAX+10)
 #define OPT_PASS_MEMMAP_CMDLINE	(OPT_ARCH_MAX+11)
+#define OPT_NOEFI		(OPT_ARCH_MAX+12)
 
 /* Options relevant to the architecture (excluding loader-specific ones): */
 #define KEXEC_ARCH_OPTIONS \
@@ -43,6 +44,7 @@
 	{ "elf32-core-headers", 0, 0, OPT_ELF32_CORE }, \
 	{ "elf64-core-headers", 0, 0, OPT_ELF64_CORE }, \
 	{ "pass-memmap-cmdline", 0, 0, OPT_PASS_MEMMAP_CMDLINE }, \
+	{ "noefi", 0, 0, OPT_NOEFI}, \
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""
 

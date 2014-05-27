@@ -822,7 +822,7 @@ void setup_linux_system_parameters(struct kexec_info *info,
 {
 	/* get subarch from running kernel */
 	setup_subarch(real_mode);
-	if (bzImage_support_efi_boot)
+	if (bzImage_support_efi_boot && !arch_options.noefi)
 		setup_efi_info(info, real_mode);
 	
 	/* Default screen size */

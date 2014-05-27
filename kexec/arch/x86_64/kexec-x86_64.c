@@ -54,6 +54,7 @@ void arch_usage(void)
 		"     --console-vga             Enable the vga console\n"
 		"     --console-serial          Enable the serial console\n"
 		"     --pass-memmap-cmdline     Pass memory map via command line in kexec on panic case\n"
+		"     --noefi                   Disable efi support\n"
 		);
 }
 
@@ -65,6 +66,7 @@ struct arch_options_t arch_options = {
 	.console_serial = 0,
 	.core_header_type = CORE_TYPE_ELF64,
 	.pass_memmap_cmdline = 0,
+	.noefi = 0,
 };
 
 int arch_process_options(int argc, char **argv)
@@ -130,6 +132,9 @@ int arch_process_options(int argc, char **argv)
 			break;
 		case OPT_PASS_MEMMAP_CMDLINE:
 			arch_options.pass_memmap_cmdline = 1;
+			break;
+		case OPT_NOEFI:
+			arch_options.noefi = 1;
 			break;
 		}
 	}
