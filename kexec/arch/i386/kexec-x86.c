@@ -54,7 +54,7 @@ void arch_usage(void)
 		"     --console-serial          Enable the serial console\n"
 		"     --elf32-core-headers      Prepare core headers in ELF32 format\n"
 		"     --elf64-core-headers      Prepare core headers in ELF64 format\n"
-		"     --pass--memmap-cmdline    Pass memory map via command line in kexec on panic case\n"
+		"     --pass-memmap-cmdline     Pass memory map via command line in kexec on panic case\n"
 		"     --noefi                   Disable efi support\n"
 		);
 }
