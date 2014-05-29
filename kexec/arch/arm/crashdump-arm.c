@@ -56,10 +56,54 @@ static struct crash_elf_info elf_info = {
 	.class		= ELFCLASS32,
 	.data		= ELFDATANATIVE,
 	.machine	= EM_ARM,
-	.page_offset	= PAGE_OFFSET,
+	.page_offset	= DEFAULT_PAGE_OFFSET,
 };
 
 unsigned long phys_offset;
+
+/* Retrieve kernel _stext symbol virtual address from /proc/kallsyms */
+static unsigned long long get_kernel_stext_sym(void)
+{
+	const char *kallsyms = "/proc/kallsyms";
+	const char *stext = "_stext";
+	char sym[128];
+	char line[128];
+	FILE *fp;
+	unsigned long long vaddr;
+	char type;
+
+	fp = fopen(kallsyms, "r");	if (!fp) {
+		fprintf(stderr, "Cannot open %s\n", kallsyms);
+		return 0;
+	}
+
+	while(fgets(line, sizeof(line), fp) != NULL) {
+		if (sscanf(line, "%Lx %c %s", &vaddr, &type, sym) != 3)
+			continue;
+		if (strcmp(sym, stext) == 0) {
+			dbgprintf("kernel symbol %s vaddr = %16llx\n", stext, vaddr);
+			return vaddr;
+		}
+	}
+
+	fprintf(stderr, "Cannot get kernel %s symbol address\n", stext);
+	return 0;
+}
+
+static int get_kernel_page_offset(struct kexec_info *info,
+		struct crash_elf_info *elf_info)
+{
+	unsigned long long stext_sym_addr = get_kernel_stext_sym();
+	if (stext_sym_addr == 0) {
+		elf_info->page_offset = (unsigned long long)DEFAULT_PAGE_OFFSET;
+		dbgprintf("Unable to get _stext symbol from /proc/kallsyms, use default: %llx\n",
+				elf_info->page_offset);
+		return 0;
+	}
+	elf_info->page_offset = stext_sym_addr & (~KVBASE_MASK);
+	dbgprintf("page_offset is set to %llx\n", elf_info->page_offset);
+	return 0;
+}
 
 /**
  * crash_range_callback() - callback called for each iomem region
@@ -291,6 +335,9 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	 */
 	phys_offset = usablemem_rgns.ranges->start;
 	dbgprintf("phys_offset: %#lx\n", phys_offset);
+
+	if (get_kernel_page_offset(info, &elf_info))
+		return -1;
 
 	err = crash_create_elf32_headers(info, &elf_info,
 					 usablemem_rgns.ranges,
