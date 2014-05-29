@@ -8,6 +8,7 @@
 #define OPT_DTB		(OPT_ARCH_MAX+0)
 #define OPT_ATAGS	(OPT_ARCH_MAX+1)
 #define OPT_IMAGE_SIZE	(OPT_ARCH_MAX+2)
+#define OPT_PAGE_OFFSET	(OPT_ARCH_MAX+3)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -39,7 +40,8 @@
 	{ "ramdisk",		1, 0, OPT_RAMDISK },	\
 	{ "dtb",		1, 0, OPT_DTB }, 	\
 	{ "atags",		0, 0, OPT_ATAGS },	\
-	{ "image-size",		1, 0, OPT_IMAGE_SIZE },
+	{ "image-size",		1, 0, OPT_IMAGE_SIZE }, \
+	{ "page-offset",	1, 0, OPT_PAGE_OFFSET },
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR "a:r:s:"
 

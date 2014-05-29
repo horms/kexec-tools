@@ -60,6 +60,7 @@ static struct crash_elf_info elf_info = {
 };
 
 unsigned long phys_offset;
+extern unsigned long long user_page_offset;
 
 /* Retrieve kernel _stext symbol virtual address from /proc/kallsyms */
 static unsigned long long get_kernel_stext_sym(void)
@@ -95,10 +96,24 @@ static int get_kernel_page_offset(struct kexec_info *info,
 {
 	unsigned long long stext_sym_addr = get_kernel_stext_sym();
 	if (stext_sym_addr == 0) {
+		if (user_page_offset != (-1ULL)) {
+			elf_info->page_offset = user_page_offset;
+			dbgprintf("Unable to get _stext symbol from /proc/kallsyms, "
+					"use user provided vaule: %llx\n",
+					elf_info->page_offset);
+			return 0;
+		}
 		elf_info->page_offset = (unsigned long long)DEFAULT_PAGE_OFFSET;
-		dbgprintf("Unable to get _stext symbol from /proc/kallsyms, use default: %llx\n",
+		dbgprintf("Unable to get _stext symbol from /proc/kallsyms, "
+				"use default: %llx\n",
 				elf_info->page_offset);
 		return 0;
+	} else if ((user_page_offset != (-1ULL)) &&
+			(user_page_offset != stext_sym_addr)) {
+		fprintf(stderr, "PAGE_OFFSET is set to %llx "
+				"instead of user provided value %llx\n",
+				stext_sym_addr & (~KVBASE_MASK),
+				user_page_offset);
 	}
 	elf_info->page_offset = stext_sym_addr & (~KVBASE_MASK);
 	dbgprintf("page_offset is set to %llx\n", elf_info->page_offset);

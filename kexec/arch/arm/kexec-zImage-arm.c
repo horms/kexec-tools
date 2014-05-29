@@ -25,6 +25,7 @@
 
 off_t initrd_base = 0, initrd_size = 0;
 unsigned int kexec_arm_image_size = 0;
+unsigned long long user_page_offset = (-1ULL);
 
 struct tag_header {
 	uint32_t size;
@@ -104,6 +105,8 @@ void zImage_arm_usage(void)
 		"     --ramdisk=FILE        Use FILE as the kernel's initial ramdisk.\n"
 		"     --dtb=FILE            Use FILE as the fdt blob.\n"
 		"     --atags               Use ATAGs instead of device-tree.\n"
+		"     --page-offset=PAGE_OFFSET\n"
+		"                           Set PAGE_OFFSET of crash dump vmcore\n"
 		);
 }
 
@@ -306,6 +309,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		{ "dtb",		1, 0, OPT_DTB },
 		{ "atags",		0, 0, OPT_ATAGS },
 		{ "image-size",		1, 0, OPT_IMAGE_SIZE },
+		{ "page-offset",	1, 0, OPT_PAGE_OFFSET },
 		{ 0, 			0, 0, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "a:r:";
@@ -341,6 +345,9 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_IMAGE_SIZE:
 			kexec_arm_image_size = strtoul(optarg, &end, 0);
+			break;
+		case OPT_PAGE_OFFSET:
+			user_page_offset = strtoull(optarg, &end, 0);
 			break;
 		}
 	}
