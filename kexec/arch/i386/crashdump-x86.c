@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <dirent.h>
 #include "../../kexec.h"
 #include "../../kexec-elf.h"
 #include "../../kexec-syscall.h"
@@ -780,6 +781,18 @@ static enum coretype get_core_type(struct crash_elf_info *elf_info,
 	}
 }
 
+static int sysfs_efi_runtime_map_exist(void)
+{
+	DIR *dir;
+
+	dir = opendir("/sys/firmware/efi/runtime-map");
+	if (!dir)
+		return 0;
+
+	closedir(dir);
+	return 1;
+}
+
 /* Appends 'acpi_rsdp=' commandline for efi boot crash dump */
 static void cmdline_add_efi(char *cmdline)
 {
@@ -974,7 +987,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
 	if (delete_memmap(memmap_p, &nr_memmap, elfcorehdr, memsz) < 0)
 		return -1;
-	if (!bzImage_support_efi_boot || arch_options.noefi)
+	if (!bzImage_support_efi_boot || arch_options.noefi ||
+	    !sysfs_efi_runtime_map_exist())
 		cmdline_add_efi(mod_cmdline);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
