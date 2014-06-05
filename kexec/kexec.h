@@ -282,8 +282,8 @@ int kexec_iomem_for_each_line(char *match,
 			      int (*callback)(void *data,
 					      int nr,
 					      char *str,
-					      unsigned long base,
-					      unsigned long length),
+					      unsigned long long base,
+					      unsigned long long length),
 			      void *data);
 int parse_iomem_single(char *str, uint64_t *start, uint64_t *end);
 const char * proc_iomem(void);

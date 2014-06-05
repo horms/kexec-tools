@@ -26,8 +26,8 @@ int kexec_iomem_for_each_line(char *match,
 			      int (*callback)(void *data,
 					      int nr,
 					      char *str,
-					      unsigned long base,
-					      unsigned long length),
+					      unsigned long long base,
+					      unsigned long long length),
 			      void *data)
 {
 	const char *iomem = proc_iomem();
@@ -65,8 +65,8 @@ int kexec_iomem_for_each_line(char *match,
 
 static int kexec_iomem_single_callback(void *data, int nr,
 				       char *UNUSED(str),
-				       unsigned long base,
-				       unsigned long length)
+				       unsigned long long base,
+				       unsigned long long length)
 {
 	struct memory_range *range = data;
 

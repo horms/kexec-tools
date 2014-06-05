@@ -134,8 +134,8 @@ static int get_kernel_page_offset(struct kexec_info *info,
  * regions is placed in @crash_memory_nr_ranges.
  */
 static int crash_range_callback(void *UNUSED(data), int UNUSED(nr),
-				char *str, unsigned long base,
-				unsigned long length)
+				char *str, unsigned long long base,
+				unsigned long long length)
 {
 	struct memory_range *range;
 
