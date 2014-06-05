@@ -84,7 +84,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 		if (fopen_errno != ENOENT)
 			die("Could not open \"%s\": %s\n", crash_notes,
 			    strerror(fopen_errno));
-		if (!stat("/sys/devices", &cpu_stat)) {
+		if (stat("/sys/devices", &cpu_stat)) {
 			stat_errno = errno;
 			if (stat_errno == ENOENT)
 				die("\"/sys/devices\" does not exist. "
