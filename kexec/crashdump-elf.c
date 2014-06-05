@@ -41,6 +41,7 @@ int FUNC(struct kexec_info *info,
 	uint64_t vmcoreinfo_addr, vmcoreinfo_len;
 	int has_vmcoreinfo = 0;
 	int (*get_note_info)(int cpu, uint64_t *addr, uint64_t *len);
+	long int count_cpu;
 
 	if (xen_present())
 		nr_cpus = xen_get_nr_phys_cpus();
@@ -138,11 +139,13 @@ int FUNC(struct kexec_info *info,
 
 	/* PT_NOTE program headers. One per cpu */
 
-	for (i = 0; i < nr_cpus; i++) {
+	count_cpu = nr_cpus;
+	for (i = 0; count_cpu > 0; i++) {
 		if (get_note_info(i, &notes_addr, &notes_len) < 0) {
 			/* This cpu is not present. Skip it. */
 			continue;
 		}
+		count_cpu--;
 
 		phdr = (PHDR *) bufp;
 		bufp += sizeof(PHDR);
