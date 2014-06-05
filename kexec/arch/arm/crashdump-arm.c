@@ -20,6 +20,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+#include <limits.h>
 #include <elf.h>
 #include <errno.h>
 #include <stdio.h>
@@ -335,6 +336,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	unsigned long bufsz;
 	void *buf;
 	int err;
+	int last_ranges;
 
 	/*
 	 * First fetch all the memory (RAM) ranges that we are going to pass to
@@ -354,10 +356,25 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	if (get_kernel_page_offset(info, &elf_info))
 		return -1;
 
-	err = crash_create_elf32_headers(info, &elf_info,
+	last_ranges = usablemem_rgns.size - 1;
+	if (last_ranges < 0)
+		last_ranges = 0;
+
+	if (crash_memory_ranges[last_ranges].end > ULONG_MAX) {
+
+		/* for support LPAE enabled kernel*/
+		elf_info.class = ELFCLASS64;
+
+		err = crash_create_elf64_headers(info, &elf_info,
 					 usablemem_rgns.ranges,
 					 usablemem_rgns.size, &buf, &bufsz,
 					 ELF_CORE_HEADER_ALIGN);
+	} else {
+		err = crash_create_elf32_headers(info, &elf_info,
+					 usablemem_rgns.ranges,
+					 usablemem_rgns.size, &buf, &bufsz,
+					 ELF_CORE_HEADER_ALIGN);
+	}
 	if (err)
 		return err;
 
