@@ -259,7 +259,7 @@ static int setup_dtb_prop(char **bufp, off_t *sizep, const char *node_name,
 		dtb_size += fdt_prop_len(prop_name, len);
 	} else {
 		if (prop_len < len)
-			dtb_size += len - prop_len;
+			dtb_size += FDT_TAGALIGN(len - prop_len);
 	}
 
 	if (fdt_totalsize(dtb_buf) < dtb_size) {
