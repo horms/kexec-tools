@@ -38,7 +38,11 @@
 static struct crash_elf_info elf_info64 =
 {
 	class: ELFCLASS64,
+#if BYTE_ORDER == LITTLE_ENDIAN
+	data: ELFDATA2LSB,
+#else
 	data: ELFDATA2MSB,
+#endif
 	machine: EM_PPC64,
 	page_offset: PAGE_OFFSET,
 	lowmem_limit: MAXMEM,
