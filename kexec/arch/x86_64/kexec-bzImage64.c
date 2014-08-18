@@ -235,6 +235,89 @@ static int do_bzImage64_load(struct kexec_info *info,
 	return 0;
 }
 
+/* This assumes file is being loaded using file based kexec syscall */
+int bzImage64_load_file(int argc, char **argv, struct kexec_info *info)
+{
+	int ret = 0;
+	char *command_line = NULL, *tmp_cmdline = NULL;
+	const char *ramdisk = NULL, *append = NULL;
+	int entry_16bit = 0, entry_32bit = 0;
+	int opt;
+	int command_line_len;
+
+	/* See options.h -- add any more there, too. */
+	static const struct option options[] = {
+		KEXEC_ARCH_OPTIONS
+		{ "command-line",	1, 0, OPT_APPEND },
+		{ "append",		1, 0, OPT_APPEND },
+		{ "reuse-cmdline",	0, 0, OPT_REUSE_CMDLINE },
+		{ "initrd",		1, 0, OPT_RAMDISK },
+		{ "ramdisk",		1, 0, OPT_RAMDISK },
+		{ "real-mode",		0, 0, OPT_REAL_MODE },
+		{ "entry-32bit",	0, 0, OPT_ENTRY_32BIT },
+		{ 0,			0, 0, 0 },
+	};
+	static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
+
+	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+		switch (opt) {
+		default:
+			/* Ignore core options */
+			if (opt < OPT_ARCH_MAX)
+				break;
+		case OPT_APPEND:
+			append = optarg;
+			break;
+		case OPT_REUSE_CMDLINE:
+			tmp_cmdline = get_command_line();
+			break;
+		case OPT_RAMDISK:
+			ramdisk = optarg;
+			break;
+		case OPT_REAL_MODE:
+			entry_16bit = 1;
+			break;
+		case OPT_ENTRY_32BIT:
+			entry_32bit = 1;
+			break;
+		}
+	}
+	command_line = concat_cmdline(tmp_cmdline, append);
+	if (tmp_cmdline)
+		free(tmp_cmdline);
+	command_line_len = 0;
+	if (command_line) {
+		command_line_len = strlen(command_line) + 1;
+	} else {
+		command_line = strdup("\0");
+		command_line_len = 1;
+	}
+
+	if (entry_16bit || entry_32bit) {
+		fprintf(stderr, "Kexec2 syscall does not support 16bit"
+			" or 32bit entry yet\n");
+		ret = -1;
+		goto out;
+	}
+
+	if (ramdisk) {
+		info->initrd_fd = open(ramdisk, O_RDONLY);
+		if (info->initrd_fd == -1) {
+			fprintf(stderr, "Could not open initrd file %s:%s\n",
+					ramdisk, strerror(errno));
+			ret = -1;
+			goto out;
+		}
+	}
+
+	info->command_line = command_line;
+	info->command_line_len = command_line_len;
+	return ret;
+out:
+	free(command_line);
+	return ret;
+}
+
 int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
@@ -246,6 +329,9 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 	int entry_16bit = 0, entry_32bit = 0;
 	int opt;
 	int result;
+
+	if (info->file_mode)
+		return bzImage64_load_file(argc, argv, info);
 
 	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {

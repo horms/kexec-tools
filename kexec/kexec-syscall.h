@@ -53,6 +53,19 @@
 #endif
 #endif /*ifndef __NR_kexec_load*/
 
+#ifndef __NR_kexec_file_load
+
+#ifdef __x86_64__
+#define __NR_kexec_file_load	320
+#endif
+
+#ifndef __NR_kexec_file_load
+/* system call not available for the arch */
+#define __NR_kexec_file_load	0xffffffff	/* system call not available */
+#endif
+
+#endif /*ifndef __NR_kexec_file_load*/
+
 struct kexec_segment;
 
 static inline long kexec_load(void *entry, unsigned long nr_segments,
@@ -61,9 +74,28 @@ static inline long kexec_load(void *entry, unsigned long nr_segments,
 	return (long) syscall(__NR_kexec_load, entry, nr_segments, segments, flags);
 }
 
+static inline int is_kexec_file_load_implemented(void) {
+	if (__NR_kexec_file_load != 0xffffffff)
+		return 1;
+	return 0;
+}
+
+static inline long kexec_file_load(int kernel_fd, int initrd_fd,
+			unsigned long cmdline_len, const char *cmdline_ptr,
+			unsigned long flags)
+{
+	return (long) syscall(__NR_kexec_file_load, kernel_fd, initrd_fd,
+				cmdline_len, cmdline_ptr, flags);
+}
+
 #define KEXEC_ON_CRASH		0x00000001
 #define KEXEC_PRESERVE_CONTEXT	0x00000002
 #define KEXEC_ARCH_MASK		0xffff0000
+
+/* Flags for kexec file based system call */
+#define KEXEC_FILE_UNLOAD	0x00000001
+#define KEXEC_FILE_ON_CRASH	0x00000002
+#define KEXEC_FILE_NO_INITRAMFS	0x00000004
 
 /* These values match the ELF architecture values. 
  * Unless there is a good reason that should continue to be the case.

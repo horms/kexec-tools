@@ -51,6 +51,8 @@
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
 static unsigned long kexec_flags = 0;
+/* Flags for kexec file (fd) based syscall */
+static unsigned long kexec_file_flags = 0;
 int kexec_debug = 0;
 
 void dbgprint_mem_range(const char *prefix, struct memory_range *mr, int nr_mr)
@@ -787,6 +789,19 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	return result;
 }
 
+static int kexec_file_unload(unsigned long kexec_file_flags)
+{
+	int ret = 0;
+
+	ret = kexec_file_load(-1, -1, 0, NULL, kexec_file_flags);
+	if (ret != 0) {
+		/* The unload failed, print some debugging information */
+		fprintf(stderr, "kexec_file_load(unload) failed\n: %s\n",
+			strerror(errno));
+	}
+	return ret;
+}
+
 static int k_unload (unsigned long kexec_flags)
 {
 	int result;
@@ -925,6 +940,7 @@ void usage(void)
 	       "                      (0 means it's not jump back or\n"
 	       "                      preserve context)\n"
 	       "                      to original kernel.\n"
+	       " -s, --kexec-file-syscall Use file based syscall for kexec operation\n"
 	       " -d, --debug           Enable debugging to help spot a failure.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
@@ -1072,6 +1088,82 @@ char *concat_cmdline(const char *base, const char *append)
 	return cmdline;
 }
 
+/* New file based kexec system call related code */
+static int do_kexec_file_load(int fileind, int argc, char **argv,
+			unsigned long flags) {
+
+	char *kernel;
+	int kernel_fd, i;
+	struct kexec_info info;
+	int ret = 0;
+	char *kernel_buf;
+	off_t kernel_size;
+
+	memset(&info, 0, sizeof(info));
+	info.segment = NULL;
+	info.nr_segments = 0;
+	info.entry = NULL;
+	info.backup_start = 0;
+	info.kexec_flags = flags;
+
+	info.file_mode = 1;
+	info.initrd_fd = -1;
+
+	if (!is_kexec_file_load_implemented()) {
+		fprintf(stderr, "syscall kexec_file_load not available.\n");
+		return -1;
+	}
+
+	if (argc - fileind <= 0) {
+		fprintf(stderr, "No kernel specified\n");
+		usage();
+		return -1;
+	}
+
+	kernel = argv[fileind];
+
+	kernel_fd = open(kernel, O_RDONLY);
+	if (kernel_fd == -1) {
+		fprintf(stderr, "Failed to open file %s:%s\n", kernel,
+				strerror(errno));
+		return -1;
+	}
+
+	/* slurp in the input kernel */
+	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
+
+	for (i = 0; i < file_types; i++) {
+		if (file_type[i].probe(kernel_buf, kernel_size) >= 0)
+			break;
+	}
+
+	if (i == file_types) {
+		fprintf(stderr, "Cannot determine the file type " "of %s\n",
+				kernel);
+		return -1;
+	}
+
+	ret = file_type[i].load(argc, argv, kernel_buf, kernel_size, &info);
+	if (ret < 0) {
+		fprintf(stderr, "Cannot load %s\n", kernel);
+		return ret;
+	}
+
+	/*
+	 * If there is no initramfs, set KEXEC_FILE_NO_INITRAMFS flag so that
+	 * kernel does not return error with negative initrd_fd.
+	 */
+	if (info.initrd_fd == -1)
+		info.kexec_flags |= KEXEC_FILE_NO_INITRAMFS;
+
+	ret = kexec_file_load(kernel_fd, info.initrd_fd, info.command_line_len,
+			info.command_line, info.kexec_flags);
+	if (ret != 0)
+		fprintf(stderr, "kexec_file_load failed: %s\n",
+					strerror(errno));
+	return ret;
+}
+
 
 int main(int argc, char *argv[])
 {
@@ -1083,6 +1175,7 @@ int main(int argc, char *argv[])
 	int do_ifdown = 0;
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
+	int do_kexec_file_syscall = 0;
 	void *entry = 0;
 	char *type = 0;
 	char *endptr;
@@ -1094,6 +1187,23 @@ int main(int argc, char *argv[])
 		{ 0, 0, 0, 0},
 	};
 	static const char short_options[] = KEXEC_ALL_OPT_STR;
+
+	/*
+	 * First check if --use-kexec-file-syscall is set. That changes lot of
+	 * things
+	 */
+	while ((opt = getopt_long(argc, argv, short_options,
+				  options, 0)) != -1) {
+		switch(opt) {
+		case OPT_KEXEC_FILE_SYSCALL:
+			do_kexec_file_syscall = 1;
+			break;
+		}
+	}
+
+	/* Reset getopt for the next pass. */
+	opterr = 1;
+	optind = 1;
 
 	while ((opt = getopt_long(argc, argv, short_options,
 				  options, 0)) != -1) {
@@ -1127,6 +1237,8 @@ int main(int argc, char *argv[])
 			do_shutdown = 0;
 			do_sync = 0;
 			do_unload = 1;
+			if (do_kexec_file_syscall)
+				kexec_file_flags |= KEXEC_FILE_UNLOAD;
 			break;
 		case OPT_EXEC:
 			do_load = 0;
@@ -1169,7 +1281,10 @@ int main(int argc, char *argv[])
 			do_exec = 0;
 			do_shutdown = 0;
 			do_sync = 0;
-			kexec_flags = KEXEC_ON_CRASH;
+			if (do_kexec_file_syscall)
+				kexec_file_flags |= KEXEC_FILE_ON_CRASH;
+			else
+				kexec_flags = KEXEC_ON_CRASH;
 			break;
 		case OPT_MEM_MIN:
 			mem_min = strtoul(optarg, &endptr, 0);
@@ -1193,6 +1308,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_REUSE_INITRD:
 			do_reuse_initrd = 1;
+			break;
+		case OPT_KEXEC_FILE_SYSCALL:
+			/* We already parsed it. Nothing to do. */
 			break;
 		default:
 			break;
@@ -1238,10 +1356,18 @@ int main(int argc, char *argv[])
 	}
 
 	if (do_unload) {
-		result = k_unload(kexec_flags);
+		if (do_kexec_file_syscall)
+			result = kexec_file_unload(kexec_file_flags);
+		else
+			result = k_unload(kexec_flags);
 	}
 	if (do_load && (result == 0)) {
-		result = my_load(type, fileind, argc, argv, kexec_flags, entry);
+		if (do_kexec_file_syscall)
+			result = do_kexec_file_load(fileind, argc, argv,
+						 kexec_file_flags);
+		else
+			result = my_load(type, fileind, argc, argv,
+						kexec_flags, entry);
 	}
 	/* Don't shutdown unless there is something to reboot to! */
 	if ((result == 0) && (do_shutdown || do_exec) && !kexec_loaded()) {
