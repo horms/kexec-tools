@@ -1209,6 +1209,8 @@ int main(int argc, char *argv[])
 				  options, 0)) != -1) {
 		switch(opt) {
 		case '?':
+			usage();
+			return 1;
 		case OPT_HELP:
 			usage();
 			return 0;
