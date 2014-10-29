@@ -377,10 +377,6 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	dbgprintf("opal_base is %llx\n", (unsigned long long) my_opal_base);
 	dbgprintf("opal_entry is %llx\n", (unsigned long long) my_opal_entry);
 
-	for (i = 0; i < info->nr_segments; i++)
-		fprintf(stderr, "segment[%d].mem:%p memsz:%zu\n", i,
-			info->segment[i].mem, info->segment[i].memsz);
-
 	return 0;
 }
 
