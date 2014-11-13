@@ -479,6 +479,8 @@ static int comparefunc(const struct dirent **dentry1,
 {
 	char *str1 = (*(struct dirent **)dentry1)->d_name;
 	char *str2 = (*(struct dirent **)dentry2)->d_name;
+	char *sep1 = strchr(str1, '@');
+	char *sep2 = strchr(str2, '@');
 
 	/*
 	 * strcmp scans from left to right and fails to idetify for some
@@ -486,9 +488,20 @@ static int comparefunc(const struct dirent **dentry1,
 	 * Therefore, we get the wrong sorted order like memory@10000000 and
 	 * memory@f000000.
 	 */
-	if (strchr(str1, '@') && strchr(str2, '@') &&
-		(strlen(str1) > strlen(str2)))
-		return 1;
+	if (sep1 && sep2) {
+		int baselen1 = sep1 - str1;
+		int baselen2 = sep2 - str2;
+		int len1 = strlen(str1);
+		int len2 = strlen(str2);
+
+		/*
+		 * Check the base name matches, and the properties are
+		 * different lengths.
+		 */
+		if ((baselen1 == baselen2) && (len1 != len2) &&
+		    !strncmp(str1, str2, baselen2))
+			return (len1 > len2) - (len1 < len2);
+	}
 
 	return strcmp(str1, str2);
 }
