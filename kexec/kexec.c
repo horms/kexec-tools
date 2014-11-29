@@ -662,10 +662,6 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	int guess_only = 0;
 
 	memset(&info, 0, sizeof(info));
-	info.segment = NULL;
-	info.nr_segments = 0;
-	info.entry = NULL;
-	info.backup_start = 0;
 	info.kexec_flags = kexec_flags;
 
 	result = 0;
