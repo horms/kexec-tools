@@ -1048,10 +1048,8 @@ char *get_command_line(void)
 	line[strlen(line) - 1] = '\0';
 
 	remove_parameter(line, "BOOT_IMAGE");
-	if (kexec_flags & KEXEC_ON_CRASH) {
+	if (kexec_flags & KEXEC_ON_CRASH)
 		remove_parameter(line, "crashkernel");
-		remove_parameter(line, "panic_on_warn");
-	}
 
 	return line;
 }
