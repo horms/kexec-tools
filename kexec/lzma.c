@@ -162,13 +162,16 @@ char *lzma_decompress_file(const char *filename, off_t *r_size)
 	off_t size, allocated;
 	ssize_t result;
 
-	if (!filename) {
-		*r_size = 0;
-		return 0;
-	}
+	dbgprintf("Try LZMA decompression.\n");
+
+	*r_size = 0;
+	if (!filename)
+		return NULL;
+
 	fp = lzopen(filename, "rb");
 	if (fp == 0) {
-		die("Cannot open `%s'\n", filename);
+		dbgprintf("Cannot open `%s'\n", filename);
+		return NULL;
 	}
 	size = 0;
 	allocated = 65536;
@@ -183,17 +186,25 @@ char *lzma_decompress_file(const char *filename, off_t *r_size)
 			if ((errno == EINTR) || (errno == EAGAIN))
 				continue;
 
-			die ("read on %s of %ld bytes failed\n",
-				filename, (allocated - size) + 0UL);
+			dbgprintf("%s: read on %s of %ld bytes failed\n",
+				__func__, filename, (allocated - size) + 0UL);
+			break;
 		}
 		size += result;
-	} while(result > 0);
-	result = lzclose(fp);
-	if (result != LZMA_OK) {
-		die ("Close of %s failed\n", filename);
+	} while (result > 0);
+
+	if (lzclose(fp) != LZMA_OK) {
+		dbgprintf("%s: Close of %s failed\n", __func__, filename);
+		goto fail;
 	}
+	if (result < 0)
+		goto fail;
+
 	*r_size =  size;
 	return buf;
+fail:
+	free(buf);
+	return NULL;
 }
 #else
 char *lzma_decompress_file(const char *UNUSED(filename), off_t *UNUSED(r_size))
