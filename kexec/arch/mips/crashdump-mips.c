@@ -148,7 +148,7 @@ static int exclude_crash_reserve_region(int *nr_ranges)
 static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
 	const char iomem[] = "/proc/iomem";
-	int i, memory_ranges = 0;
+	int memory_ranges = 0;
 	char line[MAX_LINE];
 	FILE *fp;
 	unsigned long long start, end;
