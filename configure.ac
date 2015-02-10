@@ -152,22 +152,22 @@ AC_CHECK_PROG([DIRNAME],  dirname,  dirname,  "no", [$PATH])
 dnl See if I have a usable copy of zlib available
 if test "$with_zlib" = yes ; then
 	AC_CHECK_HEADER(zlib.h,
-		AC_CHECK_LIB(z, inflateInit_, ,
-		AC_MSG_NOTICE([zlib support disabled])))
+		[AC_CHECK_LIB(z, inflateInit_, ,
+		AC_MSG_NOTICE([zlib support disabled]))])
 fi
 
 dnl See if I have a usable copy of lzma available
 if test "$with_lzma" = yes ; then
 	AC_CHECK_HEADER(lzma.h,
-		AC_CHECK_LIB(lzma, lzma_code, ,
-		AC_MSG_NOTICE([lzma support disabled])))
+		[AC_CHECK_LIB(lzma, lzma_code, ,
+		AC_MSG_NOTICE([lzma support disabled]))])
 fi
 
 dnl find Xen control stack libraries
 if test "$with_xen" = yes ; then
 	AC_CHECK_HEADER(xenctrl.h,
-		AC_CHECK_LIB(xenctrl, xc_kexec_load, ,
-		AC_MSG_NOTICE([Xen support disabled])))
+		[AC_CHECK_LIB(xenctrl, xc_kexec_load, ,
+		AC_MSG_NOTICE([Xen support disabled]))])
 fi
 
 dnl ---Sanity checks
