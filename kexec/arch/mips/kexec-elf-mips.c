@@ -158,7 +158,7 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	if (info->kexec_flags & KEXEC_ON_CRASH)
 		/* In case of crashdump segment[0] is kernel.
 		 * Put cmdline just after it. */
-		cmdline_addr = info->segment[0].mem +
+		cmdline_addr = (unsigned long)info->segment[0].mem +
 				info->segment[0].memsz;
 	else
 		cmdline_addr = 0;
