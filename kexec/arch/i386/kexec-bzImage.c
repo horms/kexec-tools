@@ -108,7 +108,6 @@ int do_bzImage_load(struct kexec_info *info,
 	struct x86_linux_header setup_header;
 	struct x86_linux_param_header *real_mode;
 	int setup_sects;
-	char *kernel_version;
 	size_t size;
 	int kern16_size;
 	unsigned long setup_base, setup_size;
@@ -134,7 +133,6 @@ int do_bzImage_load(struct kexec_info *info,
 	}
 
 	kern16_size = (setup_sects +1) *512;
-	kernel_version = ((char *)&setup_header) + 512 + setup_header.kver_addr;
 	if (kernel_len < kern16_size) {
 		fprintf(stderr, "BzImage truncated?\n");
 		return -1;
