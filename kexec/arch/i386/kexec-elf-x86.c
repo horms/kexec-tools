@@ -94,7 +94,6 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	char *error_msg = NULL;
 	int result;
 	int command_line_len;
-	int modified_cmdline_len;
 	const char *ramdisk;
 	unsigned long entry, max_addr;
 	int arg_style;
@@ -123,7 +122,6 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	 * Parse the command line arguments
 	 */
 	arg_style = ARG_STYLE_ELF;
-	modified_cmdline_len = 0;
 	ramdisk = 0;
 	result = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
@@ -180,7 +178,6 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 						COMMAND_LINE_SIZE);
 			modified_cmdline[COMMAND_LINE_SIZE - 1] = '\0';
 		}
-		modified_cmdline_len = strlen(modified_cmdline);
 	}
 
 	/* Load the ELF executable */
