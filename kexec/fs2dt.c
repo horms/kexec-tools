@@ -322,7 +322,7 @@ static void add_usable_mem_property(int fd, size_t len)
 
 	ranges = malloc(ranges_size * sizeof(*ranges));
 	if (!ranges)
-		die("unrecoverable error: can't alloc %d bytes for ranges.\n",
+		die("unrecoverable error: can't alloc %zu bytes for ranges.\n",
 		    ranges_size * sizeof(*ranges));
 
 	for (range = 0; range < usablemem_rgns.size; range++) {
@@ -345,7 +345,7 @@ static void add_usable_mem_property(int fd, size_t len)
 						 sizeof(*ranges));
 				if (!ranges)
 					die("unrecoverable error: can't realloc"
-					    "%d bytes for ranges.\n",
+					    "%zu bytes for ranges.\n",
 					    ranges_size*sizeof(*ranges));
 			}
 			ranges[rlen++] = cpu_to_be64(loc_base);
