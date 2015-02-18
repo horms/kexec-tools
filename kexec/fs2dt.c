@@ -122,16 +122,17 @@ static void checkprop(char *name, unsigned *data, int len)
 	else if (!strcmp(name, "rtas-size") ||
 			!strcmp(name, "linux,tce-size"))
 		size = be32_to_cpu(*data);
-	else if (reuse_initrd && !strcmp(name, "linux,initrd-start"))
+	else if (reuse_initrd && !strcmp(name, "linux,initrd-start")) {
 		if (len == 8)
 			base = be64_to_cpu(*(unsigned long long *) data);
 		else
 			base = be32_to_cpu(*data);
-	else if (reuse_initrd && !strcmp(name, "linux,initrd-end"))
+	} else if (reuse_initrd && !strcmp(name, "linux,initrd-end")) {
 		if (len == 8)
 			end = be64_to_cpu(*(unsigned long long *) data);
 		else
 			end = be32_to_cpu(*data);
+	}
 
 	if (size && end)
 		die("unrecoverable error: size and end set at same time\n");
