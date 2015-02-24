@@ -1041,8 +1041,8 @@ int get_max_crash_kernel_limit(uint64_t *start, uint64_t *end)
 
 static int crashkernel_mem_callback(void *UNUSED(data), int nr,
                                           char *UNUSED(str),
-                                          unsigned long base,
-                                          unsigned long length)
+                                          unsigned long long base,
+                                          unsigned long long length)
 {
 	if (nr >= CRASH_RESERVED_MEM_NR)
 		return 1;

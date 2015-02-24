@@ -24,8 +24,8 @@ static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 static int kexec_sh_memory_range_callback(void *UNUSED(data), int nr,
 					  char *UNUSED(str),
-					  unsigned long base,
-					  unsigned long length)
+					  unsigned long long base,
+					  unsigned long long length)
 {
 	if (nr < MAX_MEMORY_RANGES) {
 		memory_range[nr].start = base;
