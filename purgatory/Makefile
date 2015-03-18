@@ -12,6 +12,7 @@ PURGATORY_SRCS =
 PURGATORY_SRCS += purgatory/purgatory.c
 PURGATORY_SRCS += purgatory/printf.c
 PURGATORY_SRCS += purgatory/string.c
+PURGATORY_MAP = purgatory/purgatory.map
 
 dist += purgatory/Makefile $(PURGATORY_SRCS)				\
 	purgatory/include/purgatory.h purgatory/include/string.h
@@ -59,7 +60,8 @@ $(PURGATORY): CPPFLAGS=$($(ARCH)_PURGATORY_EXTRA_CFLAGS) \
 			-I$(shell $(CC) -print-file-name=include)
 $(PURGATORY): LDFLAGS=$($(ARCH)_PURGATORY_EXTRA_CFLAGS)\
 			-Wl,--no-undefined -nostartfiles -nostdlib \
-			-nodefaultlibs -e purgatory_start -r
+			-nodefaultlibs -e purgatory_start -r \
+			-Wl,-Map=$(PURGATORY_MAP)
 
 $(PURGATORY): $(PURGATORY_OBJS)
 	$(MKDIR) -p $(@D)
