@@ -293,10 +293,10 @@ again:
  * @return 1 if parameter is present, 0 if not or if an error occurs.
  */
 int efi_map_added( void ) {
-	char buf[512], *res;
+	char buf[512];
 	FILE *fp = fopen( "/proc/cmdline", "r" );
 	if( fp ) {
-		res = fgets( buf, 512, fp );
+		fgets( buf, 512, fp );
 		fclose( fp );
 		return strstr( buf, "add_efi_memmap" ) != NULL;
 	} else {
