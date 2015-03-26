@@ -913,11 +913,7 @@ void usage(void)
 	       " -f, --force          Force an immediate kexec,\n"
 	       "                      don't call shutdown.\n"
 	       " -x, --no-ifdown      Don't bring down network interfaces.\n"
-	       "                      (if used, must be one of last options\n"
-	       "                       specified)\n"
 	       " -y, --no-sync        Don't sync filesystems before kexec.\n"
-	       "                      (if used, must be one of last options\n"
-	       "                       specified)\n"
 	       " -l, --load           Load the new kernel into the\n"
 	       "                      current kernel.\n"
 	       " -p, --load-panic     Load the new kernel for use on panic.\n"
@@ -1170,8 +1166,8 @@ int main(int argc, char *argv[])
 	int do_exec = 0;
 	int do_load_jump_back_helper = 0;
 	int do_shutdown = 1;
-	int do_sync = 1;
-	int do_ifdown = 0;
+	int do_sync = 1, skip_sync = 0;
+	int do_ifdown = 0, skip_ifdown = 0;
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
 	int do_kexec_file_syscall = 0;
@@ -1219,10 +1215,10 @@ int main(int argc, char *argv[])
 		case OPT_DEBUG:
 			kexec_debug = 1;
 		case OPT_NOIFDOWN:
-			do_ifdown = 0;
+			skip_ifdown = 1;
 			break;
 		case OPT_NOSYNC:
-			do_sync = 0;
+			skip_sync = 1;
 			break;
 		case OPT_FORCE:
 			do_load = 1;
@@ -1320,6 +1316,11 @@ int main(int argc, char *argv[])
 			break;
 		}
 	}
+
+	if (skip_ifdown)
+		do_ifdown = 0;
+	if (skip_sync)
+		do_sync = 0;
 
 	if (do_load && (kexec_flags & KEXEC_ON_CRASH) &&
 	    !is_crashkernel_mem_reserved()) {
