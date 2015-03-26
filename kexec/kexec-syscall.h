@@ -31,7 +31,11 @@
 #define __NR_kexec_load		268
 #endif
 #ifdef __x86_64__
+#ifdef __ILP32__
+#define __NR_kexec_load		528
+#else
 #define __NR_kexec_load		246
+#endif
 #endif
 #ifdef __s390x__
 #define __NR_kexec_load		277

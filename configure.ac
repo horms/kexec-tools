@@ -52,6 +52,15 @@ case $target_cpu in
 		;;
 	ia64|x86_64|alpha|m68k )
 		ARCH="$target_cpu"
+
+		dnl ---Test for x32 ABI in x86_64
+		if test "x$ARCH" = "xx86_64" ; then
+			AC_EGREP_CPP(x32_test,
+			[#if defined(__x86_64__) && defined (__ILP32__)
+				x32_test
+			#endif
+			], SUBARCH='x32', SUBARCH='64')
+		fi
 		;;
 	* )
 		AC_MSG_ERROR([unsupported architecture $target_cpu])
