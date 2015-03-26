@@ -6,7 +6,7 @@
 kexec \- directly boot into a new kernel
 .SH SYNOPSIS
 .B /sbin/kexec
-.B [-v (\-\-version)] [-f (\-\-force)] [-x (\-\-no-ifdown)] [-l (\-\-load)] [-p (\-\-load-panic)] [-u (\-\-unload)] [-e (\-\-exec)] [-t (\-\-type)]
+.B [-v (\-\-version)] [-f (\-\-force)] [-x (\-\-no-ifdown)] [-y (\-\-no-sync)] [-l (\-\-load)] [-p (\-\-load-panic)] [-u (\-\-unload)] [-e (\-\-exec)] [-t (\-\-type)]
 .BI [\-\-mem\-min= addr ]
 .BI [\-\-mem\-max= addr ]
 
@@ -148,7 +148,11 @@ Return the version number of the installed utility.
 .TP
 .B \-x\ (\-\-no\-ifdown)
 Shut down the running kernel, but restore the interface on reload. (If
-this option is used, it must be specified last.)
+this option is used, it must be one of last options specified.)
+.TP
+.B \-y\ (\-\-no\-sync)
+Shut down the running kernel, but skip syncing the filesystems. (If
+this option is used, it must be one of last options specified.)
 .TP
 .BI \-\-mem\-min= addr
 Specify the lowest memory address

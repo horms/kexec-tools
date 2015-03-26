@@ -913,7 +913,10 @@ void usage(void)
 	       " -f, --force          Force an immediate kexec,\n"
 	       "                      don't call shutdown.\n"
 	       " -x, --no-ifdown      Don't bring down network interfaces.\n"
-	       "                      (if used, must be last option\n"
+	       "                      (if used, must be one of last options\n"
+	       "                       specified)\n"
+	       " -y, --no-sync        Don't sync filesystems before kexec.\n"
+	       "                      (if used, must be one of last options\n"
 	       "                       specified)\n"
 	       " -l, --load           Load the new kernel into the\n"
 	       "                      current kernel.\n"
@@ -1217,6 +1220,9 @@ int main(int argc, char *argv[])
 			kexec_debug = 1;
 		case OPT_NOIFDOWN:
 			do_ifdown = 0;
+			break;
+		case OPT_NOSYNC:
+			do_sync = 0;
 			break;
 		case OPT_FORCE:
 			do_load = 1;

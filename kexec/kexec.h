@@ -209,6 +209,7 @@ extern int file_types;
 #define OPT_DEBUG		'd'
 #define OPT_FORCE		'f'
 #define OPT_NOIFDOWN		'x'
+#define OPT_NOSYNC		'y'
 #define OPT_EXEC		'e'
 #define OPT_LOAD		'l'
 #define OPT_UNLOAD		'u'
@@ -227,6 +228,7 @@ extern int file_types;
 	{ "version",		0, 0, OPT_VERSION }, \
 	{ "force",		0, 0, OPT_FORCE }, \
 	{ "no-ifdown",		0, 0, OPT_NOIFDOWN }, \
+	{ "no-sync",		0, 0, OPT_NOSYNC }, \
 	{ "load",		0, 0, OPT_LOAD }, \
 	{ "unload",		0, 0, OPT_UNLOAD }, \
 	{ "exec",		0, 0, OPT_EXEC }, \
@@ -241,7 +243,7 @@ extern int file_types;
 	{ "kexec-file-syscall",	0, 0, OPT_KEXEC_FILE_SYSCALL }, \
 	{ "debug",		0, 0, OPT_DEBUG }, \
 
-#define KEXEC_OPT_STR "h?vdfxluet:ps"
+#define KEXEC_OPT_STR "h?vdfxyluet:ps"
 
 extern void dbgprint_mem_range(const char *prefix, struct memory_range *mr, int nr_mr);
 extern void die(const char *fmt, ...)
