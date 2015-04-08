@@ -8,6 +8,7 @@ AC_INIT(kexec-tools, 2.0.10.git)
 AC_CONFIG_AUX_DIR(./config)
 AC_CONFIG_HEADERS([include/config.h])
 AC_LANG(C)
+AC_PROG_CC
 
 AC_DEFINE_UNQUOTED(PACKAGE_DATE, "`date '+%d %B %Y'`",
 		[Define to the release date of this package])
@@ -106,9 +107,6 @@ AC_ARG_WITH([booke],
 
 dnl ---Programs
 dnl To specify a different compiler, just 'export CC=/path/to/compiler'
-
-AC_PROG_CC
-
 if test "${build}" != "${host}" ; then
 	AC_CHECK_PROGS(BUILD_CC, [${build_alias}-gcc ${build}-gcc gcc])
 else
