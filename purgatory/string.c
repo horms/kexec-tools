@@ -46,6 +46,8 @@ int memcmp(void *src1, void *src2, size_t len)
 		if (*s1 != *s2) {
 			return *s2 - *s1;
 		}
+		s1++;
+		s2++;
 	}
 	return 0;
 	
