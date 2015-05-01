@@ -8,11 +8,7 @@ int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 	if (ehdr->ei_data != ELFDATA2LSB) {
 		return 0;
 	}
-#ifdef __ILP32__
-	if (ehdr->ei_class != ELFCLASS32) {
-#else
 	if (ehdr->ei_class != ELFCLASS64) {
-#endif
 		return 0;
 	}
 	if (ehdr->e_machine != EM_X86_64) {

@@ -23,6 +23,4 @@ x86_64_PURGATORY_SRCS += purgatory/arch/i386/console-x86.c
 x86_64_PURGATORY_SRCS += purgatory/arch/i386/vga.c
 x86_64_PURGATORY_SRCS += purgatory/arch/i386/pic.c
 
-ifeq ($(SUBARCH),64)
-        x86_64_PURGATORY_EXTRA_CFLAGS = -mcmodel=large
-endif
+x86_64_PURGATORY_EXTRA_CFLAGS = -mcmodel=large
