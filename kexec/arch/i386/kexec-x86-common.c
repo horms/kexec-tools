@@ -94,6 +94,12 @@ static int get_memory_ranges_proc_iomem(struct memory_range **range, int *ranges
 		else if (memcmp(str, "ACPI Non-volatile Storage\n", 26) == 0) {
 			type = RANGE_ACPI_NVS;
 		}
+		else if (memcmp(str, "Persistent Memory (legacy)\n", 27) == 0) {
+			type = RANGE_PRAM;
+		}
+		else if (memcmp(str, "Persistent Memory\n", 18) == 0) {
+			type = RANGE_PMEM;
+		}
 		else {
 			continue;
 		}
@@ -149,6 +155,10 @@ unsigned xen_e820_to_kexec_type(uint32_t type)
 			return RANGE_ACPI;
 		case E820_NVS:
 			return RANGE_ACPI_NVS;
+		case E820_PMEM:
+			return RANGE_PMEM;
+		case E820_PRAM:
+			return RANGE_PRAM;
 		case E820_RESERVED:
 		default:
 			return RANGE_RESERVED;

@@ -21,6 +21,8 @@ struct e820entry {
 #define E820_RESERVED	2
 #define E820_ACPI	3 /* usable as RAM once ACPI tables have been read */
 #define E820_NVS	4
+#define E820_PMEM       7
+#define E820_PRAM       12
 } __attribute__((packed));
 #endif
 

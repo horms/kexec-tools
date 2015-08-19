@@ -705,6 +705,12 @@ static void add_e820_map_from_mr(struct x86_linux_param_header *real_mode,
 			case RANGE_ACPI_NVS:
 				e820[i].type = E820_NVS;
 				break;
+			case RANGE_PMEM:
+				e820[i].type = E820_PMEM;
+				break;
+			case RANGE_PRAM:
+				e820[i].type = E820_PRAM;
+				break;
 			default:
 			case RANGE_RESERVED:
 				e820[i].type = E820_RESERVED;
