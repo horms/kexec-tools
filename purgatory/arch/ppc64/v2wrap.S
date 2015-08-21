@@ -114,10 +114,16 @@ master:
 	LOADADDR(6,run_at_load) # the load flag
 	lwz	7,0(6)		# possibly patched by kexec-elf-ppc64
 	stw	7,0x5c(4)	# and patch it into the kernel
-	li	5,0		# r5 will be 0 for kernel
-	mtctr	4		# prepare branch too
 	mr      3,16            # restore dt address
+
+	mtsrr0	4		# prepare branch to
+
+	mfmsr	5
+	clrrdi	5,5,1		# clear MSR_LE
+	mtsrr1	5
+
+	li	5,0		# r5 will be 0 for kernel
 
 				# skip cache flush, do we care?
 
-	bctr			# start kernel
+	rfid			# update MSR and start kernel
