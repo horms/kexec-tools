@@ -10,9 +10,6 @@ AC_CONFIG_HEADERS([include/config.h])
 AC_LANG(C)
 AC_PROG_CC
 
-AC_DEFINE_UNQUOTED(PACKAGE_DATE, "`date '+%d %B %Y'`",
-		[Define to the release date of this package])
-
 
 dnl -- Compilation platform configuration
 dnl -- the host specifices the host machine for the kexec binary, the

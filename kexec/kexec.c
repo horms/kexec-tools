@@ -897,7 +897,7 @@ static int my_load_jump_back_helper(unsigned long kexec_flags, void *entry)
 
 static void version(void)
 {
-	printf(PACKAGE_STRING " released " PACKAGE_DATE "\n");
+	printf(PACKAGE_STRING "\n");
 }
 
 void usage(void)
