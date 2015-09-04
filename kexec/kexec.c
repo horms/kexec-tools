@@ -26,6 +26,7 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/reboot.h>
@@ -552,11 +553,12 @@ char *slurp_file(const char *filename, off_t *r_size)
 		if (err < 0)
 			die("Can not seek to the begin of file %s: %s\n",
 					filename, strerror(errno));
+		buf = slurp_fd(fd, filename, size, &nread);
 	} else {
-		size = stats.st_size;
+		size = nread = stats.st_size;
+		buf = mmap(NULL, size,
+			   PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
 	}
-
-	buf = slurp_fd(fd, filename, size, &nread);
 	if (!buf)
 		die("Cannot read %s", filename);
 
