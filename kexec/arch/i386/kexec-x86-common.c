@@ -371,9 +371,9 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	    !(kexec_flags & KEXEC_PRESERVE_CONTEXT)) {
 		uint64_t start, end;
 
-		ret = get_max_crash_kernel_limit(&start, &end);
+		ret = get_crash_kernel_load_range(&start, &end);
 		if (ret != 0) {
-			fprintf(stderr, "get_max_crash_kernel_limit failed.\n");
+			fprintf(stderr, "get_crash_kernel_load_range failed.\n");
 			return -1;
 		}
 

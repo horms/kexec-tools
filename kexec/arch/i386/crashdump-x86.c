@@ -1026,24 +1026,17 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	return 0;
 }
 
-int get_max_crash_kernel_limit(uint64_t *start, uint64_t *end)
+/* On x86, the kernel may make a low reservation in addition to the
+ * normal reservation. However, the kernel refuses to load the panic
+ * kernel to low memory, so always choose the highest range.
+ */
+int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
 {
-	int i, idx = -1;
-	unsigned long sz_max = 0, sz;
-
 	if (!crash_reserved_mem_nr)
 		return -1;
 
-	for (i = crash_reserved_mem_nr - 1; i >= 0; i--) {
-		sz = crash_reserved_mem[i].end - crash_reserved_mem[i].start +1;
-		if (sz <= sz_max)
-			continue;
-		sz_max = sz;
-		idx = i;
-	}
-
-	*start = crash_reserved_mem[idx].start;
-	*end = crash_reserved_mem[idx].end;
+	*start = crash_reserved_mem[crash_reserved_mem_nr - 1].start;
+	*end = crash_reserved_mem[crash_reserved_mem_nr - 1].end;
 
 	return 0;
 }
