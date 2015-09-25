@@ -141,11 +141,12 @@ int FUNC(struct kexec_info *info,
 
 	count_cpu = nr_cpus;
 	for (i = 0; count_cpu > 0; i++) {
-		if (get_note_info(i, &notes_addr, &notes_len) < 0) {
-			/* This cpu is not present. Skip it. */
-			continue;
-		}
+		int ret;
+
+		ret = get_note_info(i, &notes_addr, &notes_len);
 		count_cpu--;
+		if (ret < 0) /* This cpu is not present. Skip it. */
+			continue;
 
 		phdr = (PHDR *) bufp;
 		bufp += sizeof(PHDR);
