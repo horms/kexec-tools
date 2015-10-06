@@ -37,6 +37,8 @@
 #include "kexec-ppc64.h"
 #include "../../fs2dt.h"
 #include "crashdump-ppc64.h"
+#include <libfdt.h>
+#include <arch/fdt.h>
 #include <arch/options.h>
 
 uint64_t initrd_base, initrd_size;
@@ -242,6 +244,11 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		/* create from fs2dt */
 		create_flatten_tree(&seg_buf, &seg_size, cmdline);
 	}
+
+	result = fixup_dt(&seg_buf, &seg_size);
+	if (result < 0)
+		return result;
+
 	my_dt_offset = add_buffer(info, seg_buf, seg_size, seg_size,
 				0, 0, max_addr, -1);
 
