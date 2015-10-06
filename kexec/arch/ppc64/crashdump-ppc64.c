@@ -33,6 +33,7 @@
 #include "../../kexec-syscall.h"
 #include "../../crashdump.h"
 #include "kexec-ppc64.h"
+#include "../../fs2dt.h"
 #include "crashdump-ppc64.h"
 
 static struct crash_elf_info elf_info64 =
@@ -187,7 +188,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	DIR *dir, *dmem;
 	FILE *file;
 	struct dirent *dentry, *mentry;
-	int i, n, crash_rng_len = 0;
+	int n, crash_rng_len = 0;
 	unsigned long long start, end;
 	int page_size;
 
