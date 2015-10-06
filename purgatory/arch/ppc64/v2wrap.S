@@ -116,9 +116,17 @@ master:
 	stw	7,0x5c(4)	# and patch it into the kernel
 	mr      3,16            # restore dt address
 
+	mfmsr	5
+	andi.	10,5,1		# test MSR_LE
+	bne	little_endian
+
+	li	5,0		# r5 will be 0 for kernel
+	mtctr	4		# prepare branch to
+	bctr			# start kernel
+	
+little_endian:			# book3s-only
 	mtsrr0	4		# prepare branch to
 
-	mfmsr	5
 	clrrdi	5,5,1		# clear MSR_LE
 	mtsrr1	5
 
