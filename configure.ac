@@ -24,6 +24,7 @@ case $target_cpu in
 		;;
 	powerpc )
 		ARCH="ppc"
+		SUBARCH="BE"
 		;;
 	powerpc64 )
 		ARCH="ppc64"
