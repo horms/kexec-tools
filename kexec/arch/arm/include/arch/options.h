@@ -1,7 +1,8 @@
 #ifndef KEXEC_ARCH_ARM_OPTIONS_H
 #define KEXEC_ARCH_ARM_OPTIONS_H
 
-#define OPT_ARCH_MAX   (OPT_MAX+0)
+#define OPT_DT_NO_OLD_ROOT	(OPT_MAX+0)
+#define OPT_ARCH_MAX		(OPT_MAX+1)
 
 #define OPT_APPEND	'a'
 #define OPT_RAMDISK	'r'
@@ -15,6 +16,7 @@
  */
 #define KEXEC_ARCH_OPTIONS \
 	KEXEC_OPTIONS \
+	{ "dt-no-old-root",	0, 0, OPT_DT_NO_OLD_ROOT }, \
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""
 

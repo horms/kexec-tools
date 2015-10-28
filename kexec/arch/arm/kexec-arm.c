@@ -16,6 +16,7 @@
 #include "../../kexec-syscall.h"
 #include "kexec-arm.h"
 #include <arch/options.h>
+#include "../../fs2dt.h"
 
 #define MAX_MEMORY_RANGES 64
 #define MAX_LINE 160
@@ -89,11 +90,37 @@ void arch_usage(void)
 	       "               including the .bss section, as reported\n"
 	       "               by 'arm-linux-size vmlinux'. If not\n"
 	       "               specified, this value is implicitly set\n"
-	       "               to the compressed images size * 4.\n");
+	       "               to the compressed images size * 4.\n"
+	       "     --dt-no-old-root\n"
+	       "               do not reuse old kernel root= param.\n"
+	       "               while creating flatten device tree.\n");
 }
 
 int arch_process_options(int argc, char **argv)
 {
+	/* We look for all options so getopt_long doesn't start reordering
+	 * argv[] before file_type[n].load() gets a look in.
+	 */
+	static const struct option options[] = {
+		KEXEC_ALL_OPTIONS
+		{ 0, 0, NULL, 0 },
+	};
+	static const char short_options[] = KEXEC_ALL_OPT_STR;
+	int opt;
+
+	opterr = 0; /* Don't complain about unrecognized options here */
+	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+		switch(opt) {
+		case OPT_DT_NO_OLD_ROOT:
+			dt_no_old_root = 1;
+			break;
+		default:
+			break;
+		}
+	}
+	/* Reset getopt for the next pass; called in other source modules */
+	opterr = 1;
+	optind = 1;
 	return 0;
 }
 
