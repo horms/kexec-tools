@@ -53,6 +53,7 @@ extern unsigned char reuse_initrd;
 /* Used for enabling printing message from purgatory code
  * Only has implemented for PPC64 */
 int my_debug;
+int dt_no_old_root;
 
 /* This provides the behaviour of hte existing ppc64 implementation */
 static void pad_structure_block(size_t len) {
@@ -511,6 +512,37 @@ static int comparefunc(const struct dirent **dentry1,
 	return strcmp(str1, str2);
 }
 
+/* grab root= from the old command line */
+static void dt_copy_old_root_param(void)
+{
+	FILE *fp;
+	char filename[MAXPATH];
+	char *last_cmdline = NULL;
+	char *p, *old_param;
+	size_t len = 0;
+
+	strcpy(filename, pathname);
+	strcat(filename, "bootargs");
+	fp = fopen(filename, "r");
+	if (fp) {
+		if (getline(&last_cmdline, &len, fp) == -1)
+			die("unable to read %s\n", filename);
+
+		p = strstr(last_cmdline, "root=");
+		if (p) {
+			old_param = strtok(p, " ");
+			len = strlen(local_cmdline);
+			if (len != 0)
+				strcat(local_cmdline, " ");
+			strcat(local_cmdline, old_param);
+		}
+	}
+	if (last_cmdline)
+		free(last_cmdline);
+
+	fclose(fp);
+}
+
 /*
  * put a node (directory) in the property structure.  first properties
  * then children.
@@ -579,8 +611,11 @@ static void putnode(void)
 		reserve(initrd_base, initrd_size);
 	}
 
-	/* Add cmdline to the second kernel.  Check to see if the new
-	 * cmdline has a root=.  If not, use the old root= cmdline.  */
+	/*
+	 * Add cmdline to the second kernel. Use the old root= cmdline if there
+	 * is no root= in the new command line and there's no --dt-no-old-root
+	 * option being used.
+	 */
 	if (!strcmp(basename,"chosen/")) {
 		size_t result;
 		size_t cmd_len = 0;
@@ -598,30 +633,9 @@ static void putnode(void)
 			param = strstr(local_cmdline, "root=");
 		}
 
-		/* ... if not, grab root= from the old command line */
-		if (!param) {
-			FILE *fp;
-			char *last_cmdline = NULL;
-			char *old_param;
+		if (!param && !dt_no_old_root)
+			dt_copy_old_root_param();
 
-			strcpy(filename, pathname);
-			strcat(filename, "bootargs");
-			fp = fopen(filename, "r");
-			if (fp) {
-				if (getline(&last_cmdline, &cmd_len, fp) == -1)
-					die("unable to read %s\n", filename);
-
-				param = strstr(last_cmdline, "root=");
-				if (param) {
-					old_param = strtok(param, " ");
-					if (cmd_len != 0)
-						strcat(local_cmdline, " ");
-					strcat(local_cmdline, old_param);
-				}
-			}
-			if (last_cmdline)
-				free(last_cmdline);
-		}
 		strcat(local_cmdline, " ");
 		cmd_len = strlen(local_cmdline);
 		cmd_len = cmd_len + 1;
