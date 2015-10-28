@@ -869,6 +869,8 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 void arch_usage(void)
 {
 	fprintf(stderr, "     --elf64-core-headers Prepare core headers in ELF64 format\n");
+	fprintf(stderr, "     --dt-no-old-root Do not reuse old kernel root= param.\n" \
+	                "                      while creating flatten device tree.\n");
 }
 
 struct arch_options_t arch_options = {
@@ -894,6 +896,9 @@ int arch_process_options(int argc, char **argv)
 			break;
 		case OPT_ELF64_CORE:
 			arch_options.core_header_type = CORE_TYPE_ELF64;
+			break;
+		case OPT_DT_NO_OLD_ROOT:
+			dt_no_old_root = 1;
 			break;
 		}
 	}
