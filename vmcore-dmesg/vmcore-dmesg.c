@@ -540,6 +540,12 @@ static void dump_dmesg_legacy(int fd)
 		exit(53);
 	}
 
+	/*
+	 * To collect full dmesg including the part before `dmesg -c` is useful
+	 * for later debugging. Use same logic as what crash utility is using.
+	 */
+	logged_chars = log_end < log_buf_len ? log_end : log_buf_len;
+
 	write_to_stdout(buf + (log_buf_len -  logged_chars), logged_chars);
 }
 
