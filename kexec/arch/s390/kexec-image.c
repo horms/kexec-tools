@@ -101,7 +101,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	 * we load the ramdisk directly behind the image with 1 MiB alignment.
 	 */
 	if (ramdisk) {
-		rd_buffer = slurp_file(ramdisk, &ramdisk_len);
+		rd_buffer = slurp_file_mmap(ramdisk, &ramdisk_len);
 		if (rd_buffer == NULL) {
 			fprintf(stderr, "Could not read ramdisk.\n");
 			return -1;

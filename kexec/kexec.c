@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/reboot.h>
+#include <sys/mman.h>
 #include <unistd.h>
 #include <fcntl.h>
 #ifndef _O_BINARY
@@ -514,7 +515,8 @@ static char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread)
 	return buf;
 }
 
-char *slurp_file(const char *filename, off_t *r_size)
+static char *slurp_file_generic(const char *filename, off_t *r_size,
+				int use_mmap)
 {
 	int fd;
 	char *buf;
@@ -552,11 +554,17 @@ char *slurp_file(const char *filename, off_t *r_size)
 		if (err < 0)
 			die("Can not seek to the begin of file %s: %s\n",
 					filename, strerror(errno));
+		buf = slurp_fd(fd, filename, size, &nread);
 	} else {
 		size = stats.st_size;
+		if (use_mmap) {
+			buf = mmap(NULL, size, PROT_READ|PROT_WRITE,
+				   MAP_PRIVATE, fd, 0);
+			nread = size;
+		} else {
+			buf = slurp_fd(fd, filename, size, &nread);
+		}
 	}
-
-	buf = slurp_fd(fd, filename, size, &nread);
 	if (!buf)
 		die("Cannot read %s", filename);
 
@@ -565,6 +573,23 @@ char *slurp_file(const char *filename, off_t *r_size)
 
 	*r_size = size;
 	return buf;
+}
+
+/*
+ * Read file into malloced buffer.
+ */
+char *slurp_file(const char *filename, off_t *r_size)
+{
+	return slurp_file_generic(filename, r_size, 0);
+}
+
+/*
+ * Map "normal" file or read "character device" into malloced buffer.
+ * You must not use free, realloc, etc. for the returned buffer.
+ */
+char *slurp_file_mmap(const char *filename, off_t *r_size)
+{
+	return slurp_file_generic(filename, r_size, 1);
 }
 
 /* This functions reads either specified number of bytes from the file or
