@@ -26,6 +26,8 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
+#include <sys/ioctl.h>
+#include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/reboot.h>
@@ -554,6 +556,12 @@ static char *slurp_file_generic(const char *filename, off_t *r_size,
 		if (err < 0)
 			die("Can not seek to the begin of file %s: %s\n",
 					filename, strerror(errno));
+		buf = slurp_fd(fd, filename, size, &nread);
+	} else if (S_ISBLK(stats.st_mode)) {
+		err = ioctl(fd, BLKGETSIZE64, &size);
+		if (err < 0)
+			die("Can't retrieve size of block device %s: %s\n",
+				filename, strerror(errno));
 		buf = slurp_fd(fd, filename, size, &nread);
 	} else {
 		size = stats.st_size;
