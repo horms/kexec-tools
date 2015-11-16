@@ -224,7 +224,7 @@ static int uImage_gz_load(const unsigned char *buf, off_t len,
 	return 0;
 }
 #else
-static int uImage_gz_load(const char *UNUSED(buf), off_t UNUSED(len),
+static int uImage_gz_load(const unsigned char *UNUSED(buf), off_t UNUSED(len),
 		struct Image_info *UNUSED(image))
 {
 	return -1;
