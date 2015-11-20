@@ -139,6 +139,38 @@ struct tag * atag_read_tags(void)
 	return (struct tag *) buf;
 }
 
+static
+int create_mem32_tag(struct tag_mem32 *tag_mem32)
+{
+	const char fn[]= "/proc/device-tree/memory/reg";
+	uint32_t tmp[2];
+	FILE *fp;
+
+	fp = fopen(fn, "r");
+	if (!fp) {
+		fprintf(stderr, "Cannot open %s: %m\n", fn);
+		return -1;
+	}
+
+	if (fread(tmp, sizeof(tmp[0]), 2, fp) != 2) {
+		fprintf(stderr, "Short read %s\n", fn);
+		fclose(fp);
+		return -1;
+	}
+
+	if (ferror(fp)) {
+		fprintf(stderr, "Cannot read %s: %m\n", fn);
+		fclose(fp);
+		return -1;
+	}
+
+	/* atags_mem32 has base/size fields reversed! */
+	tag_mem32->size = be32_to_cpu(tmp[1]);
+	tag_mem32->start = be32_to_cpu(tmp[0]);
+
+	fclose(fp);
+	return 0;
+}
 
 static
 int atag_arm_load(struct kexec_info *info, unsigned long base,
@@ -182,6 +214,12 @@ int atag_arm_load(struct kexec_info *info, unsigned long base,
 		params->hdr.size = 2;
 		params->hdr.tag = ATAG_CORE;
 		params = tag_next(params);
+
+		if (!create_mem32_tag(&params->u.mem)) {
+			params->hdr.size = 4;
+			params->hdr.tag = ATAG_MEM;
+			params = tag_next(params);
+		}
 	}
 
 	if (initrd) {
