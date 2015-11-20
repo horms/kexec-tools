@@ -39,7 +39,7 @@
 #define MEMRESERVE 256		/* max number of reserved memory blocks */
 #define MEM_RANGE_CHUNK_SZ 2048 /* Initial num dwords for mem ranges */
 
-static char pathname[MAXPATH], *pathstart;
+static char pathname[MAXPATH];
 static char propnames[NAMESPACE] = { 0 };
 static unsigned *dt_base, *dt;
 static unsigned int dt_cur_size;
@@ -800,9 +800,7 @@ static void add_boot_block(char **bufp, off_t *sizep)
 
 void create_flatten_tree(char **bufp, off_t *sizep, const char *cmdline)
 {
-	strcpy(pathname, "/proc/device-tree/");
-
-	pathstart = pathname + strlen(pathname);
+	strcpy(pathname, "/proc/device-tree");
 
 	dt_cur_size = INIT_TREE_WORDS;
 	dt_base = malloc(dt_cur_size*4);
