@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <string.h>
 #include <getopt.h>
+#include <unistd.h>
 #include "../../kexec.h"
 #include "../../kexec-syscall.h"
 #include "kexec-arm.h"
@@ -136,4 +137,10 @@ int arch_compat_trampoline(struct kexec_info *UNUSED(info))
 
 void arch_update_purgatory(struct kexec_info *UNUSED(info))
 {
+}
+
+/* return 1 if /sys/firmware/fdt exists, otherwise return 0 */
+int have_sysfs_fdt(void)
+{
+	return !access(SYSFS_FDT, F_OK);
 }

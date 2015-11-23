@@ -396,6 +396,14 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		return -1;
 	}
 
+	if (!use_atags && !dtb_file) {
+		int f;
+
+		f = have_sysfs_fdt();
+		if (f)
+			dtb_file = SYSFS_FDT;
+	}
+
 	if (command_line) {
 		command_line_len = strlen(command_line) + 1;
 		if (command_line_len > COMMAND_LINE_SIZE)
