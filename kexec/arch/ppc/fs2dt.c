@@ -30,6 +30,7 @@
 #include <stdio.h>
 #include "../../kexec.h"
 #include "kexec-ppc.h"
+#include "types.h"
 
 #define MAXPATH			1024	/* max path name length */
 #define NAMESPACE		16384	/* max bytes for property names */
@@ -296,6 +297,8 @@ static int comparefunc(const void *dentry1, const void *dentry2)
 {
 	char *str1 = (*(struct dirent **)dentry1)->d_name;
 	char *str2 = (*(struct dirent **)dentry2)->d_name;
+	char *p1, *p2;
+	int res = 0, max_len;
 
 	/*
 	 * strcmp scans from left to right and fails to idetify for some
@@ -303,11 +306,21 @@ static int comparefunc(const void *dentry1, const void *dentry2)
 	 * Therefore, we get the wrong sorted order like memory@10000000 and
 	 * memory@f000000.
 	 */
-	if (strchr(str1, '@') && strchr(str2, '@') &&
-		(strlen(str1) > strlen(str2)))
-		return 1;
+	if ((p1 = strchr(str1, '@')) && (p2 = strchr(str2, '@'))) {
+		max_len = max(p1 - str1, p2 - str2);
+		if ((res = strncmp(str1, str2, max_len)) == 0) {
+			/* prefix is equal - compare part after '@' by length */
+			p1++; p2++;
+			res = strlen(p1) - strlen(p2);
+			if (res == 0)
+				/* equal length, compare by strcmp() */
+				res = strcmp(p1,p2);
+		}
+        } else {
+		res = strcmp(str1, str2);
+        }
 
-	return strcmp(str1, str2);
+	return res;
 }
 
 /*
