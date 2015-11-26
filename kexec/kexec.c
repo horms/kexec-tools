@@ -573,7 +573,7 @@ static char *slurp_file_generic(const char *filename, off_t *r_size,
 			buf = slurp_fd(fd, filename, size, &nread);
 		}
 	}
-	if (!buf)
+	if ((use_mmap && (buf == MAP_FAILED)) || (!use_mmap && (buf == NULL)))
 		die("Cannot read %s", filename);
 
 	if (nread != size)
