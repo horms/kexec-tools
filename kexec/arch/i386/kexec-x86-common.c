@@ -44,6 +44,12 @@
 #include <xenctrl.h>
 #endif /* HAVE_LIBXENCTRL */
 
+/* Used below but not present in (older?) xenctrl.h */
+#ifndef E820_PMEM
+#define E820_PMEM         7
+#define E820_PRAM         12
+#endif
+
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /**
