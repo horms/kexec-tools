@@ -1056,7 +1056,7 @@ static int crashkernel_mem_callback(void *UNUSED(data), int nr,
 	return 0;
 }
 
-static int get_crashkernel_region(void)
+int is_crashkernel_mem_reserved(void)
 {
 	int ret;
 
@@ -1078,20 +1078,4 @@ static int get_crashkernel_region(void)
 	}
 
 	return !!crash_reserved_mem_nr;
-}
-
-int is_crashkernel_mem_reserved(void)
-{
-	return get_crashkernel_region();
-}
-
-void print_crashkernel_region_size(void)
-{
-	uint64_t end, start;
-
-	if (get_crashkernel_region()) {
-		get_crash_kernel_load_range(&start, &end);
-		printf("%lu\n", end - start + 1);
-	} else
-		printf("0\n");
 }

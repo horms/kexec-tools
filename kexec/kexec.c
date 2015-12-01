@@ -960,7 +960,6 @@ void usage(void)
 	       "     --mem-max=<addr> Specify the highest memory address to\n"
 	       "                      load code into.\n"
 	       "     --reuseinitrd    Reuse initrd from first boot.\n"
-	       "     --print-ckr-size Print crash kernel region size.\n"
 	       "     --load-preserve-context Load the new kernel and preserve\n"
 	       "                      context of current kernel during kexec.\n"
 	       "     --load-jump-back-helper Load a helper image to jump back\n"
@@ -1346,9 +1345,6 @@ int main(int argc, char *argv[])
 		case OPT_KEXEC_FILE_SYSCALL:
 			/* We already parsed it. Nothing to do. */
 			break;
-		case OPT_PRINT_CKR_SIZE:
-			print_crashkernel_region_size();
-			return 0;
 		default:
 			break;
 		}
