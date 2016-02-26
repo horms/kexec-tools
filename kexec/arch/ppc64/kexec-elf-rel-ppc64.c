@@ -23,18 +23,6 @@ static unsigned int local_entry_offset(struct mem_sym *UNUSED(sym))
 }
 #endif
 
-int machine_verify_elf_rel(struct mem_ehdr *ehdr)
-{
-	if (ehdr->ei_class != ELFCLASS64) {
-		return 0;
-	}
-	if (ehdr->e_machine != EM_PPC64) {
-		return 0;
-	}
-
-	return 1;
-}
-
 static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 {
 	struct mem_shdr *shdr, *shdr_end;
@@ -50,6 +38,24 @@ static struct mem_shdr *toc_section(const struct mem_ehdr *ehdr)
 	}
 
 	return NULL;
+}
+
+int machine_verify_elf_rel(struct mem_ehdr *ehdr)
+{
+	struct mem_shdr *toc;
+
+	if (ehdr->ei_class != ELFCLASS64) {
+		return 0;
+	}
+	if (ehdr->e_machine != EM_PPC64) {
+		return 0;
+	}
+
+	/* Ensure .toc is sufficiently aligned.  */
+	toc = toc_section(ehdr);
+	if (toc && toc->sh_addralign < 256)
+		toc->sh_addralign = 256;
+	return 1;
 }
 
 /* r2 is the TOC pointer: it actually points 0x8000 into the TOC (this
