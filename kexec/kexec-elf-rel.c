@@ -408,7 +408,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 			dbgprintf("sym: %s value: %lx addr: %lx\n",
 				name, value, address);
 
-			machine_apply_elf_rel(ehdr, rel.r_type,
+			machine_apply_elf_rel(ehdr, &sym, rel.r_type,
 				(void *)location, address, value);
 		}
 	}

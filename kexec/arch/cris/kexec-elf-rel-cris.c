@@ -29,8 +29,9 @@ int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 	return 1;
 }
 
-void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
-	void *location, unsigned long address, unsigned long value)
+void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
+	struct mem_sym *UNUSED(sym), unsigned long r_type, void *location,
+	unsigned long address, unsigned long value)
 {
 	switch(r_type) {
 

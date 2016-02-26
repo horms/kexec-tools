@@ -28,8 +28,9 @@ int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 	return 1;
 }
 
-void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr), unsigned long r_type,
-	void *orig_loc, unsigned long UNUSED(address), unsigned long relocation)
+void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
+	struct mem_sym *UNUSED(sym), unsigned long r_type, void *orig_loc,
+	unsigned long UNUSED(address), unsigned long relocation)
 {
 	uint32_t *location = orig_loc;
 	uint32_t value;

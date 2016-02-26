@@ -72,8 +72,9 @@ bundle (const uint64_t insn)
         return insn & ~0xfUL;
 }
 
-void machine_apply_elf_rel(struct mem_ehdr *ehdr, unsigned long r_type,
-	void *location, unsigned long address, unsigned long value)
+void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
+	struct mem_sym *UNUSED(sym), unsigned long r_type, void *location,
+	unsigned long address, unsigned long value)
 {
 	uint64_t gp_value = ehdr->rel_addr + 0x200000;
 	switch(r_type) {

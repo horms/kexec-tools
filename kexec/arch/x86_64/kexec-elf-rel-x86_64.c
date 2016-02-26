@@ -57,8 +57,9 @@ static const char *reloc_name(unsigned long r_type)
 	return name;
 }
 
-void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr), unsigned long r_type,
-	void *location, unsigned long address, unsigned long value)
+void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
+	struct mem_sym *UNUSED(sym), unsigned long r_type, void *location,
+	unsigned long address, unsigned long value)
 {
 	dbgprintf("%s\n", reloc_name(r_type));
 	switch(r_type) {
