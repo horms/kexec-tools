@@ -5,6 +5,24 @@
 #include "../../kexec-elf.h"
 #include "kexec-ppc64.h"
 
+#if defined(_CALL_ELF) && _CALL_ELF == 2
+#define STO_PPC64_LOCAL_BIT	5
+#define STO_PPC64_LOCAL_MASK	(7 << STO_PPC64_LOCAL_BIT)
+#define PPC64_LOCAL_ENTRY_OFFSET(other) \
+ (((1 << (((other) & STO_PPC64_LOCAL_MASK) >> STO_PPC64_LOCAL_BIT)) >> 2) << 2)
+
+static unsigned int local_entry_offset(struct mem_sym *sym)
+{
+	/* If this symbol has a local entry point, use it. */
+	return PPC64_LOCAL_ENTRY_OFFSET(sym->st_other);
+}
+#else
+static unsigned int local_entry_offset(struct mem_sym *UNUSED(sym))
+{
+	return 0;
+}
+#endif
+
 int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 {
 	if (ehdr->ei_class != ELFCLASS64) {
@@ -114,6 +132,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *sym,
 		break;
 
 	case R_PPC64_REL24:
+		value += local_entry_offset(sym);
 		/* Convert value to relative */
 		value -= address;
 		if (value + 0x2000000 > 0x3ffffff || (value & 3) != 0) {
