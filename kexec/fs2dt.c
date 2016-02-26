@@ -577,7 +577,8 @@ static void putnode(void)
 	strcpy((void *)dt, *basename ? basename : "");
 	dt += ((plen + 4)/4);
 
-	strcat(pathname, "/");
+	if (*basename)
+		strcat(pathname, "/");
 	dn = pathname + strlen(pathname);
 
 	putprops(dn, namelist, numlist);
@@ -804,7 +805,7 @@ static void add_boot_block(char **bufp, off_t *sizep)
 
 void create_flatten_tree(char **bufp, off_t *sizep, const char *cmdline)
 {
-	strcpy(pathname, "/proc/device-tree");
+	strcpy(pathname, "/proc/device-tree/");
 
 	dt_cur_size = INIT_TREE_WORDS;
 	dt_base = malloc(dt_cur_size*4);
