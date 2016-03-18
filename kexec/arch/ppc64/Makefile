@@ -21,5 +21,6 @@ ppc64_CPPFLAGS = -I$(srcdir)/kexec/libfdt
 
 dist += kexec/arch/ppc64/Makefile $(ppc64_KEXEC_SRCS)			\
 	kexec/arch/ppc64/kexec-ppc64.h kexec/arch/ppc64/crashdump-ppc64.h \
+	kexec/arch/ppc64/include/arch/fdt.h \
 	kexec/arch/ppc64/include/arch/options.h
 
