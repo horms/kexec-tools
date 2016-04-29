@@ -529,7 +529,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			unsigned long initrd_base_new = locate_hole(info,
 					hole_size, page_size,
 					initrd_base, ULONG_MAX, INT_MAX);
-			if (base == ULONG_MAX)
+			if (initrd_base_new == ULONG_MAX)
 				return -1;
 			initrd_base = initrd_base_new;
 		}
