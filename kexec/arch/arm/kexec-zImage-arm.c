@@ -274,8 +274,9 @@ int atag_arm_load(struct kexec_info *info, unsigned long base,
 	return 0;
 }
 
-static int setup_dtb_prop(char **bufp, off_t *sizep, const char *node_name,
-		const char *prop_name, const void *val, int len)
+static int setup_dtb_prop(char **bufp, off_t *sizep, int parentoffset,
+		const char *node_name, const char *prop_name,
+		const void *val, int len)
 {
 	char *dtb_buf;
 	off_t dtb_size;
@@ -290,14 +291,14 @@ static int setup_dtb_prop(char **bufp, off_t *sizep, const char *node_name,
 	dtb_size = *sizep;
 
 	/* check if the subnode has already exist */
-	off = fdt_path_offset(dtb_buf, node_name);
+	off = fdt_subnode_offset(dtb_buf, parentoffset, node_name);
 	if (off == -FDT_ERR_NOTFOUND) {
 		dtb_size += fdt_node_len(node_name);
 		fdt_set_totalsize(dtb_buf, dtb_size);
 		dtb_buf = xrealloc(dtb_buf, dtb_size);
 		if (dtb_buf == NULL)
 			die("xrealloc failed\n");
-		off = fdt_add_subnode(dtb_buf, off, node_name);
+		off = fdt_add_subnode(dtb_buf, parentoffset, node_name);
 	}
 
 	if (off < 0) {
@@ -548,7 +549,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 				 *  Error should have been reported so
 				 *  directly return -1
 				 */
-				if (setup_dtb_prop(&dtb_buf, &dtb_length, "/chosen",
+				if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
 						"bootargs", command_line,
 						strlen(command_line) + 1))
 					return -1;
@@ -594,11 +595,11 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			start = cpu_to_be32((unsigned long)(initrd_base));
 			end = cpu_to_be32((unsigned long)(initrd_base + initrd_size));
 
-			if (setup_dtb_prop(&dtb_buf, &dtb_length, "/chosen",
+			if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
 					"linux,initrd-start", &start,
 					sizeof(start)))
 				return -1;
-			if (setup_dtb_prop(&dtb_buf, &dtb_length, "/chosen",
+			if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
 					"linux,initrd-end", &end,
 					sizeof(end)))
 				return -1;
