@@ -31,6 +31,7 @@
 #include "../../kexec-elf.h"
 #include "../../crashdump.h"
 #include "crashdump-arm.h"
+#include "iomem.h"
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define ELFDATANATIVE ELFDATA2LSB
@@ -139,9 +140,8 @@ static int get_kernel_page_offset(struct kexec_info *info,
  * @length: size of the memory region
  *
  * This function is called once for each memory region found in /proc/iomem. It
- * locates system RAM and crashkernel reserved memory and places these to
- * variables: @crash_memory_ranges and @crash_reserved_mem. Number of memory
- * regions is placed in @crash_memory_nr_ranges.
+ * locates system RAM and places these into @crash_memory_ranges. Number of
+ * memory regions is placed in @crash_memory_nr_ranges.
  */
 static int crash_range_callback(void *UNUSED(data), int UNUSED(nr),
 				char *str, unsigned long long base,
@@ -159,10 +159,6 @@ static int crash_range_callback(void *UNUSED(data), int UNUSED(nr),
 		range->end = base + length - 1;
 		range->type = RANGE_RAM;
 		usablemem_rgns.size++;
-	} else if (strncmp(str, "Crash kernel\n", 13) == 0) {
-		crash_reserved_mem.start = base;
-		crash_reserved_mem.end = base + length - 1;
-		crash_reserved_mem.type = RANGE_RAM;
 	}
 
 	return 0;
@@ -424,12 +420,39 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	return 0;
 }
 
+/**
+ * iomem_range_callback() - callback called for each iomem region
+ * @data: not used
+ * @nr: not used
+ * @str: name of the memory region (not NULL terminated)
+ * @base: start address of the memory region
+ * @length: size of the memory region
+ *
+ * This function is called for each memory range in /proc/iomem, and stores
+ * the location of the crash kernel range into @crash_reserved_mem.
+ */
+static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
+				char *str, unsigned long long base,
+				unsigned long long length)
+{
+	if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0) {
+		crash_reserved_mem.start = base;
+		crash_reserved_mem.end = base + length - 1;
+		crash_reserved_mem.type = RANGE_RAM;
+	}
+	return 0;
+}
+
+/**
+ * is_crashkernel_mem_reserved() - check for the crashkernel reserved region
+ *
+ * Check for the crashkernel reserved region in /proc/iomem, and return
+ * true if it is present, or false otherwise. We use this to store the
+ * location of this region.
+ */
 int is_crashkernel_mem_reserved(void)
 {
-	uint64_t start, end;
+	kexec_iomem_for_each_line(NULL, iomem_range_callback, NULL);
 
-	if (parse_iomem_single("Crash kernel\n", &start, &end) == 0)
-		return start != end;
-
-	return 0;
+	return crash_reserved_mem.start != crash_reserved_mem.end;
 }
