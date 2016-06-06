@@ -18,6 +18,9 @@ libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/libfdt/%)
 
 arm_CPPFLAGS = -I$(srcdir)/kexec/libfdt
 
+# We want 64-bit file IO for kdump to work correctly on LPAE systems
+arm_CPPFLAGS += -D_FILE_OFFSET_BITS=64
+
 arm_KEXEC_SRCS += $(libfdt_SRCS)
 
 arm_UIMAGE = kexec/kexec-uImage.c
