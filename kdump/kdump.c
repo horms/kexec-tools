@@ -192,6 +192,7 @@ static void *generate_new_headers(
 		}
 		memcpy(nphdr, &phdr[i], sizeof(*nphdr));
 		nphdr->p_offset = offset;
+		nphdr++;
 		offset += phdr[i].p_filesz;
 	}
 	
