@@ -142,6 +142,7 @@ struct memory_range {
 
 struct memory_ranges {
         unsigned int size;
+	unsigned int max_size;
         struct memory_range *ranges;
 };
 
