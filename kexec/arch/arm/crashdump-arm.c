@@ -365,6 +365,17 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	if (get_kernel_page_offset(info, &elf_info))
 		return -1;
 
+	/*
+	 * Ensure that the crash kernel memory range is sane. The crash kernel
+	 * must be located within memory which is visible during booting.
+	 */
+	if (crash_reserved_mem.end > ARM_MAX_VIRTUAL) {
+		fprintf(stderr,
+			"Crash kernel memory [0x%llx-0x%llx] is inaccessible at boot - unable to load crash kernel\n",
+			crash_reserved_mem.start, crash_reserved_mem.end);
+		return -1;
+	}
+
 	last_ranges = usablemem_rgns.size - 1;
 	if (last_ranges < 0)
 		last_ranges = 0;
