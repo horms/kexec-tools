@@ -14,7 +14,7 @@
  * http://lists.arm.linux.org.uk/lurker/message/20010723.185051.94ce743c.en.html
  */
 unsigned long
-phys_to_virt(struct crash_elf_info *elf_info, unsigned long paddr)
+phys_to_virt(struct crash_elf_info *elf_info, unsigned long long paddr)
 {
 	return paddr + elf_info->page_offset - phys_offset;
 }

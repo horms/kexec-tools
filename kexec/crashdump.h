@@ -55,7 +55,7 @@ int crash_create_elf64_headers(struct kexec_info *info,
 unsigned long crash_architecture(struct crash_elf_info *elf_info);
 
 unsigned long phys_to_virt(struct crash_elf_info *elf_info,
-			   unsigned long paddr);
+			   unsigned long long paddr);
 
 unsigned long xen_architecture(struct crash_elf_info *elf_info);
 int xen_get_nr_phys_cpus(void);
