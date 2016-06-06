@@ -82,7 +82,8 @@ int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch)
 	if (be32_to_cpu(header.ih_size) > len - sizeof(header)) {
 		printf("uImage header claims that image has %d bytes\n",
 				be32_to_cpu(header.ih_size));
-		printf("we read only %ld bytes.\n", len - sizeof(header));
+		printf("we read only %lld bytes.\n",
+		       (long long)len - sizeof(header));
 		return -1;
 	}
 #ifdef HAVE_LIBZ

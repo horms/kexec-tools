@@ -60,8 +60,8 @@ char *zlib_decompress_file(const char *filename, off_t *r_size)
 			if ((errno == EINTR) || (errno == EAGAIN))
 				continue;
 			_gzerror(fp, &errnum, &msg);
-			dbgprintf("Read on %s of %ld bytes failed: %s\n",
-					filename, (allocated - size) + 0UL, msg);
+			dbgprintf("Read on %s of %d bytes failed: %s\n",
+				  filename, (int)(allocated - size), msg);
 			size = 0;
 			goto fail;
 		}

@@ -707,8 +707,8 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 	/* slurp in the input kernel */
 	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
 
-	dbgprintf("kernel: %p kernel_size: 0x%lx\n",
-		  kernel_buf, kernel_size);
+	dbgprintf("kernel: %p kernel_size: %#llx\n",
+		  kernel_buf, (unsigned long long)kernel_size);
 
 	if (get_memory_ranges(&info.memory_range, &info.memory_ranges,
 		info.kexec_flags) < 0 || info.memory_ranges == 0) {
