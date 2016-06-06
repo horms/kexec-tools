@@ -136,7 +136,6 @@ static int get_kernel_page_offset(struct kexec_info *info,
 				user_page_offset);
 	}
 	elf_info->page_offset = stext_sym_addr & (~KVBASE_MASK);
-	dbgprintf("page_offset is set to %llx\n", elf_info->page_offset);
 	return 0;
 }
 
@@ -293,10 +292,12 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	 * region as PHYS_OFFSET.
 	 */
 	phys_offset = usablemem_rgns.ranges->start;
-	dbgprintf("phys_offset: %#llx\n", phys_offset);
 
 	if (get_kernel_page_offset(info, &elf_info))
 		return -1;
+
+	dbgprintf("phys offset = %#llx, page offset = %llx\n",
+		  phys_offset, elf_info.page_offset);
 
 	/*
 	 * Ensure that the crash kernel memory range is sane. The crash kernel
