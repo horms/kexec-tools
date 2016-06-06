@@ -504,7 +504,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			 * No crash kernel memory reserved. We cannot do more
 			 * but just bail out.
 			 */
-			return -1;
+			return ENOCRASHKERNEL;
 		}
 		base = start;
 	} else {
