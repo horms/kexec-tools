@@ -158,6 +158,10 @@ static int crash_get_memory_ranges(void)
 		return -1;
 	}
 
+	dbgprint_mem_range("Reserved memory ranges",
+			   crash_reserved_rgns.ranges,
+			   crash_reserved_rgns.size);
+
 	/*
 	 * Exclude all reserved memory from the usable memory regions.
 	 * We want to avoid dumping the crashkernel region itself.  Note
@@ -178,6 +182,9 @@ static int crash_get_memory_ranges(void)
 	 * Make sure that the memory regions are sorted.
 	 */
 	mem_regions_sort(&usablemem_rgns);
+
+	dbgprint_mem_range("Coredump memory ranges",
+			   usablemem_rgns.ranges, usablemem_rgns.size);
 
 	return 0;
 }
