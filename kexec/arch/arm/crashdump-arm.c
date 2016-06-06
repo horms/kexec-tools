@@ -369,8 +369,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	if (last_ranges < 0)
 		last_ranges = 0;
 
-	if (crash_memory_ranges[last_ranges].end > ULONG_MAX) {
-
+	if (crash_memory_ranges[last_ranges].end > UINT32_MAX) {
 		/* for support LPAE enabled kernel*/
 		elf_info.class = ELFCLASS64;
 
