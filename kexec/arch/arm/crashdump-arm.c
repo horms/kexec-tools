@@ -33,6 +33,7 @@
 #include "../../mem_regions.h"
 #include "crashdump-arm.h"
 #include "iomem.h"
+#include "phys_to_virt.h"
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define ELFDATANATIVE ELFDATA2LSB
@@ -70,7 +71,6 @@ static struct crash_elf_info elf_info = {
 	.page_offset	= DEFAULT_PAGE_OFFSET,
 };
 
-unsigned long phys_offset;
 extern unsigned long long user_page_offset;
 
 /* Retrieve kernel _stext symbol virtual address from /proc/kallsyms */
@@ -293,7 +293,7 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 	 * region as PHYS_OFFSET.
 	 */
 	phys_offset = usablemem_rgns.ranges->start;
-	dbgprintf("phys_offset: %#lx\n", phys_offset);
+	dbgprintf("phys_offset: %#llx\n", phys_offset);
 
 	if (get_kernel_page_offset(info, &elf_info))
 		return -1;

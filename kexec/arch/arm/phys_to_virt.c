@@ -1,6 +1,8 @@
 #include "../../kexec.h"
 #include "../../crashdump.h"
-#include "crashdump-arm.h"
+#include "phys_to_virt.h"
+
+uint64_t phys_offset;
 
 /**
  * phys_to_virt() - translate physical address to virtual address

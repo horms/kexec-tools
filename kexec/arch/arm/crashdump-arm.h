@@ -16,7 +16,6 @@ extern struct memory_ranges usablemem_rgns;
 
 struct kexec_info;
 
-extern unsigned long phys_offset;
 extern int load_crashdump_segments(struct kexec_info *, char *);
 
 #ifdef __cplusplus
