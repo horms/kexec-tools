@@ -46,8 +46,8 @@
  */
 static struct memory_range crash_memory_ranges[CRASH_MAX_MEMORY_RANGES];
 struct memory_ranges usablemem_rgns = {
-    .size = 0,
-    .ranges = crash_memory_ranges,
+	.max_size = CRASH_MAX_MEMORY_RANGES,
+	.ranges = crash_memory_ranges,
 };
 
 /* memory range reserved for crashkernel */
