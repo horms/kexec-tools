@@ -51,7 +51,6 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		if (count != 2)
 			continue;
 		str = line + consumed;
-		end = end + 1;
 
 		if (memcmp(str, "System RAM\n", 11) == 0) {
 			type = RANGE_RAM;
