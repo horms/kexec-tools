@@ -20,6 +20,7 @@
 #include "kexec-arm.h"
 #include "../../fs2dt.h"
 #include "crashdump-arm.h"
+#include "iomem.h"
 
 #define BOOT_PARAMS_SIZE 1536
 
@@ -499,7 +500,8 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		 * We put the dump capture kernel at the start of crashkernel
 		 * reserved memory.
 		 */
-		if (parse_iomem_single("Crash kernel\n", &start, &end)) {
+		if (parse_iomem_single(CRASH_KERNEL_BOOT, &start, &end) &&
+		    parse_iomem_single(CRASH_KERNEL, &start, &end)) {
 			/*
 			 * No crash kernel memory reserved. We cannot do more
 			 * but just bail out.
