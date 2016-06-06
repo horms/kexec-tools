@@ -69,6 +69,10 @@ dist				+= kexec/fs2dt.c kexec/fs2dt.h
 $(ARCH)_FS2DT			=
 KEXEC_SRCS			+= $($(ARCH)_FS2DT)
 
+dist				+= kexec/mem_regions.c kexec/mem_regions.h
+$(ARCH)_MEM_REGIONS		=
+KEXEC_SRCS			+= $($(ARCH)_MEM_REGIONS)
+
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
 include $(srcdir)/kexec/arch/i386/Makefile
