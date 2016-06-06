@@ -300,7 +300,7 @@ int main(int argc, char **argv)
 	for(i = 0; i < ehdr->e_phnum; i++) {
 		unsigned long long offset, size;
 		size_t wsize;
-		if (phdr[i].p_type != PT_NOTE) {
+		if (phdr[i].p_type == PT_NOTE) {
 			continue;
 		}
 		offset = phdr[i].p_offset;
