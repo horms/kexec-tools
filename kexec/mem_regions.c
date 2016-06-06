@@ -1,5 +1,32 @@
+#include <stdlib.h>
+
 #include "kexec.h"
 #include "mem_regions.h"
+
+static int mem_range_cmp(const void *a1, const void *a2)
+{
+	const struct memory_range *r1 = a1;
+	const struct memory_range *r2 = a2;
+
+	if (r1->start > r2->start)
+		return 1;
+	if (r1->start < r2->start)
+		return -1;
+
+	return 0;
+}
+
+/**
+ * mem_regions_sort() - sort ranges into ascending address order
+ * @ranges: ranges to sort
+ *
+ * Sort the memory regions into ascending address order.
+ */
+void mem_regions_sort(struct memory_ranges *ranges)
+{
+	qsort(ranges->ranges, ranges->size, sizeof(ranges->ranges),
+	      mem_range_cmp);
+}
 
 /**
  * mem_regions_add() - add a memory region to a set of ranges
