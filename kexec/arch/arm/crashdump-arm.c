@@ -52,7 +52,7 @@ struct memory_ranges usablemem_rgns = {
 	.ranges = crash_memory_ranges,
 };
 
-/* memory range reserved for crashkernel */
+/* The boot-time physical memory range reserved for crashkernel region */
 static struct memory_range crash_kernel_mem;
 
 /* reserved regions */
@@ -366,10 +366,19 @@ static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
 				char *str, unsigned long long base,
 				unsigned long long length)
 {
-	if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0) {
+	if (strncmp(str, CRASH_KERNEL_BOOT, strlen(CRASH_KERNEL_BOOT)) == 0) {
 		crash_kernel_mem.start = base;
 		crash_kernel_mem.end = base + length - 1;
 		crash_kernel_mem.type = RANGE_RAM;
+		return mem_regions_add(&crash_reserved_rgns,
+				       base, length, RANGE_RAM);
+	}
+	else if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0) {
+		if (crash_kernel_mem.start == crash_kernel_mem.end) {
+			crash_kernel_mem.start = base;
+			crash_kernel_mem.end = base + length - 1;
+			crash_kernel_mem.type = RANGE_RAM;
+		}
 		return mem_regions_add(&crash_reserved_rgns,
 				       base, length, RANGE_RAM);
 	}
