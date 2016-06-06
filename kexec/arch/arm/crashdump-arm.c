@@ -202,19 +202,6 @@ static void crash_exclude_range(void)
 	}
 }
 
-static int range_cmp(const void *a1, const void *a2)
-{
-	const struct memory_range *r1 = a1;
-	const struct memory_range *r2 = a2;
-
-	if (r1->start > r2->start)
-		return 1;
-	if (r1->start < r2->start)
-		return -1;
-
-	return 0;
-}
-
 /**
  * crash_get_memory_ranges() - read system physical memory
  *
@@ -246,8 +233,7 @@ static int crash_get_memory_ranges(void)
 	/*
 	 * Make sure that the memory regions are sorted.
 	 */
-	qsort(usablemem_rgns.ranges, usablemem_rgns.size,
-	      sizeof(*usablemem_rgns.ranges), range_cmp);
+	mem_regions_sort(&usablemem_rgns);
 
 	return 0;
 }
