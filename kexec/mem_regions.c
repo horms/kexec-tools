@@ -31,7 +31,6 @@ void mem_regions_sort(struct memory_ranges *ranges)
 /**
  * mem_regions_add() - add a memory region to a set of ranges
  * @ranges: ranges to add the memory region to
- * @max: maximum number of entries in memory region
  * @base: base address of memory region
  * @length: length of memory region in bytes
  * @type: type of memory region
