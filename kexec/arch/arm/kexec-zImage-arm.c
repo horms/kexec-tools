@@ -526,8 +526,10 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		initrd_base = kernel_base + _ALIGN(kexec_arm_image_size, getpagesize());
 	} else {
 		/* Otherwise, assume the maximum kernel compression ratio
-		 * is 4, and just to be safe, place ramdisk after that */
-		initrd_base = kernel_base + _ALIGN(len * 4, getpagesize());
+		 * is 4, and just to be safe, place ramdisk after that.
+		 * Note that we must include space for the compressed
+		 * image here as well. */
+		initrd_base = kernel_base + _ALIGN(len * 5, getpagesize());
 	}
 
 	if (use_atags) {
