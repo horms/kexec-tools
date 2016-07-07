@@ -343,6 +343,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long base, kernel_base;
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
 	unsigned int extra_size = 0x8000; /* TEXT_OFFSET */
+	size_t kernel_mem_size;
 	const char *command_line;
 	char *modified_cmdline = NULL;
 	off_t command_line_len;
@@ -468,6 +469,12 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 				command_line_len = strlen(command_line) + 1;
 		}
 	}
+
+	/*
+	 * Always extend the zImage by four bytes to ensure that an appended
+	 * DTB image always sees an initialised value after _edata.
+	 */
+	kernel_mem_size = len + 4;
 
 	/*
 	 * If we are loading a dump capture kernel, we need to update kernel
@@ -621,7 +628,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		            dtb_offset, dtb_length);
 	}
 
-	add_segment(info, buf, len, kernel_base, len);
+	add_segment(info, buf, len, kernel_base, kernel_mem_size);
 
 	info->entry = (void*)kernel_base;
 
