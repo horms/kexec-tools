@@ -24,7 +24,7 @@ static int mem_range_cmp(const void *a1, const void *a2)
  */
 void mem_regions_sort(struct memory_ranges *ranges)
 {
-	qsort(ranges->ranges, ranges->size, sizeof(ranges->ranges),
+	qsort(ranges->ranges, ranges->size, sizeof(*ranges->ranges),
 	      mem_range_cmp);
 }
 
