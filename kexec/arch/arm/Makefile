@@ -27,6 +27,8 @@ arm_KEXEC_SRCS += $(libfdt_SRCS)
 
 arm_UIMAGE = kexec/kexec-uImage.c
 arm_PHYS_TO_VIRT = kexec/arch/arm/phys_to_virt.c
+arm_PHYS_TO_VIRT += kexec/arch/arm/iomem.h
+arm_PHYS_TO_VIRT += kexec/arch/arm/phys_to_virt.h
 
 dist += kexec/arch/arm/Makefile $(arm_KEXEC_SRCS) $(arm_PHYS_TO_VIRT)	\
 	kexec/arch/arm/crashdump-arm.h kexec/arch/arm/kexec-arm.h	\
