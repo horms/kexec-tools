@@ -1,6 +1,6 @@
 /*
- * ifdown.c	Find all network interfaces on the system and
- *		shut them down.
+ * ifdown.c Find all network interfaces on the system and
+ *      shut them down.
  *
  */
 char *v_ifdown = "@(#)ifdown.c  1.11  02-Jun-1998  miquels@cistron.nl";
@@ -20,10 +20,10 @@ char *v_ifdown = "@(#)ifdown.c  1.11  02-Jun-1998  miquels@cistron.nl";
 #include <netinet/in.h>
 
 /*
- *	First, we find all shaper devices and down them. Then we
- *	down all real interfaces. This is because the comment in the
- *	shaper driver says "if you down the shaper device before the
- *	attached inerface your computer will follow".
+ *  First, we find all shaper devices and down them. Then we
+ *  down all real interfaces. This is because the comment in the
+ *  shaper driver says "if you down the shaper device before the
+ *  attached inerface your computer will follow".
  */
 int ifdown(void)
 {
@@ -34,13 +34,13 @@ int ifdown(void)
 	if ((fd = socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
 		fprintf(stderr, "ifdown: ");
 		perror("socket");
-		return -1;
+		goto error;
 	}
 
 	if ((ifa = if_nameindex()) == NULL) {
 		fprintf(stderr, "ifdown: ");
 		perror("if_nameindex");
-		return -1;
+		goto error;
 	}
 
 	for (shaper = 1; shaper >= 0; shaper--) {
@@ -57,18 +57,22 @@ int ifdown(void)
 			if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0) {
 				fprintf(stderr, "ifdown: shutdown ");
 				perror(ifp->if_name);
-				return -1;
+				goto error;
 			}
 			ifr.ifr_flags &= ~(IFF_UP);
 			if (ioctl(fd, SIOCSIFFLAGS, &ifr) < 0) {
 				fprintf(stderr, "ifdown: shutdown ");
 				perror(ifp->if_name);
-				return -1;
+				goto error;
 			}
 
 		}
 	}
-	close(fd);
 
+	close(fd);
 	return 0;
+
+error:
+	close(fd);
+	return -1;
 }
