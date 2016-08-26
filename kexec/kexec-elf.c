@@ -720,6 +720,14 @@ static int build_mem_notes(struct mem_ehdr *ehdr)
 		desc       = note + note_size;
 		note_size += _ALIGN(hdr.n_descsz, 4);
 
+		if (((note+note_size) > note_end) ||
+		    ((note+note_size) < note_start)) {
+			/* Something is very wrong here ! Most likely the note
+			 * header is invalid */
+			fprintf(stderr, "ELF Note corrupted !\n");
+			return -1;
+		}
+
 		if ((hdr.n_namesz != 0) && (name[hdr.n_namesz -1] != '\0')) {
 			/* If note name string is not null terminated, just
 			 * warn user about it and continue processing. This
