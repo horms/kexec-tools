@@ -278,7 +278,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 			    && (range[i].end > mem_upper + 0x100000))
 				mem_upper = range[i].end - 0x100000;
 		} else {
-			mmap[i].Type = 0xbad;  /* Not RAM */
+			mmap[i].Type = 2;  /* Not RAM (reserved) */
 		}
 	}
 
