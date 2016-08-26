@@ -252,7 +252,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	mmap = xmalloc(ranges * sizeof(*mmap));
 	for (i=0; i<ranges; i++) {
 		unsigned long long length;
-		length = range[i].end - range[i].start;
+		length = range[i].end - range[i].start + 1;
 		/* Translate bzImage mmap to multiboot-speak */
 		mmap[i].size = sizeof(mmap[i]) - 4;
 		mmap[i].base_addr_low  = range[i].start & 0xffffffff;
