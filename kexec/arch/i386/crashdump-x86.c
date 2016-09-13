@@ -102,11 +102,10 @@ static int get_kernel_paddr(struct kexec_info *UNUSED(info),
 	return -1;
 }
 
-/* Retrieve kernel _stext symbol virtual address from /proc/kallsyms */
-static unsigned long long get_kernel_stext_sym(void)
+/* Retrieve kernel symbol virtual address from /proc/kallsyms */
+static unsigned long long get_kernel_sym(const char *symbol)
 {
 	const char *kallsyms = "/proc/kallsyms";
-	const char *stext = "_stext";
 	char sym[128];
 	char line[128];
 	FILE *fp;
@@ -122,13 +121,13 @@ static unsigned long long get_kernel_stext_sym(void)
 	while(fgets(line, sizeof(line), fp) != NULL) {
 		if (sscanf(line, "%Lx %c %s", &vaddr, &type, sym) != 3)
 			continue;
-		if (strcmp(sym, stext) == 0) {
-			dbgprintf("kernel symbol %s vaddr = %16llx\n", stext, vaddr);
+		if (strcmp(sym, symbol) == 0) {
+			dbgprintf("kernel symbol %s vaddr = %16llx\n", symbol, vaddr);
 			return vaddr;
 		}
 	}
 
-	fprintf(stderr, "Cannot get kernel %s symbol address\n", stext);
+	fprintf(stderr, "Cannot get kernel %s symbol address\n", symbol);
 	return 0;
 }
 
@@ -151,6 +150,8 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 	off_t size;
 	uint32_t elf_flags = 0;
 	uint64_t stext_sym;
+	const unsigned long long pud_mask = ~((1 << 30) - 1);
+	unsigned long long vaddr, lowest_vaddr = 0;
 
 	if (elf_info->machine != EM_X86_64)
 		return 0;
@@ -180,9 +181,23 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 
 	end_phdr = &ehdr.e_phdr[ehdr.e_phnum];
 
+	/* Search for the real PAGE_OFFSET when KASLR memory randomization
+	 * is enabled */
+	if (get_kernel_sym("page_offset_base") != 0) {
+		for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
+			if (phdr->p_type == PT_LOAD) {
+				vaddr = phdr->p_vaddr & pud_mask;
+				if (lowest_vaddr == 0 || lowest_vaddr > vaddr)
+					lowest_vaddr = vaddr;
+			}
+		}
+		if (lowest_vaddr != 0)
+			elf_info->page_offset = lowest_vaddr;
+	}
+
 	/* Traverse through the Elf headers and find the region where
 	 * _stext symbol is located in. That's where kernel is mapped */
-	stext_sym = get_kernel_stext_sym();
+	stext_sym = get_kernel_sym("_stext");
 	for(phdr = ehdr.e_phdr; stext_sym && phdr != end_phdr; phdr++) {
 		if (phdr->p_type == PT_LOAD) {
 			unsigned long long saddr = phdr->p_vaddr;
