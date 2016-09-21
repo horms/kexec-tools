@@ -34,6 +34,9 @@ case $target_cpu in
 		ARCH="ppc64"
 		SUBARCH="LE"
 		;;
+	aarch64* )
+		ARCH="arm64"
+		;;
 	arm* )
 		ARCH="arm"
 		;;

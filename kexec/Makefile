@@ -79,6 +79,7 @@ KEXEC_SRCS			+= $($(ARCH)_DT_OPS)
 
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
+include $(srcdir)/kexec/arch/arm64/Makefile
 include $(srcdir)/kexec/arch/i386/Makefile
 include $(srcdir)/kexec/arch/ia64/Makefile
 include $(srcdir)/kexec/arch/m68k/Makefile

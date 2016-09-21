@@ -19,6 +19,7 @@ dist += purgatory/Makefile $(PURGATORY_SRCS)				\
 
 include $(srcdir)/purgatory/arch/alpha/Makefile
 include $(srcdir)/purgatory/arch/arm/Makefile
+include $(srcdir)/purgatory/arch/arm64/Makefile
 include $(srcdir)/purgatory/arch/i386/Makefile
 include $(srcdir)/purgatory/arch/ia64/Makefile
 include $(srcdir)/purgatory/arch/mips/Makefile

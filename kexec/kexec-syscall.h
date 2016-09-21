@@ -39,8 +39,8 @@
 #ifdef __s390__
 #define __NR_kexec_load		277
 #endif
-#ifdef __arm__
-#define __NR_kexec_load		__NR_SYSCALL_BASE + 347  
+#if defined(__arm__) || defined(__arm64__)
+#define __NR_kexec_load		__NR_SYSCALL_BASE + 347
 #endif
 #if defined(__mips__)
 #define __NR_kexec_load                4311
@@ -108,6 +108,7 @@ static inline long kexec_file_load(int kernel_fd, int initrd_fd,
 #define KEXEC_ARCH_PPC64   (21 << 16)
 #define KEXEC_ARCH_IA_64   (50 << 16)
 #define KEXEC_ARCH_ARM     (40 << 16)
+#define KEXEC_ARCH_ARM64   (183 << 16)
 #define KEXEC_ARCH_S390    (22 << 16)
 #define KEXEC_ARCH_SH      (42 << 16)
 #define KEXEC_ARCH_MIPS_LE (10 << 16)
@@ -152,6 +153,9 @@ static inline long kexec_file_load(int kernel_fd, int initrd_fd,
 #endif
 #ifdef __m68k__
 #define KEXEC_ARCH_NATIVE	KEXEC_ARCH_68K
+#endif
+#if defined(__arm64__)
+#define KEXEC_ARCH_NATIVE	KEXEC_ARCH_ARM64
 #endif
 
 #endif /* KEXEC_SYSCALL_H */
