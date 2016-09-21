@@ -73,6 +73,10 @@ dist				+= kexec/mem_regions.c kexec/mem_regions.h
 $(ARCH)_MEM_REGIONS		=
 KEXEC_SRCS			+= $($(ARCH)_MEM_REGIONS)
 
+dist				+= kexec/dt-ops.c kexec/dt-ops.h
+$(ARCH)_DT_OPS		=
+KEXEC_SRCS			+= $($(ARCH)_DT_OPS)
+
 include $(srcdir)/kexec/arch/alpha/Makefile
 include $(srcdir)/kexec/arch/arm/Makefile
 include $(srcdir)/kexec/arch/i386/Makefile
