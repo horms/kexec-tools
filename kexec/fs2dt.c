@@ -524,19 +524,21 @@ static void dt_copy_old_root_param(void)
 	strcpy(filename, pathname);
 	strcat(filename, "bootargs");
 	fp = fopen(filename, "r");
-	if (fp) {
-		if (getline(&last_cmdline, &len, fp) == -1)
-			die("unable to read %s\n", filename);
+	if (!fp)
+		return;
 
-		p = strstr(last_cmdline, "root=");
-		if (p) {
-			old_param = strtok(p, " ");
-			len = strlen(local_cmdline);
-			if (len != 0)
-				strcat(local_cmdline, " ");
-			strcat(local_cmdline, old_param);
-		}
+	if (getline(&last_cmdline, &len, fp) == -1)
+		die("unable to read %s\n", filename);
+
+	p = strstr(last_cmdline, "root=");
+	if (p) {
+		old_param = strtok(p, " ");
+		len = strlen(local_cmdline);
+		if (len != 0)
+			strcat(local_cmdline, " ");
+		strcat(local_cmdline, old_param);
 	}
+
 	if (last_cmdline)
 		free(last_cmdline);
 
