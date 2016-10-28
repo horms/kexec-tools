@@ -542,6 +542,10 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 # define R_AARCH64_ABS64 257
 #endif
 
+#if !defined(R_AARCH64_PREL32)
+# define R_AARCH64_PREL32 261
+#endif
+
 #if !defined(R_AARCH64_LD_PREL_LO19)
 # define R_AARCH64_LD_PREL_LO19 273
 #endif
@@ -582,6 +586,12 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 		type = "ABS64";
 		loc64 = ptr;
 		*loc64 = cpu_to_elf64(ehdr, elf64_to_cpu(ehdr, *loc64) + value);
+		break;
+	case R_AARCH64_PREL32:
+		type = "PREL32";
+		loc32 = ptr;
+		*loc32 = cpu_to_elf32(ehdr,
+			elf32_to_cpu(ehdr, *loc32) + value - address);
 		break;
 	case R_AARCH64_LD_PREL_LO19:
 		type = "LD_PREL_LO19";
