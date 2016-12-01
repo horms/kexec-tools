@@ -38,9 +38,7 @@ clean += $(PURGATORY_OBJS) $(PURGATORY_DEPS) $(PURGATORY)
 
 -include $(PURGATORY_DEPS)
 
-# sha256.c needs to be compiled without optimization, else
-# purgatory fails to execute on ia64.
-purgatory/sha256.o: CFLAGS += -O0
+purgatory/sha256.o: CFLAGS += -O2 $($(ARCH)_PURGATORY_SHA256_CFLAGS)
 
 purgatory/sha256.o: $(srcdir)/util_lib/sha256.c
 	mkdir -p $(@D)
