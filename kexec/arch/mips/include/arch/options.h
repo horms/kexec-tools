@@ -9,6 +9,8 @@
  */
 #define KEXEC_ARCH_OPTIONS \
 	KEXEC_OPTIONS \
+	{"command-line", 1, 0, OPT_APPEND}, \
+	{"append",	 1, 0, OPT_APPEND},
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""
 
@@ -27,9 +29,7 @@
  * recognise -- as they now recognise (if not act upon) all possible options.
  */
 #define KEXEC_ALL_OPTIONS			\
-	KEXEC_ARCH_OPTIONS		       	\
-	{"command-line", 1, 0, OPT_APPEND},	\
-	{"append",	 1, 0, OPT_APPEND},
+	KEXEC_ARCH_OPTIONS
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR
 

@@ -13,7 +13,8 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 void elf_mips_usage(void);
 
 struct arch_options_t {
-	int      core_header_type;
+	char *command_line;
+	int core_header_type;
 };
 
 #endif /* KEXEC_MIPS_H */

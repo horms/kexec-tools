@@ -74,6 +74,10 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 void arch_usage(void)
 {
+	printf(
+	"    --command-line=STRING Set the kernel command line to STRING.\n"
+	"    --append=STRING       Set the kernel command line to STRING.\n"
+	);
 }
 
 struct arch_options_t arch_options = {
@@ -86,6 +90,24 @@ struct arch_options_t arch_options = {
 
 int arch_process_options(int argc, char **argv)
 {
+	static const struct option options[] = {
+		KEXEC_ARCH_OPTIONS
+		{ 0 },
+	};
+	static const char short_options[] = KEXEC_ARCH_OPT_STR;
+	int opt;
+
+	while ((opt = getopt_long(argc, argv, short_options,
+				  options, 0)) != -1) {
+		switch (opt) {
+		case OPT_APPEND:
+			arch_options.command_line = optarg;
+			break;
+		default:
+			break;
+		}
+	}
+
 	return 0;
 }
 
