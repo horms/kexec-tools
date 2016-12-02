@@ -82,6 +82,7 @@ void arch_usage(void)
 	"    --command-line=STRING Set the kernel command line to STRING.\n"
 	"    --append=STRING       Set the kernel command line to STRING.\n"
 	"    --dtb=FILE            Use FILE as the device tree blob.\n"
+	"    --initrd=FILE         Use FILE as initial ramdisk.\n"
 	);
 }
 
@@ -110,6 +111,9 @@ int arch_process_options(int argc, char **argv)
 			break;
 		case OPT_DTB:
 			arch_options.dtb_file = optarg;
+			break;
+		case OPT_RAMDISK:
+			arch_options.initrd_file = optarg;
 			break;
 		default:
 			break;

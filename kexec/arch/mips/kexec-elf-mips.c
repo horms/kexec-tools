@@ -79,6 +79,7 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	size_t i;
 	off_t dtb_length;
 	char *dtb_buf;
+	char *initrd_buf = NULL;
 	unsigned long long kernel_addr = 0, kernel_size = 0;
 	unsigned long pagesize = getpagesize();
 
@@ -151,6 +152,24 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	} else {
 		create_flatten_tree(&dtb_buf, &dtb_length, cmdline_buf + strlen(CMDLINE_PREFIX));
 	}
+
+	if (arch_options.initrd_file) {
+		initrd_buf = slurp_file(arch_options.initrd_file, &initrd_size);
+
+		/* Create initrd entries in dtb - although at this time
+		 * they would not point to the correct location */
+		dtb_set_initrd(&dtb_buf, &dtb_length, initrd_buf, initrd_buf + initrd_size);
+
+		initrd_base = add_buffer(info, initrd_buf, initrd_size,
+					initrd_size, sizeof(void *),
+					_ALIGN_UP(kernel_addr + kernel_size + dtb_length,
+						pagesize), 0x0fffffff, 1);
+
+		/* Now that the buffer for initrd is prepared, update the dtb
+		 * with an appropriate location */
+		dtb_set_initrd(&dtb_buf, &dtb_length, initrd_base, initrd_base + initrd_size);
+	}
+
 
 	/* This is a legacy method for commandline passing used
 	 * currently by Octeon CPUs only */

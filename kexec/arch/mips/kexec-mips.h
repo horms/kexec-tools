@@ -20,6 +20,7 @@ void elf_mips_usage(void);
 struct arch_options_t {
 	char *command_line;
 	char *dtb_file;
+	char *initrd_file;
 	int core_header_type;
 };
 
