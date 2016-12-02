@@ -74,10 +74,6 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 void arch_usage(void)
 {
-#ifdef __mips64
-	fprintf(stderr, "     --elf32-core-headers Prepare core headers in "
-			"ELF32 format\n");
-#endif
 }
 
 #ifdef __mips64
