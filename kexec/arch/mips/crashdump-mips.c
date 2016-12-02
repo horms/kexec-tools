@@ -39,6 +39,9 @@
  * A separate program header is created for backup region */
 static struct memory_range crash_memory_range[CRASH_MAX_MEMORY_RANGES];
 
+/* Not used currently but required by generic fs2dt code */
+struct memory_ranges usablemem_rgns;
+
 /* Memory region reserved for storing panic kernel and other data. */
 static struct memory_range crash_reserved_mem;
 

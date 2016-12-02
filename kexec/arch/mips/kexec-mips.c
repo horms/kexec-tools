@@ -21,6 +21,10 @@
 #include "kexec-mips.h"
 #include <arch/options.h>
 
+/* Currently not used but required by top-level fs2dt code */
+off_t initrd_base = 0;
+off_t initrd_size = 0;
+
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
 
 /* Return a sorted list of memory ranges. */
@@ -77,6 +81,7 @@ void arch_usage(void)
 	printf(
 	"    --command-line=STRING Set the kernel command line to STRING.\n"
 	"    --append=STRING       Set the kernel command line to STRING.\n"
+	"    --dtb=FILE            Use FILE as the device tree blob.\n"
 	);
 }
 
@@ -102,6 +107,9 @@ int arch_process_options(int argc, char **argv)
 		switch (opt) {
 		case OPT_APPEND:
 			arch_options.command_line = optarg;
+			break;
+		case OPT_DTB:
+			arch_options.dtb_file = optarg;
 			break;
 		default:
 			break;

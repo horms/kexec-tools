@@ -3,6 +3,7 @@
 
 #define OPT_ARCH_MAX	(OPT_MAX+0)
 #define OPT_APPEND	(OPT_ARCH_MAX+0)
+#define OPT_DTB		(OPT_ARCH_MAX+1)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -10,7 +11,9 @@
 #define KEXEC_ARCH_OPTIONS \
 	KEXEC_OPTIONS \
 	{"command-line", 1, 0, OPT_APPEND}, \
-	{"append",	 1, 0, OPT_APPEND},
+	{"append",	 1, 0, OPT_APPEND}, \
+	{"dtb",		1, 0, OPT_DTB },
+
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""
 
