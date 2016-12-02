@@ -76,11 +76,13 @@ void arch_usage(void)
 {
 }
 
-#ifdef __mips64
 struct arch_options_t arch_options = {
-	.core_header_type = CORE_TYPE_ELF64
-};
+#ifdef __mips64
+	.core_header_type = CORE_TYPE_ELF64,
+#else
+	.core_header_type = CORE_TYPE_ELF32,
 #endif
+};
 
 int arch_process_options(int argc, char **argv)
 {

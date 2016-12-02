@@ -288,7 +288,6 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	return 0;
 }
 
-#ifdef __mips64
 static struct crash_elf_info elf_info64 = {
 	class: ELFCLASS64,
 	data : ELFDATA2MSB,
@@ -296,7 +295,7 @@ static struct crash_elf_info elf_info64 = {
 	page_offset : PAGE_OFFSET,
 	lowmem_limit : MAXMEM,
 };
-#endif
+
 static struct crash_elf_info elf_info32 = {
 	class: ELFCLASS32,
 	data : ELFDATA2MSB,
@@ -321,13 +320,11 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	struct crash_elf_info *elf_info = &elf_info32;
 	unsigned long start_offset = 0x80000000UL;
 
-#ifdef __mips64
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
 		elf_info = &elf_info64;
 		crash_create = crash_create_elf64_headers;
-		start_offset = 0xffffffff80000000UL;
+		start_offset = (unsigned long)0xffffffff80000000UL;
 	}
-#endif
 
 	if (get_kernel_paddr(elf_info))
 		return -1;
