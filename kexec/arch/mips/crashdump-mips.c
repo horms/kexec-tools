@@ -288,9 +288,17 @@ static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 	return 0;
 }
 
+#if __BYTE_ORDER == __LITTLE_ENDIAN
+# define ELFDATALOCAL ELFDATA2LSB
+#elif __BYTE_ORDER == __BIG_ENDIAN
+# define ELFDATALOCAL ELFDATA2MSB
+#else
+# error Unknown byte order
+#endif
+
 static struct crash_elf_info elf_info64 = {
 	class: ELFCLASS64,
-	data : ELFDATA2MSB,
+	data : ELFDATALOCAL,
 	machine : EM_MIPS,
 	page_offset : PAGE_OFFSET,
 	lowmem_limit : MAXMEM,
@@ -298,7 +306,7 @@ static struct crash_elf_info elf_info64 = {
 
 static struct crash_elf_info elf_info32 = {
 	class: ELFCLASS32,
-	data : ELFDATA2MSB,
+	data : ELFDATALOCAL,
 	machine : EM_MIPS,
 	page_offset : PAGE_OFFSET,
 	lowmem_limit : MAXMEM,
