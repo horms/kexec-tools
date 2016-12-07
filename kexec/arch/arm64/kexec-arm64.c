@@ -327,6 +327,7 @@ int arm64_load_other_segments(struct kexec_info *info,
 	unsigned long dtb_base;
 	unsigned long hole_min;
 	unsigned long hole_max;
+	unsigned long initrd_end;
 	char *initrd_buf = NULL;
 	struct dtb dtb;
 	char command_line[COMMAND_LINE_SIZE] = "";
@@ -366,26 +367,26 @@ int arm64_load_other_segments(struct kexec_info *info,
 		if (!initrd_buf)
 			fprintf(stderr, "kexec: Empty ramdisk file.\n");
 		else {
-			/*
-			 * Put the initrd after the kernel.  As specified in
-			 * booting.txt, align to 1 GiB.
-			 */
+			/* Put the initrd after the kernel. */
 
 			initrd_base = add_buffer_phys_virt(info, initrd_buf,
-				initrd_size, initrd_size, GiB(1),
+				initrd_size, initrd_size, 0,
 				hole_min, hole_max, 1, 0);
 
-			/* initrd_base is valid if we got here. */
+			initrd_end = initrd_base + initrd_size;
 
-			dbgprintf("initrd: base %lx, size %lxh (%ld)\n",
-				initrd_base, initrd_size, initrd_size);
+			/* Check limits as specified in booting.txt.
+			 * The kernel may have as little as 32 GB of address space to map
+			 * system memory and both kernel and initrd must be 1GB aligend.
+			 */
 
-			/* Check size limit as specified in booting.txt. */
-
-			if (initrd_base - image_base + initrd_size > GiB(32)) {
+			if (_ALIGN_UP(initrd_end, GiB(1)) - _ALIGN_DOWN(image_base, GiB(1)) > GiB(32)) {
 				fprintf(stderr, "kexec: Error: image + initrd too big.\n");
 				return -EFAILED;
 			}
+
+			dbgprintf("initrd: base %lx, size %lxh (%ld)\n",
+				initrd_base, initrd_size, initrd_size);
 
 			result = dtb_set_initrd((char **)&dtb.buf,
 				&dtb.size, initrd_base,
