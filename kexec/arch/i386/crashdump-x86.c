@@ -205,7 +205,7 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 			unsigned long long size;
 
 			/* Look for kernel text mapping header. */
-			if (saddr < stext_sym && eaddr > stext_sym) {
+			if (saddr <= stext_sym && eaddr > stext_sym) {
 				saddr = _ALIGN_DOWN(saddr, X86_64_KERN_VADDR_ALIGN);
 				elf_info->kern_vaddr_start = saddr;
 				size = eaddr - saddr;
