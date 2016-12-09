@@ -72,7 +72,7 @@ bundle (const uint64_t insn)
         return insn & ~0xfUL;
 }
 
-void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
+void machine_apply_elf_rel(struct mem_ehdr *ehdr,
 	struct mem_sym *UNUSED(sym), unsigned long r_type, void *location,
 	unsigned long address, unsigned long value)
 {
