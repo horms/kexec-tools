@@ -48,6 +48,9 @@
 #ifdef __m68k__
 #define __NR_kexec_load                313
 #endif
+#ifdef __alpha__
+#define __NR_kexec_load                448
+#endif
 #ifndef __NR_kexec_load
 #error Unknown processor architecture.  Needs a kexec_load syscall number.
 #endif
