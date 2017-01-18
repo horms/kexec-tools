@@ -11,7 +11,7 @@
 #include "image-header.h"
 #include "kexec.h"
 
-#define KEXEC_SEGMENT_MAX 16
+#define KEXEC_SEGMENT_MAX 64
 
 #define BOOT_BLOCK_VERSION 17
 #define BOOT_BLOCK_LAST_COMP_VERSION 16
