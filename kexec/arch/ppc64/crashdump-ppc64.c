@@ -123,6 +123,7 @@ static void exclude_crash_region(uint64_t start, uint64_t end)
 static int get_dyn_reconf_crash_memory_ranges(void)
 {
 	uint64_t start, end;
+	uint64_t startrange, endrange;
 	char fname[128], buf[32];
 	FILE *file;
 	unsigned int i;
@@ -137,6 +138,7 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 	}
 
 	fseek(file, 4, SEEK_SET);
+	startrange = endrange = 0;
 	for (i = 0; i < num_of_lmbs; i++) {
 		if ((n = fread(buf, 1, 24, file)) < 0) {
 			perror(fname);
@@ -162,8 +164,16 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 		if ((flags & 0x80) || !(flags & 0x8))
 			continue;
 
-		exclude_crash_region(start, end);
+		if (start != endrange) {
+			if (startrange != endrange)
+				exclude_crash_region(startrange, endrange);
+			startrange = start;
+		}
+		endrange = end;
 	}
+	if (startrange != endrange)
+		exclude_crash_region(startrange, endrange);
+
 	fclose(file);
 	return 0;
 }
