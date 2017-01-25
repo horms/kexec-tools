@@ -105,6 +105,27 @@ int xen_kexec_unload(uint64_t kexec_flags)
 	return ret;
 }
 
+int xen_kexec_status(uint64_t kexec_flags)
+{
+	xc_interface *xch;
+	uint8_t type;
+	int ret = -1;
+
+#ifdef HAVE_KEXEC_CMD_STATUS
+	xch = xc_interface_open(NULL, NULL, 0);
+	if (!xch)
+		return -1;
+
+	type = (kexec_flags & KEXEC_ON_CRASH) ? KEXEC_TYPE_CRASH : KEXEC_TYPE_DEFAULT;
+
+	ret = xc_kexec_status(xch, type);
+
+	xc_interface_close(xch);
+#endif
+
+	return ret;
+}
+
 void xen_kexec_exec(void)
 {
 	xc_interface *xch;
@@ -126,6 +147,11 @@ int xen_kexec_load(struct kexec_info *UNUSED(info))
 }
 
 int xen_kexec_unload(uint64_t kexec_flags)
+{
+	return -1;
+}
+
+int xen_kexec_status(uint64_t kexec_flags)
 {
 	return -1;
 }

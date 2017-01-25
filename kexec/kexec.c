@@ -51,6 +51,9 @@
 #include "kexec-lzma.h"
 #include <arch/options.h>
 
+#define KEXEC_LOADED_PATH "/sys/kernel/kexec_loaded"
+#define KEXEC_CRASH_LOADED_PATH "/sys/kernel/kexec_crash_loaded"
+
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
 static unsigned long kexec_flags = 0;
@@ -890,8 +893,6 @@ static int my_exec(void)
 	return -1;
 }
 
-static int kexec_loaded(void);
-
 static int load_jump_back_helper_image(unsigned long kexec_flags, void *entry)
 {
 	int result;
@@ -902,6 +903,40 @@ static int load_jump_back_helper_image(unsigned long kexec_flags, void *entry)
 	return result;
 }
 
+static int kexec_loaded(const char *file)
+{
+	long ret = -1;
+	FILE *fp;
+	char *p;
+	char line[3];
+
+	/* No way to tell if an image is loaded under Xen, assume it is. */
+	if (xen_present())
+		return 1;
+
+	fp = fopen(file, "r");
+	if (fp == NULL)
+		return -1;
+
+	p = fgets(line, sizeof(line), fp);
+	fclose(fp);
+
+	if (p == NULL)
+		return -1;
+
+	ret = strtol(line, &p, 10);
+
+	/* Too long */
+	if (ret > INT_MAX)
+		return -1;
+
+	/* No digits were found */
+	if (p == line)
+		return -1;
+
+	return (int)ret;
+}
+
 /*
  *	Jump back to the original kernel
  */
@@ -909,7 +944,7 @@ static int my_load_jump_back_helper(unsigned long kexec_flags, void *entry)
 {
 	int result;
 
-	if (kexec_loaded()) {
+	if (kexec_loaded(KEXEC_LOADED_PATH)) {
 		fprintf(stderr, "There is kexec kernel loaded, make sure "
 			"you are in kexeced kernel.\n");
 		return -1;
@@ -970,6 +1005,7 @@ void usage(void)
 	       "                      to original kernel.\n"
 	       " -s, --kexec-file-syscall Use file based syscall for kexec operation\n"
 	       " -d, --debug           Enable debugging to help spot a failure.\n"
+	       " -S, --status         Return 0 if the type (by default crash) is loaded.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
@@ -981,39 +1017,29 @@ void usage(void)
 	printf("\n");
 }
 
-static int kexec_loaded(void)
+static int k_status(unsigned long kexec_flags)
 {
-	long ret = -1;
-	FILE *fp;
-	char *p;
-	char line[3];
+	int result;
+	long native_arch;
 
-	/* No way to tell if an image is loaded under Xen, assume it is. */
+	/* set the arch */
+	native_arch = physical_arch();
+	if (native_arch < 0) {
+		return -1;
+	}
+	kexec_flags |= native_arch;
+
 	if (xen_present())
-		return 1;
-
-	fp = fopen("/sys/kernel/kexec_loaded", "r");
-	if (fp == NULL)
-		return -1;
-
-	p = fgets(line, sizeof(line), fp);
-	fclose(fp);
-
-	if (p == NULL)
-		return -1;
-
-	ret = strtol(line, &p, 10);
-
-	/* Too long */
-	if (ret > INT_MAX)
-		return -1;
-
-	/* No digits were found */
-	if (p == line)
-		return -1;
-
-	return (int)ret;
+		result = xen_kexec_status(kexec_flags);
+	else {
+		if (kexec_flags & KEXEC_ON_CRASH)
+			result = kexec_loaded(KEXEC_CRASH_LOADED_PATH);
+		else
+			result = kexec_loaded(KEXEC_LOADED_PATH);
+	}
+	return result;
 }
+
 
 /*
  * Remove parameter from a kernel command line. Helper function by get_command_line().
@@ -1204,6 +1230,7 @@ int main(int argc, char *argv[])
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
 	int do_kexec_file_syscall = 0;
+	int do_status = 0;
 	void *entry = 0;
 	char *type = 0;
 	char *endptr;
@@ -1345,6 +1372,9 @@ int main(int argc, char *argv[])
 		case OPT_KEXEC_FILE_SYSCALL:
 			/* We already parsed it. Nothing to do. */
 			break;
+		case OPT_STATUS:
+			do_status = 1;
+			break;
 		default:
 			break;
 		}
@@ -1354,6 +1384,20 @@ int main(int argc, char *argv[])
 		do_ifdown = 0;
 	if (skip_sync)
 		do_sync = 0;
+
+	if (do_status) {
+		if (kexec_flags == 0)
+			kexec_flags = KEXEC_ON_CRASH;
+		do_load = 0;
+		do_reuse_initrd = 0;
+		do_unload = 0;
+		do_load = 0;
+		do_shutdown = 0;
+		do_sync = 0;
+		do_ifdown = 0;
+		do_exec = 0;
+		do_load_jump_back_helper = 0;
+	}
 
 	if (do_load && (kexec_flags & KEXEC_ON_CRASH) &&
 	    !is_crashkernel_mem_reserved()) {
@@ -1392,7 +1436,9 @@ int main(int argc, char *argv[])
 		check_reuse_initrd();
 		arch_reuse_initrd();
 	}
-
+	if (do_status) {
+		result = k_status(kexec_flags);
+	}
 	if (do_unload) {
 		if (do_kexec_file_syscall)
 			result = kexec_file_unload(kexec_file_flags);
@@ -1408,7 +1454,7 @@ int main(int argc, char *argv[])
 						kexec_flags, entry);
 	}
 	/* Don't shutdown unless there is something to reboot to! */
-	if ((result == 0) && (do_shutdown || do_exec) && !kexec_loaded()) {
+	if ((result == 0) && (do_shutdown || do_exec) && !kexec_loaded(KEXEC_LOADED_PATH)) {
 		die("Nothing has been loaded!\n");
 	}
 	if ((result == 0) && do_shutdown) {
