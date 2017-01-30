@@ -1004,7 +1004,7 @@ void usage(void)
 	       "                      preserve context)\n"
 	       "                      to original kernel.\n"
 	       " -s, --kexec-file-syscall Use file based syscall for kexec operation\n"
-	       " -d, --debug           Enable debugging to help spot a failure.\n"
+	       " -d, --debug          Enable debugging to help spot a failure.\n"
 	       " -S, --status         Return 0 if the type (by default crash) is loaded.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
