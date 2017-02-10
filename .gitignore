@@ -17,3 +17,5 @@
 /configure
 /include/config.h.in
 /include/config.h
+/purgatory/purgatory.map
+/purgatory/purgatory.ro.sym
