@@ -995,6 +995,7 @@ void usage(void)
 	       "     --mem-max=<addr> Specify the highest memory address to\n"
 	       "                      load code into.\n"
 	       "     --reuseinitrd    Reuse initrd from first boot.\n"
+	       "     --print-ckr-size Print crash kernel region size.\n"
 	       "     --load-preserve-context Load the new kernel and preserve\n"
 	       "                      context of current kernel during kexec.\n"
 	       "     --load-jump-back-helper Load a helper image to jump back\n"
@@ -1218,6 +1219,18 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	return ret;
 }
 
+static void print_crashkernel_region_size(void)
+{
+	uint64_t start = 0, end = 0;
+
+	if (is_crashkernel_mem_reserved() &&
+	    get_crash_kernel_load_range(&start, &end)) {
+		fprintf(stderr, "get_crash_kernel_load_range() failed.\n");
+		return;
+	}
+
+	printf("%lu\n", (start != end) ? (end - start + 1) : 0UL);
+}
 
 int main(int argc, char *argv[])
 {
@@ -1375,6 +1388,9 @@ int main(int argc, char *argv[])
 		case OPT_STATUS:
 			do_status = 1;
 			break;
+		case OPT_PRINT_CKR_SIZE:
+			print_crashkernel_region_size();
+			return 0;
 		default:
 			break;
 		}
