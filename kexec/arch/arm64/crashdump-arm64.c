@@ -19,3 +19,9 @@ int is_crashkernel_mem_reserved(void)
 {
 	return 0;
 }
+
+int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
+{
+	/* Crash kernel region size is not exposed by the system */
+	return -1;
+}
