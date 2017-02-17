@@ -36,6 +36,9 @@
 #include "../../fs2dt.h"
 #include "crashdump-ppc64.h"
 
+#define DEVTREE_CRASHKERNEL_BASE "/proc/device-tree/chosen/linux,crashkernel-base"
+#define DEVTREE_CRASHKERNEL_SIZE "/proc/device-tree/chosen/linux,crashkernel-size"
+
 static struct crash_elf_info elf_info64 =
 {
 	class: ELFCLASS64,
@@ -526,11 +529,28 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size)
 		usablemem_rgns.size, base, size);
 }
 
+int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
+{
+	unsigned long long value;
+
+	if (!get_devtree_value(DEVTREE_CRASHKERNEL_BASE, &value))
+		*start = value;
+	else
+		return -1;
+
+	if (!get_devtree_value(DEVTREE_CRASHKERNEL_SIZE, &value))
+		*end = *start + value - 1;
+	else
+		return -1;
+
+	return 0;
+}
+
 int is_crashkernel_mem_reserved(void)
 {
 	int fd;
 
-	fd = open("/proc/device-tree/chosen/linux,crashkernel-base", O_RDONLY);
+	fd = open(DEVTREE_CRASHKERNEL_BASE, O_RDONLY);
 	if (fd < 0)
 		return 0;
 	close(fd);

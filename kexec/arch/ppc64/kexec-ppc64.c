@@ -356,6 +356,30 @@ void scan_reserved_ranges(unsigned long kexec_flags, int *range_index)
 	*range_index = i;
 }
 
+/* Return 0 if fname/value valid, -1 otherwise */
+int get_devtree_value(const char *fname, unsigned long long *value)
+{
+	FILE *file;
+	char buf[MAXBYTES];
+	int n = -1;
+
+	if ((file = fopen(fname, "r"))) {
+		n = fread(buf, 1, MAXBYTES, file);
+		fclose(file);
+	}
+
+	if (n == sizeof(uint32_t))
+		*value = ((uint32_t *)buf)[0];
+	else if (n == sizeof(uint64_t))
+		*value = ((uint64_t *)buf)[0];
+	else {
+		fprintf(stderr, "%s node has invalid size: %d\n", fname, n);
+		return -1;
+	}
+
+	return 0;
+}
+
 /* Get devtree details and create exclude_range array
  * Also create usablemem_ranges for KEXEC_ON_CRASH
  */
