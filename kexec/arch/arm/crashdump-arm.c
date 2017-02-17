@@ -413,3 +413,8 @@ int is_crashkernel_mem_reserved(void)
 
 	return crash_kernel_mem.start != crash_kernel_mem.end;
 }
+
+int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
+{
+	return parse_iomem_single("Crash kernel\n", start, end);
+}
