@@ -432,7 +432,8 @@ static int build_mem_phdrs(const char *buf, off_t len, struct mem_ehdr *ehdr,
 			}
 			return -1;
 		}
-		if ((phdr->p_paddr + phdr->p_memsz) < phdr->p_paddr) {
+		if (phdr->p_paddr != (unsigned long long)-1 &&
+			(phdr->p_paddr + phdr->p_memsz) < phdr->p_paddr) {
 			/* The memory address wraps */
 			if (probe_debug) {
 				fprintf(stderr, "ELF address wrap around\n");
