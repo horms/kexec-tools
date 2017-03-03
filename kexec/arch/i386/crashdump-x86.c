@@ -127,7 +127,7 @@ static unsigned long long get_kernel_sym(const char *symbol)
 		}
 	}
 
-	fprintf(stderr, "Cannot get kernel %s symbol address\n", symbol);
+	dbgprintf("Cannot get kernel %s symbol address\n", symbol);
 	return 0;
 }
 
