@@ -1,4 +1,5 @@
 #define _XOPEN_SOURCE 600
+#define _GNU_SOURCE
 #define _LARGEFILE_SOURCE 1
 #define _FILE_OFFSET_BITS 64
 #include <endian.h>
