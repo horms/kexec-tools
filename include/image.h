@@ -79,6 +79,13 @@
 #define IH_ARCH_BLACKFIN	16	/* Blackfin	*/
 #define IH_ARCH_AVR32		17	/* AVR32	*/
 #define IH_ARCH_ST200	        18	/* STMicroelectronics ST200  */
+#define IH_ARCH_SANDBOX		19	/* Sandbox architecture (test only) */
+#define IH_ARCH_NDS32		20	/* ANDES Technology - NDS32  */
+#define IH_ARCH_OPENRISC	21	/* OpenRISC 1000  */
+#define IH_ARCH_ARM64		22	/* ARM64        */
+#define IH_ARCH_ARC		23	/* Synopsys DesignWare ARC */
+#define IH_ARCH_X86_64		24	/* AMD x86_64, Intel and Via */
+#define IH_ARCH_XTENSA		25	/* Xtensa       */
 
 /*
  * Image Types
