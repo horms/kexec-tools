@@ -136,7 +136,7 @@ int uImage_probe_ramdisk(const unsigned char *buf, off_t len, unsigned int arch)
 #define COMMENT		0x10 /* bit 4 set: file comment present */
 #define RESERVED	0xE0 /* bits 5..7: reserved */
 
-static int uImage_gz_load(const unsigned char *buf, off_t len,
+static int uImage_gz_load(const char *buf, off_t len,
 		struct Image_info *image)
 {
 	int ret;
@@ -225,14 +225,14 @@ static int uImage_gz_load(const unsigned char *buf, off_t len,
 	return 0;
 }
 #else
-static int uImage_gz_load(const unsigned char *UNUSED(buf), off_t UNUSED(len),
+static int uImage_gz_load(const char *UNUSED(buf), off_t UNUSED(len),
 		struct Image_info *UNUSED(image))
 {
 	return -1;
 }
 #endif
 
-int uImage_load(const unsigned char *buf, off_t len, struct Image_info *image)
+int uImage_load(const char *buf, off_t len, struct Image_info *image)
 {
 	const struct image_header *header = (const struct image_header *)buf;
 	const unsigned char *img_buf = buf + sizeof(struct image_header);
