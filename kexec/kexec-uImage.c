@@ -210,9 +210,9 @@ static int uImage_gz_load(const unsigned char *buf, off_t len,
 				return -1;
 			}
 
+			uncomp_buf = new_buf;
 			strm.next_out = uncomp_buf + mem_alloc - inc_buf;
 			strm.avail_out = inc_buf;
-			uncomp_buf = new_buf;
 		} else {
 			printf("Error during decompression %d\n", ret);
 			return -1;
