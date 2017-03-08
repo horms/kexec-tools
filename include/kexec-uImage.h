@@ -8,8 +8,8 @@ struct Image_info {
 	unsigned int ep;
 };
 
-int uImage_probe(const unsigned char *buf, off_t len, unsigned int arch);
-int uImage_probe_kernel(const unsigned char *buf, off_t len, unsigned int arch);
-int uImage_probe_ramdisk(const unsigned char *buf, off_t len, unsigned int arch);
+int uImage_probe(const char *buf, off_t len, unsigned int arch);
+int uImage_probe_kernel(const char *buf, off_t len, unsigned int arch);
+int uImage_probe_ramdisk(const char *buf, off_t len, unsigned int arch);
 int uImage_load(const char *buf, off_t len, struct Image_info *info);
 #endif
