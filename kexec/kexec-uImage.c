@@ -236,7 +236,7 @@ int uImage_load(const unsigned char *buf, off_t len, struct Image_info *image)
 {
 	const struct image_header *header = (const struct image_header *)buf;
 	const unsigned char *img_buf = buf + sizeof(struct image_header);
-	off_t img_len = header->ih_size;
+	off_t img_len = be32_to_cpu(header->ih_size);
 
 	/*
 	 * Prevent loading a modified image.
