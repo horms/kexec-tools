@@ -11,8 +11,7 @@
 
 int uImage_arm_probe(const char *buf, off_t len)
 {
-	return uImage_probe_kernel((const unsigned char *)buf, len,
-				   IH_ARCH_ARM);
+	return uImage_probe_kernel(buf, len, IH_ARCH_ARM);
 }
 
 int uImage_arm_load(int argc, char **argv, const char *buf, off_t len,
