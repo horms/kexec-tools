@@ -155,6 +155,6 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr,
 	}
 	return;
 overflow:
-	die("overflow in relocation type %lu val %Lx\n", 
+	die("overflow in relocation type %lu val %llx\n",
 			r_type, value);
 }

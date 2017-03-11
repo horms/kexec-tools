@@ -47,7 +47,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		int count;
 		if (memory_ranges >= MAX_MEMORY_RANGES)
 			break;
-		count = sscanf(line, "%Lx-%Lx : %n",
+		count = sscanf(line, "%llx-%llx : %n",
 			&start, &end, &consumed);
 		if (count != 2)
 			continue;

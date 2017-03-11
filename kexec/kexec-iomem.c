@@ -44,7 +44,7 @@ int kexec_iomem_for_each_line(char *match,
 		die("Cannot open %s\n", iomem);
 
 	while(fgets(line, sizeof(line), fp) != 0) {
-		count = sscanf(line, "%Lx-%Lx : %n", &start, &end, &consumed);
+		count = sscanf(line, "%llx-%llx : %n", &start, &end, &consumed);
 		if (count != 2)
 			continue;
 		str = line + consumed;

@@ -119,7 +119,7 @@ static unsigned long long get_kernel_sym(const char *symbol)
 	}
 
 	while(fgets(line, sizeof(line), fp) != NULL) {
-		if (sscanf(line, "%Lx %c %s", &vaddr, &type, sym) != 3)
+		if (sscanf(line, "%llx %c %s", &vaddr, &type, sym) != 3)
 			continue;
 		if (strcmp(sym, symbol) == 0) {
 			dbgprintf("kernel symbol %s vaddr = %16llx\n", symbol, vaddr);
@@ -296,12 +296,12 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 
 		if (memory_ranges >= CRASH_MAX_MEMORY_RANGES)
 			break;
-		count = sscanf(line, "%Lx-%Lx : %n",
+		count = sscanf(line, "%llx-%llx : %n",
 			&start, &end, &consumed);
 		if (count != 2)
 			continue;
 		str = line + consumed;
-		dbgprintf("%016Lx-%016Lx : %s",
+		dbgprintf("%016llx-%016llx : %s",
 			start, end, str);
 		/* Only Dumping memory of type System RAM. */
 		if (memcmp(str, "System RAM\n", 11) == 0) {
@@ -778,7 +778,7 @@ static int get_crash_notes(int cpu, uint64_t *addr, uint64_t *len)
 		*addr = x86__pa(vaddr + (cpu * MAX_NOTE_BYTES));
 		*len = MAX_NOTE_BYTES;
 
-		dbgprintf("crash_notes addr = %Lx\n",
+		dbgprintf("crash_notes addr = %llx\n",
 			  (unsigned long long)*addr);
 
 		fclose(fp);

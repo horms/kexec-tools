@@ -98,7 +98,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 	}
 	if (!fgets(line, sizeof(line), fp))
 		die("Cannot parse %s: %s\n", crash_notes, strerror(errno));
-	count = sscanf(line, "%Lx", &temp);
+	count = sscanf(line, "%llx", &temp);
 	if (count != 1)
 		die("Cannot parse %s: %s\n", crash_notes, strerror(errno));
 	*addr = (uint64_t) temp;
@@ -112,7 +112,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 		if (!fgets(line, sizeof(line), fp))
 			die("Cannot parse %s: %s\n",
 			    crash_notes_size, strerror(errno));
-		count = sscanf(line, "%Lu", &temp);
+		count = sscanf(line, "%llu", &temp);
 		if (count != 1)
 			die("Cannot parse %s: %s\n",
 			    crash_notes_size, strerror(errno));
@@ -120,7 +120,7 @@ int get_crash_notes_per_cpu(int cpu, uint64_t *addr, uint64_t *len)
 		fclose(fp);
 	}
 
-	dbgprintf("%s: crash_notes addr = %Lx, size = %Lu\n", __FUNCTION__,
+	dbgprintf("%s: crash_notes addr = %llx, size = %llu\n", __FUNCTION__,
 		  (unsigned long long)*addr, (unsigned long long)*len);
 
 	return 0;
@@ -141,7 +141,7 @@ static int get_vmcoreinfo(const char *kdump_info, uint64_t *addr, uint64_t *len)
 
 	if (!fgets(line, sizeof(line), fp))
 		die("Cannot parse %s: %s\n", kdump_info, strerror(errno));
-	count = sscanf(line, "%Lx %Lx", &temp, &temp2);
+	count = sscanf(line, "%llx %llx", &temp, &temp2);
 	if (count != 2)
 		die("Cannot parse %s: %s\n", kdump_info, strerror(errno));
 
