@@ -91,7 +91,7 @@ int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	char *command_line = NULL, *modified_cmdline = NULL;
 	const char *append = NULL;
 	char *tmp_cmdline = NULL;
-	char *error_msg = NULL;
+	const char *error_msg = NULL;
 	int result;
 	int command_line_len;
 	const char *ramdisk;
@@ -296,6 +296,6 @@ out:
 	free(command_line);
 	free(modified_cmdline);
 	if (error_msg)
-		die(error_msg);
+		die("%s", error_msg);
 	return result;
 }

@@ -99,7 +99,7 @@ int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 #define ARG_STYLE_NONE  2
 	int opt;
 	int result = 0;
-	char *error_msg = NULL;
+	const char *error_msg = NULL;
 
 	/* See options.h and add any new options there too! */
 	static const struct option options[] = {
@@ -276,6 +276,6 @@ out:
 	free(command_line);
 	free(modified_cmdline);
 	if (error_msg)
-		die(error_msg);
+		die("%s", error_msg);
 	return result;
 }
