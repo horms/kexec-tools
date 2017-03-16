@@ -306,7 +306,7 @@ out:
 	if (!tmp_cmdline)
 		free(command_line);
 	if (error_msg)
-		die(error_msg);
+		die("%s", error_msg);
 	return ret;
 }
 
