@@ -165,9 +165,9 @@ fi
 dnl find Xen control stack libraries
 if test "$with_xen" = yes ; then
 	AC_CHECK_HEADER(xenctrl.h,
-		[AC_CHECK_LIB(xenctrl, xc_kexec_load, [ have_xenctrl_h=yes ],
+		[AC_CHECK_LIB(xenctrl, xc_kexec_load, ,
 		AC_MSG_NOTICE([Xen support disabled]))])
-		if test "$have_xenctrl_h" = yes ; then
+		if test "$ac_cv_lib_xenctrl_xc_kexec_load" = yes ; then
 			AC_CHECK_LIB(xenctrl, xc_kexec_status,
 				AC_DEFINE(HAVE_KEXEC_CMD_STATUS, 1,
 					[The kexec_status call is available]),
