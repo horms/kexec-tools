@@ -164,6 +164,10 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 		range->type = RANGE_RESERVED;
 	else if (strcmp(type, "reserved") == 0)
 		range->type = RANGE_RESERVED;
+	else if (strcmp(type, "Reserved") == 0)
+		range->type = RANGE_RESERVED;
+	else if (strcmp(type, "Unknown E820 type") == 0)
+		range->type = RANGE_RESERVED;
 	else if (strcmp(type, "ACPI Non-volatile Storage") == 0)
 		range->type = RANGE_ACPI_NVS;
 	else if (strcmp(type, "Uncached RAM") == 0)
