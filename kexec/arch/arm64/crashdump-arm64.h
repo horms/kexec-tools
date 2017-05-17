@@ -21,5 +21,6 @@ extern struct memory_range crash_reserved_mem;
 extern struct memory_range elfcorehdr_mem;
 
 extern int load_crashdump_segments(struct kexec_info *info);
+extern void fixup_elf_addrs(struct mem_ehdr *ehdr);
 
 #endif /* CRASHDUMP_ARM64_H */

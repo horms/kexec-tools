@@ -308,12 +308,27 @@ unsigned long arm64_locate_kernel_segment(struct kexec_info *info)
 {
 	unsigned long hole;
 
-	hole = locate_hole(info,
-		arm64_mem.text_offset + arm64_mem.image_size,
-		MiB(2), 0, ULONG_MAX, 1);
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		unsigned long hole_end;
 
-	if (hole == ULONG_MAX)
-		dbgprintf("%s: locate_hole failed\n", __func__);
+		hole = (crash_reserved_mem.start < mem_min ?
+				mem_min : crash_reserved_mem.start);
+		hole = _ALIGN_UP(hole, MiB(2));
+		hole_end = hole + arm64_mem.text_offset + arm64_mem.image_size;
+
+		if ((hole_end > mem_max) ||
+		    (hole_end > crash_reserved_mem.end)) {
+			dbgprintf("%s: Crash kernel out of range\n", __func__);
+			hole = ULONG_MAX;
+		}
+	} else {
+		hole = locate_hole(info,
+			arm64_mem.text_offset + arm64_mem.image_size,
+			MiB(2), 0, ULONG_MAX, 1);
+
+		if (hole == ULONG_MAX)
+			dbgprintf("%s: locate_hole failed\n", __func__);
+	}
 
 	return hole;
 }

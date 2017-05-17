@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <linux/elf.h>
 
+#include "crashdump-arm64.h"
 #include "kexec-arm64.h"
 #include "kexec-elf.h"
 #include "kexec-syscall.h"
@@ -105,7 +106,8 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	}
 
 	arm64_mem.vp_offset = _ALIGN_DOWN(ehdr.e_entry, MiB(2));
-	arm64_mem.vp_offset -= kernel_segment - get_phys_offset();
+	if (!(info->kexec_flags & KEXEC_ON_CRASH))
+		arm64_mem.vp_offset -= kernel_segment - get_phys_offset();
 
 	dbgprintf("%s: kernel_segment: %016lx\n", __func__, kernel_segment);
 	dbgprintf("%s: text_offset:    %016lx\n", __func__,
@@ -130,6 +132,13 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	}
 
 	/* load the kernel */
+	if (info->kexec_flags & KEXEC_ON_CRASH)
+		/*
+		 * offset addresses in elf header in order to load
+		 * vmlinux (elf_exec) into crash kernel's memory
+		 */
+		fixup_elf_addrs(&ehdr);
+
 	result = elf_exec_load(&ehdr, info);
 
 	if (result) {
