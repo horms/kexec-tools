@@ -39,6 +39,39 @@ struct memory_ranges usablemem_rgns = {
 	.ranges = &crash_reserved_mem,
 };
 
+struct memory_range elfcorehdr_mem;
+
+static struct crash_elf_info elf_info = {
+	.class		= ELFCLASS64,
+#if (__BYTE_ORDER == __LITTLE_ENDIAN)
+	.data		= ELFDATA2LSB,
+#else
+	.data		= ELFDATA2MSB,
+#endif
+	.machine	= EM_AARCH64,
+};
+
+/*
+ * Note: The returned value is correct only if !CONFIG_RANDOMIZE_BASE.
+ */
+static uint64_t get_kernel_page_offset(void)
+{
+	int i;
+
+	if (elf_info.kern_vaddr_start == UINT64_MAX)
+		return UINT64_MAX;
+
+	/* Current max virtual memory range is 48-bits. */
+	for (i = 48; i > 0; i--)
+		if (!(elf_info.kern_vaddr_start & (1UL << i)))
+			break;
+
+	if (i <= 0)
+		return UINT64_MAX;
+	else
+		return UINT64_MAX << i;
+}
+
 /*
  * iomem_range_callback() - callback called for each iomem region
  * @data: not used
@@ -62,6 +95,10 @@ static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
 	else if (strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) == 0)
 		return mem_regions_add(&system_memory_rgns,
 				       base, length, RANGE_RAM);
+	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0)
+		elf_info.kern_paddr_start = base;
+	else if (strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) == 0)
+		elf_info.kern_size = base + length - elf_info.kern_paddr_start;
 
 	return 0;
 }
@@ -111,6 +148,67 @@ static int crash_get_memory_ranges(void)
 
 	dbgprint_mem_range("Coredump memory ranges",
 			   system_memory_rgns.ranges, system_memory_rgns.size);
+
+	/*
+	 * For additional kernel code/data segment.
+	 * kern_paddr_start/kern_size are determined in iomem_range_callback
+	 */
+	elf_info.kern_vaddr_start = get_kernel_sym("_text");
+	if (!elf_info.kern_vaddr_start)
+		elf_info.kern_vaddr_start = UINT64_MAX;
+
+	return 0;
+}
+
+/*
+ * load_crashdump_segments() - load the elf core header
+ * @info: kexec info structure
+ *
+ * This function creates and loads an additional segment of elf core header
+ : which is used to construct /proc/vmcore on crash dump kernel.
+ *
+ * Return 0 in case of success and -1 in case of error.
+ */
+
+int load_crashdump_segments(struct kexec_info *info)
+{
+	unsigned long elfcorehdr;
+	unsigned long bufsz;
+	void *buf;
+	int err;
+
+	/*
+	 * First fetch all the memory (RAM) ranges that we are going to
+	 * pass to the crash dump kernel during panic.
+	 */
+
+	err = crash_get_memory_ranges();
+
+	if (err)
+		return EFAILED;
+
+	elf_info.page_offset = get_kernel_page_offset();
+	dbgprintf("%s: page_offset:   %016llx\n", __func__,
+			elf_info.page_offset);
+
+	err = crash_create_elf64_headers(info, &elf_info,
+			system_memory_rgns.ranges, system_memory_rgns.size,
+			&buf, &bufsz, ELF_CORE_HEADER_ALIGN);
+
+	if (err)
+		return EFAILED;
+
+	elfcorehdr = add_buffer_phys_virt(info, buf, bufsz, bufsz, 0,
+		crash_reserved_mem.start, crash_reserved_mem.end,
+		-1, 0);
+
+	elfcorehdr_mem.start = elfcorehdr;
+	elfcorehdr_mem.end = elfcorehdr + bufsz - 1;
+
+	dbgprintf("%s: elfcorehdr 0x%llx-0x%llx\n", __func__,
+			elfcorehdr_mem.start, elfcorehdr_mem.end);
+
+	return 0;
 }
 
 int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
