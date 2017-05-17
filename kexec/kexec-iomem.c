@@ -18,6 +18,9 @@
  * Iterate over each line in the file returned by proc_iomem(). If match is
  * NULL or if the line matches with our match-pattern then call the
  * callback if non-NULL.
+ * If match is NULL, callback should return a negative if error.
+ * Otherwise the interation goes on, incrementing nr but only if callback
+ * returns 0 (matched).
  *
  * Return the number of lines matched.
  */
@@ -37,7 +40,7 @@ int kexec_iomem_for_each_line(char *match,
 	char *str;
 	int consumed;
 	int count;
-	int nr = 0;
+	int nr = 0, ret;
 
 	fp = fopen(iomem, "r");
 	if (!fp)
@@ -50,11 +53,13 @@ int kexec_iomem_for_each_line(char *match,
 		str = line + consumed;
 		size = end - start + 1;
 		if (!match || memcmp(str, match, strlen(match)) == 0) {
-			if (callback
-			    && callback(data, nr, str, start, size) < 0) {
-				break;
+			if (callback) {
+				ret = callback(data, nr, str, start, size);
+				if (ret < 0)
+					break;
+				else if (ret == 0)
+					nr++;
 			}
-			nr++;
 		}
 	}
 
