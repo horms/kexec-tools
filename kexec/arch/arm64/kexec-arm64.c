@@ -21,6 +21,7 @@
 #include "crashdump-arm64.h"
 #include "dt-ops.h"
 #include "fs2dt.h"
+#include "iomem.h"
 #include "kexec-syscall.h"
 #include "arch/options.h"
 
@@ -477,7 +478,14 @@ static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 		return -1;
 
 	r = (struct memory_range *)data + nr;
-	r->type = RANGE_RAM;
+
+	if (!strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)))
+		r->type = RANGE_RAM;
+	else if (!strncmp(str, IOMEM_RESERVED, strlen(IOMEM_RESERVED)))
+		r->type = RANGE_RESERVED;
+	else
+		return 1;
+
 	r->start = base;
 	r->end = base + length - 1;
 
@@ -496,7 +504,7 @@ static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 static int get_memory_ranges_iomem(struct memory_range *array,
 	unsigned int *count)
 {
-	*count = kexec_iomem_for_each_line("System RAM\n",
+	*count = kexec_iomem_for_each_line(NULL,
 		get_memory_ranges_iomem_cb, array);
 
 	if (!*count) {
