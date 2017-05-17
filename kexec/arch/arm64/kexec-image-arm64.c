@@ -4,7 +4,9 @@
 
 #define _GNU_SOURCE
 
+#include "crashdump-arm64.h"
 #include "kexec-arm64.h"
+#include "kexec-syscall.h"
 #include <limits.h>
 
 int image_arm64_probe(const char *kernel_buf, off_t kernel_size)
@@ -58,11 +60,22 @@ int image_arm64_load(int argc, char **argv, const char *kernel_buf,
 	dbgprintf("%s: PE format:      %s\n", __func__,
 		(arm64_header_check_pe_sig(header) ? "yes" : "no"));
 
+	/* create and initialize elf core header segment */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		result = load_crashdump_segments(info);
+		if (result) {
+			dbgprintf("%s: Creating eflcorehdr failed.\n",
+								__func__);
+			goto exit;
+		}
+	}
+
 	/* load the kernel */
 	add_segment_phys_virt(info, kernel_buf, kernel_size,
 			kernel_segment + arm64_mem.text_offset,
 			arm64_mem.image_size, 0);
 
+	/* load additional data */
 	result = arm64_load_other_segments(info, kernel_segment
 		+ arm64_mem.text_offset);
 
