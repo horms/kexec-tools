@@ -317,4 +317,6 @@ int xen_kexec_unload(uint64_t kexec_flags);
 void xen_kexec_exec(void);
 int xen_kexec_status(uint64_t kexec_flags);
 
+extern unsigned long long get_kernel_sym(const char *text);
+
 #endif /* KEXEC_H */
