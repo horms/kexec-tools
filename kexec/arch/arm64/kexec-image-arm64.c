@@ -36,13 +36,13 @@ int image_arm64_load(int argc, char **argv, const char *kernel_buf,
 	header = (const struct arm64_image_header *)(kernel_buf);
 
 	if (arm64_process_image_header(header))
-		return -1;
+		return EFAILED;
 
         kernel_segment = arm64_locate_kernel_segment(info);
 
         if (kernel_segment == ULONG_MAX) {
                 dbgprintf("%s: Kernel segment is not allocated\n", __func__);
-                result = -EFAILED;
+		result = EFAILED;
                 goto exit;
         }
 

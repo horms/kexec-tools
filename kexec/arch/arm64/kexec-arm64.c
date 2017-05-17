@@ -79,7 +79,7 @@ int arm64_process_image_header(const struct arm64_image_header *h)
 #endif
 
 	if (!arm64_header_check_magic(h))
-		return -EFAILED;
+		return EFAILED;
 
 	if (h->image_size) {
 		arm64_mem.text_offset = arm64_header_text_offset(h);
@@ -202,7 +202,7 @@ static int set_bootargs(struct dtb *dtb, const char *command_line)
 	if (result) {
 		fprintf(stderr,
 			"kexec: Set device tree bootargs failed.\n");
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	return 0;
@@ -222,7 +222,7 @@ static int read_proc_dtb(struct dtb *dtb)
 
 	if (result) {
 		dbgprintf("%s: %s\n", __func__, strerror(errno));
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	dtb->path = path;
@@ -245,7 +245,7 @@ static int read_sys_dtb(struct dtb *dtb)
 
 	if (result) {
 		dbgprintf("%s: %s\n", __func__, strerror(errno));
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	dtb->path = path;
@@ -275,7 +275,7 @@ static int read_1st_dtb(struct dtb *dtb)
 		goto on_success;
 
 	dbgprintf("%s: not found\n", __func__);
-	return -EFAILED;
+	return EFAILED;
 
 on_success:
 	dbgprintf("%s: found %s\n", __func__, dtb->path);
@@ -294,7 +294,7 @@ static int setup_2nd_dtb(struct dtb *dtb, char *command_line)
 
 	if (result) {
 		fprintf(stderr, "kexec: Invalid 2nd device tree.\n");
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	result = set_bootargs(dtb, command_line);
@@ -349,14 +349,14 @@ int arm64_load_other_segments(struct kexec_info *info,
 		if (result) {
 			fprintf(stderr,
 				"kexec: Error: No device tree available.\n");
-			return -EFAILED;
+			return EFAILED;
 		}
 	}
 
 	result = setup_2nd_dtb(&dtb, command_line);
 
 	if (result)
-		return -EFAILED;
+		return EFAILED;
 
 	/* Put the other segments after the image. */
 
@@ -384,7 +384,7 @@ int arm64_load_other_segments(struct kexec_info *info,
 
 			if (_ALIGN_UP(initrd_end, GiB(1)) - _ALIGN_DOWN(image_base, GiB(1)) > GiB(32)) {
 				fprintf(stderr, "kexec: Error: image + initrd too big.\n");
-				return -EFAILED;
+				return EFAILED;
 			}
 
 			dbgprintf("initrd: base %lx, size %lxh (%ld)\n",
@@ -395,7 +395,7 @@ int arm64_load_other_segments(struct kexec_info *info,
 				initrd_base + initrd_size);
 
 			if (result)
-				return -EFAILED;
+				return EFAILED;
 		}
 	}
 
@@ -403,7 +403,7 @@ int arm64_load_other_segments(struct kexec_info *info,
 
 	if (dtb.size > MiB(2)) {
 		fprintf(stderr, "kexec: Error: dtb too big.\n");
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	dtb_base = add_buffer_phys_virt(info, dtb.buf, dtb.size, dtb.size,
@@ -509,7 +509,7 @@ static int get_memory_ranges_iomem(struct memory_range *array,
 
 	if (!*count) {
 		dbgprintf("%s: failed: No RAM found.\n", __func__);
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	return 0;

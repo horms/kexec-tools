@@ -48,7 +48,7 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		fprintf(stderr, "kexec: kdump not yet supported on arm64\n");
-		return -EFAILED;
+		return EFAILED;
 	}
 
 	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
@@ -92,7 +92,7 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 
 	if (i == ehdr.e_phnum) {
 		dbgprintf("%s: Valid arm64 header not found\n", __func__);
-		result = -EFAILED;
+		result = EFAILED;
 		goto exit;
 	}
 
@@ -100,7 +100,7 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 
 	if (kernel_segment == ULONG_MAX) {
 		dbgprintf("%s: Kernel segment is not allocated\n", __func__);
-		result = -EFAILED;
+		result = EFAILED;
 		goto exit;
 	}
 
