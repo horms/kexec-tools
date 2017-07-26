@@ -38,7 +38,7 @@
 static struct memory_range *exclude_range = NULL;
 static struct memory_range *memory_range = NULL;
 static struct memory_range *base_memory_range = NULL;
-static uint64_t rmo_top;
+static uint64_t rma_top;
 uint64_t memory_max = 0;
 uint64_t memory_limit;
 static int nr_memory_ranges, nr_exclude_ranges;
@@ -385,7 +385,7 @@ int get_devtree_value(const char *fname, unsigned long long *value)
  */
 static int get_devtree_details(unsigned long kexec_flags)
 {
-	uint64_t rmo_base;
+	uint64_t rma_base = -1, base;
 	uint64_t tce_base;
 	unsigned int tce_size;
 	uint64_t htab_base, htab_size;
@@ -696,10 +696,13 @@ static int get_devtree_details(unsigned long kexec_flags)
 				perror(fname);
 				goto error_openfile;
 			}
-			rmo_base = be64_to_cpu(((uint64_t *)buf)[0]);
-			rmo_top = rmo_base + be64_to_cpu(((uint64_t *)buf)[1]);
-			if (rmo_top > 0x30000000UL)
-				rmo_top = 0x30000000UL;
+			base = be64_to_cpu(((uint64_t *)buf)[0]);
+			if (base < rma_base) {
+				rma_base = base;
+				rma_top = base + be64_to_cpu(((uint64_t *)buf)[1]);
+				if (rma_top > 0x30000000UL)
+					rma_top = 0x30000000UL;
+			}
 
 			fclose(file);
 			closedir(cdir);
@@ -811,14 +814,14 @@ int setup_memory_ranges(unsigned long kexec_flags)
 				j++;
 				if (j >= max_memory_ranges)
 					realloc_memory_ranges();
-				/* Limit the end to rmo_top */
-				if (memory_range[j-1].start >= rmo_top) {
+				/* Limit the end to rma_top */
+				if (memory_range[j-1].start >= rma_top) {
 					j--;
 					break;
 				}
-				if ((memory_range[j-1].start < rmo_top) &&
-				(memory_range[j-1].end >= rmo_top)) {
-					memory_range[j-1].end = rmo_top;
+				if ((memory_range[j-1].start < rma_top) &&
+				(memory_range[j-1].end >= rma_top)) {
+					memory_range[j-1].end = rma_top;
 					break;
 				}
 				continue;
@@ -833,14 +836,14 @@ int setup_memory_ranges(unsigned long kexec_flags)
 		j++;
 		if (j >= max_memory_ranges)
 			realloc_memory_ranges();
-		/* Limit range to rmo_top */
-		if (memory_range[j-1].start >= rmo_top) {
+		/* Limit range to rma_top */
+		if (memory_range[j-1].start >= rma_top) {
 			j--;
 			break;
 		}
-		if ((memory_range[j-1].start < rmo_top) &&
-			(memory_range[j-1].end >= rmo_top)) {
-			memory_range[j-1].end = rmo_top;
+		if ((memory_range[j-1].start < rma_top) &&
+			(memory_range[j-1].end >= rma_top)) {
+			memory_range[j-1].end = rma_top;
 			break;
 		}
 	}
