@@ -6,6 +6,8 @@
 #define CORE_TYPE_ELF32	1
 #define CORE_TYPE_ELF64	2
 
+#define COMMAND_LINE_SIZE	2048 /* from kernel */
+
 extern unsigned char setup_simple_start[];
 extern uint32_t setup_simple_size;
 
@@ -76,7 +78,6 @@ extern int init_memory_region_info(void);
 extern int read_memory_region_limits(int fd, unsigned long long *start,
 					unsigned long long *end);
 extern int get_devtree_value(const char *fname, unsigned long long *pvalue);
-#define COMMAND_LINE_SIZE	512 /* from kernel */
 /*fs2dt*/
 void reserve(unsigned long long where, unsigned long long length);
 

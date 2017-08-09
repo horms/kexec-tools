@@ -20,8 +20,6 @@ extern struct arch_options_t arch_options;
 #define KERNELBASE	PAGE_OFFSET
 #define __pa(x)		((unsigned long)(x)-PAGE_OFFSET)
 
-#define COMMAND_LINE_SIZE	512 /* from kernel */
-
 #ifdef CONFIG_BOOKE
 /* We don't need backup region in Book E */
 #define BACKUP_SRC_START	0x0000

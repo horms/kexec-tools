@@ -252,8 +252,12 @@ static void ulltoa(unsigned long long i, char *str)
 /* Append str to cmdline */
 static void add_cmdline(char *cmdline, char *str)
 {
+	int cmdline_size;
 	int cmdlen = strlen(cmdline) + strlen(str);
-	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+
+	cmdline_size = (kernel_version() < KERNEL_VERSION(3, 15, 0) ?
+			512 : COMMAND_LINE_SIZE);
+	if (cmdlen > (cmdline_size - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
 }

@@ -37,7 +37,6 @@
 #define TREEWORDS		65536	/* max 32 bit words for properties */
 #define MEMRESERVE		256	/* max number of reserved memory blks */
 #define MAX_MEMORY_RANGES	1024
-#define COMMAND_LINE_SIZE	512	/* from kernel */
 
 static char pathname[MAXPATH];
 static char propnames[NAMESPACE] = { 0 };

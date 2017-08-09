@@ -12,7 +12,6 @@
 #define _PPC_BOOT_OPS_H_
 #include "types.h"
 
-#define	COMMAND_LINE_SIZE	512
 #define	MAX_PATH_LEN		256
 #define	MAX_PROP_LEN		256 /* What should this be? */
 

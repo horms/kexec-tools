@@ -381,7 +381,7 @@ static void ultoa(uint64_t i, char *str)
 static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
 				char *byte)
 {
-	int cmdlen, len, align = 1024;
+	int cmdline_size, cmdlen, len, align = 1024;
 	char str[COMMAND_LINE_SIZE], *ptr;
 
 	/* Passing in =xxxK / =xxxM format. Saves space required in cmdline.*/
@@ -402,7 +402,9 @@ static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
 	strcat(str, byte);
 	len = strlen(str);
 	cmdlen = strlen(cmdline) + len;
-	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+	cmdline_size = (kernel_version() < KERNEL_VERSION(3, 15, 0) ?
+			512 : COMMAND_LINE_SIZE);
+	if (cmdlen > (cmdline_size - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
 	dbgprintf("Command line after adding elfcorehdr: %s\n", cmdline);
