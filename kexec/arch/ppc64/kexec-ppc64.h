@@ -1,6 +1,7 @@
 #ifndef KEXEC_PPC64_H
 #define KEXEC_PPC64_H
 
+#define PATH_LEN 256
 #define MAXBYTES 128
 #define MAX_LINE 160
 #define CORE_TYPE_ELF32 1

@@ -181,6 +181,53 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 	return 0;
 }
 
+/*
+ * For a given memory node, check if it is mapped to system RAM or
+ * to onboard memory on accelerator device like GPU card or such.
+ */
+static int is_coherent_device_mem(const char *fname)
+{
+	char fpath[PATH_LEN];
+	char buf[32];
+	DIR *dmem;
+	FILE *file;
+	struct dirent *mentry;
+	int cnt, ret = 0;
+
+	strcpy(fpath, fname);
+	if ((dmem = opendir(fpath)) == NULL) {
+		perror(fpath);
+		return -1;
+	}
+
+	while ((mentry = readdir(dmem)) != NULL) {
+		if (strcmp(mentry->d_name, "compatible"))
+			continue;
+
+		strcat(fpath, "/compatible");
+		if ((file = fopen(fpath, "r")) == NULL) {
+			perror(fpath);
+			ret = -1;
+			break;
+		}
+		if ((cnt = fread(buf, 1, 32, file)) < 0) {
+			perror(fpath);
+			fclose(file);
+			ret = -1;
+			break;
+		}
+		if (!strncmp(buf, "ibm,coherent-device-memory", 26)) {
+			ret = 1;
+			break;
+		}
+		fclose(file);
+	}
+
+	closedir(dmem);
+	return ret;
+}
+
+
 /* Reads the appropriate file and retrieves the SYSTEM RAM regions for whom to
  * create Elf headers. Keeping it separate from get_memory_ranges() as
  * requirements are different in the case of normal kexec and crashdumps.
@@ -196,12 +243,12 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 {
 
 	char device_tree[256] = "/proc/device-tree/";
-	char fname[256];
+	char fname[PATH_LEN];
 	char buf[MAXBYTES];
 	DIR *dir, *dmem;
 	FILE *file;
 	struct dirent *dentry, *mentry;
-	int n, crash_rng_len = 0;
+	int n, ret, crash_rng_len = 0;
 	unsigned long long start, end;
 	int page_size;
 
@@ -240,6 +287,19 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 			continue;
 		strcpy(fname, device_tree);
 		strcat(fname, dentry->d_name);
+
+		ret = is_coherent_device_mem(fname);
+		if (ret == -1) {
+			closedir(dir);
+			goto err;
+		} else if (ret == 1) {
+			/*
+			 * Avoid adding this memory region as it is not
+			 * mapped to system RAM.
+			 */
+			continue;
+		}
+
 		if ((dmem = opendir(fname)) == NULL) {
 			perror(fname);
 			closedir(dir);
