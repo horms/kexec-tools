@@ -217,6 +217,7 @@ static int is_coherent_device_mem(const char *fname)
 			break;
 		}
 		if (!strncmp(buf, "ibm,coherent-device-memory", 26)) {
+			fclose(file);
 			ret = 1;
 			break;
 		}
