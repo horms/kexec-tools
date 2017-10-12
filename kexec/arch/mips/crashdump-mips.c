@@ -318,6 +318,30 @@ static struct crash_elf_info elf_info32 = {
 	lowmem_limit : MAXMEM,
 };
 
+static int patch_elf_info(void)
+{
+	const char cpuinfo[] = "/proc/cpuinfo";
+	char line[MAX_LINE];
+	FILE *fp;
+
+	fp = fopen(cpuinfo, "r");
+	if (!fp) {
+		fprintf(stderr, "Cannot open %s: %s\n",
+			cpuinfo, strerror(errno));
+		return -1;
+	}
+	while (fgets(line, sizeof(line), fp) != 0) {
+		if (strncmp(line, "cpu model", 9) == 0) {
+			/* OCTEON uses a different page_offset. */
+			if (strstr(line, "Octeon"))
+				elf_info64.page_offset = 0x8000000000000000ULL;
+			break;
+		}
+	}
+	fclose(fp);
+	return 0;
+}
+
 /* Loads additional segments in case of a panic kernel is being loaded.
  * One segment for backup region, another segment for storing elf headers
  * for crash memory image.
@@ -333,6 +357,9 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	crash_create_elf_headers_func crash_create = crash_create_elf32_headers;
 	struct crash_elf_info *elf_info = &elf_info32;
 	unsigned long start_offset = 0x80000000UL;
+
+	if (patch_elf_info())
+		return -1;
 
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
 		elf_info = &elf_info64;
