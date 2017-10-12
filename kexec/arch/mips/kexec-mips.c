@@ -60,10 +60,16 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		} else {
 			continue;
 		}
-		memory_range[memory_ranges].start = start;
-		memory_range[memory_ranges].end = end;
-		memory_range[memory_ranges].type = type;
-		memory_ranges++;
+		if (memory_ranges > 0 &&
+		    memory_range[memory_ranges - 1].end == start &&
+		    memory_range[memory_ranges - 1].type == type) {
+			memory_range[memory_ranges - 1].end = end;
+		} else {
+			memory_range[memory_ranges].start = start;
+			memory_range[memory_ranges].end = end;
+			memory_range[memory_ranges].type = type;
+			memory_ranges++;
+		}
 	}
 	fclose(fp);
 	*range = memory_range;
