@@ -74,7 +74,10 @@ static int get_kernel_vaddr_and_size(struct crash_elf_info *elf_info,
 
 	elf_info->kern_vaddr_start = elf_info->kern_paddr_start |
 					start_offset;
-	if (parse_iomem_single("Kernel data\n", NULL, &end) == 0) {
+	/* If "Kernel bss" exists, the kernel ends there, else fall
+	 *  through and say that it ends at "Kernel data" */
+	if (parse_iomem_single("Kernel bss\n", NULL, &end) == 0 ||
+	    parse_iomem_single("Kernel data\n", NULL, &end) == 0) {
 		elf_info->kern_size = end - elf_info->kern_paddr_start;
 		dbgprintf("kernel_vaddr= 0x%llx paddr %llx\n",
 				elf_info->kern_vaddr_start,
