@@ -6,12 +6,13 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 				unsigned long max_addr, unsigned long min_base);
 #ifdef __mips64
 #define PAGE_OFFSET	0xa800000000000000ULL
+#define MAXMEM		0
 #else
 #define PAGE_OFFSET	0x80000000
+#define MAXMEM		0x80000000
 #endif
 #define __pa(x)		((unsigned long)(X) & 0x7fffffff)
 
-#define MAXMEM		0x80000000
 
 #define CRASH_MAX_MEMMAP_NR	(KEXEC_MAX_SEGMENTS + 1)
 #define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)

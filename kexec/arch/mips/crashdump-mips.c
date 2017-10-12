@@ -201,7 +201,7 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 		memory_ranges++;
 
 		/* Segregate linearly mapped region. */
-		if ((MAXMEM - 1) >= start && (MAXMEM - 1) <= end) {
+		if (MAXMEM && (MAXMEM - 1) >= start && (MAXMEM - 1) <= end) {
 			crash_memory_range[memory_ranges - 1].end = MAXMEM - 1;
 
 			/* Add segregated region. */
@@ -304,7 +304,7 @@ static struct crash_elf_info elf_info64 = {
 	data : ELFDATALOCAL,
 	machine : EM_MIPS,
 	page_offset : PAGE_OFFSET,
-	lowmem_limit : MAXMEM,
+	lowmem_limit : 0, /* 0 == no limit */
 };
 
 static struct crash_elf_info elf_info32 = {
