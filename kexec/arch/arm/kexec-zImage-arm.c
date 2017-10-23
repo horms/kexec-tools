@@ -34,6 +34,15 @@ struct zimage_header {
 #define ZIMAGE_MAGIC cpu_to_le32(0x016f2818)
 	uint32_t start;
 	uint32_t end;
+	uint32_t endian;
+
+	/* Extension to the data passed to the boot agent.  The offset
+	 * points at a tagged table following a similar format to the
+	 * ATAGs.
+	 */
+	uint32_t magic2;
+#define ZIMAGE_MAGIC2 (0x45454545)
+	uint32_t extension_tag_offset;
 };
 
 struct android_image {
@@ -113,6 +122,17 @@ struct tag {
 #define tag_next(t)     ((struct tag *)((uint32_t *)(t) + (t)->hdr.size))
 #define byte_size(t)    ((t)->hdr.size << 2)
 #define tag_size(type)  ((sizeof(struct tag_header) + sizeof(struct type) + 3) >> 2)
+
+struct zimage_tag {
+	struct tag_header hdr;
+	union {
+#define ZIMAGE_TAG_KRNL_SIZE cpu_to_le32(0x5a534c4b)
+		struct zimage_krnl_size {
+			uint32_t size_ptr;
+			uint32_t bss_size;
+		} krnl_size;
+	} u;
+};
 
 int zImage_arm_probe(const char *UNUSED(buf), off_t UNUSED(len))
 {
@@ -434,7 +454,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	if (dtb_file)
 		dtb_buf = slurp_file(dtb_file, &dtb_length);
 
-	if (len > 0x34) {
+	if (len > sizeof(struct zimage_header)) {
 		const struct zimage_header *hdr;
 		off_t size;
 
@@ -459,6 +479,35 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			}
 			if (size < len)
 				len = size;
+		}
+
+		/* Do we have an extension table? */
+		if (hdr->magic2 == ZIMAGE_MAGIC2 && !kexec_arm_image_size) {
+			uint32_t offset = hdr->extension_tag_offset;
+			uint32_t max = len - sizeof(struct tag_header);
+			struct zimage_tag *tag;
+
+			dbgprintf("zImage has tags\n");
+
+			for (offset = hdr->extension_tag_offset;
+			     (tag = (void *)(buf + offset)) != NULL &&
+			     offset < max && byte_size(tag) &&
+				offset + byte_size(tag) < len;
+			     offset += byte_size(tag)) {
+				dbgprintf("  offset 0x%08x tag 0x%08x size %u\n",
+					  offset, tag->hdr.tag, byte_size(tag));
+				if (tag->hdr.tag == ZIMAGE_TAG_KRNL_SIZE) {
+					uint32_t *p = (void *)buf +
+						tag->u.krnl_size.size_ptr;
+
+					kexec_arm_image_size =
+						get_unaligned(p) +
+						tag->u.krnl_size.bss_size;
+				}
+			}
+
+			dbgprintf("kernel image size: 0x%08x\n",
+				  kexec_arm_image_size);
 		}
 	}
 
