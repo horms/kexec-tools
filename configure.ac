@@ -167,12 +167,27 @@ if test "$with_xen" = yes ; then
 	AC_CHECK_HEADER(xenctrl.h,
 		[AC_CHECK_LIB(xenctrl, xc_kexec_load, ,
 		AC_MSG_NOTICE([Xen support disabled]))])
-		if test "$ac_cv_lib_xenctrl_xc_kexec_load" = yes ; then
-			AC_CHECK_LIB(xenctrl, xc_kexec_status,
-				AC_DEFINE(HAVE_KEXEC_CMD_STATUS, 1,
-					[The kexec_status call is available]),
-				AC_MSG_NOTICE([The kexec_status call is not available]))
-		fi
+fi
+
+dnl Link libxenctrl.so at run-time rather than build-time
+if test "$with_xen" = dl ; then
+	AC_CHECK_HEADER(dlfcn.h,
+		[AC_CHECK_LIB(dl, dlopen, ,
+			AC_MSG_ERROR([Dynamic library linking not available]))],
+		AC_MSG_ERROR([Dynamic library linking header not available]))
+	AC_DEFINE(CONFIG_LIBXENCTRL_DL, 1, [Define to 1 to link libxenctrl.so at run-time rather than build-time])
+	AC_CHECK_HEADER(xenctrl.h,
+		[AC_CHECK_LIB(xenctrl, xc_kexec_load,
+		AC_DEFINE(HAVE_LIBXENCTRL, 1, ), # required define, and prevent -lxenctrl
+		AC_MSG_NOTICE([Xen support disabled]))])
+fi
+
+dnl Check for the Xen kexec_status hypercall - reachable from --with-xen=yes|dl
+if test "$ac_cv_lib_xenctrl_xc_kexec_load" = yes ; then
+	AC_CHECK_LIB(xenctrl, xc_kexec_status,
+		AC_DEFINE(HAVE_KEXEC_CMD_STATUS, 1,
+			[The kexec_status call is available]),
+		AC_MSG_NOTICE([The kexec_status call is not available]))
 fi
 
 dnl ---Sanity checks

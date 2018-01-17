@@ -15,12 +15,8 @@
 #include "kexec.h"
 #include "crashdump.h"
 #include "kexec-syscall.h"
-
 #include "config.h"
-
-#ifdef HAVE_LIBXENCTRL
-#include <xenctrl.h>
-#endif
+#include "kexec-xen.h"
 
 struct crash_note_info {
 	unsigned long base;

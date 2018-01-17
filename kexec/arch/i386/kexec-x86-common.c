@@ -39,10 +39,7 @@
 #include "../../firmware_memmap.h"
 #include "../../crashdump.h"
 #include "kexec-x86.h"
-
-#ifdef HAVE_LIBXENCTRL
-#include <xenctrl.h>
-#endif /* HAVE_LIBXENCTRL */
+#include "../../kexec-xen.h"
 
 /* Used below but not present in (older?) xenctrl.h */
 #ifndef E820_PMEM

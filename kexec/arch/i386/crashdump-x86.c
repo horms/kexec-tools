@@ -43,13 +43,8 @@
 #include "../../crashdump.h"
 #include "kexec-x86.h"
 #include "crashdump-x86.h"
-
-#ifdef HAVE_LIBXENCTRL
-#include <xenctrl.h>
-#endif /* HAVE_LIBXENCTRL */
-
+#include "../../kexec-xen.h"
 #include "x86-linux-setup.h"
-
 #include <x86/x86-linux.h>
 
 extern struct arch_options_t arch_options;

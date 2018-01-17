@@ -10,9 +10,49 @@
 #include "config.h"
 
 #ifdef HAVE_LIBXENCTRL
-#include <xenctrl.h>
+#include "kexec-xen.h"
 
 #include "crashdump.h"
+
+#ifdef CONFIG_LIBXENCTRL_DL
+void *xc_dlhandle;
+xc_hypercall_buffer_t XC__HYPERCALL_BUFFER_NAME(HYPERCALL_BUFFER_NULL);
+xc_interface *__xc_interface_open(xentoollog_logger *logger,
+				  xentoollog_logger *dombuild_logger,
+				  unsigned open_flags)
+{
+	xc_interface *xch = NULL;
+
+	if (!xc_dlhandle)
+		xc_dlhandle = dlopen("libxenctrl.so", RTLD_NOW | RTLD_NODELETE);
+
+	if (xc_dlhandle) {
+		typedef xc_interface *(*func_t)(xentoollog_logger *logger,
+			xentoollog_logger *dombuild_logger,
+			unsigned open_flags);
+
+		func_t func = (func_t)dlsym(xc_dlhandle, "xc_interface_open");
+		xch = func(logger, dombuild_logger, open_flags);
+	}
+
+	return xch;
+}
+
+int __xc_interface_close(xc_interface *xch)
+{
+	int rc = -1;
+
+	if (xc_dlhandle) {
+		typedef int (*func_t)(xc_interface *xch);
+
+		func_t func = (func_t)dlsym(xc_dlhandle, "xc_interface_close");
+		rc = func(xch);
+		xc_dlhandle = NULL;
+	}
+
+	return rc;
+}
+#endif /* CONFIG_LIBXENCTRL_DL */
 
 int xen_kexec_load(struct kexec_info *info)
 {

@@ -36,6 +36,7 @@ dist += kexec/Makefile						\
 	kexec/kexec-elf-boot.h					\
 	kexec/kexec-elf.h kexec/kexec-sha256.h			\
 	kexec/kexec-zlib.h kexec/kexec-lzma.h			\
+	kexec/kexec-xen.h 					\
 	kexec/kexec-syscall.h kexec/kexec.h kexec/kexec.8
 
 dist				+= kexec/proc_iomem.c
