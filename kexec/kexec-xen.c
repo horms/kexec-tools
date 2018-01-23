@@ -47,6 +47,7 @@ int __xc_interface_close(xc_interface *xch)
 
 		func_t func = (func_t)dlsym(xc_dlhandle, "xc_interface_close");
 		rc = func(xch);
+		dlclose(xc_dlhandle);
 		xc_dlhandle = NULL;
 	}
 
