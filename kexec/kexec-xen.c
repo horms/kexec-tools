@@ -15,8 +15,17 @@
 #include "crashdump.h"
 
 #ifdef CONFIG_LIBXENCTRL_DL
-void *xc_dlhandle;
+#include <dlfcn.h>
+
+/* The handle from dlopen(), needed by dlsym(), dlclose() */
+static void *xc_dlhandle;
 xc_hypercall_buffer_t XC__HYPERCALL_BUFFER_NAME(HYPERCALL_BUFFER_NULL);
+
+void *__xc_dlsym(const char *symbol)
+{
+	return dlsym(xc_dlhandle, symbol);
+}
+
 xc_interface *__xc_interface_open(xentoollog_logger *logger,
 				  xentoollog_logger *dombuild_logger,
 				  unsigned open_flags)

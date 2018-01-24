@@ -5,29 +5,27 @@
 #include <xenctrl.h>
 
 #ifdef CONFIG_LIBXENCTRL_DL
-#include <dlfcn.h>
-
-/* The handle from dlopen(), needed by dlsym(), dlclose() */
-extern void *xc_dlhandle;
+/* Lookup symbols in libxenctrl.so */
+extern void *__xc_dlsym(const char *symbol);
 
 /* Wrappers around xc_interface_open/close() to insert dlopen/dlclose() */
-xc_interface *__xc_interface_open(xentoollog_logger *logger,
-				  xentoollog_logger *dombuild_logger,
-				  unsigned open_flags);
-int __xc_interface_close(xc_interface *xch);
+extern xc_interface *__xc_interface_open(xentoollog_logger *logger,
+					 xentoollog_logger *dombuild_logger,
+					 unsigned open_flags);
+extern int __xc_interface_close(xc_interface *xch);
 
 /* GCC expression statements for evaluating dlsym() */
 #define __xc_call(dtype, name, args...) \
 ( \
 	{ dtype value; \
 	typedef dtype (*func_t)(xc_interface *, ...); \
-	func_t func = dlsym(xc_dlhandle, #name); \
+	func_t func = __xc_dlsym(#name); \
 	value = func(args); \
 	value; } \
 )
 #define __xc_data(dtype, name) \
 ( \
-	{ dtype *value = (dtype *)dlsym(xc_dlhandle, #name); value; } \
+	{ dtype *value = (dtype *)__xc_dlsym(#name); value; } \
 )
 
 /* The wrappers around utilized xenctrl.h functions */
