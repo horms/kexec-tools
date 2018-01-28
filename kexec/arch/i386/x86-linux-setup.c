@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/fb.h>
+#include <linux/screen_info.h>
 #include <unistd.h>
 #include <dirent.h>
 #include <mntent.h>
@@ -122,7 +123,8 @@ void setup_linux_bootloader_parameters_high(
 	cmdline_ptr[cmdline_len - 1] = '\0';
 }
 
-int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
+static int get_bootparam(void *buf, off_t offset, size_t size);
+static int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 {
 	struct fb_fix_screeninfo fix;
 	struct fb_var_screeninfo var;
@@ -143,8 +145,13 @@ int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 		/* VIDEO_TYPE_EFI */
 		real_mode->orig_video_isVGA = 0x70;
 	} else {
-		/* cannot handle and other types */
-		goto out;
+		int err;
+		off_t offset = offsetof(typeof(*real_mode), orig_video_isVGA);
+
+		/* blindly try old boot time video type */
+		err = get_bootparam(&real_mode->orig_video_isVGA, offset, 1);
+		if (err)
+			goto out;
 	}
 	close(fd);
 
@@ -826,6 +833,8 @@ out:
 void setup_linux_system_parameters(struct kexec_info *info,
 				   struct x86_linux_param_header *real_mode)
 {
+	int err;
+
 	/* get subarch from running kernel */
 	setup_subarch(real_mode);
 	if (bzImage_support_efi_boot && !arch_options.noefi)
@@ -841,8 +850,22 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	real_mode->orig_video_ega_bx = 0;
 	real_mode->orig_video_isVGA = 1;
 	real_mode->orig_video_points = 16;
-	setup_linux_vesafb(real_mode);
 
+	/* setup vesa fb if possible, or just use original screen_info */
+	err = setup_linux_vesafb(real_mode);
+	if (err) {
+		uint16_t cl_magic, cl_offset;
+
+		/* save and restore the old cmdline param if needed */
+		cl_magic = real_mode->cl_magic;
+		cl_offset = real_mode->cl_offset;
+
+		err = get_bootparam(real_mode, 0, sizeof(struct screen_info));
+		if (!err) {
+			real_mode->cl_magic = cl_magic;
+			real_mode->cl_offset = cl_offset;
+		}
+	}
 	/* Fill in the memsize later */
 	real_mode->ext_mem_k = 0;
 	real_mode->alt_mem_k = 0;
