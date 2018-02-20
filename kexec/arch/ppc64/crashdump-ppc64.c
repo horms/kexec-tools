@@ -39,6 +39,10 @@
 #define DEVTREE_CRASHKERNEL_BASE "/proc/device-tree/chosen/linux,crashkernel-base"
 #define DEVTREE_CRASHKERNEL_SIZE "/proc/device-tree/chosen/linux,crashkernel-size"
 
+unsigned int num_of_lmb_sets;
+unsigned int is_dyn_mem_v2;
+uint64_t lmb_size;
+
 static struct crash_elf_info elf_info64 =
 {
 	class: ELFCLASS64,
@@ -127,6 +131,7 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 {
 	uint64_t start, end;
 	uint64_t startrange, endrange;
+	uint64_t size;
 	char fname[128], buf[32];
 	FILE *file;
 	unsigned int i;
@@ -135,6 +140,8 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 
 	strcpy(fname, "/proc/device-tree/");
 	strcat(fname, "ibm,dynamic-reconfiguration-memory/ibm,dynamic-memory");
+	if (is_dyn_mem_v2)
+		strcat(fname, "-v2");
 	if ((file = fopen(fname, "r")) == NULL) {
 		perror(fname);
 		return -1;
@@ -142,8 +149,9 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 
 	fseek(file, 4, SEEK_SET);
 	startrange = endrange = 0;
-	for (i = 0; i < num_of_lmbs; i++) {
-		if ((n = fread(buf, 1, 24, file)) < 0) {
+	size = lmb_size;
+	for (i = 0; i < num_of_lmb_sets; i++) {
+		if ((n = fread(buf, 1, LMB_ENTRY_SIZE, file)) < 0) {
 			perror(fname);
 			fclose(file);
 			return -1;
@@ -156,8 +164,15 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 			return -1;
 		}
 
-		start = be64_to_cpu(((uint64_t *)buf)[DRCONF_ADDR]);
-		end = start + lmb_size;
+		/*
+		 * If the property is ibm,dynamic-memory-v2, the first 4 bytes
+		 * tell the number of sequential LMBs in this entry.
+		 */
+		if (is_dyn_mem_v2)
+			size = be32_to_cpu(((unsigned int *)buf)[0]) * lmb_size;
+
+		start = be64_to_cpu(*((uint64_t *)&buf[DRCONF_ADDR]));
+		end = start + size;
 		if (start == 0 && end >= (BACKUP_SRC_END + 1))
 			start = BACKUP_SRC_END + 1;
 

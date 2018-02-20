@@ -217,11 +217,12 @@ static uint64_t add_ranges(uint64_t **ranges, int *ranges_size, int idx,
 static void add_dyn_reconf_usable_mem_property__(int fd)
 {
 	char fname[MAXPATH], *bname;
-	uint64_t buf[32];
+	char buf[32];
+	uint32_t lmbs_in_set = 1;
 	uint64_t *ranges;
 	int ranges_size = MEM_RANGE_CHUNK_SZ;
 	uint64_t base, end, rngs_cnt;
-	size_t i;
+	size_t i, j;
 	int rlen = 0;
 	int tmp_indx;
 
@@ -242,43 +243,61 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 		    ranges_size*8);
 
 	rlen = 0;
-	for (i = 0; i < num_of_lmbs; i++) {
-		if (read(fd, buf, 24) < 0)
+	for (i = 0; i < num_of_lmb_sets; i++) {
+		if (read(fd, buf, LMB_ENTRY_SIZE) < 0)
 			die("unrecoverable error: error reading \"%s\": %s\n",
 				pathname, strerror(errno));
 
-		base = be64_to_cpu((uint64_t) buf[0]);
-		end = base + lmb_size;
-		if (~0ULL - base < end)
-			die("unrecoverable error: mem property overflow\n");
+		/*
+		 * If the property is ibm,dynamic-memory-v2, the first 4 bytes
+		 * tell the number of sequential LMBs in this entry. Else, if
+		 * the property is ibm,dynamic-memory, each entry represents
+		 * one LMB. Make sure to add an entry for each LMB as kernel
+		 * looks for a counter for every LMB.
+		 */
+		if (is_dyn_mem_v2)
+			lmbs_in_set = be32_to_cpu(((unsigned int *)buf)[0]);
 
-		tmp_indx = rlen++;
-
-		rngs_cnt = add_ranges(&ranges, &ranges_size, rlen,
-				      base, end);
-		if (rngs_cnt == 0) {
-			/* We still need to add a counter for every LMB because
-			 * the kernel parsing code is dumb.  We just have
-			 * a zero in this case, with no following base/len.
-			 */
-			ranges[tmp_indx] = 0;
-			/* rlen is already just tmp_indx+1 as we didn't write
-			 * anything.  Check array size here, as we'll probably
-			 * go on for a while writing zeros now.
-			 */
-			if (rlen >= (ranges_size-1)) {
-				ranges_size += MEM_RANGE_CHUNK_SZ;
-				ranges = realloc(ranges, ranges_size*8);
-				if (!ranges)
-					die("unrecoverable error: can't"
-					    " realloc %d bytes for"
-					    " ranges.\n",
-					    ranges_size*8);
+		base = be64_to_cpu(*((uint64_t *)&buf[DRCONF_ADDR]));
+		for (j = 0; j < lmbs_in_set; j++) {
+			end = base + lmb_size;
+			if (~0ULL - base < end) {
+				die("unrecoverable error: mem property"
+				    " overflow\n");
 			}
-		} else {
-			/* Store the count of (base, size) duple */
-			ranges[tmp_indx] = cpu_to_be64(rngs_cnt);
-			rlen += rngs_cnt * 2;
+
+			tmp_indx = rlen++;
+
+			rngs_cnt = add_ranges(&ranges, &ranges_size, rlen,
+					      base, end);
+			if (rngs_cnt == 0) {
+				/* We still need to add a counter for every LMB
+				 * because the kernel parsing code is dumb. We
+				 * just have a zero in this case, with no
+				 * following base/len.
+				 */
+				ranges[tmp_indx] = 0;
+
+				/* rlen is already just tmp_indx+1 as we didn't
+				 * write anything. Check array size here, as we
+				 * will probably go on writing zeros for a while
+				 */
+				if (rlen >= (ranges_size-1)) {
+					ranges_size += MEM_RANGE_CHUNK_SZ;
+					ranges = realloc(ranges, ranges_size*8);
+					if (!ranges)
+						die("unrecoverable error: can't"
+						    " realloc %d bytes for"
+						    " ranges.\n",
+						    ranges_size*8);
+				}
+			} else {
+				/* Store the count of (base, size) duple */
+				ranges[tmp_indx] = cpu_to_be64(rngs_cnt);
+				rlen += rngs_cnt * 2;
+			}
+
+			base = end;
 		}
 	}
 		
@@ -298,7 +317,8 @@ static void add_dyn_reconf_usable_mem_property__(int fd)
 
 static void add_dyn_reconf_usable_mem_property(struct dirent *dp, int fd)
 {
-	if (!strcmp(dp->d_name, "ibm,dynamic-memory") && usablemem_rgns.size)
+	if ((!strcmp(dp->d_name, "ibm,dynamic-memory-v2") ||
+	    !strcmp(dp->d_name, "ibm,dynamic-memory")) && usablemem_rgns.size)
 		add_dyn_reconf_usable_mem_property__(fd);
 }
 #else

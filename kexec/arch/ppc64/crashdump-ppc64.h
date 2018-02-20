@@ -34,10 +34,18 @@ extern unsigned int rtas_size;
 extern uint64_t opal_base;
 extern uint64_t opal_size;
 
-uint64_t lmb_size;
-unsigned int num_of_lmbs;
+/*
+ * In case of ibm,dynamic-memory-v2 property, this is the number of LMB
+ * sets where each set represents a group of sequential LMB entries. In
+ * case of ibm,dynamic-memory property, the number of LMB sets is nothing
+ * but the total number of LMB entries.
+ */
+extern unsigned int num_of_lmb_sets;
+extern unsigned int is_dyn_mem_v2;
+extern uint64_t lmb_size;
 
-#define DRCONF_ADDR	0
+#define LMB_ENTRY_SIZE	24
+#define DRCONF_ADDR	(is_dyn_mem_v2 ? 4 : 0)
 #define DRCONF_FLAGS	20
 
 #endif /* CRASHDUMP_PPC64_H */

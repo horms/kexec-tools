@@ -149,6 +149,7 @@ static void add_base_memory_range(uint64_t start, uint64_t end)
 static int get_dyn_reconf_base_ranges(void)
 {
 	uint64_t start, end;
+	uint64_t size;
 	char fname[128], buf[32];
 	FILE *file;
 	unsigned int i;
@@ -166,29 +167,35 @@ static int get_dyn_reconf_base_ranges(void)
 		return -1;
 	}
 	/*
-	 * lmb_size, num_of_lmbs(global variables) are
+	 * lmb_size, num_of_lmb_sets(global variables) are
 	 * initialized once here.
 	 */
-	lmb_size = be64_to_cpu(((uint64_t *)buf)[0]);
+	size = lmb_size = be64_to_cpu(((uint64_t *)buf)[0]);
 	fclose(file);
 
 	strcpy(fname, "/proc/device-tree/");
 	strcat(fname,
 		"ibm,dynamic-reconfiguration-memory/ibm,dynamic-memory");
 	if ((file = fopen(fname, "r")) == NULL) {
-		perror(fname);
-		return -1;
+		strcat(fname, "-v2");
+		if ((file = fopen(fname, "r")) == NULL) {
+			perror(fname);
+			return -1;
+		}
+
+		is_dyn_mem_v2 = 1;
 	}
-	/* first 4 bytes tell the number of lmbs */
+
+	/* first 4 bytes tell the number of lmb set entries */
 	if (fread(buf, 1, 4, file) != 4) {
 		perror(fname);
 		fclose(file);
 		return -1;
 	}
-	num_of_lmbs = be32_to_cpu(((unsigned int *)buf)[0]);
+	num_of_lmb_sets = be32_to_cpu(((unsigned int *)buf)[0]);
 
-	for (i = 0; i < num_of_lmbs; i++) {
-		if ((n = fread(buf, 1, 24, file)) < 0) {
+	for (i = 0; i < num_of_lmb_sets; i++) {
+		if ((n = fread(buf, 1, LMB_ENTRY_SIZE, file)) < 0) {
 			perror(fname);
 			fclose(file);
 			return -1;
@@ -196,13 +203,21 @@ static int get_dyn_reconf_base_ranges(void)
 		if (nr_memory_ranges >= max_memory_ranges)
 			return -1;
 
-		start = be64_to_cpu(((uint64_t *)buf)[0]);
-		end = start + lmb_size;
+		/*
+		 * If the property is ibm,dynamic-memory-v2, the first 4 bytes
+		 * tell the number of sequential LMBs in this entry.
+		 */
+		if (is_dyn_mem_v2)
+			size = be32_to_cpu(((unsigned int *)buf)[0]) * lmb_size;
+
+		start = be64_to_cpu(*((uint64_t *)&buf[DRCONF_ADDR]));
+		end = start + size;
 		add_base_memory_range(start, end);
 	}
 	fclose(file);
 	return 0;
 }
+
 /* Sort the base ranges in memory - this is useful for ensuring that our
  * ranges are in ascending order, even if device-tree read of memory nodes
  * is done differently. Also, could be used for other range coalescing later
