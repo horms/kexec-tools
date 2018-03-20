@@ -552,6 +552,12 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	 */
 	kernel_mem_size = len + 4;
 
+	/*
+	 * The zImage length does not include its stack (4k) or its
+	 * malloc space (64k).  Include this.
+	 */
+	len += 0x11000;
+
 	dbgprintf("zImage requires 0x%08llx bytes\n", (unsigned long long)len);
 
 	/*
