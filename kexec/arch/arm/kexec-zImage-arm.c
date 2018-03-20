@@ -552,6 +552,8 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	 */
 	kernel_mem_size = len + 4;
 
+	dbgprintf("zImage requires 0x%08llx bytes\n", (unsigned long long)len);
+
 	/*
 	 * Check for a kernel size extension, and set or validate the
 	 * image size.  This is the total space needed to avoid the
@@ -565,12 +567,21 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		uint32_t bss_size = le32_to_cpu(tag->u.krnl_size.bss_size);
 		uint32_t kernel_size = edata_size + bss_size;
 
+		dbgprintf("Decompressed kernel sizes:\n");
+		dbgprintf(" text+data 0x%08lx bss 0x%08lx total 0x%08lx\n",
+			  (unsigned long)edata_size,
+			  (unsigned long)bss_size,
+			  (unsigned long)kernel_size);
+
 		/*
 		 * While decompressing, the zImage is placed past _edata
 		 * of the decompressed kernel.  Ensure we account for that.
 		 */
 		if (kernel_size < edata_size + len)
 			kernel_size = edata_size + len;
+
+		dbgprintf("Resulting kernel space: 0x%08lx\n",
+			  (unsigned long)kernel_size);
 
 		if (kexec_arm_image_size == 0)
 			kexec_arm_image_size = kernel_size;
