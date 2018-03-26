@@ -93,6 +93,85 @@ static int read_prop(char *name, void *value, size_t len)
 	return 0;
 }
 
+static int elf_ppc64_load_file(int argc, char **argv, struct kexec_info *info)
+{
+	int ret = 0;
+	char *cmdline, *dtb;
+	int opt, cmdline_len = 0;
+
+	/* See options.h -- add any more there, too. */
+	static const struct option options[] = {
+		KEXEC_ARCH_OPTIONS
+		{ "command-line",       1, NULL, OPT_APPEND },
+		{ "append",             1, NULL, OPT_APPEND },
+		{ "ramdisk",            1, NULL, OPT_RAMDISK },
+		{ "initrd",             1, NULL, OPT_RAMDISK },
+		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
+		{ "dtb",                1, NULL, OPT_DEVICETREEBLOB },
+		{ "args-linux",		0, NULL, OPT_ARGS_IGNORE },
+		{ 0,                    0, NULL, 0 },
+	};
+
+	static const char short_options[] = KEXEC_OPT_STR "";
+
+	/* Parse command line arguments */
+	cmdline = 0;
+	dtb = 0;
+	ramdisk = 0;
+
+	while ((opt = getopt_long(argc, argv, short_options,
+					options, 0)) != -1) {
+		switch (opt) {
+		default:
+			/* Ignore core options */
+			if (opt < OPT_ARCH_MAX)
+				break;
+		case OPT_APPEND:
+			cmdline = optarg;
+			break;
+		case OPT_RAMDISK:
+			ramdisk = optarg;
+			break;
+		case OPT_DEVICETREEBLOB:
+			dtb = optarg;
+			break;
+		case OPT_ARGS_IGNORE:
+			break;
+		}
+	}
+
+	if (dtb)
+		die("--dtb not supported while using --kexec-file-syscall.\n");
+
+	if (reuse_initrd)
+		die("--reuseinitrd not supported with --kexec-file-syscall.\n");
+
+	if (cmdline) {
+		cmdline_len = strlen(cmdline) + 1;
+	} else {
+		cmdline = strdup("\0");
+		cmdline_len = 1;
+	}
+
+	if (ramdisk) {
+		info->initrd_fd = open(ramdisk, O_RDONLY);
+		if (info->initrd_fd == -1) {
+			fprintf(stderr, "Could not open initrd file %s:%s\n",
+					ramdisk, strerror(errno));
+			ret = -1;
+			goto out;
+		}
+	}
+
+	info->command_line = cmdline;
+	info->command_line_len = cmdline_len;
+	return ret;
+out:
+	if (cmdline_len == 1)
+		free(cmdline);
+	return ret;
+}
+
 int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info)
 {
@@ -131,6 +210,9 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	};
 
 	static const char short_options[] = KEXEC_OPT_STR "";
+
+	if (info->file_mode)
+		return elf_ppc64_load_file(argc, argv, info);
 
 	/* Parse command line arguments */
 	initrd_base = 0;
@@ -387,6 +469,8 @@ void elf_ppc64_usage(void)
 	fprintf(stderr, "     --ramdisk=<filename> Initial RAM disk.\n");
 	fprintf(stderr, "     --initrd=<filename> same as --ramdisk.\n");
 	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
+	fprintf(stderr, "                                 ");
+	fprintf(stderr, "Not applicable while using --kexec-file-syscall.\n");
 	fprintf(stderr, "     --dtb=<filename> same as --devicetreeblob.\n");
 
 	fprintf(stderr, "elf support is still broken\n");
