@@ -1415,7 +1415,9 @@ int main(int argc, char *argv[])
 		do_load_jump_back_helper = 0;
 	}
 
-	if (do_load && (kexec_flags & KEXEC_ON_CRASH) &&
+	if (do_load &&
+	    ((kexec_flags & KEXEC_ON_CRASH) ||
+	     (kexec_file_flags & KEXEC_FILE_ON_CRASH)) &&
 	    !is_crashkernel_mem_reserved()) {
 		die("Memory for crashkernel is not reserved\n"
 		    "Please reserve memory by passing"
@@ -1446,6 +1448,12 @@ int main(int argc, char *argv[])
 				return 1;
 			}
 		}
+	}
+	if (do_kexec_file_syscall) {
+		if (do_load_jump_back_helper)
+			die("--load-jump-back-helper not supported with kexec_file_load\n");
+		if (kexec_flags & KEXEC_PRESERVE_CONTEXT)
+			die("--load-preserve-context not supported with kexec_file_load\n");
 	}
 
 	if (do_reuse_initrd){
