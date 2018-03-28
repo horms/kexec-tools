@@ -1166,7 +1166,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 
 	if (!is_kexec_file_load_implemented()) {
 		fprintf(stderr, "syscall kexec_file_load not available.\n");
-		return -1;
+		return -ENOSYS;
 	}
 
 	if (argc - fileind <= 0) {
