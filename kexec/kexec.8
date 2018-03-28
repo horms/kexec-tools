@@ -144,6 +144,26 @@ Load the new kernel for use on panic.
 Specify that the new kernel is of this
 .I type.
 .TP
+.BI \-s\ (\-\-kexec-file-syscall)
+Specify that the new KEXEC_FILE_LOAD syscall should be used exclusively.
+.TP
+.BI \-c\ (\-\-kexec-syscall)
+Specify that the old KEXEC_LOAD syscall should be used exclusively (the default).
+.TP
+.BI \-a\ (\-\-kexec-syscall-auto)
+Try the new KEXEC_FILE_LOAD syscall first and when it is not supported or the
+kernel does not understand the supplied image fall back to the old KEXEC_LOAD
+interface.
+
+There is no one single interface that always works.
+
+KEXEC_FILE_LOAD is required on systems that use locked-down secure boot to
+verify the kernel signature.  KEXEC_LOAD may be also disabled in the kernel
+configuration.
+
+KEXEC_LOAD is required for some kernel image formats and on architectures that
+do not implement KEXEC_FILE_LOAD.
+.TP
 .B \-u\ (\-\-unload)
 Unload the current
 .B kexec
