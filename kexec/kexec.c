@@ -1256,19 +1256,6 @@ int main(int argc, char *argv[])
 	};
 	static const char short_options[] = KEXEC_ALL_OPT_STR;
 
-	/*
-	 * First check if --use-kexec-file-syscall is set. That changes lot of
-	 * things
-	 */
-	while ((opt = getopt_long(argc, argv, short_options,
-				  options, 0)) != -1) {
-		switch(opt) {
-		case OPT_KEXEC_FILE_SYSCALL:
-			do_kexec_file_syscall = 1;
-			break;
-		}
-	}
-
 	/* Reset getopt for the next pass. */
 	opterr = 1;
 	optind = 1;
@@ -1310,8 +1297,7 @@ int main(int argc, char *argv[])
 			do_shutdown = 0;
 			do_sync = 0;
 			do_unload = 1;
-			if (do_kexec_file_syscall)
-				kexec_file_flags |= KEXEC_FILE_UNLOAD;
+			kexec_file_flags |= KEXEC_FILE_UNLOAD;
 			break;
 		case OPT_EXEC:
 			do_load = 0;
@@ -1354,11 +1340,8 @@ int main(int argc, char *argv[])
 			do_exec = 0;
 			do_shutdown = 0;
 			do_sync = 0;
-			if (do_kexec_file_syscall)
-				kexec_file_flags |= KEXEC_FILE_ON_CRASH;
-			else
-				kexec_flags = KEXEC_ON_CRASH;
-			break;
+			kexec_file_flags |= KEXEC_FILE_ON_CRASH;
+			kexec_flags = KEXEC_ON_CRASH;
 		case OPT_MEM_MIN:
 			mem_min = strtoul(optarg, &endptr, 0);
 			if (*endptr) {
@@ -1383,7 +1366,7 @@ int main(int argc, char *argv[])
 			do_reuse_initrd = 1;
 			break;
 		case OPT_KEXEC_FILE_SYSCALL:
-			/* We already parsed it. Nothing to do. */
+			do_kexec_file_syscall = 1;
 			break;
 		case OPT_STATUS:
 			do_status = 1;
