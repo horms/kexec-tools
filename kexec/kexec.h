@@ -220,6 +220,7 @@ extern int file_types;
 #define OPT_PANIC		'p'
 #define OPT_KEXEC_FILE_SYSCALL	's'
 #define OPT_KEXEC_SYSCALL	'c'
+#define OPT_KEXEC_SYSCALL_AUTO	'a'
 #define OPT_STATUS		'S'
 #define OPT_MEM_MIN             256
 #define OPT_MEM_MAX             257
@@ -248,11 +249,12 @@ extern int file_types;
 	{ "reuseinitrd",	0, 0, OPT_REUSE_INITRD }, \
 	{ "kexec-file-syscall",	0, 0, OPT_KEXEC_FILE_SYSCALL }, \
 	{ "kexec-syscall",	0, 0, OPT_KEXEC_SYSCALL }, \
+	{ "kexec-syscall-auto",	0, 0, OPT_KEXEC_SYSCALL_AUTO }, \
 	{ "debug",		0, 0, OPT_DEBUG }, \
 	{ "status",		0, 0, OPT_STATUS }, \
 	{ "print-ckr-size",     0, 0, OPT_PRINT_CKR_SIZE }, \
 
-#define KEXEC_OPT_STR "h?vdfxyluet:pscS"
+#define KEXEC_OPT_STR "h?vdfxyluet:pscaS"
 
 extern void dbgprint_mem_range(const char *prefix, struct memory_range *mr, int nr_mr);
 extern void die(const char *fmt, ...)

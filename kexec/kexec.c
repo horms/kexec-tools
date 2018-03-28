@@ -1007,6 +1007,10 @@ void usage(void)
 	       " -s, --kexec-file-syscall Use file based syscall for kexec operation\n"
 	       " -c, --kexec-syscall  Use the kexec_load syscall for for compatibility\n"
 	       "                      with systems that don't support -s (default)\n"
+	       " -a, --kexec-syscall-auto  Use file based syscall for kexec and fall\n"
+	       "                      back to the compatibility syscall when file based\n"
+	       "                      syscall is not supported or the kernel did not\n"
+	       "                      understand the image\n"
 	       " -d, --debug          Enable debugging to help spot a failure.\n"
 	       " -S, --status         Return 0 if the type (by default crash) is loaded.\n"
 	       "\n"
@@ -1245,6 +1249,7 @@ int main(int argc, char *argv[])
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
 	int do_kexec_file_syscall = 0;
+	int do_kexec_fallback = 0;
 	int do_status = 0;
 	void *entry = 0;
 	char *type = 0;
@@ -1369,9 +1374,15 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_KEXEC_FILE_SYSCALL:
 			do_kexec_file_syscall = 1;
+			do_kexec_fallback = 0;
 			break;
 		case OPT_KEXEC_SYSCALL:
 			do_kexec_file_syscall = 0;
+			do_kexec_fallback = 0;
+			break;
+		case OPT_KEXEC_SYSCALL_AUTO:
+			do_kexec_file_syscall = 1;
+			do_kexec_fallback = 1;
 			break;
 		case OPT_STATUS:
 			do_status = 1;
@@ -1438,7 +1449,7 @@ int main(int argc, char *argv[])
 		}
 	}
 	if (do_kexec_file_syscall) {
-		if (do_load_jump_back_helper)
+		if (do_load_jump_back_helper && !do_kexec_fallback)
 			die("--load-jump-back-helper not supported with kexec_file_load\n");
 		if (kexec_flags & KEXEC_PRESERVE_CONTEXT)
 			die("--load-preserve-context not supported with kexec_file_load\n");
@@ -1452,16 +1463,60 @@ int main(int argc, char *argv[])
 		result = k_status(kexec_flags);
 	}
 	if (do_unload) {
-		if (do_kexec_file_syscall)
+		if (do_kexec_file_syscall) {
 			result = kexec_file_unload(kexec_file_flags);
-		else
+			if ((result == -ENOSYS) && do_kexec_fallback)
+				do_kexec_file_syscall = 0;
+		}
+		if (!do_kexec_file_syscall)
 			result = k_unload(kexec_flags);
 	}
 	if (do_load && (result == 0)) {
-		if (do_kexec_file_syscall)
+		if (do_kexec_file_syscall) {
 			result = do_kexec_file_load(fileind, argc, argv,
 						 kexec_file_flags);
-		else
+			if (do_kexec_fallback) switch (result) {
+				/*
+				 * Something failed with signature verification.
+				 * Reject the image.
+				 */
+				case -ELIBBAD:
+				case -EKEYREJECTED:
+				case -ENOPKG:
+				case -ENOKEY:
+				case -EBADMSG:
+				case -EMSGSIZE:
+					/*
+					 * By default reject or do nothing if
+					 * succeded
+					 */
+				default: break;
+				case -ENOSYS: /* not implemented */
+					/*
+					 * Parsing image or other options failed
+					 * The image may be invalid or image
+					 * type may not supported by kernel so
+					 * retry parsing in kexec-tools.
+					 */
+				case -EINVAL:
+				case -ENOEXEC:
+					 /*
+					  * ENOTSUP can be unsupported image
+					  * type or unsupported PE signature
+					  * wrapper type, duh
+					  *
+					  * The kernel sometimes wrongly
+					  * returns ENOTSUPP (524) - ignore
+					  * that. It is not supposed to be seen
+					  * by userspace so seeing it is a
+					  * kernel bug
+					  */
+				case -ENOTSUP:
+					do_kexec_file_syscall = 0;
+					break;
+			}
+		}
+		if (!do_kexec_file_syscall)
 			result = my_load(type, fileind, argc, argv,
 						kexec_flags, entry);
 	}
