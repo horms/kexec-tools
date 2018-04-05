@@ -1349,6 +1349,7 @@ int main(int argc, char *argv[])
 			do_sync = 0;
 			kexec_file_flags |= KEXEC_FILE_ON_CRASH;
 			kexec_flags = KEXEC_ON_CRASH;
+			break;
 		case OPT_MEM_MIN:
 			mem_min = strtoul(optarg, &endptr, 0);
 			if (*endptr) {
