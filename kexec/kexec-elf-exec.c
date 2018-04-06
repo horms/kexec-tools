@@ -63,9 +63,13 @@ int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info)
 
 	/* If I have a dynamic executable find it's size
 	 * and then find a location for it in memory.
+	 * Note on arm64:
+	 * arm64's vmlinux has virtual address in physical address
+	 * field of PT_LOAD segments. So the following validity check
+	 * and relocation makes no sense on arm64.
 	 */
 	base = 0;
-	if (ehdr->e_type == ET_DYN) {
+	if ((ehdr->e_machine != EM_AARCH64) && (ehdr->e_type == ET_DYN)) {
 		unsigned long first, last, align;
 		first = ULONG_MAX;
 		last  = 0;
