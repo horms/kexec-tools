@@ -8,6 +8,7 @@
 
 struct sha256_region sha256_regions[SHA256_REGIONS] = {};
 sha256_digest_t sha256_digest = { };
+int skip_checks = 0;
 
 int verify_sha256_digest(void)
 {
@@ -43,7 +44,7 @@ void purgatory(void)
 {
 	printf("I'm in purgatory\n");
 	setup_arch();
-	if (verify_sha256_digest()) {
+	if (!skip_checks && verify_sha256_digest()) {
 		for(;;) {
 			/* loop forever */
 		}

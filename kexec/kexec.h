@@ -166,6 +166,8 @@ struct kexec_info {
 	int initrd_fd;
 	char *command_line;
 	int command_line_len;
+
+	int skip_checks;
 };
 
 struct arch_map_entry {
@@ -211,6 +213,7 @@ extern int file_types;
 #define OPT_VERSION		'v'
 #define OPT_DEBUG		'd'
 #define OPT_FORCE		'f'
+#define OPT_NOCHECKS		'i'
 #define OPT_NOIFDOWN		'x'
 #define OPT_NOSYNC		'y'
 #define OPT_EXEC		'e'
@@ -234,6 +237,7 @@ extern int file_types;
 	{ "help",		0, 0, OPT_HELP }, \
 	{ "version",		0, 0, OPT_VERSION }, \
 	{ "force",		0, 0, OPT_FORCE }, \
+	{ "no-checks",		0, 0, OPT_NOCHECKS }, \
 	{ "no-ifdown",		0, 0, OPT_NOIFDOWN }, \
 	{ "no-sync",		0, 0, OPT_NOSYNC }, \
 	{ "load",		0, 0, OPT_LOAD }, \
@@ -254,7 +258,7 @@ extern int file_types;
 	{ "status",		0, 0, OPT_STATUS }, \
 	{ "print-ckr-size",     0, 0, OPT_PRINT_CKR_SIZE }, \
 
-#define KEXEC_OPT_STR "h?vdfxyluet:pscaS"
+#define KEXEC_OPT_STR "h?vdfixyluet:pscaS"
 
 extern void dbgprint_mem_range(const char *prefix, struct memory_range *mr, int nr_mr);
 extern void die(const char *fmt, ...)
