@@ -14,7 +14,7 @@ void add_usable_mem_rgns(unsigned long long base, unsigned long long size);
 #define VMALLOCBASE     0xD000000000000000ULL
 
 #define __pa(x)         ((unsigned long)(x)-PAGE_OFFSET)
-#define MAXMEM          (-KERNELBASE-VMALLOCBASE)
+#define MAXMEM          (-(unsigned long)(KERNELBASE-VMALLOCBASE))
 
 #define COMMAND_LINE_SIZE       2048 /* from kernel */
 /* Backup Region, First 64K of System RAM. */
