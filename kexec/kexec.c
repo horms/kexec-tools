@@ -20,6 +20,7 @@
  */
 
 #define _GNU_SOURCE
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -1235,7 +1236,7 @@ static void print_crashkernel_region_size(void)
 		return;
 	}
 
-	printf("%lu\n", (start != end) ? (end - start + 1) : 0UL);
+	printf("%" PRIu64 "\n", (start != end) ? (end - start + 1) : 0UL);
 }
 
 int main(int argc, char *argv[])
