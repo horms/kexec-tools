@@ -29,7 +29,7 @@ extern int debug;
 
 void putchar(int c)
 {
-	char buff[16];
+	char buff[16] = "";
 	unsigned long *lbuf = (unsigned long *)buff;
 
 	if (!debug) /* running on non pseries */
