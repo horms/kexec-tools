@@ -104,7 +104,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *sym,
 		break;
 
 	case R_PPC64_REL32:
-		*(uint32_t *)location = value - (uint32_t)(uint64_t)location;
+		*(uint32_t *)location = value - (uint32_t)location;
 		break;
 
 	case R_PPC64_TOC:
