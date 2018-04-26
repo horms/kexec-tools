@@ -15,6 +15,11 @@
 #include <linux/elf-em.h>
 #include <elf.h>
 
+#include <unistd.h>
+#include <syscall.h>
+#include <errno.h>
+#include <linux/random.h>
+
 #include "kexec.h"
 #include "kexec-arm64.h"
 #include "crashdump.h"
@@ -392,11 +397,13 @@ static int fdt_setprop_range(void *fdt, int nodeoffset,
 static int setup_2nd_dtb(struct dtb *dtb, char *command_line, int on_crash)
 {
 	uint32_t address_cells, size_cells;
-	int range_len;
-	int nodeoffset;
+	uint64_t fdt_val64;
+	uint64_t *prop;
 	char *new_buf = NULL;
+	int len, range_len;
+	int nodeoffset;
 	int new_size;
-	int result;
+	int result, kaslr_seed;
 
 	result = fdt_check_header(dtb->buf);
 
@@ -407,47 +414,103 @@ static int setup_2nd_dtb(struct dtb *dtb, char *command_line, int on_crash)
 
 	result = set_bootargs(dtb, command_line);
 
-	if (on_crash) {
-		/* determine #address-cells and #size-cells */
-		result = get_cells_size(dtb->buf, &address_cells, &size_cells);
-		if (result) {
-			fprintf(stderr,
-				"kexec: cannot determine cells-size.\n");
-			result = -EINVAL;
-			goto on_error;
-		}
+	/* determine #address-cells and #size-cells */
+	result = get_cells_size(dtb->buf, &address_cells, &size_cells);
+	if (result) {
+		fprintf(stderr, "kexec: cannot determine cells-size.\n");
+		result = -EINVAL;
+		goto on_error;
+	}
 
-		if (!cells_size_fitted(address_cells, size_cells,
-					&elfcorehdr_mem)) {
-			fprintf(stderr,
-				"kexec: elfcorehdr doesn't fit cells-size.\n");
-			result = -EINVAL;
-			goto on_error;
-		}
+	if (!cells_size_fitted(address_cells, size_cells,
+				&elfcorehdr_mem)) {
+		fprintf(stderr, "kexec: elfcorehdr doesn't fit cells-size.\n");
+		result = -EINVAL;
+		goto on_error;
+	}
 
-		if (!cells_size_fitted(address_cells, size_cells,
-					&crash_reserved_mem)) {
-			fprintf(stderr,
-				"kexec: usable memory range doesn't fit cells-size.\n");
-			result = -EINVAL;
-			goto on_error;
-		}
+	if (!cells_size_fitted(address_cells, size_cells,
+				&crash_reserved_mem)) {
+		fprintf(stderr, "kexec: usable memory range doesn't fit cells-size.\n");
+		result = -EINVAL;
+		goto on_error;
+	}
 
-		/* duplicate dt blob */
-		range_len = sizeof(uint32_t) * (address_cells + size_cells);
-		new_size = fdt_totalsize(dtb->buf)
-			+ fdt_prop_len(PROP_ELFCOREHDR, range_len)
-			+ fdt_prop_len(PROP_USABLE_MEM_RANGE, range_len);
+	/* duplicate dt blob */
+	range_len = sizeof(uint32_t) * (address_cells + size_cells);
+	new_size = fdt_totalsize(dtb->buf)
+		+ fdt_prop_len(PROP_ELFCOREHDR, range_len)
+		+ fdt_prop_len(PROP_USABLE_MEM_RANGE, range_len);
 
-		new_buf = xmalloc(new_size);
-		result = fdt_open_into(dtb->buf, new_buf, new_size);
-		if (result) {
-			dbgprintf("%s: fdt_open_into failed: %s\n", __func__,
+	new_buf = xmalloc(new_size);
+	result = fdt_open_into(dtb->buf, new_buf, new_size);
+	if (result) {
+		dbgprintf("%s: fdt_open_into failed: %s\n", __func__,
 				fdt_strerror(result));
-			result = -ENOSPC;
+		result = -ENOSPC;
+		goto on_error;
+	}
+
+	/* fixup 'kaslr-seed' with a random value, if supported */
+	nodeoffset = fdt_path_offset(new_buf, "/chosen");
+	prop = fdt_getprop_w(new_buf, nodeoffset,
+			"kaslr-seed", &len);
+	if (!prop || len != sizeof(uint64_t)) {
+		dbgprintf("%s: no kaslr-seed found\n",
+				__func__);
+		/* for kexec warm reboot case, we don't need to fixup
+		 * other dtb properties
+		 */
+		if (!on_crash) {
+			dump_reservemap(dtb);
+			if (new_buf)
+				free(new_buf);
+
+			return result;
+		}
+	} else {
+		kaslr_seed = fdt64_to_cpu(*prop);
+
+		/* kaslr_seed must be wiped clean by primary
+		 * kernel during boot
+		 */
+		if (kaslr_seed != 0) {
+			dbgprintf("%s: kaslr-seed is not wiped to 0.\n",
+					__func__);
+			result = -EINVAL;
 			goto on_error;
 		}
 
+		/*
+		 * Invoke the getrandom system call with
+		 * GRND_NONBLOCK, to make sure we
+		 * have a valid random seed to pass to the
+		 * secondary kernel.
+		 */
+		result = syscall(SYS_getrandom, &fdt_val64,
+				sizeof(fdt_val64),
+				GRND_NONBLOCK);
+
+		if(result == -1) {
+			dbgprintf("%s: Reading random bytes failed.\n",
+					__func__);
+			result = -EINVAL;
+			goto on_error;
+		}
+
+		nodeoffset = fdt_path_offset(new_buf, "/chosen");
+		result = fdt_setprop_inplace(new_buf,
+				nodeoffset, "kaslr-seed",
+				&fdt_val64, sizeof(fdt_val64));
+		if (result) {
+			dbgprintf("%s: fdt_setprop failed: %s\n",
+					__func__, fdt_strerror(result));
+			result = -EINVAL;
+			goto on_error;
+		}
+	}
+
+	if (on_crash) {
 		/* add linux,elfcorehdr */
 		nodeoffset = fdt_path_offset(new_buf, "/chosen");
 		result = fdt_setprop_range(new_buf, nodeoffset,
@@ -455,7 +518,7 @@ static int setup_2nd_dtb(struct dtb *dtb, char *command_line, int on_crash)
 				address_cells, size_cells);
 		if (result) {
 			dbgprintf("%s: fdt_setprop failed: %s\n", __func__,
-				fdt_strerror(result));
+					fdt_strerror(result));
 			result = -EINVAL;
 			goto on_error;
 		}
@@ -467,18 +530,17 @@ static int setup_2nd_dtb(struct dtb *dtb, char *command_line, int on_crash)
 				address_cells, size_cells);
 		if (result) {
 			dbgprintf("%s: fdt_setprop failed: %s\n", __func__,
-				fdt_strerror(result));
+					fdt_strerror(result));
 			result = -EINVAL;
 			goto on_error;
 		}
-
-		fdt_pack(new_buf);
-		dtb->buf = new_buf;
-		dtb->size = fdt_totalsize(new_buf);
 	}
 
-	dump_reservemap(dtb);
+	fdt_pack(new_buf);
+	dtb->buf = new_buf;
+	dtb->size = fdt_totalsize(new_buf);
 
+	dump_reservemap(dtb);
 
 	return result;
 
