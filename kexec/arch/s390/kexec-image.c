@@ -22,6 +22,7 @@
 #include "../../kexec/crashdump.h"
 #include "kexec-s390.h"
 #include <arch/options.h>
+#include <fcntl.h>
 
 static uint64_t crash_base, crash_end;
 static char command_line[COMMAND_LINESIZE];
@@ -45,6 +46,48 @@ int command_line_add(const char *str)
 	return 0;
 }
 
+int image_s390_load_file(int argc, char **argv, struct kexec_info *info)
+{
+	const char *ramdisk = NULL;
+	int opt;
+
+	static const struct option options[] =
+		{
+			KEXEC_OPTIONS
+			{"command-line",     1, 0, OPT_APPEND},
+			{"append",           1, 0, OPT_APPEND},
+			{"initrd",           1, 0, OPT_RAMDISK},
+			{0,                  0, 0, 0},
+		};
+	static const char short_options[] = KEXEC_OPT_STR "";
+
+	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
+		switch(opt) {
+		case OPT_APPEND:
+			if (command_line_add(optarg))
+				return -1;
+			break;
+		case OPT_RAMDISK:
+			ramdisk = optarg;
+			break;
+		}
+	}
+
+	if (ramdisk) {
+		info->initrd_fd = open(ramdisk, O_RDONLY);
+		if (info->initrd_fd == -1) {
+			fprintf(stderr, "Could not open initrd file %s:%s\n",
+					ramdisk, strerror(errno));
+			return -1;
+		}
+	}
+
+	info->command_line = command_line;
+	info->command_line_len = strlen (command_line) + 1;
+
+	return 0;
+}
+
 int
 image_s390_load(int argc, char **argv, const char *kernel_buf,
 		off_t kernel_size, struct kexec_info *info)
@@ -55,6 +98,9 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	off_t ramdisk_len;
 	unsigned int ramdisk_origin;
 	int opt;
+
+	if (info->file_mode)
+		return image_s390_load_file(argc, argv, info);
 
 	static const struct option options[] =
 		{
