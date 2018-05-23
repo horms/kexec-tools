@@ -689,7 +689,7 @@ static void dump_dmesg_structured(int fd)
 		 */
 		loglen = struct_val_u16(buf, log_offset_len);
 		if (!loglen)
-			current_idx = log_first_idx;
+			current_idx = 0;
 		else
 			/* Move to next record */
 			current_idx += loglen;
