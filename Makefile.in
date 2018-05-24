@@ -182,9 +182,20 @@ BINARIES_i386:=$(KEXEC_TEST)
 BINARIES_x86_64:=$(KEXEC_TEST)
 BINARIES:=$(KEXEC) $(KDUMP) $(VMCORE_DMESG) $(BINARIES_$(ARCH))
 
-TARGETS:=$(BINARIES) $(MAN_PAGES)
+UNINSTALL_KDUMP = $(sbindir)/kdump
+UNINSTALL_KDUMP_MANPAGE = $(mandir)/man8/kdump.8
+UNINSTALL_KEXEC = $(sbindir)/kexec
+UNINSTALL_KEXEC_MANPAGE = $(mandir)/man8/kexec.8
+UNINSTALL_VMCORE_DMESG = $(sbindir)/vmcore-dmesg
+UNINSTALL_VMCORE_DMESG_MANPAGE = $(mandir)/man8/vmcore-dmesg.8
 
+TARGETS:=$(BINARIES) $(MAN_PAGES)
 targets: $(TARGETS)
+
+UNINSTALL_TARGETS:=$(UNINSTALL_KDUMP) $(UNINSTALL_KDUMP_MANPAGE) \
+		   $(UNINSTALL_KEXEC) $(UNINSTALL_KEXEC_MANPAGE) \
+		   $(UNINSTALL_VMCORE_DMESG) $(UNINSTALL_VMCORE_DMESG_MANPAGE)
+uninstall-targets: $(UNINSTALL_TARGETS)
 
 Makefile: Makefile.in config.status
 	./config.status
@@ -218,6 +229,7 @@ echo::
 	@echo ARCH=$(ARCH)
 	@echo BINARIES=$(BINARIES)
 	@echo TARGETS=$(TARGETS)
+	@echo UNINSTALL_TARGETS=$(UNINSTALL_TARGETS)
 	@echo CC=$(CC)
 	@echo AR=$(AR)
 	@echo LD=$(LD)
@@ -323,5 +335,72 @@ install: $(TARGETS)
 		fi; \
 	done
 
-.PHONY: echo install all targets clean dist-clean distclean \
+uninstall:
+	UINSTALL_LIST='$(UNINSTALL_TARGETS)'; for file in $$UINSTALL_LIST ; do \
+		if test `$(DIRNAME) $$file` =     "$(sbindir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(bindir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(libexecdir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(datadir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(sysconfdir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(sharedstatedir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(localstatedir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(libdir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(infodir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man1" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man2" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man3" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man4" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man5" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man6" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man7" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(mandir)/man8" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(includedir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(pkgdatadir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(pkglibdir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+		if test `$(DIRNAME) $$file` =     "$(pkgincludedir)" ; then \
+			rm -rf $$file ; \
+		fi; \
+	done
+
+.PHONY: echo install uninstall all targets uninstall-targets clean dist-clean distclean \
 	maintainer-clean maintainerclean tarball rpm
