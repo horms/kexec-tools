@@ -155,11 +155,6 @@ include $(srcdir)/purgatory/Makefile
 #
 include $(srcdir)/kexec/Makefile
 
-
-# kdump (read a crashdump from memory)
-#
-include $(srcdir)/kdump/Makefile
-
 # vmcore-dmesg (read dmesg from a vmcore)
 #
 include $(srcdir)/vmcore-dmesg/Makefile
@@ -177,10 +172,10 @@ SRCS:= $(dist)
 PSRCS:=$(foreach s, $(SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 PGSRCS:=$(foreach s, $(GENERATED_SRCS), $(PACKAGE_NAME)-$(PACKAGE_VERSION)/$(s))
 
-MAN_PAGES:=$(KEXEC_MANPAGE) $(KDUMP_MANPAGE) $(VMCORE_DMESG_MANPAGE)
+MAN_PAGES:=$(KEXEC_MANPAGE) $(VMCORE_DMESG_MANPAGE)
 BINARIES_i386:=$(KEXEC_TEST)
 BINARIES_x86_64:=$(KEXEC_TEST)
-BINARIES:=$(KEXEC) $(KDUMP) $(VMCORE_DMESG) $(BINARIES_$(ARCH))
+BINARIES:=$(KEXEC) $(VMCORE_DMESG) $(BINARIES_$(ARCH))
 
 UNINSTALL_KDUMP = $(sbindir)/kdump
 UNINSTALL_KDUMP_MANPAGE = $(mandir)/man8/kdump.8
