@@ -15,7 +15,7 @@
 
 #define BOOT_BLOCK_VERSION 17
 #define BOOT_BLOCK_LAST_COMP_VERSION 16
-#define COMMAND_LINE_SIZE 512
+#define COMMAND_LINE_SIZE 2048 /* from kernel */
 
 #define KiB(x) ((x) * 1024UL)
 #define MiB(x) (KiB(x) * 1024UL)
