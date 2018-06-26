@@ -598,8 +598,15 @@ int arm64_load_other_segments(struct kexec_info *info,
 	char command_line[COMMAND_LINE_SIZE] = "";
 
 	if (arm64_opts.command_line) {
+		if (strlen(arm64_opts.command_line) >
+		    sizeof(command_line) - 1) {
+			fprintf(stderr,
+				"Kernel command line too long for kernel!\n");
+			return EFAILED;
+		}
+
 		strncpy(command_line, arm64_opts.command_line,
-			sizeof(command_line));
+			sizeof(command_line) - 1);
 		command_line[sizeof(command_line) - 1] = 0;
 	}
 
