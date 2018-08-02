@@ -172,6 +172,28 @@ struct multiboot_info
 	uint16_t vbe_interface_seg;
 	uint16_t vbe_interface_off;
 	uint16_t vbe_interface_len;
+
+	uint64_t framebuffer_addr;
+	uint32_t framebuffer_pitch;
+	uint32_t framebuffer_width;
+	uint32_t framebuffer_height;
+	uint8_t  framebuffer_bpp;
+	uint8_t	 framebuffer_type;
+
+	union {
+		struct {
+			uint32_t	framebuffer_palette_addr;
+			uint16_t	framebuffer_palette_num_color;
+		};
+		struct {
+			uint8_t		framebuffer_red_field_position;
+			uint8_t		framebuffer_red_mask_size;
+			uint8_t		framebuffer_green_field_position;
+			uint8_t		framebuffer_green_mask_size;
+			uint8_t		framebuffer_blue_field_position;
+			uint8_t		framebuffer_blue_mask_size;
+		};
+	};
 };
 
 /*
@@ -211,6 +233,11 @@ struct multiboot_info
 
 /* Is there video information?  */
 #define MB_INFO_VIDEO_INFO		0x00000800
+#define MB_INFO_FRAMEBUFFER_INFO	0x00001000
+
+#define MB_FRAMEBUFFER_TYPE_INDEXED	0
+#define MB_FRAMEBUFFER_TYPE_RGB		1
+#define MB_FRAMEBUFFER_TYPE_EGA_TEXT	2
 
 /*
  *  The following value must be present in the EAX register.

@@ -55,6 +55,12 @@
 #include <x86/mb_header.h>
 #include <x86/mb_info.h>
 
+/* Framebuffer */
+#include <sys/ioctl.h>
+#include <linux/fb.h>
+
+extern struct arch_options_t arch_options;
+
 /* Static storage */
 static char headerbuf[MULTIBOOT_SEARCH];
 static struct multiboot_header *mbh = NULL;
@@ -124,16 +130,6 @@ int multiboot_x86_probe(const char *buf, off_t buf_len)
 				"don't understand.  Sorry.\n");
 			return -1;
 		} 
-		if (mbh->flags & MULTIBOOT_VIDEO_MODE) { 
-			/* Asked for screen mode information */
-			/* XXX carry on regardless */
-			fprintf(stderr, 
-				"BEWARE!  Found a multiboot header which asks "
-				"for screen mode information.\n"
-				"BEWARE!  I am NOT supplying screen mode "
-                                "information, but loading it regardless.\n");
-			
-		}
 		/* Bootable */
 		return 0;
 	}
@@ -149,6 +145,76 @@ void multiboot_x86_usage(void)
 	printf("    --reuse-cmdline       	 Use kernel command line from running system.\n");
 	printf("    --module=\"MOD arg1 arg2...\"  Load module MOD with command-line \"arg1...\"\n");
 	printf("                                 (can be used multiple times).\n");
+}
+
+
+static int framebuffer_info(struct multiboot_info *mbi)
+{
+	struct fb_fix_screeninfo info;
+	struct fb_var_screeninfo mode;
+	int fd;
+
+	/* check if purgatory will reset to standard ega text mode */
+	if (arch_options.reset_vga || arch_options.console_vga) {
+		mbi->framebuffer_type = MB_FRAMEBUFFER_TYPE_EGA_TEXT;
+		mbi->framebuffer_addr = 0xb8000;
+		mbi->framebuffer_pitch = 80*2;
+		mbi->framebuffer_width = 80;
+		mbi->framebuffer_height = 25;
+		mbi->framebuffer_bpp = 16;
+
+		mbi->flags |= MB_INFO_FRAMEBUFFER_INFO;
+		return 0;
+	}
+
+	/* use current graphics framebuffer settings */
+	fd = open("/dev/fb0", O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "can't open /dev/fb0: %s\n", strerror(errno));
+		return -1;
+	}
+	if (ioctl(fd, FBIOGET_FSCREENINFO, &info) < 0){
+		fprintf(stderr, "can't get screeninfo: %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+	if (ioctl(fd, FBIOGET_VSCREENINFO, &mode) < 0){
+		fprintf(stderr, "can't get modeinfo: %s\n", strerror(errno));
+		close(fd);
+		return -1;
+	}
+	close(fd);
+
+	if (info.smem_start == 0 || info.smem_len == 0) {
+		fprintf(stderr, "can't get linerar framebuffer address\n");
+		return -1;
+	}
+
+	if (info.type != FB_TYPE_PACKED_PIXELS) {
+		fprintf(stderr, "unsupported framebuffer type\n");
+		return -1;
+	}
+
+	if (info.visual != FB_VISUAL_TRUECOLOR) {
+		fprintf(stderr, "unsupported framebuffer visual\n");
+		return -1;
+	}
+
+	mbi->framebuffer_type = MB_FRAMEBUFFER_TYPE_RGB;
+	mbi->framebuffer_addr = info.smem_start;
+	mbi->framebuffer_pitch = info.line_length;
+	mbi->framebuffer_width = mode.xres;
+	mbi->framebuffer_height = mode.yres;
+	mbi->framebuffer_bpp = mode.bits_per_pixel;
+	mbi->framebuffer_red_field_position = mode.red.offset;
+	mbi->framebuffer_red_mask_size = mode.red.length;
+	mbi->framebuffer_green_field_position = mode.green.offset;
+	mbi->framebuffer_green_mask_size = mode.green.length;
+	mbi->framebuffer_blue_field_position = mode.blue.offset;
+	mbi->framebuffer_blue_mask_size = mode.blue.length;
+
+	mbi->flags |= MB_INFO_FRAMEBUFFER_INFO;
+	return 0;
 }
 
 int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
@@ -336,6 +402,12 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		mbi->mem_upper = MIN(mem_upper>>10, 0xffffffff);
 			
 		/* done */
+	}
+
+	/* Video */
+	if (mbh->flags & MULTIBOOT_VIDEO_MODE) {
+		if (framebuffer_info(mbi) < 0)
+			fprintf(stderr, "not providing framebuffer information.\n");
 	}
 
 	/* Load modules */
