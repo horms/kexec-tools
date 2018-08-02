@@ -286,7 +286,8 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 		mmap[i].base_addr_high  = range[i].start >> 32;
 		mmap[i].length_low     = length & 0xffffffff;
 		mmap[i].length_high    = length >> 32;
-		if (range[i].type == RANGE_RAM) {
+		switch (range[i].type) {
+		case RANGE_RAM:
 			mmap[i].Type = 1; /* RAM */
 			/*
                          * Is this the "low" memory?  Can't just test
@@ -304,7 +305,15 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 			if ((range[i].start <= 0x100000)
 			    && (range[i].end > mem_upper + 0x100000))
 				mem_upper = range[i].end - 0x100000;
-		} else {
+			break;
+		case RANGE_ACPI:
+			mmap[i].Type = 3;
+			break;
+		case RANGE_ACPI_NVS:
+			mmap[i].Type = 4;
+			break;
+		case RANGE_RESERVED:
+		default:
 			mmap[i].Type = 2;  /* Not RAM (reserved) */
 		}
 	}
