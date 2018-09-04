@@ -149,6 +149,13 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 
 	if (arch_options.dtb_file) {
 		dtb_buf = slurp_file(arch_options.dtb_file, &dtb_length);
+		/* For systems using DTB as opposed to relying on the FDT
+		 * created below, we need to pass command line options
+		 * into the command line in the DTB. Otherwise, non-Octeon
+		 * systems will need to patch Linux kernel to pass the new
+		 * cmdline like Octeon does.
+		 */
+		dtb_set_bootargs(&dtb_buf, &dtb_length, cmdline_buf + strlen(CMDLINE_PREFIX));
 	} else {
 		create_flatten_tree(&dtb_buf, &dtb_length, cmdline_buf + strlen(CMDLINE_PREFIX));
 	}
