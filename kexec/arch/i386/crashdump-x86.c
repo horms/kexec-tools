@@ -289,6 +289,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 			type = RANGE_PMEM;
 		} else if(memcmp(str,"reserved\n",9) == 0 ) {
 			type = RANGE_RESERVED;
+		} else if (memcmp(str, "Reserved\n", 9) == 0) {
+			type = RANGE_RESERVED;
 		} else if (memcmp(str, "GART\n", 5) == 0) {
 			gart_start = start;
 			gart_end = end;
