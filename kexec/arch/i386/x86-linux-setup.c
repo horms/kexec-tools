@@ -595,8 +595,8 @@ static int get_efi_runtime_map(struct efi_mem_descriptor **map)
 	closedir(dirp);
 	return nr_maps;
 err_out:
-	if (map)
-		free(map);
+	if (*map)
+		free(*map);
 	closedir(dirp);
 	return 0;
 }
