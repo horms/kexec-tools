@@ -492,10 +492,21 @@ static int setup_2nd_dtb(struct dtb *dtb, char *command_line, int on_crash)
 				GRND_NONBLOCK);
 
 		if(result == -1) {
-			dbgprintf("%s: Reading random bytes failed.\n",
+			fprintf(stderr, "%s: Reading random bytes failed.\n",
 					__func__);
-			result = -EINVAL;
-			goto on_error;
+
+			/* Currently on some arm64 platforms this
+			 * 'getrandom' system call fails while booting
+			 * the platform.
+			 *
+			 * In case, this happens at best we can set
+			 * the 'kaslr_seed' as 0, indicating that the
+			 * 2nd kernel will be booted with a 'nokaslr'
+			 * like behaviour.
+			 */
+			fdt_val64 = 0UL;
+			dbgprintf("%s: Disabling KASLR in secondary kernel.\n",
+					__func__);
 		}
 
 		nodeoffset = fdt_path_offset(new_buf, "/chosen");
