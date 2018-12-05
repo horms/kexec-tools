@@ -107,7 +107,10 @@ struct x86_linux_param_header {
 	uint16_t vesapm_seg;			/* 0x2e */
 	uint16_t vesapm_off;			/* 0x30 */
 	uint16_t pages;				/* 0x32 */
-	uint8_t  reserved4[12];			/* 0x34 -- 0x3f reserved for future expansion */
+	uint16_t vesa_attributes;		/* 0x34 */
+	uint32_t capabilities;			/* 0x36 */
+	uint32_t ext_lfb_base;			/* 0x3a */
+	uint8_t  reserved4[2];			/* 0x3e -- 0x3f reserved for future expansion */
 
 	struct apm_bios_info apm_bios_info;	/* 0x40 */
 	struct drive_info_struct drive_info;	/* 0x80 */
@@ -199,7 +202,7 @@ struct x86_linux_param_header {
 	struct 	edd_info eddbuf[EDDMAXNR];	/* 0xd00 */
 						/* 0xeec */
 #define COMMAND_LINE_SIZE 2048
-};
+} __attribute__((packed));
 
 struct x86_linux_faked_param_header {
 	struct x86_linux_param_header hdr;	/* 0x00 */
