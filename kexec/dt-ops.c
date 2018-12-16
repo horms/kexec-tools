@@ -80,15 +80,16 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 	}
 
 	nodeoffset = fdt_path_offset(new_dtb, node);
-	
+
 	if (nodeoffset == -FDT_ERR_NOTFOUND) {
-		result = fdt_add_subnode(new_dtb, nodeoffset, node);
+		result = fdt_add_subnode(new_dtb, 0, node);
 
 		if (result < 0) {
 			dbgprintf("%s: fdt_add_subnode failed: %s\n", __func__,
 				fdt_strerror(result));
 			goto on_error;
 		}
+		nodeoffset = result;
 	} else if (nodeoffset < 0) {
 		dbgprintf("%s: fdt_path_offset failed: %s\n", __func__,
 			fdt_strerror(nodeoffset));
