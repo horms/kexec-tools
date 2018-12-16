@@ -413,6 +413,11 @@ static int setup_2nd_dtb(struct dtb *dtb, char *command_line, int on_crash)
 	}
 
 	result = set_bootargs(dtb, command_line);
+	if (result) {
+		fprintf(stderr, "kexec: cannot set bootargs.\n");
+		result = -EINVAL;
+		goto on_error;
+	}
 
 	/* determine #address-cells and #size-cells */
 	result = get_cells_size(dtb->buf, &address_cells, &size_cells);
