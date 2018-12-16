@@ -8,7 +8,7 @@
 #include "kexec.h"
 #include "dt-ops.h"
 
-static const char n_chosen[] = "/chosen";
+static const char n_chosen[] = "chosen";
 
 static const char p_bootargs[] = "bootargs";
 static const char p_initrd_start[] = "linux,initrd-start";
@@ -58,6 +58,7 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 	int nodeoffset;
 	void *new_dtb;
 	int new_size;
+	char *new_node = NULL;
 
 	value_len = FDT_TAGALIGN(value_len);
 
@@ -79,7 +80,16 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 		goto on_error;
 	}
 
-	nodeoffset = fdt_path_offset(new_dtb, node);
+	new_node = malloc(strlen("/") + strlen(node) + 1);
+	if (!new_node) {
+		dbgprintf("%s: malloc failed\n", __func__);
+		return -ENOMEM;
+	}
+
+	strcpy(new_node, "/");
+	strcat(new_node, node);
+	
+	nodeoffset = fdt_path_offset(new_dtb, new_node);
 
 	if (nodeoffset == -FDT_ERR_NOTFOUND) {
 		result = fdt_add_subnode(new_dtb, 0, node);
@@ -122,17 +132,29 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 
 on_error:
 	free(new_dtb);
+	free(new_node);
 	return result;
 }
 
 int dtb_delete_property(char *dtb, const char *node, const char *prop)
 {
-	int result;
-	int nodeoffset = fdt_path_offset(dtb, node);
+	int result, nodeoffset;
+	char *new_node = NULL;
 
+	new_node = malloc(strlen("/") + strlen(node) + 1);
+	if (!new_node) {
+		dbgprintf("%s: malloc failed\n", __func__);
+		return -ENOMEM;
+	}
+
+	strcpy(new_node, "/");
+	strcat(new_node, node);
+
+	nodeoffset = fdt_path_offset(dtb, new_node);
 	if (nodeoffset < 0) {
 		dbgprintf("%s: fdt_path_offset failed: %s\n", __func__,
 			fdt_strerror(nodeoffset));
+		free(new_node);
 		return nodeoffset;
 	}
 
@@ -142,5 +164,6 @@ int dtb_delete_property(char *dtb, const char *node, const char *prop)
 		dbgprintf("%s: fdt_delprop failed: %s\n", __func__,
 			fdt_strerror(nodeoffset));
 
+	free(new_node);
 	return result;
 }
