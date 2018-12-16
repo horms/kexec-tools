@@ -84,7 +84,7 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 	if (nodeoffset == -FDT_ERR_NOTFOUND) {
 		result = fdt_add_subnode(new_dtb, nodeoffset, node);
 
-		if (result) {
+		if (result < 0) {
 			dbgprintf("%s: fdt_add_subnode failed: %s\n", __func__,
 				fdt_strerror(result));
 			goto on_error;
