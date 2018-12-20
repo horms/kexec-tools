@@ -14,6 +14,7 @@
 #include <sys/stat.h>
 #include <linux/elf-em.h>
 #include <elf.h>
+#include <elf_info.h>
 
 #include <unistd.h>
 #include <syscall.h>
@@ -37,6 +38,21 @@
 #define PROP_SIZE_CELLS "#size-cells"
 #define PROP_ELFCOREHDR "linux,elfcorehdr"
 #define PROP_USABLE_MEM_RANGE "linux,usable-memory-range"
+
+#define PAGE_OFFSET_36 ((0xffffffffffffffffUL) << 36)
+#define PAGE_OFFSET_39 ((0xffffffffffffffffUL) << 39)
+#define PAGE_OFFSET_42 ((0xffffffffffffffffUL) << 42)
+#define PAGE_OFFSET_47 ((0xffffffffffffffffUL) << 47)
+#define PAGE_OFFSET_48 ((0xffffffffffffffffUL) << 48)
+
+/* Global flag which indicates that we have tried reading
+ * PHYS_OFFSET from 'kcore' already.
+ */
+static bool try_read_phys_offset_from_kcore = false;
+
+/* Machine specific details. */
+static int va_bits;
+static unsigned long page_offset;
 
 /* Global varables the core kexec routines expect. */
 
@@ -755,6 +771,126 @@ void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
 	add_segment_phys_virt(info, buf, bufsz, base, memsz, 1);
 }
 
+static inline void set_phys_offset(uint64_t v, char *set_method)
+{
+	if (arm64_mem.phys_offset == arm64_mem_ngv
+		|| v < arm64_mem.phys_offset) {
+		arm64_mem.phys_offset = v;
+		dbgprintf("%s: phys_offset : %016lx (method : %s)\n",
+				__func__, arm64_mem.phys_offset,
+				set_method);
+	}
+}
+
+/**
+ * get_va_bits - Helper for getting VA_BITS
+ */
+
+static int get_va_bits(void)
+{
+	unsigned long long stext_sym_addr = get_kernel_sym("_stext");
+
+	if (stext_sym_addr == 0) {
+		fprintf(stderr, "Can't get the symbol of _stext.\n");
+		return -1;
+	}
+
+	/* Derive va_bits as per arch/arm64/Kconfig */
+	if ((stext_sym_addr & PAGE_OFFSET_36) == PAGE_OFFSET_36) {
+		va_bits = 36;
+	} else if ((stext_sym_addr & PAGE_OFFSET_39) == PAGE_OFFSET_39) {
+		va_bits = 39;
+	} else if ((stext_sym_addr & PAGE_OFFSET_42) == PAGE_OFFSET_42) {
+		va_bits = 42;
+	} else if ((stext_sym_addr & PAGE_OFFSET_47) == PAGE_OFFSET_47) {
+		va_bits = 47;
+	} else if ((stext_sym_addr & PAGE_OFFSET_48) == PAGE_OFFSET_48) {
+		va_bits = 48;
+	} else {
+		fprintf(stderr,
+			"Cannot find a proper _stext for calculating VA_BITS\n");
+		return -1;
+	}
+
+	dbgprintf("va_bits : %d\n", va_bits);
+
+	return 0;
+}
+
+/**
+ * get_page_offset - Helper for getting PAGE_OFFSET
+ */
+
+static int get_page_offset(void)
+{
+	int ret;
+
+	ret = get_va_bits();
+	if (ret < 0)
+		return ret;
+
+	page_offset = (0xffffffffffffffffUL) << (va_bits - 1);
+	dbgprintf("page_offset : %lx\n", page_offset);
+
+	return 0;
+}
+
+/**
+ * get_phys_offset_from_vmcoreinfo_pt_note - Helper for getting PHYS_OFFSET
+ * from VMCOREINFO note inside 'kcore'.
+ */
+
+static int get_phys_offset_from_vmcoreinfo_pt_note(unsigned long *phys_offset)
+{
+	int fd, ret = 0;
+
+	if ((fd = open("/proc/kcore", O_RDONLY)) < 0) {
+		fprintf(stderr, "Can't open (%s).\n", "/proc/kcore");
+		return EFAILED;
+	}
+
+	ret = read_phys_offset_elf_kcore(fd, phys_offset);
+
+	close(fd);
+	return ret;
+}
+
+/**
+ * get_phys_base_from_pt_load - Helper for getting PHYS_OFFSET
+ * from PT_LOADs inside 'kcore'.
+ */
+
+int get_phys_base_from_pt_load(unsigned long *phys_offset)
+{
+	int i, fd, ret;
+	unsigned long long phys_start;
+	unsigned long long virt_start;
+
+	ret = get_page_offset();
+	if (ret < 0)
+		return ret;
+
+	if ((fd = open("/proc/kcore", O_RDONLY)) < 0) {
+		fprintf(stderr, "Can't open (%s).\n", "/proc/kcore");
+		return EFAILED;
+	}
+
+	read_elf_kcore(fd);
+
+	for (i = 0; get_pt_load(i,
+		    &phys_start, NULL, &virt_start, NULL);
+	 	    i++) {
+		if (virt_start != NOT_KV_ADDR
+				&& virt_start >= page_offset
+				&& phys_start != NOT_PADDR)
+			*phys_offset = phys_start -
+				(virt_start & ~page_offset);
+	}
+
+	close(fd);
+	return 0;
+}
+
 /**
  * get_memory_ranges_iomem_cb - Helper for get_memory_ranges_iomem.
  */
@@ -762,10 +898,44 @@ void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
 static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 	unsigned long long base, unsigned long long length)
 {
+	int ret;
+	unsigned long phys_offset = UINT64_MAX;
 	struct memory_range *r;
 
 	if (nr >= KEXEC_SEGMENT_MAX)
 		return -1;
+
+	if (!try_read_phys_offset_from_kcore) {
+		/* Since kernel version 4.19, 'kcore' contains
+		 * a new PT_NOTE which carries the VMCOREINFO
+		 * information.
+		 * If the same is available, one should prefer the
+		 * same to retrieve 'PHYS_OFFSET' value exported by
+		 * the kernel as this is now the standard interface
+		 * exposed by kernel for sharing machine specific
+		 * details with the userland.
+		 */
+		ret = get_phys_offset_from_vmcoreinfo_pt_note(&phys_offset);
+		if (!ret) {
+			if (phys_offset != UINT64_MAX)
+				set_phys_offset(phys_offset,
+						"vmcoreinfo pt_note");
+		} else {
+			/* If we are running on a older kernel,
+			 * try to retrieve the 'PHYS_OFFSET' value
+			 * exported by the kernel in the 'kcore'
+			 * file by reading the PT_LOADs and determining
+			 * the correct combination.
+			 */
+			ret = get_phys_base_from_pt_load(&phys_offset);
+			if (!ret)
+				if (phys_offset != UINT64_MAX)
+					set_phys_offset(phys_offset,
+							"pt_load");
+		}
+
+		try_read_phys_offset_from_kcore = true;
+	}
 
 	r = (struct memory_range *)data + nr;
 
@@ -779,7 +949,26 @@ static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 	r->start = base;
 	r->end = base + length - 1;
 
-	set_phys_offset(r->start);
+	/* As a fallback option, we can try determining the PHYS_OFFSET
+	 * value from the '/proc/iomem' entries as well.
+	 *
+	 * But note that this can be flaky, as on certain arm64
+	 * platforms, it has been noticed that due to a hole at the
+	 * start of physical ram exposed to kernel
+	 * (i.e. it doesn't start from address 0), the kernel still
+	 * calculates the 'memstart_addr' kernel variable as 0.
+	 *
+	 * Whereas the SYSTEM_RAM or IOMEM_RESERVED range in
+	 * '/proc/iomem' would carry a first entry whose start address
+	 * is non-zero (as the physical ram exposed to the kernel
+	 * starts from a non-zero address).
+	 *
+	 * In such cases, if we rely on '/proc/iomem' entries to
+	 * calculate the phys_offset, then we will have mismatch
+	 * between the user-space and kernel space 'PHYS_OFFSET'
+	 * value.
+	 */
+	set_phys_offset(r->start, "iomem");
 
 	dbgprintf("%s: %016llx - %016llx : %s", __func__, r->start,
 		r->end, str);
@@ -788,7 +977,8 @@ static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 }
 
 /**
- * get_memory_ranges_iomem - Try to get the memory ranges from /proc/iomem.
+ * get_memory_ranges_iomem - Try to get the memory ranges from
+ * /proc/iomem.
  */
 
 static int get_memory_ranges_iomem(struct memory_range *array,

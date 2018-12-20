@@ -21,6 +21,14 @@
 #define MiB(x) (KiB(x) * 1024UL)
 #define GiB(x) (MiB(x) * 1024UL)
 
+#define ULONGLONG_MAX	(~0ULL)
+
+/*
+ * Incorrect address
+ */
+#define NOT_KV_ADDR	(0x0)
+#define NOT_PADDR	(ULONGLONG_MAX)
+
 int elf_arm64_probe(const char *kernel_buf, off_t kernel_size);
 int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info);
@@ -58,13 +66,6 @@ uint64_t get_vp_offset(void);
 static inline void reset_vp_offset(void)
 {
 	arm64_mem.vp_offset = arm64_mem_ngv;
-}
-
-static inline void set_phys_offset(uint64_t v)
-{
-	if (arm64_mem.phys_offset == arm64_mem_ngv
-		|| v < arm64_mem.phys_offset)
-		arm64_mem.phys_offset = v;
 }
 
 int arm64_process_image_header(const struct arm64_image_header *h);
