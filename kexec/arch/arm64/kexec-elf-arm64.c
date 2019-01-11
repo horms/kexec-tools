@@ -5,10 +5,12 @@
 #define _GNU_SOURCE
 
 #include <errno.h>
+#include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>
 #include <linux/elf.h>
 
+#include "arch/options.h"
 #include "crashdump-arm64.h"
 #include "kexec-arm64.h"
 #include "kexec-elf.h"
@@ -46,6 +48,13 @@ int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	struct mem_ehdr ehdr;
 	int result;
 	int i;
+
+	if (info->file_mode) {
+		fprintf(stderr,
+			"ELF executable is not supported in kexec_file\n");
+
+		return EFAILED;
+	}
 
 	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
 

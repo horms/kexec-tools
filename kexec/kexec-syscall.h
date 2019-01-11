@@ -67,6 +67,9 @@
 #ifdef __s390x__
 #define __NR_kexec_file_load	381
 #endif
+#ifdef __aarch64__
+#define __NR_kexec_file_load	294
+#endif
 
 #ifndef __NR_kexec_file_load
 /* system call not available for the arch */

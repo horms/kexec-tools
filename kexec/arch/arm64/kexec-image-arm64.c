@@ -4,10 +4,15 @@
 
 #define _GNU_SOURCE
 
+#include <errno.h>
+#include <fcntl.h>
+#include <limits.h>
 #include "crashdump-arm64.h"
+#include "image-header.h"
+#include "kexec.h"
 #include "kexec-arm64.h"
 #include "kexec-syscall.h"
-#include <limits.h>
+#include "arch/options.h"
 
 int image_arm64_probe(const char *kernel_buf, off_t kernel_size)
 {
@@ -34,6 +39,27 @@ int image_arm64_load(int argc, char **argv, const char *kernel_buf,
 	const struct arm64_image_header *header;
 	unsigned long kernel_segment;
 	int result;
+
+	if (info->file_mode) {
+		if (arm64_opts.initrd) {
+			info->initrd_fd = open(arm64_opts.initrd, O_RDONLY);
+			if (info->initrd_fd == -1) {
+				fprintf(stderr,
+					"Could not open initrd file %s:%s\n",
+					arm64_opts.initrd, strerror(errno));
+				result = EFAILED;
+				goto exit;
+			}
+		}
+
+		if (arm64_opts.command_line) {
+			info->command_line = (char *)arm64_opts.command_line;
+			info->command_line_len =
+					strlen(arm64_opts.command_line) + 1;
+		}
+
+		return 0;
+	}
 
 	header = (const struct arm64_image_header *)(kernel_buf);
 

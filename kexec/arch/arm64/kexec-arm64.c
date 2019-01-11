@@ -141,6 +141,7 @@ int arch_process_options(int argc, char **argv)
 	int opt;
 	char *cmdline = NULL;
 	const char *append = NULL;
+	int do_kexec_file_syscall = 0;
 
 	for (opt = 0; opt != -1; ) {
 		opt = getopt_long(argc, argv, short_options, options, 0);
@@ -158,6 +159,9 @@ int arch_process_options(int argc, char **argv)
 		case OPT_INITRD:
 			arm64_opts.initrd = optarg;
 			break;
+		case OPT_KEXEC_FILE_SYSCALL:
+			do_kexec_file_syscall = 1;
+			break;
 		default:
 			break; /* Ignore core and unknown options. */
 		}
@@ -169,7 +173,11 @@ int arch_process_options(int argc, char **argv)
 		arm64_opts.command_line);
 	dbgprintf("%s:%d: initrd: %s\n", __func__, __LINE__,
 		arm64_opts.initrd);
-	dbgprintf("%s:%d: dtb: %s\n", __func__, __LINE__, arm64_opts.dtb);
+	dbgprintf("%s:%d: dtb: %s\n", __func__, __LINE__,
+		(do_kexec_file_syscall && arm64_opts.dtb ? "(ignored)" :
+							arm64_opts.dtb));
+	if (do_kexec_file_syscall)
+		arm64_opts.dtb = NULL;
 
 	return 0;
 }

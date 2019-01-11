@@ -20,6 +20,13 @@ int uImage_arm64_load(int argc, char **argv, const char *buf, off_t len,
 	struct Image_info img;
 	int ret;
 
+	if (info->file_mode) {
+		fprintf(stderr,
+			"uImage is not supported in kexec_file\n");
+
+		return EFAILED;
+	}
+
 	ret = uImage_load(buf, len, &img);
 	if (ret)
 		return ret;
