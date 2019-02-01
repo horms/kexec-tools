@@ -713,6 +713,11 @@ int arm64_load_other_segments(struct kexec_info *info,
 		}
 	}
 
+	if (!initrd_buf) {
+		/* Don't reuse the initrd addresses from 1st DTB */
+		dtb_clear_initrd((char **)&dtb.buf, &dtb.size);
+	}
+
 	/* Check size limit as specified in booting.txt. */
 
 	if (dtb.size > MiB(2)) {

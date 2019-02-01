@@ -45,6 +45,12 @@ int dtb_set_initrd(char **dtb, off_t *dtb_size, off_t start, off_t end)
 	return 0;
 }
 
+void dtb_clear_initrd(char **dtb, off_t *dtb_size)
+{
+	dtb_delete_property(*dtb, n_chosen, p_initrd_start);
+	dtb_delete_property(*dtb, n_chosen, p_initrd_end);
+}
+
 int dtb_set_bootargs(char **dtb, off_t *dtb_size, const char *command_line)
 {
 	return dtb_set_property(dtb, dtb_size, n_chosen, p_bootargs,
