@@ -144,7 +144,7 @@ static int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 	} else if (0 == strcmp(fix.id, "EFI VGA")) {
 		/* VIDEO_TYPE_EFI */
 		real_mode->orig_video_isVGA = 0x70;
-	} else {
+	} else if (arch_options.reuse_video_type) {
 		int err;
 		off_t offset = offsetof(typeof(*real_mode), orig_video_isVGA);
 
@@ -152,6 +152,10 @@ static int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 		err = get_bootparam(&real_mode->orig_video_isVGA, offset, 1);
 		if (err)
 			goto out;
+	} else {
+		real_mode->orig_video_isVGA = 0;
+		close(fd);
+		return 0;
 	}
 	close(fd);
 
@@ -844,7 +848,7 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	setup_subarch(real_mode);
 	if (bzImage_support_efi_boot && !arch_options.noefi)
 		setup_efi_info(info, real_mode);
-	
+
 	/* Default screen size */
 	real_mode->orig_x = 0;
 	real_mode->orig_y = 0;

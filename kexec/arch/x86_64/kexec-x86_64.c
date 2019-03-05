@@ -55,6 +55,7 @@ void arch_usage(void)
 		"     --console-serial          Enable the serial console\n"
 		"     --pass-memmap-cmdline     Pass memory map via command line in kexec on panic case\n"
 		"     --noefi                   Disable efi support\n"
+		"     --reuse-video-type        Reuse old boot time video type blindly\n"
 		);
 }
 
@@ -67,6 +68,7 @@ struct arch_options_t arch_options = {
 	.core_header_type = CORE_TYPE_ELF64,
 	.pass_memmap_cmdline = 0,
 	.noefi = 0,
+	.reuse_video_type = 0,
 };
 
 int arch_process_options(int argc, char **argv)
@@ -135,6 +137,9 @@ int arch_process_options(int argc, char **argv)
 			break;
 		case OPT_NOEFI:
 			arch_options.noefi = 1;
+			break;
+		case OPT_REUSE_VIDEO_TYPE:
+			arch_options.reuse_video_type = 1;
 			break;
 		}
 	}

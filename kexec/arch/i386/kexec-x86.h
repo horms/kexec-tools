@@ -52,6 +52,7 @@ struct arch_options_t {
 	enum coretype	core_header_type;
 	uint8_t  	pass_memmap_cmdline;
 	uint8_t		noefi;
+	uint8_t		reuse_video_type;
 };
 
 int multiboot_x86_probe(const char *buf, off_t len);
