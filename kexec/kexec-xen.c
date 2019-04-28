@@ -64,15 +64,18 @@ int __xc_interface_close(xc_interface *xch)
 }
 #endif /* CONFIG_LIBXENCTRL_DL */
 
+#define IDENTMAP_1MiB (1024 * 1024)
+
 int xen_kexec_load(struct kexec_info *info)
 {
-	uint32_t nr_segments = info->nr_segments;
+	uint32_t nr_segments = info->nr_segments, nr_low_segments = 0;
 	struct kexec_segment *segments = info->segment;
+	uint64_t low_watermark = 0;
 	xc_interface *xch;
 	xc_hypercall_buffer_array_t *array = NULL;
 	uint8_t type;
 	uint8_t arch;
-	xen_kexec_segment_t *xen_segs;
+	xen_kexec_segment_t *xen_segs, *seg;
 	int s;
 	int ret = -1;
 
@@ -80,7 +83,28 @@ int xen_kexec_load(struct kexec_info *info)
 	if (!xch)
 		return -1;
 
-	xen_segs = calloc(nr_segments + 1, sizeof(*xen_segs));
+	/*
+	 * Ensure 0 - 1 MiB is mapped and accessible by the image.
+	 * This allows access to the VGA memory and the region
+	 * purgatory copies in the crash case.
+	 *
+	 * First, count the number of additional segments which will
+	 * need to be added in between the ones in segments[].
+	 *
+	 * The segments are already sorted.
+	 */
+	for (s = 0; s < nr_segments && (uint64_t)segments[s].mem <= IDENTMAP_1MiB; s++) {
+		if ((uint64_t)segments[s].mem > low_watermark)
+			nr_low_segments++;
+
+		low_watermark = (uint64_t)segments[s].mem + segments[s].memsz;
+	}
+	if (low_watermark < IDENTMAP_1MiB)
+		nr_low_segments++;
+
+	low_watermark = 0;
+
+	xen_segs = calloc(nr_segments + nr_low_segments, sizeof(*xen_segs));
 	if (!xen_segs)
 		goto out;
 
@@ -88,8 +112,20 @@ int xen_kexec_load(struct kexec_info *info)
 	if (array == NULL)
 		goto out;
 
+	seg = xen_segs;
 	for (s = 0; s < nr_segments; s++) {
 		DECLARE_HYPERCALL_BUFFER(void, seg_buf);
+
+		if (low_watermark < IDENTMAP_1MiB && (uint64_t)segments[s].mem > low_watermark) {
+			set_xen_guest_handle(seg->buf.h, HYPERCALL_BUFFER_NULL);
+			seg->buf_size = 0;
+			seg->dest_maddr = low_watermark;
+			low_watermark = (uint64_t)segments[s].mem;
+			if (low_watermark > IDENTMAP_1MiB)
+				low_watermark = IDENTMAP_1MiB;
+			seg->dest_size = low_watermark - seg->dest_maddr;
+			seg++;
+		}
 
 		seg_buf = xc_hypercall_buffer_array_alloc(xch, array, s,
 							  seg_buf, segments[s].bufsz);
@@ -97,23 +133,22 @@ int xen_kexec_load(struct kexec_info *info)
 			goto out;
 		memcpy(seg_buf, segments[s].buf, segments[s].bufsz);
 
-		set_xen_guest_handle(xen_segs[s].buf.h, seg_buf);
-		xen_segs[s].buf_size = segments[s].bufsz;
-		xen_segs[s].dest_maddr = (uint64_t)segments[s].mem;
-		xen_segs[s].dest_size = segments[s].memsz;
+		set_xen_guest_handle(seg->buf.h, seg_buf);
+		seg->buf_size = segments[s].bufsz;
+		seg->dest_maddr = (uint64_t)segments[s].mem;
+		seg->dest_size = segments[s].memsz;
+		seg++;
+
+		low_watermark = (uint64_t)segments[s].mem + segments[s].memsz;
 	}
 
-	/*
-	 * Ensure 0 - 1 MiB is mapped and accessible by the image.
-	 *
-	 * This allows access to the VGA memory and the region
-	 * purgatory copies in the crash case.
-	 */
-	set_xen_guest_handle(xen_segs[s].buf.h, HYPERCALL_BUFFER_NULL);
-	xen_segs[s].buf_size = 0;
-	xen_segs[s].dest_maddr = 0;
-	xen_segs[s].dest_size = 1 * 1024 * 1024;
-	nr_segments++;
+	if ((uint64_t)low_watermark < IDENTMAP_1MiB) {
+		set_xen_guest_handle(seg->buf.h, HYPERCALL_BUFFER_NULL);
+		seg->buf_size = 0;
+		seg->dest_maddr = low_watermark;
+		seg->dest_size = IDENTMAP_1MiB - low_watermark;
+		seg++;
+	}
 
 	type = (info->kexec_flags & KEXEC_ON_CRASH) ? KEXEC_TYPE_CRASH
 		: KEXEC_TYPE_DEFAULT;
@@ -125,7 +160,7 @@ int xen_kexec_load(struct kexec_info *info)
 #endif
 
 	ret = xc_kexec_load(xch, type, arch, (uint64_t)info->entry,
-			    nr_segments, xen_segs);
+			    nr_segments + nr_low_segments, xen_segs);
 
 out:
 	xc_hypercall_buffer_array_destroy(xch, array);
