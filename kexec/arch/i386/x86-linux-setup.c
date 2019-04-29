@@ -433,8 +433,12 @@ out:
  * This really only makes sense for virtual filesystems that are only expected
  * to be mounted once (sysfs, debugsfs, proc), as it will return the first
  * instance listed in /proc/mounts, falling back to mtab if absent.
+ * We search by type and not by name because the name can be anything;
+ * while setting the name equal to the mount point is common, it cannot be
+ * relied upon, as even kernel documentation examples recommends using
+ * "none" as the name e.g. for debugfs.
  */
-char *find_mnt_by_fsname(char *fsname)
+char *find_mnt_by_type(char *type)
 {
 	FILE *mtab;
 	struct mntent *mnt;
@@ -448,7 +452,7 @@ char *find_mnt_by_fsname(char *fsname)
 	if (!mtab)
 		return NULL;
 	for(mnt = getmntent(mtab); mnt; mnt = getmntent(mtab)) {
-		if (strcmp(mnt->mnt_fsname, fsname) == 0)
+		if (strcmp(mnt->mnt_type, type) == 0)
 			break;
 	}
 	mntdir = mnt ? strdup(mnt->mnt_dir) : NULL;
@@ -463,7 +467,7 @@ static int get_bootparam(void *buf, off_t offset, size_t size)
 	char filename[PATH_MAX];
 	int err, has_sysfs_params = 0;
 
-	sysfs_mnt = find_mnt_by_fsname("sysfs");
+	sysfs_mnt = find_mnt_by_type("sysfs");
 	if (sysfs_mnt) {
 		snprintf(filename, PATH_MAX, "%s/%s", sysfs_mnt,
 			"kernel/boot_params/data");
@@ -474,7 +478,7 @@ static int get_bootparam(void *buf, off_t offset, size_t size)
 	}
 
 	if (!has_sysfs_params) {
-		debugfs_mnt = find_mnt_by_fsname("debugfs");
+		debugfs_mnt = find_mnt_by_type("debugfs");
 		if (!debugfs_mnt)
 			return 1;
 		snprintf(filename, PATH_MAX, "%s/%s", debugfs_mnt,
