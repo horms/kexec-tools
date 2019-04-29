@@ -432,7 +432,7 @@ out:
 /*
  * This really only makes sense for virtual filesystems that are only expected
  * to be mounted once (sysfs, debugsfs, proc), as it will return the first
- * instance listed in mtab.
+ * instance listed in /proc/mounts, falling back to mtab if absent.
  */
 char *find_mnt_by_fsname(char *fsname)
 {
@@ -440,7 +440,11 @@ char *find_mnt_by_fsname(char *fsname)
 	struct mntent *mnt;
 	char *mntdir;
 
-	mtab = setmntent("/etc/mtab", "r");
+	mtab = setmntent("/proc/mounts", "r");
+	if (!mtab) {
+		// Fall back to mtab
+		mtab = setmntent("/etc/mtab", "r");
+	}
 	if (!mtab)
 		return NULL;
 	for(mnt = getmntent(mtab); mnt; mnt = getmntent(mtab)) {
