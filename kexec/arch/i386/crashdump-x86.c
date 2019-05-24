@@ -787,35 +787,19 @@ static int sysfs_efi_runtime_map_exist(void)
 /* Appends 'acpi_rsdp=' commandline for efi boot crash dump */
 static void cmdline_add_efi(char *cmdline)
 {
-	FILE *fp;
-	int cmdlen, len;
-	char line[MAX_LINE], *s;
-	const char *acpis = " acpi_rsdp=";
+	uint64_t acpi_rsdp;
+	char acpi_rsdp_buf[MAX_LINE];
 
-	fp = fopen("/sys/firmware/efi/systab", "r");
-	if (!fp)
+	acpi_rsdp = get_acpi_rsdp();
+
+	if (!acpi_rsdp)
 		return;
 
-	while(fgets(line, sizeof(line), fp) != 0) {
-		/* ACPI20= always goes before ACPI= */
-		if ((strstr(line, "ACPI20=")) || (strstr(line, "ACPI="))) {
-		        line[strlen(line) - 1] = '\0';
-			s = strchr(line, '=');
-			s += 1;
-			len = strlen(s) + strlen(acpis);
-			cmdlen = strlen(cmdline) + len;
-			if (cmdlen > (COMMAND_LINE_SIZE - 1))
-				die("Command line overflow\n");
-			strcat(cmdline, acpis);
-			strcat(cmdline, s);
-			dbgprintf("Command line after adding efi\n");
-			dbgprintf("%s\n", cmdline);
+	sprintf(acpi_rsdp_buf, " acpi_rsdp=0x%lx", acpi_rsdp);
+	if (strlen(cmdline) + strlen(acpi_rsdp_buf) > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
 
-			break;
-		}
-	}
-
-	fclose(fp);
+	strcat(cmdline, acpi_rsdp_buf);
 }
 
 static void get_backup_area(struct kexec_info *info,
