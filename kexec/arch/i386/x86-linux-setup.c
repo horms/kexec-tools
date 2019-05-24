@@ -909,4 +909,7 @@ void setup_linux_system_parameters(struct kexec_info *info,
 
 	/* fill the EDD information */
 	setup_edd_info(real_mode);
+
+	/* Always try to fill acpi_rsdp_addr */
+	real_mode->acpi_rsdp_addr = get_acpi_rsdp();
 }
