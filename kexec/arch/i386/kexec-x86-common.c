@@ -39,6 +39,7 @@
 #include "../../firmware_memmap.h"
 #include "../../crashdump.h"
 #include "kexec-x86.h"
+#include "x86-linux-setup.h"
 #include "../../kexec-xen.h"
 
 /* Used below but not present in (older?) xenctrl.h */
@@ -392,4 +393,46 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 	return ret;
 }
 
+static uint64_t bootparam_get_acpi_rsdp(void) {
+	uint64_t acpi_rsdp = 0;
+	off_t offset = offsetof(struct x86_linux_param_header, acpi_rsdp_addr);
 
+	if (get_bootparam(&acpi_rsdp, offset, sizeof(acpi_rsdp)))
+		return 0;
+
+	return acpi_rsdp;
+}
+
+static uint64_t efi_get_acpi_rsdp(void) {
+	FILE *fp;
+	char line[MAX_LINE], *s;
+	uint64_t acpi_rsdp = 0;
+
+	fp = fopen("/sys/firmware/efi/systab", "r");
+	if (!fp)
+		return acpi_rsdp;
+
+	while(fgets(line, sizeof(line), fp) != 0) {
+		/* ACPI20= always goes before ACPI= */
+		if ((strstr(line, "ACPI20=")) || (strstr(line, "ACPI="))) {
+			s = strchr(line, '=') + 1;
+			sscanf(s, "0x%lx", &acpi_rsdp);
+			break;
+		}
+	}
+	fclose(fp);
+
+	return acpi_rsdp;
+}
+
+uint64_t get_acpi_rsdp(void)
+{
+	uint64_t acpi_rsdp = 0;
+
+	acpi_rsdp = bootparam_get_acpi_rsdp();
+
+	if (!acpi_rsdp)
+		acpi_rsdp = efi_get_acpi_rsdp();
+
+	return acpi_rsdp;
+}

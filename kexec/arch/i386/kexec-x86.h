@@ -86,4 +86,5 @@ int nbi_load(int argc, char **argv, const char *buf, off_t len,
 void nbi_usage(void);
 
 extern unsigned xen_e820_to_kexec_type(uint32_t type);
+extern uint64_t get_acpi_rsdp(void);
 #endif /* KEXEC_X86_H */

@@ -21,6 +21,7 @@ static inline void setup_linux_bootloader_parameters(
 }
 void setup_linux_system_parameters(struct kexec_info *info,
 	struct x86_linux_param_header *real_mode);
+int get_bootparam(void *buf, off_t offset, size_t size);
 
 
 #define SETUP_BASE    0x90000

@@ -123,7 +123,6 @@ void setup_linux_bootloader_parameters_high(
 	cmdline_ptr[cmdline_len - 1] = '\0';
 }
 
-static int get_bootparam(void *buf, off_t offset, size_t size);
 static int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 {
 	struct fb_fix_screeninfo fix;
@@ -460,7 +459,7 @@ char *find_mnt_by_type(char *type)
 	return mntdir;
 }
 
-static int get_bootparam(void *buf, off_t offset, size_t size)
+int get_bootparam(void *buf, off_t offset, size_t size)
 {
 	int data_file;
 	char *debugfs_mnt, *sysfs_mnt;
