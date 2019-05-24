@@ -45,7 +45,6 @@ struct apm_bios_info {
 	uint16_t cseg_len;	/* 0x4e */
 	uint16_t cseg_16_len;	/* 0x50 */
 	uint16_t dseg_len;	/* 0x52 */
-	uint8_t  reserved[44];	/* 0x54 */
 };
 
 /*
@@ -113,12 +112,15 @@ struct x86_linux_param_header {
 	uint8_t  reserved4[2];			/* 0x3e -- 0x3f reserved for future expansion */
 
 	struct apm_bios_info apm_bios_info;	/* 0x40 */
+	uint8_t  reserved4_1[28];		/* 0x54 */
+	uint64_t acpi_rsdp_addr;		/* 0x70 */
+	uint8_t  reserved4_2[8];		/* 0x78 */
 	struct drive_info_struct drive_info;	/* 0x80 */
 	struct sys_desc_table sys_desc_table;	/* 0xa0 */
 	uint32_t ext_ramdisk_image;		/* 0xc0 */
 	uint32_t ext_ramdisk_size;		/* 0xc4 */
 	uint32_t ext_cmd_line_ptr;		/* 0xc8 */
-	uint8_t reserved4_1[0x1c0 - 0xcc];	/* 0xe4 */
+	uint8_t reserved4_3[0x1c0 - 0xcc];	/* 0xe4 */
 	uint8_t efi_info[32];			/* 0x1c0 */
 	uint32_t alt_mem_k;			/* 0x1e0 */
 	uint8_t  reserved5[4];			/* 0x1e4 */
