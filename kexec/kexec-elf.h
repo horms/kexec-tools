@@ -100,11 +100,18 @@ extern int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
 extern int build_elf_core_info(const char *buf, off_t len,
 					struct mem_ehdr *ehdr, uint32_t flags);
 extern int elf_exec_load(struct mem_ehdr *ehdr, struct kexec_info *info);
+extern int elf_exec_load_relocatable(struct mem_ehdr *ehdr, struct kexec_info *info,
+				     unsigned long reloc_min, unsigned long reloc_max,
+				     unsigned long align);
 extern int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 	unsigned long min, unsigned long max, int end);
 
 extern void elf_exec_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
 				const char *buf, off_t len, uint32_t flags);
+extern void elf_exec_build_load_relocatable(struct kexec_info *info, struct mem_ehdr *ehdr,
+					    const char *buf, off_t len, uint32_t flags,
+					    unsigned long reloc_min, unsigned long reloc_max,
+					    unsigned long align);
 extern void elf_rel_build_load(struct kexec_info *info, struct mem_ehdr *ehdr, 
 	const char *buf, off_t len, unsigned long min, unsigned long max, 
 	int end, uint32_t flags);
