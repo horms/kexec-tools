@@ -311,6 +311,30 @@ with command-line arguments
 .I "arg1 arg2 ..."
 This parameter can be specified multiple times.
 .RE
+.PP
+.B multiboot2-x86
+.RS
+.TP
+.BI \-\-command\-line= string
+Set the kernel command line to
+.IR string .
+.TP
+.BI \-\-reuse-cmdline
+Use the command line from the running system. When a panic kernel is loaded, it
+strips the
+.I
+crashkernel
+parameter automatically. The
+.I BOOT_IMAGE
+parameter is also stripped.
+.TP
+.BI \-\-module= "mod arg1 arg2 ..."
+Load module
+.I mod
+with command-line arguments
+.I "arg1 arg2 ..."
+This parameter can be specified multiple times.
+.RE
 
 .SH ARCHITECTURE OPTIONS
 .TP
