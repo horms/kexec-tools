@@ -38,9 +38,9 @@
 #include "../../kexec-syscall.h"
 #include "../../firmware_memmap.h"
 #include "../../crashdump.h"
+#include "../../kexec-xen.h"
 #include "kexec-x86.h"
 #include "x86-linux-setup.h"
-#include "../../kexec-xen.h"
 
 /* Used below but not present in (older?) xenctrl.h */
 #ifndef E820_PMEM
