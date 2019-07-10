@@ -13,6 +13,8 @@ i386_KEXEC_SRCS += kexec/arch/i386/x86-linux-setup.c
 i386_KEXEC_SRCS += kexec/arch/i386/crashdump-x86.c
 
 dist += kexec/arch/i386/Makefile $(i386_KEXEC_SRCS)			\
-	kexec/arch/i386/kexec-x86.h kexec/arch/i386/crashdump-x86.h	\
+	kexec/arch/i386/crashdump-x86.h					\
+	kexec/arch/i386/kexec-mb2-x86.c					\
+	kexec/arch/i386/kexec-x86.h					\
 	kexec/arch/i386/x86-linux-setup.h				\
 	kexec/arch/i386/include/arch/options.h
