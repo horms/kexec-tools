@@ -1234,6 +1234,8 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	if (ret != 0)
 		fprintf(stderr, "kexec_file_load failed: %s\n",
 					strerror(errno));
+
+	close(kernel_fd);
 	return ret;
 }
 
