@@ -23,6 +23,38 @@ static void _gzerror(gzFile fp, int *errnum, const char **errmsg)
 	}
 }
 
+int is_zlib_file(const char *filename, off_t *r_size)
+{
+	gzFile fp;
+	int errnum;
+	int is_zlib_file = 0; /* default: It's not in gzip format */
+	const char *msg;
+	ssize_t result;
+
+	if (!filename)
+		goto out;
+
+	fp = gzopen(filename, "rb");
+	if (fp == 0) {
+		_gzerror(fp, &errnum, &msg);
+		dbgprintf("Cannot open `%s': %s\n", filename, msg);
+		goto out;
+	}
+
+	if (!gzdirect(fp))
+		/* It's in gzip format */
+		is_zlib_file = 1;
+
+	result = gzclose(fp);
+	if (result != Z_OK) {
+		_gzerror(fp, &errnum, &msg);
+		dbgprintf(" Close of %s failed: %s\n", filename, msg);
+	}
+
+out:
+	return is_zlib_file;
+}
+
 char *zlib_decompress_file(const char *filename, off_t *r_size)
 {
 	gzFile fp;
@@ -84,6 +116,12 @@ fail:
 	return buf;
 }
 #else
+
+int is_zlib_file(const char *filename, off_t *r_size)
+{
+	return 0;
+}
+
 char *zlib_decompress_file(const char *UNUSED(filename), off_t *UNUSED(r_size))
 {
 	return NULL;
