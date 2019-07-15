@@ -15,7 +15,8 @@ arm64_KEXEC_SRCS += \
 	kexec/arch/arm64/kexec-arm64.c \
 	kexec/arch/arm64/kexec-elf-arm64.c \
 	kexec/arch/arm64/kexec-uImage-arm64.c \
-	kexec/arch/arm64/kexec-image-arm64.c
+	kexec/arch/arm64/kexec-image-arm64.c \
+	kexec/arch/arm64/kexec-zImage-arm64.c
 
 arm64_UIMAGE = kexec/kexec-uImage.c
 

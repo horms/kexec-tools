@@ -1206,8 +1206,20 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
 
 	for (i = 0; i < file_types; i++) {
+#ifdef __aarch64__
+		/* handle Image.gz like cases */
+		if (is_zlib_file(kernel, &kernel_size)) {
+			if ((ret = file_type[i].probe(kernel, kernel_size)) >= 0) {
+				kernel_fd = ret;
+				break;
+			}
+		} else
+			if (file_type[i].probe(kernel_buf, kernel_size) >= 0)
+				break;
+#else
 		if (file_type[i].probe(kernel_buf, kernel_size) >= 0)
 			break;
+#endif
 	}
 
 	if (i == file_types) {
