@@ -764,7 +764,7 @@ static void dump_dmesg(int fd)
 		dump_dmesg_legacy(fd);
 }
 
-static int read_elf(int fd)
+int read_elf(int fd)
 {
 	int ret;
 
@@ -824,24 +824,13 @@ int read_elf_vmcore(int fd)
 	return 0;
 }
 
-int read_elf_kcore(int fd)
-{
-	int ret;
-
-	ret = read_elf(fd);
-	if (ret != 0)
-		return ret;
-
-	return 0;
-}
-
 int read_phys_offset_elf_kcore(int fd, unsigned long *phys_off)
 {
 	int ret;
 
 	*phys_off = UINT64_MAX;
 
-	ret = read_elf_kcore(fd);
+	ret = read_elf(fd);
 	if (!ret) {
 		/* If we have a valid 'PHYS_OFFSET' by now,
 		 * return it to the caller now.

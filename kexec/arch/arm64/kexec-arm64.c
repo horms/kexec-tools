@@ -889,7 +889,7 @@ int get_phys_base_from_pt_load(unsigned long *phys_offset)
 		return EFAILED;
 	}
 
-	read_elf_kcore(fd);
+	read_elf(fd);
 
 	for (i = 0; get_pt_load(i,
 		    &phys_start, NULL, &virt_start, NULL);

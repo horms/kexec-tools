@@ -29,7 +29,7 @@ int get_pt_load(int idx,
 	unsigned long long *virt_start,
 	unsigned long long *virt_end);
 int read_phys_offset_elf_kcore(int fd, unsigned long *phys_off);
-int read_elf_kcore(int fd);
+int read_elf(int fd);
 int read_elf_vmcore(int fd);
 
 #endif /* ELF_INFO_H */
