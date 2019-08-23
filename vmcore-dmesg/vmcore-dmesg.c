@@ -3,7 +3,7 @@
 /* The 32bit and 64bit note headers make it clear we don't care */
 typedef Elf32_Nhdr Elf_Nhdr;
 
-static const char *fname;
+extern const char *fname;
 
 int main(int argc, char **argv)
 {

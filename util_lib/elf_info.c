@@ -20,7 +20,7 @@
 /* The 32bit and 64bit note headers make it clear we don't care */
 typedef Elf32_Nhdr Elf_Nhdr;
 
-static const char *fname;
+const char *fname;
 static Elf64_Ehdr ehdr;
 static Elf64_Phdr *phdr;
 static int num_pt_loads;
