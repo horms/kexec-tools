@@ -531,19 +531,7 @@ static int32_t read_file_s32(int fd, uint64_t addr)
 	return read_file_u32(fd, addr);
 }
 
-static void write_to_stdout(char *buf, unsigned int nr)
-{
-	ssize_t ret;
-
-	ret = write(STDOUT_FILENO, buf, nr);
-	if (ret != nr) {
-		fprintf(stderr, "Failed to write out the dmesg log buffer!:"
-			" %s\n", strerror(errno));
-		exit(54);
-	}
-}
-
-static void dump_dmesg_legacy(int fd)
+static void dump_dmesg_legacy(int fd, void (*handler)(char*, unsigned int))
 {
 	uint64_t log_buf, log_buf_offset;
 	unsigned log_end, logged_chars, log_end_wrapped;
@@ -604,7 +592,8 @@ static void dump_dmesg_legacy(int fd)
 	 */
 	logged_chars = log_end < log_buf_len ? log_end : log_buf_len;
 
-	write_to_stdout(buf + (log_buf_len - logged_chars), logged_chars);
+	if (handler)
+		handler(buf + (log_buf_len - logged_chars), logged_chars);
 }
 
 static inline uint16_t struct_val_u16(char *ptr, unsigned int offset)
@@ -623,7 +612,7 @@ static inline uint64_t struct_val_u64(char *ptr, unsigned int offset)
 }
 
 /* Read headers of log records and dump accordingly */
-static void dump_dmesg_structured(int fd)
+static void dump_dmesg_structured(int fd, void (*handler)(char*, unsigned int))
 {
 #define OUT_BUF_SIZE	4096
 	uint64_t log_buf, log_buf_offset, ts_nsec;
@@ -733,7 +722,8 @@ static void dump_dmesg_structured(int fd)
 				out_buf[len++] = c;
 
 			if (len >= OUT_BUF_SIZE - 64) {
-				write_to_stdout(out_buf, len);
+				if (handler)
+					handler(out_buf, len);
 				len = 0;
 			}
 		}
@@ -752,16 +742,16 @@ static void dump_dmesg_structured(int fd)
 			current_idx += loglen;
 	}
 	free(buf);
-	if (len)
-		write_to_stdout(out_buf, len);
+	if (len && handler)
+		handler(out_buf, len);
 }
 
-static void dump_dmesg(int fd)
+void dump_dmesg(int fd, void (*handler)(char*, unsigned int))
 {
 	if (log_first_idx_vaddr)
-		dump_dmesg_structured(fd);
+		dump_dmesg_structured(fd, handler);
 	else
-		dump_dmesg_legacy(fd);
+		dump_dmesg_legacy(fd, handler);
 }
 
 int read_elf(int fd)
@@ -804,22 +794,6 @@ int read_elf(int fd)
 	ret = scan_note_headers(fd);
 	if (ret < 0)
 		return ret;
-
-	return 0;
-}
-
-int read_elf_vmcore(int fd)
-{
-	int ret;
-
-	ret = read_elf(fd);
-	if (ret > 0) {
-		fprintf(stderr, "Unable to read ELF information"
-			" from vmcore\n");
-		return ret;
-	}
-
-	dump_dmesg(fd);
 
 	return 0;
 }

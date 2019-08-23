@@ -5,6 +5,34 @@ typedef Elf32_Nhdr Elf_Nhdr;
 
 extern const char *fname;
 
+static void write_to_stdout(char *buf, unsigned int nr)
+{
+	ssize_t ret;
+
+	ret = write(STDOUT_FILENO, buf, nr);
+	if (ret != nr) {
+		fprintf(stderr, "Failed to write out the dmesg log buffer!:"
+			" %s\n", strerror(errno));
+		exit(54);
+	}
+}
+
+static int read_vmcore_dmesg(int fd, void (*handler)(char*, unsigned int))
+{
+	int ret;
+
+	ret = read_elf(fd);
+	if (ret > 0) {
+		fprintf(stderr, "Unable to read ELF information"
+			" from vmcore\n");
+		return ret;
+	}
+
+	dump_dmesg(fd, handler);
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	ssize_t ret;
@@ -23,7 +51,7 @@ int main(int argc, char **argv)
 		return 2;
 	}
 
-	ret = read_elf_vmcore(fd);
+	ret = read_vmcore_dmesg(fd, write_to_stdout);
 	
 	close(fd);
 
