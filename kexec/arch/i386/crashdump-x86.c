@@ -61,6 +61,8 @@ static int get_kernel_page_offset(struct kexec_info *UNUSED(info),
 
 		if (kv < KERNEL_VERSION(2, 6, 27))
 			elf_info->page_offset = X86_64_PAGE_OFFSET_PRE_2_6_27;
+		else if (kv < KERNEL_VERSION(4, 20, 0))
+			elf_info->page_offset = X86_64_PAGE_OFFSET_PRE_4_20_0;
 		else
 			elf_info->page_offset = X86_64_PAGE_OFFSET;
 	}

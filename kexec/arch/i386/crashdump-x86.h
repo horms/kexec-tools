@@ -13,7 +13,8 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 
 #define X86_64__START_KERNEL_map	0xffffffff80000000ULL
 #define X86_64_PAGE_OFFSET_PRE_2_6_27	0xffff810000000000ULL
-#define X86_64_PAGE_OFFSET		0xffff880000000000ULL
+#define X86_64_PAGE_OFFSET_PRE_4_20_0	0xffff880000000000ULL
+#define X86_64_PAGE_OFFSET	0xffff888000000000ULL
 
 #define X86_64_MAXMEM        		0x3fffffffffffUL
 
