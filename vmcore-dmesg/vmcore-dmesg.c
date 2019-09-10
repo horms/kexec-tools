@@ -6,7 +6,7 @@ typedef Elf32_Nhdr Elf_Nhdr;
 extern const char *fname;
 
 /* stole this macro from kernel printk.c */
-#define LOG_BUF_LEN_MAX (uint32_t)(1 << 31)
+#define LOG_BUF_LEN_MAX (uint32_t)(1U << 31)
 
 static void write_to_stdout(char *buf, unsigned int nr)
 {
