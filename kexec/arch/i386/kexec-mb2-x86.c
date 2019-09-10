@@ -399,7 +399,6 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 	char *command_line = NULL, *tmp_cmdline = NULL;
 	int command_line_len;
 	char *imagename, *cp, *append = NULL;;
-	int result;
 	int opt;
 	int modules, mod_command_line_space;
 	uint64_t mbi_ptr;
@@ -429,7 +428,6 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 	command_line_len = 0;
 	modules = 0;
 	mod_command_line_space = 0;
-	result = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1)
 	{
 		switch(opt) {
