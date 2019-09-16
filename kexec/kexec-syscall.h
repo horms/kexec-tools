@@ -56,6 +56,10 @@
 #endif
 #endif /*ifndef __NR_kexec_load*/
 
+#ifdef __arm__
+#undef __NR_kexec_file_load
+#endif
+
 #ifndef __NR_kexec_file_load
 
 #ifdef __x86_64__
