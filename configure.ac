@@ -55,6 +55,9 @@ case $target_cpu in
 	ia64|x86_64|alpha|m68k )
 		ARCH="$target_cpu"
 		;;
+	hppa*)
+		ARCH="hppa"
+		;;
 	* )
 		AC_MSG_ERROR([unsupported architecture $target_cpu])
 		;;

@@ -74,6 +74,9 @@
 #ifdef __aarch64__
 #define __NR_kexec_file_load	294
 #endif
+#ifdef __hppa__
+#define __NR_kexec_file_load	355
+#endif
 
 #ifndef __NR_kexec_file_load
 /* system call not available for the arch */
@@ -119,6 +122,7 @@ static inline long kexec_file_load(int kernel_fd, int initrd_fd,
 #define KEXEC_ARCH_DEFAULT ( 0 << 16)
 #define KEXEC_ARCH_386     ( 3 << 16)
 #define KEXEC_ARCH_68K     ( 4 << 16)
+#define KEXEC_ARCH_HPPA    (15 << 16)
 #define KEXEC_ARCH_X86_64  (62 << 16)
 #define KEXEC_ARCH_PPC     (20 << 16)
 #define KEXEC_ARCH_PPC64   (21 << 16)

@@ -92,6 +92,7 @@ include $(srcdir)/kexec/arch/ppc64/Makefile
 include $(srcdir)/kexec/arch/s390/Makefile
 include $(srcdir)/kexec/arch/sh/Makefile
 include $(srcdir)/kexec/arch/x86_64/Makefile
+include $(srcdir)/kexec/arch/hppa/Makefile
 
 KEXEC_SRCS += $($(ARCH)_KEXEC_SRCS)
 
