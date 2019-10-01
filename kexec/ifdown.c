@@ -53,7 +53,8 @@ int ifdown(void)
 			if (strchr(ifp->if_name, ':') != NULL)
 				continue;
 
-			strncpy(ifr.ifr_name, ifp->if_name, IFNAMSIZ);
+			strncpy(ifr.ifr_name, ifp->if_name, IFNAMSIZ-1);
+			ifr.ifr_name[IFNAMSIZ-1] = 0;
 			if (ioctl(fd, SIOCGIFFLAGS, &ifr) < 0) {
 				fprintf(stderr, "ifdown: shutdown ");
 				perror(ifp->if_name);
