@@ -802,7 +802,7 @@ int read_phys_offset_elf_kcore(int fd, unsigned long *phys_off)
 {
 	int ret;
 
-	*phys_off = UINT64_MAX;
+	*phys_off = ULONG_MAX;
 
 	ret = read_elf(fd);
 	if (!ret) {
