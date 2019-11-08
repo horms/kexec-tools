@@ -478,7 +478,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			command_line_len = COMMAND_LINE_SIZE;
 	}
 	if (ramdisk)
-		ramdisk_buf = slurp_file(ramdisk, &initrd_size);
+		ramdisk_buf = slurp_file_mmap(ramdisk, &initrd_size);
 
 	if (dtb_file)
 		dtb_buf = slurp_file(dtb_file, &dtb_length);
