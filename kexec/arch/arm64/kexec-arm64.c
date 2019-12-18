@@ -10,7 +10,9 @@
 #include <inttypes.h>
 #include <libfdt.h>
 #include <limits.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/stat.h>
 #include <linux/elf-em.h>
 #include <elf.h>
@@ -29,6 +31,7 @@
 #include "fs2dt.h"
 #include "iomem.h"
 #include "kexec-syscall.h"
+#include "mem_regions.h"
 #include "arch/options.h"
 
 #define ROOT_NODE_ADDR_CELLS_DEFAULT 1
@@ -905,19 +908,33 @@ int get_phys_base_from_pt_load(unsigned long *phys_offset)
 	return 0;
 }
 
-/**
- * get_memory_ranges_iomem_cb - Helper for get_memory_ranges_iomem.
- */
-
-static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
-	unsigned long long base, unsigned long long length)
+static bool to_be_excluded(char *str)
 {
-	int ret;
-	unsigned long phys_offset = UINT64_MAX;
-	struct memory_range *r;
+	if (!strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) ||
+	    !strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) ||
+	    !strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) ||
+	    !strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)))
+		return false;
+	else
+		return true;
+}
 
-	if (nr >= KEXEC_SEGMENT_MAX)
-		return -1;
+/**
+ * get_memory_ranges - Try to get the memory ranges from
+ * /proc/iomem.
+ */
+int get_memory_ranges(struct memory_range **range, int *ranges,
+	unsigned long kexec_flags)
+{
+	unsigned long phys_offset = UINT64_MAX;
+	FILE *fp;
+	const char *iomem = proc_iomem();
+	char line[MAX_LINE], *str;
+	unsigned long long start, end;
+	int n, consumed;
+	struct memory_ranges memranges;
+	struct memory_range *last, excl_range;
+	int ret;
 
 	if (!try_read_phys_offset_from_kcore) {
 		/* Since kernel version 4.19, 'kcore' contains
@@ -951,17 +968,72 @@ static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 		try_read_phys_offset_from_kcore = true;
 	}
 
-	r = (struct memory_range *)data + nr;
+	fp = fopen(iomem, "r");
+	if (!fp)
+		die("Cannot open %s\n", iomem);
 
-	if (!strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)))
-		r->type = RANGE_RAM;
-	else if (!strncmp(str, IOMEM_RESERVED, strlen(IOMEM_RESERVED)))
-		r->type = RANGE_RESERVED;
-	else
-		return 1;
+	memranges.ranges = NULL;
+	memranges.size = memranges.max_size  = 0;
 
-	r->start = base;
-	r->end = base + length - 1;
+	while (fgets(line, sizeof(line), fp) != 0) {
+		n = sscanf(line, "%llx-%llx : %n", &start, &end, &consumed);
+		if (n != 2)
+			continue;
+		str = line + consumed;
+
+		if (!strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM))) {
+			ret = mem_regions_alloc_and_add(&memranges,
+					start, end - start + 1, RANGE_RAM);
+			if (ret) {
+				fprintf(stderr,
+					"Cannot allocate memory for ranges\n");
+				fclose(fp);
+				return -ENOMEM;
+			}
+
+			dbgprintf("%s:+[%d] %016llx - %016llx\n", __func__,
+				memranges.size - 1,
+				memranges.ranges[memranges.size - 1].start,
+				memranges.ranges[memranges.size - 1].end);
+		} else if (to_be_excluded(str)) {
+			if (!memranges.size)
+				continue;
+
+			/*
+			 * Note: mem_regions_exclude() doesn't guarantee
+			 * that the ranges are sorted out, but as long as
+			 * we cope with /proc/iomem, we only operate on
+			 * the last entry and so it is safe.
+			 */
+
+			/* The last System RAM range */
+			last = &memranges.ranges[memranges.size - 1];
+
+			if (last->end < start)
+				/* New resource outside of System RAM */
+				continue;
+			if (end < last->start)
+				/* Already excluded by parent resource */
+				continue;
+
+			excl_range.start = start;
+			excl_range.end = end;
+			ret = mem_regions_alloc_and_exclude(&memranges, &excl_range);
+			if (ret) {
+				fprintf(stderr,
+					"Cannot allocate memory for ranges (exclude)\n");
+				fclose(fp);
+				return -ENOMEM;
+			}
+			dbgprintf("%s:-      %016llx - %016llx\n",
+					__func__, start, end);
+		}
+	}
+
+	fclose(fp);
+
+	*range = memranges.ranges;
+	*ranges = memranges.size;
 
 	/* As a fallback option, we can try determining the PHYS_OFFSET
 	 * value from the '/proc/iomem' entries as well.
@@ -982,50 +1054,13 @@ static int get_memory_ranges_iomem_cb(void *data, int nr, char *str,
 	 * between the user-space and kernel space 'PHYS_OFFSET'
 	 * value.
 	 */
-	set_phys_offset(r->start, "iomem");
+	if (memranges.size)
+		set_phys_offset(memranges.ranges[0].start, "iomem");
 
-	dbgprintf("%s: %016llx - %016llx : %s", __func__, r->start,
-		r->end, str);
-
-	return 0;
-}
-
-/**
- * get_memory_ranges_iomem - Try to get the memory ranges from
- * /proc/iomem.
- */
-
-static int get_memory_ranges_iomem(struct memory_range *array,
-	unsigned int *count)
-{
-	*count = kexec_iomem_for_each_line(NULL,
-		get_memory_ranges_iomem_cb, array);
-
-	if (!*count) {
-		dbgprintf("%s: failed: No RAM found.\n", __func__);
-		return EFAILED;
-	}
+	dbgprint_mem_range("System RAM ranges;",
+				memranges.ranges, memranges.size);
 
 	return 0;
-}
-
-/**
- * get_memory_ranges - Try to get the memory ranges some how.
- */
-
-int get_memory_ranges(struct memory_range **range, int *ranges,
-	unsigned long kexec_flags)
-{
-	static struct memory_range array[KEXEC_SEGMENT_MAX];
-	unsigned int count;
-	int result;
-
-	result = get_memory_ranges_iomem(array, &count);
-
-	*range = result ? NULL : array;
-	*ranges = result ? 0 : count;
-
-	return result;
 }
 
 int arch_compat_trampoline(struct kexec_info *info)
