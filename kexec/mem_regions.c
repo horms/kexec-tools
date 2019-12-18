@@ -125,3 +125,45 @@ int mem_regions_exclude(struct memory_ranges *ranges,
 	}
 	return 0;
 }
+
+#define KEXEC_MEMORY_RANGES 16
+
+int mem_regions_alloc_and_add(struct memory_ranges *ranges,
+			      unsigned long long base,
+			      unsigned long long length, int type)
+{
+	void *new_ranges;
+
+	if (ranges->size >= ranges->max_size) {
+		new_ranges = realloc(ranges->ranges,
+				sizeof(struct memory_range) *
+				(ranges->max_size + KEXEC_MEMORY_RANGES));
+		if (!new_ranges)
+			return -1;
+
+		ranges->ranges = new_ranges;
+		ranges->max_size += KEXEC_MEMORY_RANGES;
+	}
+
+	return mem_regions_add(ranges, base, length, type);
+}
+
+int mem_regions_alloc_and_exclude(struct memory_ranges *ranges,
+				  const struct memory_range *range)
+{
+	void *new_ranges;
+
+	/* for safety, we should have at least one free entry in ranges */
+	if (ranges->size >= ranges->max_size) {
+		new_ranges = realloc(ranges->ranges,
+				sizeof(struct memory_range) *
+				(ranges->max_size + KEXEC_MEMORY_RANGES));
+		if (!new_ranges)
+			return -1;
+
+		ranges->ranges = new_ranges;
+		ranges->max_size += KEXEC_MEMORY_RANGES;
+	}
+
+	return mem_regions_exclude(ranges, range);
+}
