@@ -23,13 +23,8 @@
 #include "kexec-elf.h"
 #include "mem_regions.h"
 
-/* memory ranges on crashed kernel */
-static struct memory_range system_memory_ranges[CRASH_MAX_MEMORY_RANGES];
-static struct memory_ranges system_memory_rgns = {
-	.size = 0,
-	.max_size = CRASH_MAX_MEMORY_RANGES,
-	.ranges = system_memory_ranges,
-};
+/* memory ranges of crashed kernel */
+static struct memory_ranges system_memory_rgns;
 
 /* memory range reserved for crashkernel */
 struct memory_range crash_reserved_mem;
@@ -82,7 +77,7 @@ static uint64_t get_kernel_page_offset(void)
  *
  * This function is called once for each memory region found in /proc/iomem.
  * It locates system RAM and crashkernel reserved memory and places these to
- * variables, respectively, system_memory_ranges and crash_reserved_mem.
+ * variables, respectively, system_memory_rgns and usablemem_rgns.
  */
 
 static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
@@ -90,11 +85,11 @@ static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
 				unsigned long long length)
 {
 	if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0)
-		return mem_regions_add(&usablemem_rgns,
-				       base, length, RANGE_RAM);
+		return mem_regions_alloc_and_add(&usablemem_rgns,
+						base, length, RANGE_RAM);
 	else if (strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) == 0)
-		return mem_regions_add(&system_memory_rgns,
-				       base, length, RANGE_RAM);
+		return mem_regions_alloc_and_add(&system_memory_rgns,
+						base, length, RANGE_RAM);
 	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0)
 		elf_info.kern_paddr_start = base;
 	else if (strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) == 0)
@@ -135,9 +130,9 @@ static int crash_get_memory_ranges(void)
 
 	dbgprint_mem_range("Reserved memory range", &crash_reserved_mem, 1);
 
-	if (mem_regions_exclude(&system_memory_rgns, &crash_reserved_mem)) {
-		fprintf(stderr,
-			"Error: Number of crash memory ranges excedeed the max limit\n");
+	if (mem_regions_alloc_and_exclude(&system_memory_rgns,
+						&crash_reserved_mem)) {
+		fprintf(stderr, "Cannot allocate memory for ranges\n");
 		return -ENOMEM;
 	}
 
