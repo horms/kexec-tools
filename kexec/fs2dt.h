@@ -30,7 +30,7 @@ extern struct bootblock bb[1];
 
 /* Used for enabling printing message from purgatory code
  * Only has implemented for PPC64 */
-int my_debug;
+extern int my_debug;
 extern int dt_no_old_root;
 
 void reserve(unsigned long long where, unsigned long long length);

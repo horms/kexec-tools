@@ -44,8 +44,6 @@
 uint64_t initrd_base, initrd_size;
 unsigned char reuse_initrd = 0;
 const char *ramdisk;
-/* Used for enabling printing message from purgatory code */
-int my_debug = 0;
 
 int elf_ppc64_probe(const char *buf, off_t len)
 {

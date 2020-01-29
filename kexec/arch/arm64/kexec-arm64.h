@@ -50,8 +50,8 @@ int zImage_arm64_load(int argc, char **argv, const char *kernel_buf,
 void zImage_arm64_usage(void);
 
 
-off_t initrd_base;
-off_t initrd_size;
+extern off_t initrd_base;
+extern off_t initrd_size;
 
 /**
  * struct arm64_mem - Memory layout info.
@@ -65,7 +65,7 @@ struct arm64_mem {
 };
 
 #define arm64_mem_ngv UINT64_MAX
-struct arm64_mem arm64_mem;
+extern struct arm64_mem arm64_mem;
 
 uint64_t get_phys_offset(void);
 uint64_t get_vp_offset(void);
