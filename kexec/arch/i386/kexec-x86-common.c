@@ -90,7 +90,7 @@ static int get_memory_ranges_proc_iomem(struct memory_range **range, int *ranges
 		if (memcmp(str, "System RAM\n", 11) == 0) {
 			type = RANGE_RAM;
 		}
-		else if (memcmp(str, "reserved\n", 9) == 0) {
+		else if (strncasecmp(str, "reserved\n", 9) == 0) {
 			type = RANGE_RESERVED;
 		}
 		else if (memcmp(str, "ACPI Tables\n", 12) == 0) {
