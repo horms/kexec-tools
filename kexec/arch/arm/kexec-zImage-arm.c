@@ -228,11 +228,6 @@ int atag_arm_load(struct kexec_info *info, unsigned long base,
 	struct tag *params;
 	
 	buf = xmalloc(getpagesize());
-	if (!buf) {
-		fprintf(stderr, "Compiling ATAGs: out of memory\n");
-		return -1;
-	}
-
 	memset(buf, 0xff, getpagesize());
 	params = (struct tag *)buf;
 
@@ -315,8 +310,6 @@ static int setup_dtb_prop(char **bufp, off_t *sizep, int parentoffset,
 		dtb_size += fdt_node_len(node_name);
 		fdt_set_totalsize(dtb_buf, dtb_size);
 		dtb_buf = xrealloc(dtb_buf, dtb_size);
-		if (dtb_buf == NULL)
-			die("xrealloc failed\n");
 		off = fdt_add_subnode(dtb_buf, parentoffset, node_name);
 	}
 
@@ -340,8 +333,6 @@ static int setup_dtb_prop(char **bufp, off_t *sizep, int parentoffset,
 	if (fdt_totalsize(dtb_buf) < dtb_size) {
 		fdt_set_totalsize(dtb_buf, dtb_size);
 		dtb_buf = xrealloc(dtb_buf, dtb_size);
-		if (dtb_buf == NULL)
-			die("xrealloc failed\n");
 	}
 
 	if (fdt_setprop(dtb_buf, off, prop_name,
@@ -616,9 +607,6 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		uint64_t start, end;
 
 		modified_cmdline = xmalloc(COMMAND_LINE_SIZE);
-		if (!modified_cmdline)
-			return -1;
-
 		memset(modified_cmdline, '\0', COMMAND_LINE_SIZE);
 
 		if (command_line) {
