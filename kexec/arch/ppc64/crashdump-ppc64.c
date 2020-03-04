@@ -612,12 +612,12 @@ int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
 	unsigned long long value;
 
 	if (!get_devtree_value(DEVTREE_CRASHKERNEL_BASE, &value))
-		*start = value;
+		*start = be64_to_cpu(value);
 	else
 		return -1;
 
 	if (!get_devtree_value(DEVTREE_CRASHKERNEL_SIZE, &value))
-		*end = *start + value - 1;
+		*end = *start + be64_to_cpu(value) - 1;
 	else
 		return -1;
 
