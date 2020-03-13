@@ -1538,8 +1538,12 @@ int main(int argc, char *argv[])
 	if (do_unload) {
 		if (do_kexec_file_syscall) {
 			result = kexec_file_unload(kexec_file_flags);
-			if (result == EFALLBACK && do_kexec_fallback)
+			if (result == EFALLBACK && do_kexec_fallback) {
+				/* Reset getopt for fallback */
+				opterr = 1;
+				optind = 1;
 				do_kexec_file_syscall = 0;
+			}
 		}
 		if (!do_kexec_file_syscall)
 			result = k_unload(kexec_flags);
@@ -1548,8 +1552,12 @@ int main(int argc, char *argv[])
 		if (do_kexec_file_syscall) {
 			result = do_kexec_file_load(fileind, argc, argv,
 						 kexec_file_flags);
-			if (result == EFALLBACK && do_kexec_fallback)
+			if (result == EFALLBACK && do_kexec_fallback) {
+				/* Reset getopt for fallback */
+				opterr = 1;
+				optind = 1;
 				do_kexec_file_syscall = 0;
+			}
 		}
 		if (!do_kexec_file_syscall)
 			result = my_load(type, fileind, argc, argv,
