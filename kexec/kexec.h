@@ -63,6 +63,7 @@
  */
 #define EFAILED		-1	/* default error code */
 #define ENOCRASHKERNEL	-2	/* no memory reserved for crashkernel */
+#define EFALLBACK	-3	/* fallback to kexec_load(2) may work */
 
 /*
  * This function doesn't actually exist.  The idea is that when someone

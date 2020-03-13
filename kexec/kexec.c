@@ -836,11 +836,21 @@ static int kexec_file_unload(unsigned long kexec_file_flags)
 {
 	int ret = 0;
 
+	if (!is_kexec_file_load_implemented())
+		return EFALLBACK;
+
 	ret = kexec_file_load(-1, -1, 0, NULL, kexec_file_flags);
 	if (ret != 0) {
-		/* The unload failed, print some debugging information */
-		fprintf(stderr, "kexec_file_load(unload) failed\n: %s\n",
-			strerror(errno));
+		if (errno == ENOSYS) {
+			ret = EFALLBACK;
+		} else {
+			/*
+			 * The unload failed, print some debugging
+			 * information */
+			fprintf(stderr, "kexec_file_load(unload) failed: %s\n",
+				strerror(errno));
+			ret = EFAILED;
+		}
 	}
 	return ret;
 }
@@ -1182,15 +1192,13 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	info.file_mode = 1;
 	info.initrd_fd = -1;
 
-	if (!is_kexec_file_load_implemented()) {
-		fprintf(stderr, "syscall kexec_file_load not available.\n");
-		return -ENOSYS;
-	}
+	if (!is_kexec_file_load_implemented())
+		return EFALLBACK;
 
 	if (argc - fileind <= 0) {
 		fprintf(stderr, "No kernel specified\n");
 		usage();
-		return -1;
+		return EFAILED;
 	}
 
 	kernel = argv[fileind];
@@ -1199,7 +1207,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	if (kernel_fd == -1) {
 		fprintf(stderr, "Failed to open file %s:%s\n", kernel,
 				strerror(errno));
-		return -1;
+		return EFAILED;
 	}
 
 	/* slurp in the input kernel */
@@ -1225,7 +1233,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	if (i == file_types) {
 		fprintf(stderr, "Cannot determine the file type " "of %s\n",
 				kernel);
-		return -1;
+		return EFAILED;
 	}
 
 	ret = file_type[i].load(argc, argv, kernel_buf, kernel_size, &info);
@@ -1243,9 +1251,43 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 
 	ret = kexec_file_load(kernel_fd, info.initrd_fd, info.command_line_len,
 			info.command_line, info.kexec_flags);
-	if (ret != 0)
-		fprintf(stderr, "kexec_file_load failed: %s\n",
-					strerror(errno));
+	if (ret != 0) {
+		switch (errno) {
+			/*
+			 * Something failed with signature verification.
+			 * Reject the image.
+			 */
+		case ELIBBAD:
+		case EKEYREJECTED:
+		case ENOPKG:
+		case ENOKEY:
+		case EBADMSG:
+		case EMSGSIZE:
+			/* Reject by default. */
+		default:
+			ret = EFAILED;
+			break;
+
+			/* Not implemented. */
+		case ENOSYS:
+			/*
+			 * Parsing image or other options failed
+			 * The image may be invalid or image
+			 * type may not supported by kernel so
+			 * retry parsing in kexec-tools.
+			 */
+		case EINVAL:
+		case ENOEXEC:
+			/*
+			 * ENOTSUP can be unsupported image
+			 * type or unsupported PE signature
+			 * wrapper type, duh.
+			 */
+		case ENOTSUP:
+			ret = EFALLBACK;
+			break;
+		}
+	}
 
 	close(kernel_fd);
 	return ret;
@@ -1496,7 +1538,7 @@ int main(int argc, char *argv[])
 	if (do_unload) {
 		if (do_kexec_file_syscall) {
 			result = kexec_file_unload(kexec_file_flags);
-			if ((result == -ENOSYS) && do_kexec_fallback)
+			if (result == EFALLBACK && do_kexec_fallback)
 				do_kexec_file_syscall = 0;
 		}
 		if (!do_kexec_file_syscall)
@@ -1506,46 +1548,8 @@ int main(int argc, char *argv[])
 		if (do_kexec_file_syscall) {
 			result = do_kexec_file_load(fileind, argc, argv,
 						 kexec_file_flags);
-			if (do_kexec_fallback) switch (result) {
-				/*
-				 * Something failed with signature verification.
-				 * Reject the image.
-				 */
-				case -ELIBBAD:
-				case -EKEYREJECTED:
-				case -ENOPKG:
-				case -ENOKEY:
-				case -EBADMSG:
-				case -EMSGSIZE:
-					/*
-					 * By default reject or do nothing if
-					 * succeded
-					 */
-				default: break;
-				case -ENOSYS: /* not implemented */
-					/*
-					 * Parsing image or other options failed
-					 * The image may be invalid or image
-					 * type may not supported by kernel so
-					 * retry parsing in kexec-tools.
-					 */
-				case -EINVAL:
-				case -ENOEXEC:
-					 /*
-					  * ENOTSUP can be unsupported image
-					  * type or unsupported PE signature
-					  * wrapper type, duh
-					  *
-					  * The kernel sometimes wrongly
-					  * returns ENOTSUPP (524) - ignore
-					  * that. It is not supposed to be seen
-					  * by userspace so seeing it is a
-					  * kernel bug
-					  */
-				case -ENOTSUP:
-					do_kexec_file_syscall = 0;
-					break;
-			}
+			if (result == EFALLBACK && do_kexec_fallback)
+				do_kexec_file_syscall = 0;
 		}
 		if (!do_kexec_file_syscall)
 			result = my_load(type, fileind, argc, argv,
@@ -1570,6 +1574,8 @@ int main(int argc, char *argv[])
 	if ((result == 0) && do_load_jump_back_helper) {
 		result = my_load_jump_back_helper(kexec_flags, entry);
 	}
+	if (result == EFALLBACK)
+		fputs("syscall kexec_file_load not available.\n", stderr);
 
 	fflush(stdout);
 	fflush(stderr);
