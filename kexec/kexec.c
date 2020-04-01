@@ -906,7 +906,7 @@ static int my_shutdown(void)
 static int my_exec(void)
 {
 	if (xen_present())
-		xen_kexec_exec();
+		xen_kexec_exec(kexec_flags);
 	else
 		reboot(LINUX_REBOOT_CMD_KEXEC);
 	/* I have failed if I make it here */
@@ -1012,6 +1012,8 @@ void usage(void)
 	       "                      If capture kernel is being unloaded\n"
 	       "                      specify -p with -u.\n"
 	       " -e, --exec           Execute a currently loaded kernel.\n"
+               "     --exec-live-update Execute a currently loaded xen image after\n"
+                                      "storing the state required to live update.\n"
 	       " -t, --type=TYPE      Specify the new kernel is of this type.\n"
 	       "     --mem-min=<addr> Specify the lowest memory address to\n"
 	       "                      load code into.\n"
@@ -1397,6 +1399,13 @@ int main(int argc, char *argv[])
 			do_unload = 1;
 			kexec_file_flags |= KEXEC_FILE_UNLOAD;
 			break;
+                case OPT_EXEC_LIVE_UPDATE:
+			if ( !xen_present() ) {
+				fprintf(stderr, "--exec-live-update only works under xen.\n");
+                                return 1;
+                        }
+			kexec_flags |= KEXEC_LIVE_UPDATE;
+			/* fallthrough */
 		case OPT_EXEC:
 			do_load = 0;
 			do_shutdown = 0;
