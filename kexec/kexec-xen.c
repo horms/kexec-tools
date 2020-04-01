@@ -177,8 +177,12 @@ int xen_kexec_load(struct kexec_info *info)
 		seg++;
 	}
 
-	type = (info->kexec_flags & KEXEC_ON_CRASH) ? KEXEC_TYPE_CRASH
-		: KEXEC_TYPE_DEFAULT;
+	if (info->kexec_flags & KEXEC_ON_CRASH)
+		type = KEXEC_TYPE_CRASH;
+	else if (info->kexec_flags & KEXEC_LIVE_UPDATE )
+		type = KEXEC_TYPE_LIVE_UPDATE;
+	else
+		type = KEXEC_TYPE_DEFAULT;
 
 	arch = (info->kexec_flags & KEXEC_ARCH_MASK) >> 16;
 #if defined(__i386__) || defined(__x86_64__)

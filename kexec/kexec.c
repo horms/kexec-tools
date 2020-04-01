@@ -47,6 +47,7 @@
 #include "kexec.h"
 #include "kexec-syscall.h"
 #include "kexec-elf.h"
+#include "kexec-xen.h"
 #include "kexec-sha256.h"
 #include "kexec-zlib.h"
 #include "kexec-lzma.h"
@@ -1022,6 +1023,8 @@ void usage(void)
 	       "                      context of current kernel during kexec.\n"
 	       "     --load-jump-back-helper Load a helper image to jump back\n"
 	       "                      to original kernel.\n"
+	       "     --load-live-update Load the new kernel to overwrite the\n"
+	       "                      running kernel.\n"
 	       "     --entry=<addr>   Specify jump back address.\n"
 	       "                      (0 means it's not jump back or\n"
 	       "                      preserve context)\n"
@@ -1169,6 +1172,25 @@ char *concat_cmdline(const char *base, const char *append)
 	strcat(cmdline, " ");
 	strcat(cmdline, append);
 	return cmdline;
+}
+
+void cmdline_add_liveupdate(char **base)
+{
+	uint64_t lu_start, lu_end, lu_sizeM;
+	char *str;
+	char buf[64];
+	size_t len;
+
+	if ( !xen_present() )
+		return;
+
+	xen_get_kexec_range(KEXEC_RANGE_MA_LIVEUPDATE, &lu_start, &lu_end);
+	lu_sizeM = (lu_end - lu_start) / (1024 * 1024) + 1;
+	sprintf(buf, " liveupdate=%luM@0x%lx", lu_sizeM, lu_start);
+	len = strlen(*base) + strlen(buf) + 1;
+	str = xmalloc(len);
+	sprintf(str, "%s%s", *base, buf);
+	*base = str;
 }
 
 /* New file based kexec system call related code */
@@ -1402,11 +1424,13 @@ int main(int argc, char *argv[])
 			}
 			break;
 		case OPT_LOAD_PRESERVE_CONTEXT:
+		case OPT_LOAD_LIVE_UPDATE:
 			do_load = 1;
 			do_exec = 0;
 			do_shutdown = 0;
 			do_sync = 1;
-			kexec_flags = KEXEC_PRESERVE_CONTEXT;
+			kexec_flags = (opt == OPT_LOAD_PRESERVE_CONTEXT) ?
+				       KEXEC_PRESERVE_CONTEXT : KEXEC_LIVE_UPDATE;
 			break;
 		case OPT_TYPE:
 			type = optarg;
@@ -1502,6 +1526,11 @@ int main(int argc, char *argv[])
 		die("Please specify memory range used by kexeced kernel\n"
 		    "to preserve the context of original kernel with \n"
 		    "\"--mem-max\" parameter\n");
+	}
+
+	if (do_load && (kexec_flags & KEXEC_LIVE_UPDATE) &&
+	    !xen_present()) {
+		die("--load-live-update can only be used with xen\n");
 	}
 
 	fileind = optind;

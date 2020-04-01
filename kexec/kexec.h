@@ -233,7 +233,8 @@ extern int file_types;
 #define OPT_LOAD_JUMP_BACK_HELPER 260
 #define OPT_ENTRY		261
 #define OPT_PRINT_CKR_SIZE	262
-#define OPT_MAX			263
+#define OPT_LOAD_LIVE_UPDATE	263
+#define OPT_MAX			264
 #define KEXEC_OPTIONS \
 	{ "help",		0, 0, OPT_HELP }, \
 	{ "version",		0, 0, OPT_VERSION }, \
@@ -246,6 +247,7 @@ extern int file_types;
 	{ "exec",		0, 0, OPT_EXEC }, \
 	{ "load-preserve-context", 0, 0, OPT_LOAD_PRESERVE_CONTEXT}, \
 	{ "load-jump-back-helper", 0, 0, OPT_LOAD_JUMP_BACK_HELPER }, \
+	{ "load-live-update", 0, 0, OPT_LOAD_LIVE_UPDATE }, \
 	{ "entry",		1, 0, OPT_ENTRY }, \
 	{ "type",		1, 0, OPT_TYPE }, \
 	{ "load-panic",         0, 0, OPT_PANIC }, \
@@ -319,6 +321,7 @@ const char * proc_iomem(void);
 #define MAX_LINE	160
 
 char *concat_cmdline(const char *base, const char *append);
+void cmdline_add_liveupdate(char **base);
 
 int xen_present(void);
 int xen_kexec_load(struct kexec_info *info);

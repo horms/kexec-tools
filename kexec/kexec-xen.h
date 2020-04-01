@@ -64,8 +64,23 @@ extern int __xc_interface_close(xc_interface *xch);
 
 #endif /* CONFIG_LIBXENCTRL_DL */
 
-
 #endif /* HAVE_LIBXENCTRL */
+
+#ifndef KEXEC_RANGE_MA_XEN
+#define KEXEC_RANGE_MA_XEN 1
+#endif
+
+#ifndef KEXEC_RANGE_MA_LIVEUPDATE
+#define KEXEC_RANGE_MA_LIVEUPDATE 7
+#endif
+
+#ifndef KEXEC_TYPE_LIVE_UPDATE
+#define KEXEC_TYPE_LIVE_UPDATE 2
+#endif
+
+#ifndef KEXEC_LIVE_UPDATE
+#define KEXEC_LIVE_UPDATE 0x00000004
+#endif
 
 int xen_get_kexec_range(int range, uint64_t *start, uint64_t *end);
 
