@@ -63,6 +63,10 @@ extern int __xc_interface_close(xc_interface *xch);
 	__xc_call(void *, xc_hypercall_buffer_array_destroy, args)
 
 #endif /* CONFIG_LIBXENCTRL_DL */
+
+
 #endif /* HAVE_LIBXENCTRL */
+
+int xen_get_kexec_range(int range, uint64_t *start, uint64_t *end);
 
 #endif /* KEXEC_XEN_H */

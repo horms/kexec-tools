@@ -64,6 +64,33 @@ int __xc_interface_close(xc_interface *xch)
 }
 #endif /* CONFIG_LIBXENCTRL_DL */
 
+int xen_get_kexec_range(int range, uint64_t *start, uint64_t *end)
+{
+	uint64_t size;
+	xc_interface *xc;
+	int rc = -1;
+
+	xc = xc_interface_open(NULL, NULL, 0);
+	if (!xc) {
+		fprintf(stderr, "failed to open xen control interface.\n");
+		goto out;
+	}
+
+	rc = xc_kexec_get_range(xc, range, 0, &size, start);
+	if (rc < 0) {
+		fprintf(stderr, "failed to get range=%d from hypervisor.\n", range);
+		goto out_close;
+	}
+
+	*end = *start + size - 1;
+
+out_close:
+	xc_interface_close(xc);
+
+out:
+	return rc;
+}
+
 #define IDENTMAP_1MiB (1024 * 1024)
 
 int xen_kexec_load(struct kexec_info *info)
@@ -225,6 +252,11 @@ void xen_kexec_exec(void)
 }
 
 #else /* ! HAVE_LIBXENCTRL */
+
+int xen_get_kexec_range(int range, uint64_t *start, uint64_t *end)
+{
+	return -1;
+}
 
 int xen_kexec_load(struct kexec_info *UNUSED(info))
 {
