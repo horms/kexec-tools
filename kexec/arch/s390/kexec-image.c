@@ -112,6 +112,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		};
 	static const char short_options[] = KEXEC_OPT_STR "";
 
+	command_line[0] = 0;
 	ramdisk = NULL;
 	ramdisk_len = 0;
 	ramdisk_origin = 0;
