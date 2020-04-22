@@ -409,7 +409,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		{ "page-offset",	1, 0, OPT_PAGE_OFFSET },
 		{ 0, 			0, 0, 0 },
 	};
-	static const char short_options[] = KEXEC_ARCH_OPT_STR "a:r:";
+	static const char short_options[] = KEXEC_ARCH_OPT_STR "";
 
 	/*
 	 * Parse the command line arguments

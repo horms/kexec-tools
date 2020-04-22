@@ -4,12 +4,12 @@
 #define OPT_DT_NO_OLD_ROOT	(OPT_MAX+0)
 #define OPT_ARCH_MAX		(OPT_MAX+1)
 
-#define OPT_APPEND	'a'
-#define OPT_RAMDISK	'r'
 #define OPT_DTB		(OPT_ARCH_MAX+0)
 #define OPT_ATAGS	(OPT_ARCH_MAX+1)
 #define OPT_IMAGE_SIZE	(OPT_ARCH_MAX+2)
 #define OPT_PAGE_OFFSET	(OPT_ARCH_MAX+3)
+#define OPT_APPEND	(OPT_ARCH_MAX+4)
+#define OPT_RAMDISK	(OPT_ARCH_MAX+5)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -45,7 +45,7 @@
 	{ "image-size",		1, 0, OPT_IMAGE_SIZE }, \
 	{ "page-offset",	1, 0, OPT_PAGE_OFFSET },
 
-#define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR "a:r:s:"
+#define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR ""
 
 extern unsigned int kexec_arm_image_size;
 

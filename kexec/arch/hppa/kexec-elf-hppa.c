@@ -76,7 +76,7 @@ int elf_hppa_load(int argc, char **argv, const char *buf, off_t len,
 		{ 0,                    0, NULL, 0 },
 	};
 
-	static const char short_options[] = KEXEC_ALL_OPT_STR "d";
+	static const char short_options[] = KEXEC_ALL_OPT_STR;
 
 	while ((opt = getopt_long(argc, argv, short_options, options, 0)) !=
 		-1) {

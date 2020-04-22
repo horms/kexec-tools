@@ -17,7 +17,7 @@
 	{ "ramdisk",		1, 0, OPT_RAMDISK },
 
 
-#define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR "a:r:s:"
+#define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR ""
 
 /* See the other architectures for details of these; HPPA has no
  * loader-specific options yet.
