@@ -1374,6 +1374,7 @@ int main(int argc, char *argv[])
 			return 0;
 		case OPT_DEBUG:
 			kexec_debug = 1;
+			break;
 		case OPT_NOIFDOWN:
 			skip_ifdown = 1;
 			break;
