@@ -544,6 +544,14 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	kernel_mem_size = len + 4;
 
 	/*
+	 * Check for a kernel size extension, and set or validate the
+	 * image size.  This is the total space needed to avoid the
+	 * boot kernel BSS, so other data (such as initrd) does not get
+	 * overwritten.
+	 */
+	tag = find_extension_tag(buf, len, ZIMAGE_TAG_KRNL_SIZE);
+
+	/*
 	 * The zImage length does not include its stack (4k) or its
 	 * malloc space (64k).  Include this.
 	 */
@@ -551,13 +559,6 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 
 	dbgprintf("zImage requires 0x%08llx bytes\n", (unsigned long long)len);
 
-	/*
-	 * Check for a kernel size extension, and set or validate the
-	 * image size.  This is the total space needed to avoid the
-	 * boot kernel BSS, so other data (such as initrd) does not get
-	 * overwritten.
-	 */
-	tag = find_extension_tag(buf, len, ZIMAGE_TAG_KRNL_SIZE);
 	if (tag) {
 		uint32_t *p = (void *)buf + le32_to_cpu(tag->u.krnl_size.size_ptr);
 		uint32_t edata_size = le32_to_cpu(get_unaligned(p));
