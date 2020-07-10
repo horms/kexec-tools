@@ -129,9 +129,12 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	if (arch_options.command_line)
 		strncat(cmdline_buf, arch_options.command_line, command_line_len);
 	if (crash_cmdline)
+	{
 		strncat(cmdline_buf, crash_cmdline,
 				sizeof(crash_cmdline) -
 				strlen(crash_cmdline) - 1);
+		free(crash_cmdline);
+	}
 
 	if (info->kexec_flags & KEXEC_ON_CRASH)
 		/* In case of crashdump segment[0] is kernel.
