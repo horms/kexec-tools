@@ -42,6 +42,9 @@ int kexec_iomem_for_each_line(char *match,
 	int count;
 	int nr = 0, ret;
 
+	if (!callback)
+		return nr;
+
 	fp = fopen(iomem, "r");
 	if (!fp)
 		die("Cannot open %s\n", iomem);
@@ -53,13 +56,11 @@ int kexec_iomem_for_each_line(char *match,
 		str = line + consumed;
 		size = end - start + 1;
 		if (!match || memcmp(str, match, strlen(match)) == 0) {
-			if (callback) {
-				ret = callback(data, nr, str, start, size);
-				if (ret < 0)
-					break;
-				else if (ret == 0)
-					nr++;
-			}
+			ret = callback(data, nr, str, start, size);
+			if (ret < 0)
+				break;
+			else if (ret == 0)
+				nr++;
 		}
 	}
 
