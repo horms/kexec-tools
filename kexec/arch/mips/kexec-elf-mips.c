@@ -161,7 +161,7 @@ int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 
 		/* Create initrd entries in dtb - although at this time
 		 * they would not point to the correct location */
-		dtb_set_initrd(&dtb_buf, &dtb_length, initrd_buf, initrd_buf + initrd_size);
+		dtb_set_initrd(&dtb_buf, &dtb_length, (off_t)initrd_buf, (off_t)initrd_buf + initrd_size);
 
 		initrd_base = add_buffer(info, initrd_buf, initrd_size,
 					initrd_size, sizeof(void *),
