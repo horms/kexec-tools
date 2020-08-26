@@ -585,6 +585,7 @@ static char *slurp_file_generic(const char *filename, off_t *r_size,
 		die("Read on %s ended before stat said it should\n", filename);
 
 	*r_size = size;
+	close(fd);
 	return buf;
 }
 
@@ -1257,12 +1258,14 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	if (i == file_types) {
 		fprintf(stderr, "Cannot determine the file type " "of %s\n",
 				kernel);
+		close(kernel_fd);
 		return EFAILED;
 	}
 
 	ret = file_type[i].load(argc, argv, kernel_buf, kernel_size, &info);
 	if (ret < 0) {
 		fprintf(stderr, "Cannot load %s\n", kernel);
+		close(kernel_fd);
 		return ret;
 	}
 
