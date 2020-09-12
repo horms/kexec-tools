@@ -535,15 +535,19 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		if (crash_create_elf64_headers(info, &elf_info64,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz,
-					       ELF_CORE_HEADER_ALIGN) < 0)
+					       ELF_CORE_HEADER_ALIGN) < 0) {
+			free (tmp);
 			return -1;
+		}
 	}
 	else {
 		if (crash_create_elf32_headers(info, &elf_info32,
 					       crash_memory_range, nr_ranges,
 					       &tmp, &sz,
-					       ELF_CORE_HEADER_ALIGN) < 0)
+					       ELF_CORE_HEADER_ALIGN) < 0) {
+			free(tmp);
 			return -1;
+		}
 	}
 
 	elfcorehdr = add_buffer(info, tmp, sz, sz, align, min_base,

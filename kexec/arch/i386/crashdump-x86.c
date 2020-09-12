@@ -913,8 +913,11 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	add_memmap(memmap_p, &nr_memmap, info->backup_src_start, info->backup_src_size, RANGE_RAM);
 	for (i = 0; i < crash_reserved_mem_nr; i++) {
 		sz = crash_reserved_mem[i].end - crash_reserved_mem[i].start +1;
-		if (add_memmap(memmap_p, &nr_memmap, crash_reserved_mem[i].start, sz, RANGE_RAM) < 0)
+		if (add_memmap(memmap_p, &nr_memmap, crash_reserved_mem[i].start,
+				sz, RANGE_RAM) < 0) {
+			free(memmap_p);
 			return ENOCRASHKERNEL;
+		}
 	}
 
 	/* Create a backup region segment to store backup data*/
@@ -926,22 +929,29 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 						0, max_addr, -1);
 		dbgprintf("Created backup segment at 0x%lx\n",
 			  info->backup_start);
-		if (delete_memmap(memmap_p, &nr_memmap, info->backup_start, sz) < 0)
+		if (delete_memmap(memmap_p, &nr_memmap, info->backup_start, sz) < 0) {
+			free(tmp);
+			free(memmap_p);
 			return EFAILED;
+		}
 	}
 
 	/* Create elf header segment and store crash image data. */
 	if (arch_options.core_header_type == CORE_TYPE_ELF64) {
 		if (crash_create_elf64_headers(info, &elf_info, mem_range,
 						nr_ranges, &tmp, &bufsz,
-						ELF_CORE_HEADER_ALIGN) < 0)
+						ELF_CORE_HEADER_ALIGN) < 0) {
+			free(memmap_p);
 			return EFAILED;
+		}
 	}
 	else {
 		if (crash_create_elf32_headers(info, &elf_info, mem_range,
 						nr_ranges, &tmp, &bufsz,
-						ELF_CORE_HEADER_ALIGN) < 0)
+						ELF_CORE_HEADER_ALIGN) < 0) {
+			free(memmap_p);
 			return EFAILED;
+		}
 	}
 	/* the size of the elf headers allocated is returned in 'bufsz' */
 
@@ -962,8 +972,10 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	elfcorehdr = add_buffer(info, tmp, bufsz, memsz, align, min_base,
 							max_addr, -1);
 	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
-	if (delete_memmap(memmap_p, &nr_memmap, elfcorehdr, memsz) < 0)
+	if (delete_memmap(memmap_p, &nr_memmap, elfcorehdr, memsz) < 0) {
+		free(memmap_p);
 		return -1;
+		}
 	if (!bzImage_support_efi_boot || arch_options.noefi ||
 	    !sysfs_efi_runtime_map_exist())
 		cmdline_add_efi(mod_cmdline);
