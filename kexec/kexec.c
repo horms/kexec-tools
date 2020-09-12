@@ -1530,7 +1530,7 @@ int main(int argc, char *argv[])
 	    !is_crashkernel_mem_reserved()) {
 		die("Memory for crashkernel is not reserved\n"
 		    "Please reserve memory by passing"
-		    "\"crashkernel=X@Y\" parameter to kernel\n"
+		    "\"crashkernel=Y@X\" parameter to kernel\n"
 		    "Then try to loading kdump kernel\n");
 	}
 
