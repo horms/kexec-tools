@@ -125,11 +125,17 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 {
 	char filename[PATH_MAX];
 	char *type;
+	int ret;
 
 	/*
 	 * entry/start
 	 */
-	snprintf(filename, PATH_MAX, "%s/%s", entry, "start");
+	ret = snprintf(filename, PATH_MAX, "%s/%s", entry, "start");
+	if (ret < 0 || ret >= PATH_MAX) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	filename[PATH_MAX-1] = 0;
 
 	range->start = parse_numeric_sysfs(filename);
@@ -139,7 +145,12 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 	/*
 	 * entry/end
 	 */
-	snprintf(filename, PATH_MAX, "%s/%s", entry, "end");
+	ret = snprintf(filename, PATH_MAX, "%s/%s", entry, "end");
+	if (ret < 0 || ret >= PATH_MAX) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	filename[PATH_MAX-1] = 0;
 
 	range->end = parse_numeric_sysfs(filename);
@@ -149,7 +160,12 @@ static int parse_memmap_entry(const char *entry, struct memory_range *range)
 	/*
 	 * entry/type
 	 */
-	snprintf(filename, PATH_MAX, "%s/%s", entry, "type");
+	ret = snprintf(filename, PATH_MAX, "%s/%s", entry, "type");
+	if (ret < 0 || ret >= PATH_MAX) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	filename[PATH_MAX-1] = 0;
 
 	type = parse_string_sysfs(filename);

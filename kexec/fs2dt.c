@@ -568,7 +568,7 @@ static void putnode(void)
 	struct dirent **namelist;
 	int numlist, i;
 	struct stat statbuf;
-	int plen;
+	int plen, ret;
 
 	numlist = scandir(pathname, &namelist, 0, comparefunc);
 	if (numlist < 0)
@@ -670,10 +670,20 @@ static void putnode(void)
 		 * code can print 'I'm in purgatory' message. Currently only
 		 * pseries/hvcterminal is supported.
 		 */
-		snprintf(filename, MAXPATH, "%sstdout-path", pathname);
+		ret = snprintf(filename, MAXPATH, "%sstdout-path", pathname);
+		if (ret < 0 || ret >= MAXPATH) {
+			fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+			goto no_debug;
+		}
+
 		fd = open(filename, O_RDONLY);
 		if (fd == -1) {
-			snprintf(filename, MAXPATH, "%slinux,stdout-path", pathname);
+			ret = snprintf(filename, MAXPATH, "%slinux,stdout-path", pathname);
+			if (ret < 0 || ret >= MAXPATH) {
+				fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+				goto no_debug;
+			}
+
 			fd = open(filename, O_RDONLY);
 			if (fd == -1) {
 				printf("Unable to find %s[linux,]stdout-path, printing from purgatory is disabled\n",
