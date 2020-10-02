@@ -165,6 +165,8 @@ int arch_process_options(int argc, char **argv)
 			break;
 		case OPT_KEXEC_FILE_SYSCALL:
 			do_kexec_file_syscall = 1;
+		case OPT_SERIAL:
+			arm64_opts.console = optarg;
 			break;
 		default:
 			break; /* Ignore core and unknown options. */
@@ -180,10 +182,70 @@ int arch_process_options(int argc, char **argv)
 	dbgprintf("%s:%d: dtb: %s\n", __func__, __LINE__,
 		(do_kexec_file_syscall && arm64_opts.dtb ? "(ignored)" :
 							arm64_opts.dtb));
+	dbgprintf("%s:%d: console: %s\n", __func__, __LINE__,
+		arm64_opts.console);
+
 	if (do_kexec_file_syscall)
 		arm64_opts.dtb = NULL;
 
 	return 0;
+}
+
+/**
+ * find_purgatory_sink - Find a sink for purgatory output.
+ */
+
+static uint64_t find_purgatory_sink(const char *console)
+{
+	int fd, ret;
+	char device[255], mem[255];
+	struct stat sb;
+	char buffer[10];
+	uint64_t iomem = 0x0;
+
+	if (!console)
+		return 0;
+
+	ret = snprintf(device, sizeof(device), "/sys/class/tty/%s", console);
+	if (ret < 0 || ret >= sizeof(device)) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return 0;
+	}
+
+	if (stat(device, &sb) || !S_ISDIR(sb.st_mode)) {
+		fprintf(stderr, "kexec: %s: No valid console found for %s\n",
+			__func__, device);
+		return 0;
+	}
+
+	ret = snprintf(mem, sizeof(mem), "%s%s", device, "/iomem_base");
+	if (ret < 0 || ret >= sizeof(mem)) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return 0;
+	}
+
+	printf("console memory read from %s\n", mem);
+
+	fd = open(mem, O_RDONLY);
+	if (fd < 0) {
+		fprintf(stderr, "kexec: %s: No able to open %s\n",
+			__func__, mem);
+		return 0;
+	}
+
+	memset(buffer, '\0', sizeof(buffer));
+	ret = read(fd, buffer, sizeof(buffer));
+	if (ret < 0) {
+		fprintf(stderr, "kexec: %s: not able to read fd\n", __func__);
+		close(fd);
+		return 0;
+	}
+
+	sscanf(buffer, "%lx", &iomem);
+	printf("console memory is at %#lx\n", iomem);
+
+	close(fd);
+	return iomem;
 }
 
 /**
@@ -637,6 +699,7 @@ int arm64_load_other_segments(struct kexec_info *info,
 	unsigned long hole_min;
 	unsigned long hole_max;
 	unsigned long initrd_end;
+	uint64_t purgatory_sink;
 	char *initrd_buf = NULL;
 	struct dtb dtb;
 	char command_line[COMMAND_LINE_SIZE] = "";
@@ -653,6 +716,11 @@ int arm64_load_other_segments(struct kexec_info *info,
 			sizeof(command_line) - 1);
 		command_line[sizeof(command_line) - 1] = 0;
 	}
+
+	purgatory_sink = find_purgatory_sink(arm64_opts.console);
+
+	dbgprintf("%s:%d: purgatory sink: 0x%" PRIx64 "\n", __func__, __LINE__,
+		purgatory_sink);
 
 	if (arm64_opts.dtb) {
 		dtb.name = "dtb_user";
@@ -741,6 +809,9 @@ int arm64_load_other_segments(struct kexec_info *info,
 		hole_min, hole_max, 1, 0);
 
 	info->entry = (void *)elf_rel_get_addr(&info->rhdr, "purgatory_start");
+
+	elf_rel_set_symbol(&info->rhdr, "arm64_sink", &purgatory_sink,
+		sizeof(purgatory_sink));
 
 	elf_rel_set_symbol(&info->rhdr, "arm64_kernel_entry", &image_base,
 		sizeof(image_base));
