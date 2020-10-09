@@ -63,6 +63,17 @@ case $target_cpu in
 		;;
 esac
 
+if test "$ARCH" = "x86_64" ; then
+	case $target in
+		*x32 )
+			SUBARCH="x32"
+			;;
+		* )
+			SUBARCH=""
+			;;
+	esac
+fi
+
 dnl ---Options
 
 OBJDIR=`pwd`/objdir
