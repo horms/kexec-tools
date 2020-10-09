@@ -360,13 +360,13 @@ static uint64_t multiboot2_make_mbi(struct kexec_info *info, char *cmdline, int 
 	}
 
 out:
-	return (uint64_t) ptrorig;
+	return (uint64_t) (uintptr_t) ptrorig;
 }
 
 static uint64_t multiboot2_mbi_add_module(void *mbi_buf, uint64_t mbi_ptr, uint32_t mod_start,
 					  uint32_t mod_end, char *mod_clp)
 {
-	struct multiboot_tag_module *tag = (struct multiboot_tag_module *) mbi_ptr;
+	struct multiboot_tag_module *tag = (struct multiboot_tag_module *) (uintptr_t) mbi_ptr;
 
 	tag->type = MULTIBOOT_TAG_TYPE_MODULE;
 	tag->size = sizeof(struct multiboot_tag_module) + strlen((char *)(long) mod_clp) + 1;
@@ -381,7 +381,7 @@ static uint64_t multiboot2_mbi_add_module(void *mbi_buf, uint64_t mbi_ptr, uint3
 
 static uint64_t multiboot2_mbi_end(void *mbi_buf, uint64_t mbi_ptr)
 {
-	struct multiboot_tag *tag = (struct multiboot_tag *) mbi_ptr;
+	struct multiboot_tag *tag = (struct multiboot_tag *) (uintptr_t) mbi_ptr;
 
 	tag->type = MULTIBOOT_TAG_TYPE_END;
 	tag->size = sizeof (struct multiboot_tag);
