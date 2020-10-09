@@ -232,8 +232,14 @@ static int parse_edd_extensions(const char *dir, struct edd_info *edd_info)
 	char line[1024];
 	uint16_t flags = 0;
 	FILE *fp;
+	int ret;
 
-	snprintf(filename, PATH_MAX, "%s/%s", dir, "extensions");
+	ret = snprintf(filename, PATH_MAX, "%s/%s", dir, "extensions");
+	if (ret < 0 || ret >= PATH_MAX) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	filename[PATH_MAX-1] = 0;
 
 	fp = fopen(filename, "r");
@@ -269,8 +275,14 @@ static int read_edd_raw_data(const char *dir, struct edd_info *edd_info)
 	FILE *fp;
 	size_t read_chars;
 	uint16_t len;
+	int ret;
 
-	snprintf(filename, PATH_MAX, "%s/%s", dir, "raw_data");
+	ret = snprintf(filename, PATH_MAX, "%s/%s", dir, "raw_data");
+	if (ret < 0 || ret >= PATH_MAX) {
+		fprintf(stderr, "snprintf failed: %s\n", strerror(errno));
+		return -1;
+	}
+
 	filename[PATH_MAX-1] = 0;
 
 	fp = fopen(filename, "r");
