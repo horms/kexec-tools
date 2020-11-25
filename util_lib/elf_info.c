@@ -27,6 +27,32 @@ static int num_pt_loads;
 
 static char osrelease[4096];
 
+/* VMCOREINFO symbols for lockless printk ringbuffer */
+static loff_t prb_vaddr;
+static size_t printk_ringbuffer_sz;
+static size_t prb_desc_sz;
+static size_t printk_info_sz;
+static uint64_t printk_ringbuffer_desc_ring_offset;
+static uint64_t printk_ringbuffer_text_data_ring_offset;
+static uint64_t prb_desc_ring_count_bits_offset;
+static uint64_t prb_desc_ring_descs_offset;
+static uint64_t prb_desc_ring_infos_offset;
+static uint64_t prb_data_ring_size_bits_offset;
+static uint64_t prb_data_ring_data_offset;
+static uint64_t prb_desc_ring_head_id_offset;
+static uint64_t prb_desc_ring_tail_id_offset;
+static uint64_t atomic_long_t_counter_offset;
+static uint64_t prb_desc_state_var_offset;
+static uint64_t prb_desc_info_offset;
+static uint64_t prb_desc_text_blk_lpos_offset;
+static uint64_t prb_data_blk_lpos_begin_offset;
+static uint64_t prb_data_blk_lpos_next_offset;
+static uint64_t printk_info_seq_offset;
+static uint64_t printk_info_caller_id_offset;
+static uint64_t printk_info_ts_nsec_offset;
+static uint64_t printk_info_level_offset;
+static uint64_t printk_info_text_len_offset;
+
 static loff_t log_buf_vaddr;
 static loff_t log_end_vaddr;
 static loff_t log_buf_len_vaddr;
@@ -304,6 +330,7 @@ void scan_vmcoreinfo(char *start, size_t size)
 		size_t len;
 		loff_t *vaddr;
 	} symbol[] = {
+		SYMBOL(prb),
 		SYMBOL(log_buf),
 		SYMBOL(log_end),
 		SYMBOL(log_buf_len),
@@ -360,6 +387,119 @@ void scan_vmcoreinfo(char *start, size_t size)
 			/* Remember the virtual address */
 			*symbol[i].vaddr = vaddr;
 		}
+
+		str = "SIZE(printk_ringbuffer)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_ringbuffer_sz = strtoull(pos + strlen(str),
+							NULL, 10);
+
+		str = "SIZE(prb_desc)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_sz = strtoull(pos + strlen(str), NULL, 10);
+
+		str = "SIZE(printk_info)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_info_sz = strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_ringbuffer.desc_ring)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_ringbuffer_desc_ring_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_ringbuffer.text_data_ring)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_ringbuffer_text_data_ring_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc_ring.count_bits)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_ring_count_bits_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc_ring.descs)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_ring_descs_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc_ring.infos)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_ring_infos_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_data_ring.size_bits)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_data_ring_size_bits_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_data_ring.data)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_data_ring_data_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc_ring.head_id)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_ring_head_id_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc_ring.tail_id)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_ring_tail_id_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(atomic_long_t.counter)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			atomic_long_t_counter_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc.state_var)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_state_var_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc.info)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_info_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_desc.text_blk_lpos)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_desc_text_blk_lpos_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_data_blk_lpos.begin)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_data_blk_lpos_begin_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(prb_data_blk_lpos.next)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			prb_data_blk_lpos_next_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_info.seq)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_info_seq_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_info.caller_id)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_info_caller_id_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_info.ts_nsec)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_info_ts_nsec_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_info.level)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_info_level_offset =
+				strtoull(pos + strlen(str), NULL, 10);
+
+		str = "OFFSET(printk_info.text_len)=";
+		if (memcmp(str, pos, strlen(str)) == 0)
+			printk_info_text_len_offset =
+				strtoull(pos + strlen(str), NULL, 10);
 
 		/* Check for "SIZE(printk_log)" or older "SIZE(log)=" */
 		str = "SIZE(log)=";
@@ -746,9 +886,305 @@ static void dump_dmesg_structured(int fd, void (*handler)(char*, unsigned int))
 		handler(out_buf, len);
 }
 
+/* convenience struct for passing many values to helper functions */
+struct prb_map {
+	char		*prb;
+
+	char		*desc_ring;
+	unsigned long	desc_ring_count;
+	char		*descs;
+
+	char		*infos;
+
+	char		*text_data_ring;
+	unsigned long	text_data_ring_size;
+	char		*text_data;
+};
+
+/*
+ * desc_state and DESC_* definitions taken from kernel source:
+ *
+ * kernel/printk/printk_ringbuffer.h
+ *
+ * DESC_* definitions modified to provide 32-bit and 64-bit variants.
+ */
+
+/* The possible responses of a descriptor state-query. */
+enum desc_state {
+	desc_miss	=  -1,	/* ID mismatch (pseudo state) */
+	desc_reserved	= 0x0,	/* reserved, in use by writer */
+	desc_committed	= 0x1,	/* committed by writer, could get reopened */
+	desc_finalized	= 0x2,	/* committed, no further modification allowed */
+	desc_reusable	= 0x3,	/* free, not yet used by any writer */
+};
+
+#define DESC_SV_BITS		(sizeof(uint64_t) * 8)
+#define DESC_FLAGS_SHIFT	(DESC_SV_BITS - 2)
+#define DESC_FLAGS_MASK		(3UL << DESC_FLAGS_SHIFT)
+#define DESC_STATE(sv)		(3UL & (sv >> DESC_FLAGS_SHIFT))
+#define DESC_ID_MASK		(~DESC_FLAGS_MASK)
+#define DESC_ID(sv)		((sv) & DESC_ID_MASK)
+
+#define DESC32_SV_BITS		(sizeof(uint32_t) * 8)
+#define DESC32_FLAGS_SHIFT	(DESC32_SV_BITS - 2)
+#define DESC32_FLAGS_MASK	(3UL << DESC32_FLAGS_SHIFT)
+#define DESC32_STATE(sv)	(3UL & (sv >> DESC32_FLAGS_SHIFT))
+#define DESC32_ID_MASK		(~DESC32_FLAGS_MASK)
+#define DESC32_ID(sv)		((sv) & DESC32_ID_MASK)
+
+/*
+ * get_desc_state() taken from kernel source:
+ *
+ * kernel/printk/printk_ringbuffer.c
+ *
+ * get_desc32_state() added as 32-bit variant.
+ */
+
+/* Query the state of a descriptor. */
+static enum desc_state get_desc_state(unsigned long id,
+				      uint64_t state_val)
+{
+	if (id != DESC_ID(state_val))
+		return desc_miss;
+
+	return DESC_STATE(state_val);
+}
+
+static enum desc_state get_desc32_state(unsigned long id,
+					uint64_t state_val)
+{
+	if (id != DESC32_ID(state_val))
+		return desc_miss;
+
+	return DESC32_STATE(state_val);
+}
+
+static bool record_committed(unsigned long id, uint64_t state_var)
+{
+	enum desc_state state;
+
+	if (machine_pointer_bits() == 32)
+		state = get_desc32_state(id, state_var);
+	else
+		state = get_desc_state(id, state_var);
+
+	return (state == desc_committed || state == desc_finalized);
+}
+
+static uint64_t id_inc(uint64_t id)
+{
+	id++;
+
+	if (machine_pointer_bits() == 32)
+		return (id & DESC32_ID_MASK);
+
+	return (id & DESC_ID_MASK);
+}
+
+static uint64_t get_ulong(char *addr)
+{
+	if (machine_pointer_bits() == 32)
+		return struct_val_u32(addr, 0);
+	return struct_val_u64(addr, 0);
+}
+
+static uint64_t sizeof_ulong(void)
+{
+	return (machine_pointer_bits() >> 3);
+}
+
+static void dump_record(struct prb_map *m, unsigned long id,
+			void (*handler)(char*, unsigned int))
+{
+#define OUT_BUF_SIZE	4096
+	char out_buf[OUT_BUF_SIZE];
+	imaxdiv_t imaxdiv_usec;
+	imaxdiv_t imaxdiv_sec;
+	uint32_t offset = 0;
+	unsigned short len;
+	uint64_t state_var;
+	uint64_t ts_nsec;
+	uint64_t begin;
+	uint64_t next;
+	char *info;
+	char *text;
+	char *desc;
+	int i;
+
+	desc = m->descs + ((id % m->desc_ring_count) * prb_desc_sz);
+	info = m->infos + ((id % m->desc_ring_count) * printk_info_sz);
+
+	/* skip non-committed record */
+	state_var = get_ulong(desc + prb_desc_state_var_offset +
+					atomic_long_t_counter_offset);
+	if (!record_committed(id, state_var))
+		return;
+
+	begin = get_ulong(desc + prb_desc_text_blk_lpos_offset +
+			  prb_data_blk_lpos_begin_offset) %
+		m->text_data_ring_size;
+	next = get_ulong(desc + prb_desc_text_blk_lpos_offset +
+			 prb_data_blk_lpos_next_offset) %
+	       m->text_data_ring_size;
+
+	ts_nsec = struct_val_u64(info, printk_info_ts_nsec_offset);
+	imaxdiv_sec = imaxdiv(ts_nsec, 1000000000);
+	imaxdiv_usec = imaxdiv(imaxdiv_sec.rem, 1000);
+
+	offset += sprintf(out_buf + offset, "[%5llu.%06llu] ",
+		(long long unsigned int)imaxdiv_sec.quot,
+		(long long unsigned int)imaxdiv_usec.quot);
+
+	/* skip data-less text blocks */
+	if (begin == next)
+		goto out;
+
+	len = struct_val_u16(info, printk_info_text_len_offset);
+
+	/* handle wrapping data block */
+	if (begin > next)
+		begin = 0;
+
+	/* skip over descriptor ID */
+	begin += sizeof_ulong();
+
+	/* handle truncated messages */
+	if (next - begin < len)
+		len = next - begin;
+
+	text = m->text_data + begin;
+
+	/* escape non-printable characters */
+	for (i = 0; i < len; i++) {
+		unsigned char c = text[i];
+
+		if (!isprint(c) && !isspace(c))
+			offset += sprintf(out_buf + offset, "\\x%02x", c);
+		else
+			out_buf[offset++] = c;
+
+		if (offset >= OUT_BUF_SIZE - 64) {
+			if (handler)
+				handler(out_buf, offset);
+			offset = 0;
+		}
+	}
+out:
+	out_buf[offset++] = '\n';
+
+	if (offset && handler)
+		handler(out_buf, offset);
+}
+
+/*
+ *  Handle the lockless printk_ringbuffer.
+ */
+static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
+{
+	struct prb_map m;
+	uint64_t head_id;
+	uint64_t tail_id;
+	uint64_t kaddr;
+	uint64_t id;
+	int ret;
+
+	/* setup printk_ringbuffer */
+	kaddr = read_file_pointer(fd, vaddr_to_offset(prb_vaddr));
+	m.prb = calloc(1, printk_ringbuffer_sz);
+	if (!m.prb) {
+		fprintf(stderr, "Failed to malloc %lu bytes for prb: %s\n",
+			printk_ringbuffer_sz, strerror(errno));
+		exit(64);
+	}
+	ret = pread(fd, m.prb, printk_ringbuffer_sz, vaddr_to_offset(kaddr));
+	if (ret != printk_ringbuffer_sz) {
+		fprintf(stderr, "Failed to read prb of size %lu bytes: %s\n",
+			printk_ringbuffer_sz, strerror(errno));
+		exit(65);
+	}
+
+	/* setup descriptor ring */
+	m.desc_ring = m.prb + printk_ringbuffer_desc_ring_offset;
+	m.desc_ring_count = 1 << struct_val_u32(m.desc_ring,
+					prb_desc_ring_count_bits_offset);
+	kaddr = get_ulong(m.desc_ring + prb_desc_ring_descs_offset);
+	m.descs = calloc(1, prb_desc_sz * m.desc_ring_count);
+	if (!m.descs) {
+		fprintf(stderr, "Failed to malloc %lu bytes for descs: %s\n",
+			prb_desc_sz * m.desc_ring_count, strerror(errno));
+		exit(64);
+	}
+	ret = pread(fd, m.descs, prb_desc_sz * m.desc_ring_count,
+		    vaddr_to_offset(kaddr));
+	if (ret != prb_desc_sz * m.desc_ring_count) {
+		fprintf(stderr,
+			"Failed to read descs of size %lu bytes: %s\n",
+			prb_desc_sz * m.desc_ring_count, strerror(errno));
+		exit(65);
+	}
+
+	/* setup info ring */
+	kaddr = get_ulong(m.prb + prb_desc_ring_infos_offset);
+	m.infos = calloc(1, printk_info_sz * m.desc_ring_count);
+	if (!m.infos) {
+		fprintf(stderr, "Failed to malloc %lu bytes for infos: %s\n",
+			printk_info_sz * m.desc_ring_count, strerror(errno));
+		exit(64);
+	}
+	ret = pread(fd, m.infos, printk_info_sz * m.desc_ring_count,
+		    vaddr_to_offset(kaddr));
+	if (ret != printk_info_sz * m.desc_ring_count) {
+		fprintf(stderr,
+			"Failed to read infos of size %lu bytes: %s\n",
+			printk_info_sz * m.desc_ring_count, strerror(errno));
+		exit(65);
+	}
+
+	/* setup text data ring */
+	m.text_data_ring = m.prb + printk_ringbuffer_text_data_ring_offset;
+	m.text_data_ring_size = 1 << struct_val_u32(m.text_data_ring,
+					prb_data_ring_size_bits_offset);
+	kaddr = get_ulong(m.text_data_ring + prb_data_ring_data_offset);
+	m.text_data = calloc(1, m.text_data_ring_size);
+	if (!m.text_data) {
+		fprintf(stderr,
+			"Failed to malloc %lu bytes for text_data: %s\n",
+			m.text_data_ring_size, strerror(errno));
+		exit(64);
+	}
+	ret = pread(fd, m.text_data, m.text_data_ring_size,
+		    vaddr_to_offset(kaddr));
+	if (ret != m.text_data_ring_size) {
+		fprintf(stderr,
+			"Failed to read text_data of size %lu bytes: %s\n",
+			m.text_data_ring_size, strerror(errno));
+		exit(65);
+	}
+
+	/* ready to go */
+
+	tail_id = get_ulong(m.desc_ring + prb_desc_ring_tail_id_offset +
+						atomic_long_t_counter_offset);
+	head_id = get_ulong(m.desc_ring + prb_desc_ring_head_id_offset +
+						atomic_long_t_counter_offset);
+
+	for (id = tail_id; id != head_id; id = id_inc(id))
+		dump_record(&m, id, handler);
+
+	/* dump head record */
+	dump_record(&m, id, handler);
+
+	free(m.text_data);
+	free(m.infos);
+	free(m.descs);
+	free(m.prb);
+}
+
 void dump_dmesg(int fd, void (*handler)(char*, unsigned int))
 {
-	if (log_first_idx_vaddr)
+	if (prb_vaddr)
+		dump_dmesg_lockless(fd, handler);
+	else if (log_first_idx_vaddr)
 		dump_dmesg_structured(fd, handler);
 	else
 		dump_dmesg_legacy(fd, handler);
