@@ -60,7 +60,7 @@ char *zlib_decompress_file(const char *filename, off_t *r_size)
 	gzFile fp;
 	int errnum;
 	const char *msg;
-	char *buf;
+	char *buf = NULL;
 	off_t size = 0, allocated;
 	ssize_t result;
 
@@ -78,7 +78,7 @@ char *zlib_decompress_file(const char *filename, off_t *r_size)
 	}
 	if (gzdirect(fp)) {
 		/* It's not in gzip format */
-		return NULL;
+		goto fail;
 	}
 	allocated = 65536;
 	buf = xmalloc(allocated);
