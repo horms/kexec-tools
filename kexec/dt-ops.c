@@ -89,7 +89,8 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 	new_node = malloc(strlen("/") + strlen(node) + 1);
 	if (!new_node) {
 		dbgprintf("%s: malloc failed\n", __func__);
-		return -ENOMEM;
+		result = -ENOMEM;
+		goto on_error;
 	}
 
 	strcpy(new_node, "/");
