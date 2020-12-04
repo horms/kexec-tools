@@ -243,6 +243,33 @@ static void ultoa(unsigned long i, char *str)
 	}
 }
 
+/* Adds the appropriate mem= options to command line, indicating the
+ * memory region the new kernel can use to boot into. */
+static int cmdline_add_mem(char *cmdline, unsigned long addr,
+		unsigned long size)
+{
+	int cmdlen, len;
+	char str[50], *ptr;
+
+	addr = addr/1024;
+	size = size/1024;
+	ptr = str;
+	strcpy(str, " mem=");
+	ptr += strlen(str);
+	ultoa(size, ptr);
+	strcat(str, "K@");
+	ptr = str + strlen(str);
+	ultoa(addr, ptr);
+	strcat(str, "K");
+	len = strlen(str);
+	cmdlen = strlen(cmdline) + len;
+	if (cmdlen > (COMMAND_LINE_SIZE - 1))
+		die("Command line overflow\n");
+	strcat(cmdline, str);
+
+	return 0;
+}
+
 /* Adds the elfcorehdr= command line parameter to command line. */
 static int cmdline_add_elfcorehdr(char *cmdline, unsigned long addr)
 {
@@ -373,6 +400,8 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 * backup segment is after elfcorehdr, so use elfcorehdr as top of
 	 * kernel's available memory
 	 */
+	cmdline_add_mem(mod_cmdline, crash_reserved_mem.start,
+		crash_reserved_mem.end - crash_reserved_mem.start);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
 	dbgprintf("CRASH MEMORY RANGES:\n");
