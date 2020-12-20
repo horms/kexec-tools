@@ -55,6 +55,8 @@ LIBS		= @LIBS@
 
 # Utilities called by the makefiles
 INSTALL		= @INSTALL@
+CHMOD		= @CHMOD@
+CD		= cd
 MKDIR		= @MKDIR@
 RM		= @RM@
 CP		= @CP@
@@ -215,6 +217,8 @@ dist: tarball
 tarball: $(TARBALL.gz)
 
 $(TARBALL): $(SRCS) $(GENERATED_SRCS)
+	[ ! -d $(PACKAGE_NAME)-$(PACKAGE_VERSION) ] || \
+	        $(CHMOD) u+w $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	$(RM) -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	$(MKDIR) $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	$(TAR) -c $(SRCS) $(GENERATED_SRCS) | \
@@ -254,6 +258,38 @@ dist-clean: clean
 	$(RM) -f config.log config.status config.cache Makefile include/config.h
 	$(RM) -f include/config.h.in configure $(SPEC)
 	$(RM) -rf autom4te.cache
+
+distuninstallcheck:
+	FOUND=$$(find $(distuninstallcheck_dir) ! -type d) && \
+		[ -z "$$FOUND" ] || { \
+			echo "Unexpeced files found after uninstall:" && \
+			echo "$$FOUND" && \
+			exit 1; }
+
+distcheck: $(TARBALL)
+	[ ! -d $(PACKAGE_NAME)-$(PACKAGE_VERSION) ] || \
+	        $(CHMOD) u+w $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(RM) -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(TAR) -xf $(TARBALL)
+	$(MKDIR) $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_build \
+	         $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_build/sub \
+	         $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_inst \
+	         $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_dest
+	$(CHMOD) a-w $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	test -d $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_build
+	INSTALL_BASE=$$($(CD) $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_inst && pwd | sed -e 's,^[^:\\/]:[\\/],/,') &&\
+		DESTDIR="$(PACKAGE_NAME)-$(PACKAGE_VERSION)/_dest" && \
+		$(CD) $(PACKAGE_NAME)-$(PACKAGE_VERSION)/_build/sub && \
+			../../configure \
+			$(DISTCHECK_CONFIGURE_FLAGS) \
+			--srcdir=../.. --prefix="$$INSTALL_BASE" && \
+		$(MAKE) $(AM_MAKEFLAGS) && \
+		$(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$DESTDIR" install && \
+		$(MAKE) $(AM_MAKEFLAGS) DESTDIR="$$DESTDIR" uninstall && \
+		$(MAKE) $(AM_MAKEFLAGS) distuninstallcheck_dir="$$DESTDIR" \
+			distuninstallcheck
+	$(CHMOD) u+w $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(RM) -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
 install: $(TARGETS)
 	for file in $(TARGETS) ; do \
@@ -355,5 +391,6 @@ uninstall:
 		done; \
 	done
 
-.PHONY: echo install uninstall all targets uninstall-targets clean dist-clean distclean \
+.PHONY: echo install uninstall distuninstallcheck all targets \
+	uninstall-targets clean dist-clean distclean distcheck \
 	maintainer-clean maintainerclean dist tarball rpm

@@ -151,6 +151,7 @@ AC_SUBST(PURGATORY_EXTRA_CFLAGS, [$PURGATORY_EXTRA_CFLAGS])
 
 dnl Find the helper functions
 AC_PROG_INSTALL
+AC_CHECK_PROG([CHMOD],    chmod,    chmod,    "no", [$PATH])
 AC_CHECK_PROG([MKDIR],    mkdir,    mkdir,    "no", [$PATH])
 AC_CHECK_PROG([RM],       rm,       rm,       "no", [$PATH])
 AC_CHECK_PROG([CP],       cp,       cp,       "no", [$PATH])
