@@ -198,6 +198,8 @@ Makefile: Makefile.in config.status
 configure: configure.ac
 	cd $(srcdir) && autoheader && autoconf && rm -rf autom4te.cache
 
+dist: tarball
+
 tarball: $(TARBALL.gz)
 
 $(TARBALL): $(SRCS) $(GENERATED_SRCS)
@@ -397,4 +399,4 @@ uninstall:
 	done
 
 .PHONY: echo install uninstall all targets uninstall-targets clean dist-clean distclean \
-	maintainer-clean maintainerclean tarball rpm
+	maintainer-clean maintainerclean dist tarball rpm
