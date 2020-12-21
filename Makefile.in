@@ -201,14 +201,13 @@ configure: configure.ac
 tarball: $(TARBALL.gz)
 
 $(TARBALL): $(SRCS) $(GENERATED_SRCS)
-	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
-	$(LN) -s $(srcdir) $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(RM) -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(MKDIR) $(PACKAGE_NAME)-$(PACKAGE_VERSION)
+	$(TAR) -c $(SRCS) $(GENERATED_SRCS) | \
+	        $(TAR) -C $(PACKAGE_NAME)-$(PACKAGE_VERSION) -x
 	$(TAR) -cf $@ $(PSRCS)
-	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
-	$(LN) -sf . $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 	$(TAR) -rf $@ $(PGSRCS)
-	$(RM) -f $(PACKAGE_NAME)-$(PACKAGE_VERSION)
-	@echo $(dist)
+	$(RM) -rf $(PACKAGE_NAME)-$(PACKAGE_VERSION)
 
 $(TARBALL.gz): $(TARBALL)
 	gzip -c < $^ > $@
