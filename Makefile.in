@@ -106,6 +106,14 @@ PKGDATADIR=$(DATADIR)/$(PACKAGE_NAME)
 PKGLIBDIR=$(LIBDIR)/$(PACKAGE_NAME)
 PKGINCLUDEIR=$(INCLUDEDIR)/$(PACKAGE_NAME)
 
+ALLOWED_UNINSTALL_DIRS := \
+	$(SBINDIR) \
+	$(sbindir) $(bindir) $(libexecdir) $(datadir) $(sysconfdir) \
+	$(sharedstatedir) $(localstatedir) $(libdir) $(infodir) \
+	$(mandir)/man1 $(mandir)/man2 $(mandir)/man3 $(mandir)/man4 \
+	$(mandir)/man5 $(mandir)/man6 $(mandir)/man7 $(mandir)/man8 \
+	$(includedir) $(pkgdatadir) $(pkglibdir) $(pkgincludedir)
+
 all: targets
 
 # generic build rules
@@ -336,70 +344,15 @@ install: $(TARGETS)
 	done
 
 uninstall:
-	UINSTALL_LIST='$(UNINSTALL_TARGETS)'; for file in $$UINSTALL_LIST ; do \
-		if test `$(DIRNAME) $$file` =     "$(sbindir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(bindir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(libexecdir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(datadir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(sysconfdir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(sharedstatedir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(localstatedir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(libdir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(infodir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man1" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man2" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man3" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man4" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man5" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man6" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man7" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(mandir)/man8" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(includedir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(pkgdatadir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(pkglibdir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
-		if test `$(DIRNAME) $$file` =     "$(pkgincludedir)" ; then \
-			rm -rf $(DESTDIR)/$$file ; \
-		fi; \
+	UINSTALL_LIST='$(UNINSTALL_TARGETS)'; \
+	for file in $$UINSTALL_LIST ; do \
+		DIRS='$(ALLOWED_UNINSTALL_DIRS)'; \
+		for dir in $$DIRS ; do \
+			if test `$(DIRNAME) $$file` = "$$dir" ; then \
+				rm -rf $(DESTDIR)/$$file ; \
+				break ; \
+			fi; \
+		done; \
 	done
 
 .PHONY: echo install uninstall all targets uninstall-targets clean dist-clean distclean \
