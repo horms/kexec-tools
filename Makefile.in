@@ -338,67 +338,67 @@ install: $(TARGETS)
 uninstall:
 	UINSTALL_LIST='$(UNINSTALL_TARGETS)'; for file in $$UINSTALL_LIST ; do \
 		if test `$(DIRNAME) $$file` =     "$(sbindir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(bindir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(libexecdir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(datadir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(sysconfdir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(sharedstatedir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(localstatedir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(libdir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(infodir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man1" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man2" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man3" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man4" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man5" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man6" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man7" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(mandir)/man8" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(includedir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(pkgdatadir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(pkglibdir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 		if test `$(DIRNAME) $$file` =     "$(pkgincludedir)" ; then \
-			rm -rf $$file ; \
+			rm -rf $(DESTDIR)/$$file ; \
 		fi; \
 	done
 
