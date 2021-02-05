@@ -37,6 +37,10 @@
 #include "x86-linux-setup.h"
 #include "../../kexec/kexec-syscall.h"
 
+#ifndef VIDEO_CAPABILITY_64BIT_BASE
+#define VIDEO_CAPABILITY_64BIT_BASE (1 << 1)	/* Frame buffer base is 64-bit */
+#endif
+
 void init_linux_parameters(struct x86_linux_param_header *real_mode)
 {
 	/* Fill in the values that are usually provided by the kernel. */
