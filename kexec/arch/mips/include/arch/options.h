@@ -1,10 +1,11 @@
 #ifndef KEXEC_ARCH_MIPS_OPTIONS_H
 #define KEXEC_ARCH_MIPS_OPTIONS_H
 
-#define OPT_ARCH_MAX	(OPT_MAX+0)
-#define OPT_APPEND	(OPT_ARCH_MAX+0)
-#define OPT_DTB		(OPT_ARCH_MAX+1)
-#define OPT_RAMDISK	(OPT_ARCH_MAX+2)
+#define OPT_ARCH_MAX		(OPT_MAX+0)
+#define OPT_APPEND		(OPT_ARCH_MAX+0)
+#define OPT_DTB 		(OPT_ARCH_MAX+1)
+#define OPT_RAMDISK		(OPT_ARCH_MAX+2)
+#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+3)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -14,7 +15,8 @@
 	{"command-line", 1, 0, OPT_APPEND}, \
 	{"append",	 1, 0, OPT_APPEND}, \
 	{"dtb",		1, 0, OPT_DTB }, \
-	{"initrd",	1, 0, OPT_RAMDISK },
+	{"initrd",	1, 0, OPT_RAMDISK }, \
+	{ "reuse-cmdline", 0, NULL, OPT_REUSE_CMDLINE },
 
 
 #define KEXEC_ARCH_OPT_STR KEXEC_OPT_STR ""

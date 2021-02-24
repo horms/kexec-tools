@@ -89,6 +89,7 @@ void arch_usage(void)
 	"    --append=STRING       Set the kernel command line to STRING.\n"
 	"    --dtb=FILE            Use FILE as the device tree blob.\n"
 	"    --initrd=FILE         Use FILE as initial ramdisk.\n"
+	"    --reuse-cmdline       Use kernel command line from running system.\n"
 	);
 }
 
@@ -114,6 +115,9 @@ int arch_process_options(int argc, char **argv)
 		switch (opt) {
 		case OPT_APPEND:
 			arch_options.command_line = optarg;
+			break;
+		case OPT_REUSE_CMDLINE:
+			arch_options.command_line = get_command_line();
 			break;
 		case OPT_DTB:
 			arch_options.dtb_file = optarg;
