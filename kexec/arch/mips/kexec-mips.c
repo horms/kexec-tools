@@ -3,7 +3,7 @@
  * Copyright (C) 2007 Francesco Chiechi, Alessandro Rubini
  * Copyright (C) 2007 Tvblob s.r.l.
  *
- * derived from ../ppc/kexec-mips.c
+ * derived from ../ppc/kexec-ppc.c
  * Copyright (C) 2004, 2005 Albert Herranz
  *
  * This source code is licensed under the GNU General Public License,
