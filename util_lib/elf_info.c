@@ -1092,13 +1092,13 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
 	kaddr = read_file_pointer(fd, vaddr_to_offset(prb_vaddr));
 	m.prb = calloc(1, printk_ringbuffer_sz);
 	if (!m.prb) {
-		fprintf(stderr, "Failed to malloc %lu bytes for prb: %s\n",
+		fprintf(stderr, "Failed to malloc %zu bytes for prb: %s\n",
 			printk_ringbuffer_sz, strerror(errno));
 		exit(64);
 	}
 	ret = pread(fd, m.prb, printk_ringbuffer_sz, vaddr_to_offset(kaddr));
 	if (ret != printk_ringbuffer_sz) {
-		fprintf(stderr, "Failed to read prb of size %lu bytes: %s\n",
+		fprintf(stderr, "Failed to read prb of size %zu bytes: %s\n",
 			printk_ringbuffer_sz, strerror(errno));
 		exit(65);
 	}
