@@ -920,8 +920,8 @@ enum desc_state {
 
 #define DESC_SV_BITS		(sizeof(uint64_t) * 8)
 #define DESC_FLAGS_SHIFT	(DESC_SV_BITS - 2)
-#define DESC_FLAGS_MASK		(3UL << DESC_FLAGS_SHIFT)
-#define DESC_STATE(sv)		(3UL & (sv >> DESC_FLAGS_SHIFT))
+#define DESC_FLAGS_MASK		(3ULL << DESC_FLAGS_SHIFT)
+#define DESC_STATE(sv)		(3ULL & (sv >> DESC_FLAGS_SHIFT))
 #define DESC_ID_MASK		(~DESC_FLAGS_MASK)
 #define DESC_ID(sv)		((sv) & DESC_ID_MASK)
 
