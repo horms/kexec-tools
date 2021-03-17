@@ -1189,7 +1189,8 @@ void cmdline_add_liveupdate(char **base)
 
 	xen_get_kexec_range(KEXEC_RANGE_MA_LIVEUPDATE, &lu_start, &lu_end);
 	lu_sizeM = (lu_end - lu_start) / (1024 * 1024) + 1;
-	sprintf(buf, " liveupdate=%luM@0x%lx", lu_sizeM, lu_start);
+	sprintf(buf, " liveupdate=%lluM@0x%llx", (unsigned long long)lu_sizeM,
+		(unsigned long long)lu_start);
 	len = strlen(*base) + strlen(buf) + 1;
 	str = xmalloc(len);
 	sprintf(str, "%s%s", *base, buf);
