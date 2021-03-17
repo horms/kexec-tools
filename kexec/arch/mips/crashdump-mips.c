@@ -401,7 +401,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	 * kernel's available memory
 	 */
 	cmdline_add_mem(mod_cmdline, crash_reserved_mem.start,
-		crash_reserved_mem.end - crash_reserved_mem.start);
+		crash_reserved_mem.end - crash_reserved_mem.start + 1);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
 	dbgprintf("CRASH MEMORY RANGES:\n");
