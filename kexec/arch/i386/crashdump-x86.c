@@ -271,8 +271,14 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 		str = line + consumed;
 		dbgprintf("%016llx-%016llx : %s",
 			start, end, str);
-		/* Only Dumping memory of type System RAM. */
-		if (memcmp(str, "System RAM\n", 11) == 0) {
+		/*
+		 * We want to dump any System RAM -- memory regions currently
+		 * used by the kernel. In the usual case, this is "System RAM"
+		 * on the top level. However, we can also have "System RAM
+		 * (virtio_mem)" below virtio devices or "System RAM (kmem)"
+		 * below "Persistent Memory".
+		 */
+		if (strstr(str, "System RAM")) {
 			type = RANGE_RAM;
 		} else if (memcmp(str, "ACPI Tables\n", 12) == 0) {
 			/*
