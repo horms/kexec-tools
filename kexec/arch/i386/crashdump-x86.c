@@ -988,7 +988,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
 	/* Inform second kernel about the presence of ACPI tables. */
-	for (i = 0; i < CRASH_MAX_MEMORY_RANGES; i++) {
+	for (i = 0; i < nr_ranges; i++) {
 		unsigned long start, end, size, type;
 		if ( !( mem_range[i].type == RANGE_ACPI
 			|| mem_range[i].type == RANGE_ACPI_NVS
