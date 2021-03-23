@@ -91,6 +91,17 @@ out:
 	return rc;
 }
 
+static uint8_t xen_get_kexec_type(unsigned long kexec_flags)
+{
+	if (kexec_flags & KEXEC_ON_CRASH)
+		return KEXEC_TYPE_CRASH;
+
+	if (kexec_flags & KEXEC_LIVE_UPDATE)
+		return KEXEC_TYPE_LIVE_UPDATE;
+
+	return KEXEC_TYPE_DEFAULT;
+}
+
 #define IDENTMAP_1MiB (1024 * 1024)
 
 int xen_kexec_load(struct kexec_info *info)
@@ -177,12 +188,7 @@ int xen_kexec_load(struct kexec_info *info)
 		seg++;
 	}
 
-	if (info->kexec_flags & KEXEC_ON_CRASH)
-		type = KEXEC_TYPE_CRASH;
-	else if (info->kexec_flags & KEXEC_LIVE_UPDATE )
-		type = KEXEC_TYPE_LIVE_UPDATE;
-	else
-		type = KEXEC_TYPE_DEFAULT;
+	type = xen_get_kexec_type(info->kexec_flags);
 
 	arch = (info->kexec_flags & KEXEC_ARCH_MASK) >> 16;
 #if defined(__i386__) || defined(__x86_64__)
@@ -211,8 +217,7 @@ int xen_kexec_unload(uint64_t kexec_flags)
 	if (!xch)
 		return -1;
 
-	type = (kexec_flags & KEXEC_ON_CRASH) ? KEXEC_TYPE_CRASH
-		: KEXEC_TYPE_DEFAULT;
+	type = xen_get_kexec_type(kexec_flags);
 
 	ret = xc_kexec_unload(xch, type);
 
@@ -232,7 +237,7 @@ int xen_kexec_status(uint64_t kexec_flags)
 	if (!xch)
 		return -1;
 
-	type = (kexec_flags & KEXEC_ON_CRASH) ? KEXEC_TYPE_CRASH : KEXEC_TYPE_DEFAULT;
+	type = xen_get_kexec_type(kexec_flags);
 
 	ret = xc_kexec_status(xch, type);
 
