@@ -1337,6 +1337,7 @@ static void print_crashkernel_region_size(void)
 
 int main(int argc, char *argv[])
 {
+	int has_opt_load = 0;
 	int do_load = 1;
 	int do_exec = 0;
 	int do_load_jump_back_helper = 0;
@@ -1394,6 +1395,7 @@ int main(int argc, char *argv[])
 			do_exec = 1;
 			break;
 		case OPT_LOAD:
+			has_opt_load = 1;
 			do_load = 1;
 			do_exec = 0;
 			do_shutdown = 0;
@@ -1513,7 +1515,7 @@ int main(int argc, char *argv[])
 		do_sync = 0;
 
 	if (do_status) {
-		if (kexec_flags == 0)
+		if (kexec_flags == 0 && !has_opt_load)
 			kexec_flags = KEXEC_ON_CRASH;
 		do_load = 0;
 		do_reuse_initrd = 0;
