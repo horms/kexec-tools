@@ -108,9 +108,9 @@ command:
 Enable debugging messages.
 .TP
 .B \-S\ (\-\-status)
-Return 0 if the type (by default crash) is loaded. Can be used in conjuction
-with -l or -p to toggle the type. Note this option supersedes other options
-and it will
+Return 1 if the type (by default crash) is loaded, 0 if not. Can be used in
+conjuction with -l or -p to toggle the type. Note this option supersedes other
+options and it will
 .BR not\ load\ or\ unload\ the\ kernel.
 .TP
 .B \-e\ (\-\-exec)

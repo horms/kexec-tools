@@ -1040,7 +1040,8 @@ void usage(void)
 	       "                      syscall is not supported or the kernel did not\n"
 	       "                      understand the image\n"
 	       " -d, --debug          Enable debugging to help spot a failure.\n"
-	       " -S, --status         Return 0 if the type (by default crash) is loaded.\n"
+	       " -S, --status         Return 1 if the type (by default crash) is loaded,\n"
+	       "                      0 if not.\n"
 	       "\n"
 	       "Supported kernel file types and options: \n");
 	for (i = 0; i < file_types; i++) {
