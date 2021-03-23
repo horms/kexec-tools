@@ -355,8 +355,8 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges,
 static int get_crash_memory_ranges_xen(struct memory_range **range,
 					int *ranges, unsigned long lowmem_limit)
 {
+	struct e820entry *e820entries;
 	int j, rc, ret = -1;
-	struct e820entry e820entries[CRASH_MAX_MEMORY_RANGES];
 	unsigned int i;
 	xc_interface *xc;
 
@@ -366,6 +366,8 @@ static int get_crash_memory_ranges_xen(struct memory_range **range,
 		fprintf(stderr, "%s: Failed to open Xen control interface\n", __func__);
 		return -1;
 	}
+
+	e820entries = xmalloc(sizeof(*e820entries) * CRASH_MAX_MEMORY_RANGES);
 
 	rc = xc_get_machine_memory_map(xc, e820entries, CRASH_MAX_MEMORY_RANGES);
 
@@ -395,7 +397,7 @@ static int get_crash_memory_ranges_xen(struct memory_range **range,
 
 err:
 	xc_interface_close(xc);
-
+	free(e820entries);
 	return ret;
 }
 #else

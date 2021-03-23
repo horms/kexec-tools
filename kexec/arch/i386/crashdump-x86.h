@@ -22,7 +22,8 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline,
 #define X86_64_KERNEL_TEXT_SIZE  (512UL*1024*1024)
 
 #define CRASH_MAX_MEMMAP_NR	1024
-#define CRASH_MAX_MEMORY_RANGES	(MAX_MEMORY_RANGES + 2)
+
+#define CRASH_MAX_MEMORY_RANGES	32768
 
 /* Backup Region, First 640K of System RAM. */
 #define BACKUP_SRC_START	0x00000000
