@@ -483,9 +483,18 @@ static int add_memmap(struct memory_range *memmap_p, int *nr_memmap,
 	int i, j, nr_entries = 0, tidx = 0, align = 1024;
 	unsigned long long mstart, mend;
 
-	/* Do alignment check if it's RANGE_RAM */
-	if ((type == RANGE_RAM) && ((addr%align) || (size%align)))
-		return -1;
+	/* Shrink to 1KiB alignment if needed. */
+	if (type == RANGE_RAM && ((addr%align) || (size%align))) {
+		unsigned long long end = addr + size;
+
+		printf("%s: RAM chunk %#llx - %#llx unaligned\n", __func__, addr, end);
+		addr = _ALIGN_UP(addr, align);
+		end = _ALIGN_DOWN(end, align);
+		if (addr >= end)
+			return -1;
+		size = end - addr;
+		printf("%s: RAM chunk shrunk to %#llx - %#llx\n", __func__, addr, end);
+	}
 
 	/* Make sure at least one entry in list is free. */
 	for (i = 0; i < CRASH_MAX_MEMMAP_NR;  i++) {
