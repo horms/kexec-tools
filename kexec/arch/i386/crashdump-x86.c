@@ -55,16 +55,8 @@ static int get_kernel_page_offset(struct kexec_info *UNUSED(info),
 	int kv;
 
 	if (elf_info->machine == EM_X86_64) {
-		kv = kernel_version();
-		if (kv < 0)
-			return -1;
-
-		if (kv < KERNEL_VERSION(2, 6, 27))
-			elf_info->page_offset = X86_64_PAGE_OFFSET_PRE_2_6_27;
-		else if (kv < KERNEL_VERSION(4, 20, 0))
-			elf_info->page_offset = X86_64_PAGE_OFFSET_PRE_4_20_0;
-		else
-			elf_info->page_offset = X86_64_PAGE_OFFSET;
+		/* get_kernel_vaddr_and_size will override this */
+		elf_info->page_offset = X86_64_PAGE_OFFSET;
 	}
 	else if (elf_info->machine == EM_386) {
 		elf_info->page_offset = X86_PAGE_OFFSET;
@@ -151,17 +143,15 @@ static int get_kernel_vaddr_and_size(struct kexec_info *UNUSED(info),
 
 	/* Search for the real PAGE_OFFSET when KASLR memory randomization
 	 * is enabled */
-	if (get_kernel_sym("page_offset_base") != 0) {
-		for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
-			if (phdr->p_type == PT_LOAD) {
-				vaddr = phdr->p_vaddr & pud_mask;
-				if (lowest_vaddr == 0 || lowest_vaddr > vaddr)
-					lowest_vaddr = vaddr;
-			}
+	for(phdr = ehdr.e_phdr; phdr != end_phdr; phdr++) {
+		if (phdr->p_type == PT_LOAD) {
+			vaddr = phdr->p_vaddr & pud_mask;
+			if (lowest_vaddr == 0 || lowest_vaddr > vaddr)
+				lowest_vaddr = vaddr;
 		}
-		if (lowest_vaddr != 0)
-			elf_info->page_offset = lowest_vaddr;
 	}
+	if (lowest_vaddr != 0)
+		elf_info->page_offset = lowest_vaddr;
 
 	/* Traverse through the Elf headers and find the region where
 	 * _stext symbol is located in. That's where kernel is mapped */

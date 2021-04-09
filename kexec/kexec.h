@@ -179,10 +179,6 @@ struct arch_map_entry {
 extern const struct arch_map_entry arches[];
 long physical_arch(void);
 
-#define KERNEL_VERSION(major, minor, patch) \
-	(((major) << 16) | ((minor) << 8) | patch)
-long kernel_version(void);
-
 void usage(void);
 int get_memory_ranges(struct memory_range **range, int *ranges,
 						unsigned long kexec_flags);

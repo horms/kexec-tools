@@ -478,8 +478,7 @@ static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
 	strcat(str, byte);
 	len = strlen(str);
 	cmdlen = strlen(cmdline) + len;
-	cmdline_size = (kernel_version() < KERNEL_VERSION(3, 15, 0) ?
-			512 : COMMAND_LINE_SIZE);
+	cmdline_size = COMMAND_LINE_SIZE;
 	if (cmdlen > (cmdline_size - 1))
 		die("Command line overflow\n");
 	strcat(cmdline, str);
