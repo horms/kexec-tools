@@ -382,6 +382,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
 	unsigned int extra_size = 0x8000; /* TEXT_OFFSET */
 	const struct zimage_tag *tag;
+	size_t kernel_buf_size;
 	size_t kernel_mem_size;
 	const char *command_line;
 	char *modified_cmdline = NULL;
@@ -536,6 +537,15 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 				command_line_len = strlen(command_line) + 1;
 		}
 	}
+
+	/*
+	 * Save the length of the compressed kernel image w/o the appended DTB.
+	 * This will be required later on when the kernel image contained
+	 * in the zImage will be loaded into a kernel memory segment.
+	 * And we want to load ONLY the compressed kernel image from the zImage
+	 * and discard the appended DTB.
+	 */
+	kernel_buf_size = len;
 
 	/*
 	 * Always extend the zImage by four bytes to ensure that an appended
@@ -759,7 +769,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		add_segment(info, dtb_buf, dtb_length, dtb_offset, dtb_length);
 	}
 
-	add_segment(info, buf, len, kernel_base, kernel_mem_size);
+	add_segment(info, buf, kernel_buf_size, kernel_base, kernel_mem_size);
 
 	info->entry = (void*)kernel_base;
 
