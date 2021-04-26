@@ -33,7 +33,6 @@
 static const int probe_debug = 0;
 
 unsigned char reuse_initrd;
-const char *ramdisk;
 int create_flatten_tree(struct kexec_info *, unsigned char **, unsigned long *,
 			char *);
 
