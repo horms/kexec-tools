@@ -180,6 +180,19 @@ static void add_usable_mem_property(int fd, int len)
 	dt += (rlen + 3)/4;
 }
 
+static int dt_read(int fd, void *dt, int len)
+{
+	int done = 0, len2;
+
+	while (len > 0 && (len2 = read(fd, dt, len)) > 0) {
+		len -= len2;
+		dt += len2;
+		done += len2;
+	}
+
+	return done;
+}
+
 /* put all properties (files) in the property structure */
 static void putprops(char *fn, struct dirent **nlist, int numlist)
 {
@@ -238,7 +251,7 @@ static void putprops(char *fn, struct dirent **nlist, int numlist)
 			die("unrecoverable error: could not open \"%s\": %s\n",
 			    pathname, strerror(errno));
 
-		if (read(fd, dt, len) != len)
+		if (dt_read(fd, dt, len) != len)
 			die("unrecoverable error: could not read \"%s\": %s\n",
 			    pathname, strerror(errno));
 
