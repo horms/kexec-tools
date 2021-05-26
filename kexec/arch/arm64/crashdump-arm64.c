@@ -90,8 +90,16 @@ static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
 	else if (strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) == 0)
 		return mem_regions_alloc_and_add(&system_memory_rgns,
 						base, length, RANGE_RAM);
-	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0)
-		elf_info.kern_paddr_start = base;
+	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0) {
+		/*
+		 * old: kernel_code.start   = __pa_symbol(_text);
+		 * new: kernel_code.start   = __pa_symbol(_stext);
+		 *
+		 * By utilizing the fact that paddr(_text) should align on 2MB, plus
+		 * _stext - _text <= 64K.
+		 */
+		elf_info.kern_paddr_start = base & ((0xffffffffffffffffUL) << 21);
+	}
 	else if (strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) == 0)
 		elf_info.kern_size = base + length - elf_info.kern_paddr_start;
 
