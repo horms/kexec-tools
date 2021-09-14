@@ -526,7 +526,7 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 		rel_min = lu_start + 4096;
 		rel_max = lu_end;
 	} else {
-		rel_min = 0;
+		rel_min = 0x500;
 		rel_max = ULONG_MAX;
 	}
 
