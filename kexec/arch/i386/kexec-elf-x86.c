@@ -42,7 +42,7 @@
 
 static const int probe_debug = 0;
 
-int elf_x86_probe(const char *buf, off_t len)
+int elf_x86_any_probe(const char *buf, off_t len, enum coretype arch)
 {
 	
 	struct mem_ehdr ehdr;
@@ -56,18 +56,48 @@ int elf_x86_probe(const char *buf, off_t len)
 	}
 
 	/* Verify the architecuture specific bits */
-	if ((ehdr.e_machine != EM_386) && (ehdr.e_machine != EM_486)) {
-		/* for a different architecture */
-		if (probe_debug) {
-			fprintf(stderr, "Not i386 ELF executable\n");
+	switch (arch) {
+	case CORE_TYPE_ELF32:
+		if ((ehdr.e_machine != EM_386) && (ehdr.e_machine != EM_486)) {
+			if (probe_debug)
+				fprintf(stderr, "Not i386 ELF executable\n");
+			result = -1;
+			goto out;
 		}
-		result = -1;
-		goto out;
+		break;
+
+	case CORE_TYPE_ELF64:
+		if (ehdr.e_machine != EM_X86_64) {
+			if (probe_debug)
+				fprintf(stderr, "Not x86_64 ELF executable\n");
+			result = -1;
+			goto out;
+		}
+		break;
+
+	case CORE_TYPE_UNDEF:
+	default:
+		if (
+			(ehdr.e_machine != EM_386) &&
+			(ehdr.e_machine != EM_486) &&
+			(ehdr.e_machine != EM_X86_64)
+		) {
+			if (probe_debug)
+				fprintf(stderr, "Not i386 or x86_64 ELF executable\n");
+			result = -1;
+			goto out;
+		}
+		break;
 	}
+
 	result = 0;
  out:
 	free_elf_info(&ehdr);
 	return result;
+}
+
+int elf_x86_probe(const char *buf, off_t len) {
+	return elf_x86_any_probe(buf, len, CORE_TYPE_ELF32);
 }
 
 void elf_x86_usage(void)

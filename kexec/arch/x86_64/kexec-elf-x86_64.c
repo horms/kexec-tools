@@ -37,37 +37,13 @@
 #include "../../kexec-elf-boot.h"
 #include "../i386/x86-linux-setup.h"
 #include "kexec-x86_64.h"
+#include "../i386/kexec-x86.h"
 #include "../i386/crashdump-x86.h"
 #include <arch/options.h>
 
-static const int probe_debug = 0;
-
 int elf_x86_64_probe(const char *buf, off_t len)
 {
-	
-	struct mem_ehdr ehdr;
-	int result;
-	result = build_elf_exec_info(buf, len, &ehdr, 0);
-	if (result < 0) {
-		if (probe_debug) {
-			fprintf(stderr, "Not an ELF executable\n");
-		}
-		goto out;
-	}
-
-	/* Verify the architecuture specific bits */
-	if (ehdr.e_machine != EM_X86_64) {
-		/* for a different architecture */
-		if (probe_debug) {
-			fprintf(stderr, "Not x86_64 ELF executable\n");
-		}
-		result = -1;
-		goto out;
-	}
-	result = 0;
- out:
-	free_elf_info(&ehdr);
-	return result;
+	return elf_x86_any_probe(buf, len, CORE_TYPE_ELF64);
 }
 
 void elf_x86_64_usage(void)
