@@ -582,7 +582,7 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 
 			/* Pick the next aligned spot to load it in. Always page align. */
 			addr = add_buffer(info, buf, mod_size, mod_size, getpagesize(),
-					  mhi.rel_tag->min_addr, mhi.rel_tag->max_addr, 1);
+					  rel_min, rel_max, 1);
 
 			/* Add the module command line */
 			sprintf(mod_clp, "%s", mod_command_line);
@@ -602,7 +602,7 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 		return -1;
 
 	addr = add_buffer(info, mbi_buf, mbi_bytes, mbi_bytes, 4,
-			  mhi.rel_tag->min_addr, mhi.rel_tag->max_addr, 1);
+			  rel_min, rel_max, 1);
 
 	elf_rel_get_symbol(&info->rhdr, "entry32_regs", &regs, sizeof(regs));
 	regs.eax = MULTIBOOT2_BOOTLOADER_MAGIC;
