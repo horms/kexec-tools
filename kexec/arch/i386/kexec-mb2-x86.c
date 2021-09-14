@@ -76,8 +76,10 @@ int multiboot2_x86_probe(const char *buf, off_t buf_len)
 /* Is it a good idea to try booting this file? */
 {
 	int i, len;
-	/* First of all, check that this is an ELF file */
-	if ((i=elf_x86_probe(buf, buf_len)) < 0)
+
+	/* First of all, check that this is an ELF file for either x86 or x86-64 */
+	i = elf_x86_any_probe(buf, buf_len, CORE_TYPE_UNDEF);
+	if (i < 0)
 		return i;
 
 	/* Now look for a multiboot header. */

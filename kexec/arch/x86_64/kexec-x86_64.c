@@ -33,11 +33,11 @@
 #include <arch/options.h>
 
 struct file_type file_type[] = {
+	{ "multiboot2-x86", multiboot2_x86_probe, multiboot2_x86_load,
+	  multiboot2_x86_usage },
 	{ "elf-x86_64", elf_x86_64_probe, elf_x86_64_load, elf_x86_64_usage },
 	{ "multiboot-x86", multiboot_x86_probe, multiboot_x86_load,
 	  multiboot_x86_usage },
-	{ "multiboot2-x86", multiboot2_x86_probe, multiboot2_x86_load,
-	  multiboot2_x86_usage },
 	{ "elf-x86", elf_x86_probe, elf_x86_load, elf_x86_usage },
 	{ "bzImage64", bzImage64_probe, bzImage64_load, bzImage64_usage },
 	{ "bzImage", bzImage_probe, bzImage_load, bzImage_usage },
