@@ -115,17 +115,26 @@ void multiboot2_x86_usage(void)
 static size_t
 multiboot2_get_mbi_size(int ranges, int cmdline_size, int modcount, int modcmd_size)
 {
-	return (2 * sizeof (uint32_t) + sizeof (struct multiboot_tag)
-		+ sizeof (struct multiboot_tag)
+	size_t mbi_size;
+
+	mbi_size = (2 * sizeof (uint32_t) /* u32 total_size, u32 reserved */
 		+ ALIGN_UP (sizeof (struct multiboot_tag_basic_meminfo), MULTIBOOT_TAG_ALIGN)
 		+ ALIGN_UP ((sizeof (struct multiboot_tag_mmap)
 			+ ranges * sizeof (struct multiboot_mmap_entry)), MULTIBOOT_TAG_ALIGN)
-		+ ALIGN_UP (sizeof (struct multiboot_tag_load_base_addr), MULTIBOOT_TAG_ALIGN)
 		+ (sizeof (struct multiboot_tag_string)
 			+ ALIGN_UP (cmdline_size, MULTIBOOT_TAG_ALIGN))
 		+ (sizeof (struct multiboot_tag_string)
 			+ ALIGN_UP (strlen(BOOTLOADER " " BOOTLOADER_VERSION) + 1, MULTIBOOT_TAG_ALIGN))
-		+ (modcount * sizeof (struct multiboot_tag_module) + modcmd_size));
+		+ (modcount * sizeof (struct multiboot_tag_module) + modcmd_size))
+		+ sizeof (struct multiboot_tag); /* end tag */
+
+	if (mhi.rel_tag)
+		mbi_size += ALIGN_UP (sizeof (struct multiboot_tag_load_base_addr), MULTIBOOT_TAG_ALIGN);
+
+	if (mhi.fb_tag)
+		mbi_size += ALIGN_UP (sizeof (struct multiboot_tag_framebuffer), MULTIBOOT_TAG_ALIGN);
+
+	return mbi_size;
 }
 
 static void multiboot2_read_header_tags(void)
