@@ -52,7 +52,6 @@ extern struct arch_options_t arch_options;
 static int get_kernel_page_offset(struct kexec_info *UNUSED(info),
 				  struct crash_elf_info *elf_info)
 {
-	int kv;
 
 	if (elf_info->machine == EM_X86_64) {
 		/* get_kernel_vaddr_and_size will override this */
