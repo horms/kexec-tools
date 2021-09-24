@@ -256,8 +256,8 @@ static uint64_t multiboot2_make_mbi(struct kexec_info *info, char *cmdline, int 
 
 		tag->type = MULTIBOOT_TAG_TYPE_BASIC_MEMINFO;
 		tag->size = sizeof (struct multiboot_tag_basic_meminfo);
-		tag->mem_lower = mem_lower;
-		tag->mem_upper = mem_upper;
+		tag->mem_lower = mem_lower >> 10;
+		tag->mem_upper = mem_upper >> 10;
 		ptrorig += ALIGN_UP (tag->size, MULTIBOOT_TAG_ALIGN) / sizeof (*ptrorig);
 	}
 
