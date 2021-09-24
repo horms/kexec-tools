@@ -102,10 +102,12 @@ int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
 	}
 	if (fseek(file, elf.e_phoff, SEEK_SET) < 0) {
 		perror("seek failed: ");
+		free(ph);
 		return -1;
 	}
 	if (fread(ph, sizeof(Elf32_Phdr) * elf.e_phnum, 1, file) != 1) {
 		perror("read error: ");
+		free(ph);
 		return -1;
 	}
 
@@ -113,6 +115,7 @@ int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
 	if (*ret_segments == 0) {
 		fprintf(stderr, "malloc failed: %s\n",
 			strerror(errno));
+		free(ph);
 		return -1;
 	}
 	segment = ret_segments[0];
@@ -135,6 +138,7 @@ int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
 	}
 	if (memsize == 0) {
 		fprintf(stderr, "Can't find a loadable segment.\n");
+		free(ph);
 		return -1;
 	}
 
@@ -143,6 +147,7 @@ int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
 	segment->buf = malloc(filesize);
 	if (segment->buf == 0) {
 		perror("malloc failed: ");
+		free(ph);
 		return -1;
 	}
 	for (i = 0; i < elf.e_phnum; ++i, ++p) {
@@ -153,12 +158,14 @@ int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
 		/* skip to the actual image */
 		if (fseek(file, p->p_offset, SEEK_SET) < 0) {
 			perror("seek error: ");
+			free(ph);
 			return -1;
 		}
 		mem_offset = p->p_vaddr - load_loc;
 		if (fread((void *)segment->buf+mem_offset, p->p_filesz, 1,
 				file) != 1) {
 			perror("read error: ");
+			free(ph);
 			return -1;
 		}
 	}
