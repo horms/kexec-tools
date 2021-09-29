@@ -200,8 +200,10 @@ static int get_dyn_reconf_base_ranges(void)
 			fclose(file);
 			return -1;
 		}
-		if (nr_memory_ranges >= max_memory_ranges)
+		if (nr_memory_ranges >= max_memory_ranges) {
+			fclose(file);
 			return -1;
+		}
 
 		/*
 		 * If the property is ibm,dynamic-memory-v2, the first 4 bytes

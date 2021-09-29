@@ -382,6 +382,8 @@ static void save_fixed_up_dtb(char *blob_buf, off_t blob_size)
 		} else {
 			dbgprintf("Unable to write debug.dtb\n");
 		}
+
+		fclose(fp);
 	} else {
 		dbgprintf("Unable to dump flat device tree to debug.dtb\n");
 	}

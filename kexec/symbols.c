@@ -24,11 +24,13 @@ unsigned long long get_kernel_sym(const char *symbol)
 		if (strcmp(sym, symbol) == 0) {
 			dbgprintf("kernel symbol %s vaddr = %16llx\n",
 					symbol, vaddr);
+			fclose(fp);
 			return vaddr;
 		}
 	}
 
 	dbgprintf("Cannot get kernel %s symbol address\n", symbol);
 
+	fclose(fp);
 	return 0;
 }

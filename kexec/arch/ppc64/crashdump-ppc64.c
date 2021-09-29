@@ -161,6 +161,7 @@ static int get_dyn_reconf_crash_memory_ranges(void)
 				fprintf(stderr,
 				"Error: Number of crash memory ranges"
 				" excedeed the max limit\n");
+			fclose(file);
 			return -1;
 		}
 
