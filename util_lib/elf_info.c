@@ -605,8 +605,10 @@ static int scan_notes(int fd, loff_t start, loff_t lsize)
 		scan_vmcoreinfo(n_desc, n_descsz);
 	}
 
-	if ((note + sizeof(Elf_Nhdr)) == last)
+	if ((note + sizeof(Elf_Nhdr)) == last) {
+		free(buf);
 		return -1;
+	}
 
 	free(buf);
 

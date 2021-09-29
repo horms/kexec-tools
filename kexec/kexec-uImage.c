@@ -157,12 +157,15 @@ static int uImage_gz_load(const char *buf, off_t len,
 	skip = 10;
 
 	/* check GZ magic */
-	if (buf[0] != 0x1f || buf[1] != 0x8b)
+	if (buf[0] != 0x1f || buf[1] != 0x8b) {
+		free(uncomp_buf);
 		return -1;
+	}
 
 	flags = buf[3];
 	if (buf[2] != Z_DEFLATED || (flags & RESERVED) != 0) {
 		puts ("Error: Bad gzipped data\n");
+		free(uncomp_buf);
 		return -1;
 	}
 
@@ -187,8 +190,10 @@ static int uImage_gz_load(const char *buf, off_t len,
 
 	/* - activates parsing gz headers */
 	ret = inflateInit2(&strm, -MAX_WBITS);
-	if (ret != Z_OK)
+	if (ret != Z_OK) {
+		free(uncomp_buf);
 		return -1;
+	}
 
 	strm.next_out = uncomp_buf;
 	strm.avail_out = mem_alloc;
@@ -214,6 +219,7 @@ static int uImage_gz_load(const char *buf, off_t len,
 			strm.next_out = uncomp_buf + mem_alloc - inc_buf;
 			strm.avail_out = inc_buf;
 		} else {
+			free(uncomp_buf);
 			printf("Error during decompression %d\n", ret);
 			return -1;
 		}
