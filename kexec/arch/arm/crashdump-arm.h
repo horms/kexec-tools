@@ -13,6 +13,8 @@ extern "C" {
 
 
 extern struct memory_ranges usablemem_rgns;
+extern struct memory_range crash_kernel_mem;
+extern struct memory_range elfcorehdr_mem;
 
 struct kexec_info;
 

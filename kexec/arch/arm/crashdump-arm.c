@@ -54,7 +54,7 @@ struct memory_ranges usablemem_rgns = {
 };
 
 /* The boot-time physical memory range reserved for crashkernel region */
-static struct memory_range crash_kernel_mem;
+struct memory_range crash_kernel_mem;
 
 /* reserved regions */
 #define CRASH_MAX_RESERVED_RANGES 2
@@ -63,6 +63,8 @@ static struct memory_ranges crash_reserved_rgns = {
 	.max_size = CRASH_MAX_RESERVED_RANGES,
 	.ranges = crash_reserved_ranges,
 };
+
+struct memory_range elfcorehdr_mem;
 
 static struct crash_elf_info elf_info = {
 	.class		= ELFCLASS32,
@@ -307,7 +309,11 @@ int load_crashdump_segments(struct kexec_info *info, char *mod_cmdline)
 					  crash_kernel_mem.start,
 					  crash_kernel_mem.end, -1, 0);
 
-	dbgprintf("elfcorehdr: %#lx\n", elfcorehdr);
+	elfcorehdr_mem.start = elfcorehdr;
+	elfcorehdr_mem.end = elfcorehdr + bufsz - 1;
+
+	dbgprintf("elfcorehdr 0x%llx-0x%llx\n", elfcorehdr_mem.start,
+		  elfcorehdr_mem.end);
 	cmdline_add_elfcorehdr(mod_cmdline, elfcorehdr);
 
 	/*

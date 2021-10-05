@@ -4,6 +4,7 @@
  */
 #define _GNU_SOURCE
 #define _XOPEN_SOURCE
+#include <stdbool.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -374,6 +375,103 @@ static const struct zimage_tag *find_extension_tag(const char *buf, off_t len,
 	return NULL;
 }
 
+static int get_cells_size(void *fdt, uint32_t *address_cells,
+			  uint32_t *size_cells)
+{
+	int nodeoffset;
+	const uint32_t *prop = NULL;
+	int prop_len;
+
+	/* default values */
+	*address_cells = 1;
+	*size_cells = 1;
+
+	/* under root node */
+	nodeoffset = fdt_path_offset(fdt, "/");
+	if (nodeoffset < 0)
+		return -1;
+
+	prop = fdt_getprop(fdt, nodeoffset, "#address-cells", &prop_len);
+	if (prop) {
+		if (prop_len != sizeof(*prop))
+			return -1;
+
+		*address_cells = fdt32_to_cpu(*prop);
+	}
+
+	prop = fdt_getprop(fdt, nodeoffset, "#size-cells", &prop_len);
+	if (prop) {
+		if (prop_len != sizeof(*prop))
+			return -1;
+
+		*size_cells = fdt32_to_cpu(*prop);
+	}
+
+	dbgprintf("%s: #address-cells:%d #size-cells:%d\n", __func__,
+		  *address_cells, *size_cells);
+	return 0;
+}
+
+static bool cells_size_fitted(uint32_t address_cells, uint32_t size_cells,
+			      struct memory_range *range)
+{
+	dbgprintf("%s: %llx-%llx\n", __func__, range->start, range->end);
+
+	/* if *_cells >= 2, cells can hold 64-bit values anyway */
+	if ((address_cells == 1) && (range->start >= (1ULL << 32)))
+		return false;
+
+	if ((size_cells == 1) &&
+	    ((range->end - range->start + 1) >= (1ULL << 32)))
+		return false;
+
+	return true;
+}
+
+static void fill_property(void *buf, uint64_t val, uint32_t cells)
+{
+	uint32_t val32;
+	int i;
+
+	if (cells == 1) {
+		val32 = cpu_to_fdt32((uint32_t)val);
+		memcpy(buf, &val32, sizeof(uint32_t));
+	} else {
+		for (i = 0;
+		     i < (cells * sizeof(uint32_t) - sizeof(uint64_t)); i++)
+			*(char *)buf++ = 0;
+
+		val = cpu_to_fdt64(val);
+		memcpy(buf, &val, sizeof(uint64_t));
+	}
+}
+
+static int setup_dtb_prop_range(char **bufp, off_t *sizep, int parentoffset,
+				const char *node_name, const char *prop_name,
+				struct memory_range *range,
+				uint32_t address_cells, uint32_t size_cells)
+{
+	void *buf, *prop;
+	size_t buf_size;
+	int result;
+
+	buf_size = (address_cells + size_cells) * sizeof(uint32_t);
+	prop = buf = xmalloc(buf_size);
+
+	fill_property(prop, range->start, address_cells);
+	prop += address_cells * sizeof(uint32_t);
+
+	fill_property(prop, range->end - range->start + 1, size_cells);
+	prop += size_cells * sizeof(uint32_t);
+
+	result = setup_dtb_prop(bufp, sizep, parentoffset, node_name,
+				prop_name, buf, buf_size);
+
+	free(buf);
+
+	return result;
+}
+
 int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info)
 {
@@ -381,6 +479,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long base, kernel_base;
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
 	unsigned int extra_size = 0x8000; /* TEXT_OFFSET */
+	uint32_t address_cells, size_cells;
 	const struct zimage_tag *tag;
 	size_t kernel_buf_size;
 	size_t kernel_mem_size;
@@ -391,6 +490,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	const char *ramdisk_buf;
 	int opt;
 	int use_atags;
+	int result;
 	char *dtb_buf;
 	off_t dtb_length;
 	char *dtb_file;
@@ -740,6 +840,43 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 			if (setup_dtb_prop(&dtb_buf, &dtb_length, 0, "chosen",
 					"linux,initrd-end", &end,
 					sizeof(end)))
+				return -1;
+		}
+
+		if (info->kexec_flags & KEXEC_ON_CRASH) {
+			/* Determine #address-cells and #size-cells */
+			result = get_cells_size(dtb_buf, &address_cells,
+						&size_cells);
+			if (result) {
+				fprintf(stderr, "Cannot determine cells-size.\n");
+				return -1;
+			}
+
+			if (!cells_size_fitted(address_cells, size_cells,
+					       &elfcorehdr_mem)) {
+				fprintf(stderr, "elfcorehdr doesn't fit cells-size.\n");
+				return -1;
+			}
+
+			if (!cells_size_fitted(address_cells, size_cells,
+					       &crash_kernel_mem)) {
+				fprintf(stderr, "kexec: usable memory range doesn't fit cells-size.\n");
+				return -1;
+			}
+
+			/* Add linux,elfcorehdr */
+			if (setup_dtb_prop_range(&dtb_buf, &dtb_length, 0,
+						 "chosen", "linux,elfcorehdr",
+						 &elfcorehdr_mem,
+						 address_cells, size_cells))
+				return -1;
+
+			/* Add linux,usable-memory-range */
+			if (setup_dtb_prop_range(&dtb_buf, &dtb_length, 0,
+						 "chosen",
+						 "linux,usable-memory-range",
+						 &crash_kernel_mem,
+						 address_cells, size_cells))
 				return -1;
 		}
 
