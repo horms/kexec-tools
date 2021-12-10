@@ -91,14 +91,22 @@ static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
 		return mem_regions_alloc_and_add(&system_memory_rgns,
 						base, length, RANGE_RAM);
 	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0) {
+
+		unsigned long long  kva_text = get_kernel_sym("_text");
+		unsigned long long  kva_stext = get_kernel_sym("_stext");
+		unsigned long long  kva_text_end = get_kernel_sym("__init_begin");
+
 		/*
 		 * old: kernel_code.start   = __pa_symbol(_text);
 		 * new: kernel_code.start   = __pa_symbol(_stext);
 		 *
-		 * By utilizing the fact that paddr(_text) should align on 2MB, plus
-		 * _stext - _text <= 64K.
+		 * For compatibility, deduce by comparing the gap "__init_begin - _stext"
+		 * and the res size of "Kernel code" in /proc/iomem
 		 */
-		elf_info.kern_paddr_start = base & ((0xffffffffffffffffUL) << 21);
+		if (kva_text_end - kva_stext == length)
+			elf_info.kern_paddr_start = base - (kva_stext - kva_text);
+		else
+			elf_info.kern_paddr_start = base;
 	}
 	else if (strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) == 0)
 		elf_info.kern_size = base + length - elf_info.kern_paddr_start;
