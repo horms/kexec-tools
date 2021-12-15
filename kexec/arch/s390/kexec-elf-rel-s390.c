@@ -56,6 +56,7 @@ void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
 	case R_390_PC16:	/* PC relative 16 bit.  */
 	case R_390_PC16DBL:	/* PC relative 16 bit shifted by 1.  */
 	case R_390_PC32DBL:	/* PC relative 32 bit shifted by 1.  */
+	case R_390_PLT32DBL:	/* 32 bit PC rel. PLT shifted by 1.  */
 	case R_390_PC32:	/* PC relative 32 bit.  */
 	case R_390_PC64:	/* PC relative 64 bit.	*/
 		val -= address;
@@ -63,7 +64,7 @@ void machine_apply_elf_rel(struct mem_ehdr *UNUSED(ehdr),
 			*(unsigned short *) loc = val;
 		else if (r_type == R_390_PC16DBL)
 			*(unsigned short *) loc = val >> 1;
-		else if (r_type == R_390_PC32DBL)
+		else if (r_type == R_390_PC32DBL || r_type == R_390_PLT32DBL)
 			*(unsigned int *) loc = val >> 1;
 		else if (r_type == R_390_PC32)
 			*(unsigned int *) loc = val;
