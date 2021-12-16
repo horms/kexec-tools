@@ -57,10 +57,7 @@ int image_s390_load_file(int argc, char **argv, struct kexec_info *info)
 
 	static const struct option options[] =
 		{
-			KEXEC_OPTIONS
-			{"command-line",     1, 0, OPT_APPEND},
-			{"append",           1, 0, OPT_APPEND},
-			{"initrd",           1, 0, OPT_RAMDISK},
+			KEXEC_ALL_OPTIONS
 			{0,                  0, 0, 0},
 		};
 	static const char short_options[] = KEXEC_OPT_STR "";
@@ -111,10 +108,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 
 	static const struct option options[] =
 		{
-			KEXEC_OPTIONS
-			{"command-line",     1, 0, OPT_APPEND},
-			{"append",           1, 0, OPT_APPEND},
-			{"initrd",           1, 0, OPT_RAMDISK},
+			KEXEC_ALL_OPTIONS
 			{0,                  0, 0, 0},
 		};
 	static const char short_options[] = KEXEC_OPT_STR "";
