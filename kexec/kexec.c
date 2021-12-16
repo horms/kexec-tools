@@ -1106,6 +1106,57 @@ static void remove_parameter(char *line, const char *param_name)
 	}
 }
 
+static ssize_t _read(int fd, void *buf, size_t count)
+{
+	ssize_t ret, offset = 0;
+
+	do {
+		ret = read(fd, buf + offset, count - offset);
+		if (ret < 0) {
+			if ((errno == EINTR) ||	(errno == EAGAIN))
+				continue;
+			return ret;
+		}
+		offset += ret;
+	} while (ret && offset < count);
+
+	return offset;
+}
+
+static char *slurp_proc_file(const char *filename, size_t *len)
+{
+	ssize_t ret, startpos = 0;
+	unsigned int size = 64;
+	char *buf = NULL, *tmp;
+	int fd;
+
+	fd = open(filename, O_RDONLY);
+	if (fd == -1)
+		return NULL;
+
+	do {
+		size *= 2;
+		tmp = realloc(buf, size);
+		if (!tmp) {
+			free(buf);
+			return NULL;
+		}
+		buf = tmp;
+
+		ret = _read(fd, buf + startpos, size - startpos);
+		if (ret < 0) {
+			free(buf);
+			return NULL;
+		}
+
+		startpos += ret;
+
+	} while(ret);
+
+	*len = startpos;
+	return buf;
+}
+
 /*
  * Returns the contents of the current command line to be used with
  * --reuse-cmdline option.  The function gets called from architecture specific
