@@ -1172,25 +1172,19 @@ static char *slurp_proc_file(const char *filename, size_t *len)
  */
 char *get_command_line(void)
 {
-	FILE *fp;
-	char *line;
-	const int sizeof_line = 2048;
+	char *p, *line;
+	size_t size;
 
-	line = malloc(sizeof_line);
-	if (line == NULL)
-		die("Could not allocate memory to read /proc/cmdline.");
-
-	fp = fopen("/proc/cmdline", "r");
-	if (!fp)
-		die("Could not open /proc/cmdline.");
-
-	if (fgets(line, sizeof_line, fp) == NULL)
-		die("Can't read /proc/cmdline.");
-
-	fclose(fp);
+	line = slurp_proc_file("/proc/cmdline", &size);
+	if (!line || !size)
+		die("Failed to read /proc/cmdline\n");
 
 	/* strip newline */
-	line[strlen(line) - 1] = '\0';
+	line[size-1] = '\0';
+
+	p = strpbrk(line, "\r\n");
+	if (p)
+		*p = '\0';
 
 	remove_parameter(line, "BOOT_IMAGE");
 	if (kexec_flags & KEXEC_ON_CRASH)
