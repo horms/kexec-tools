@@ -52,7 +52,8 @@ static int create_elf_header(struct kexec_info *info, unsigned long crash_base,
 	elfcorehdr_size = bufsz;
 	snprintf(str, sizeof(str), " elfcorehdr=%ld@%ldK\n",
 		 elfcorehdr_size, elfcorehdr / 1024);
-	command_line_add(str);
+	if (command_line_add(info, str))
+		return -1;
 #endif
 	return 0;
 }

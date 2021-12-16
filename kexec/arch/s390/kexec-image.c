@@ -25,7 +25,6 @@
 #include <fcntl.h>
 
 static uint64_t crash_base, crash_end;
-static char command_line[COMMAND_LINESIZE];
 
 static void add_segment_check(struct kexec_info *info, const void *buf,
 			      size_t bufsz, unsigned long base, size_t memsz)
@@ -36,13 +35,18 @@ static void add_segment_check(struct kexec_info *info, const void *buf,
 	add_segment(info, buf, bufsz, crash_base + base, memsz);
 }
 
-int command_line_add(const char *str)
+int command_line_add(struct kexec_info *info, const char *str)
 {
-	if (strlen(command_line) + strlen(str) + 1 > COMMAND_LINESIZE) {
-		fprintf(stderr, "Command line too long.\n");
+	char *tmp = NULL;
+
+	tmp = concat_cmdline(info->command_line, str);
+	if (!tmp) {
+		fprintf(stderr, "out of memory\n");
 		return -1;
 	}
-	strcat(command_line, str);
+
+	free(info->command_line);
+	info->command_line = tmp;
 	return 0;
 }
 
@@ -64,7 +68,7 @@ int image_s390_load_file(int argc, char **argv, struct kexec_info *info)
 	while ((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch(opt) {
 		case OPT_APPEND:
-			if (command_line_add(optarg))
+			if (command_line_add(info, optarg))
 				return -1;
 			break;
 		case OPT_RAMDISK:
@@ -78,13 +82,16 @@ int image_s390_load_file(int argc, char **argv, struct kexec_info *info)
 		if (info->initrd_fd == -1) {
 			fprintf(stderr, "Could not open initrd file %s:%s\n",
 					ramdisk, strerror(errno));
+			free(info->command_line);
+			info->command_line = NULL;
 			return -1;
 		}
 	}
 
-	info->command_line = command_line;
-	info->command_line_len = strlen (command_line) + 1;
-
+	if (info->command_line)
+		info->command_line_len = strlen(info->command_line) + 1;
+	else
+		info->command_line_len = 0;
 	return 0;
 }
 
@@ -97,7 +104,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	const char *ramdisk;
 	off_t ramdisk_len;
 	unsigned int ramdisk_origin;
-	int opt;
+	int opt, ret = -1;
 
 	if (info->file_mode)
 		return image_s390_load_file(argc, argv, info);
@@ -112,7 +119,6 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		};
 	static const char short_options[] = KEXEC_OPT_STR "";
 
-	command_line[0] = 0;
 	ramdisk = NULL;
 	ramdisk_len = 0;
 	ramdisk_origin = 0;
@@ -120,7 +126,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	while ((opt = getopt_long(argc,argv,short_options,options,0)) != -1) {
 		switch(opt) {
 		case OPT_APPEND:
-			if (command_line_add(optarg))
+			if (command_line_add(info, optarg))
 				return -1;
 			break;
 		case OPT_RAMDISK:
@@ -132,7 +138,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		if (parse_iomem_single("Crash kernel\n", &crash_base,
 				       &crash_end))
-			return -1;
+			goto out;
 	}
 
 	/* Add kernel segment */
@@ -151,7 +157,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		rd_buffer = slurp_file_mmap(ramdisk, &ramdisk_len);
 		if (rd_buffer == NULL) {
 			fprintf(stderr, "Could not read ramdisk.\n");
-			return -1;
+			goto out;
 		}
 		ramdisk_origin = MAX(RAMDISK_ORIGIN_ADDR, kernel_size);
 		ramdisk_origin = _ALIGN_UP(ramdisk_origin, 0x100000);
@@ -160,7 +166,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	}
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		if (load_crashdump_segments(info, crash_base, crash_end))
-			return -1;
+			goto out;
 	} else {
 		info->entry = (void *) IMAGE_READ_OFFSET;
 	}
@@ -183,15 +189,28 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 			*tmp = crash_end - crash_base + 1;
 		}
 	}
-	/*
-	 * We will write a probably given command line.
-	 * First, erase the old area, then setup the new parameters:
-	 */
-	if (strlen(command_line) != 0) {
-		memset(krnl_buffer + COMMAND_LINE_OFFS, 0, COMMAND_LINESIZE);
-		memcpy(krnl_buffer + COMMAND_LINE_OFFS, command_line, strlen(command_line));
+
+	if (info->command_line) {
+		unsigned long maxsize;
+		char *dest = krnl_buffer + COMMAND_LINE_OFFS;
+
+		maxsize = *(unsigned long *)(krnl_buffer + MAX_COMMAND_LINESIZE_OFFS);
+		if (!maxsize)
+			maxsize = LEGACY_COMMAND_LINESIZE;
+
+		if (strlen(info->command_line) > maxsize-1) {
+			fprintf(stderr, "command line too long, maximum allowed size %ld\n",
+				maxsize-1);
+			goto out;
+		}
+		strncpy(dest, info->command_line, maxsize-1);
+		dest[maxsize-1] = '\0';
 	}
-	return 0;
+	ret = 0;
+out:
+	free(info->command_line);
+	info->command_line = NULL;
+	return ret;
 }
 
 int 
