@@ -71,6 +71,10 @@ int image_s390_load_file(int argc, char **argv, struct kexec_info *info)
 		case OPT_RAMDISK:
 			ramdisk = optarg;
 			break;
+		case OPT_REUSE_CMDLINE:
+			free(info->command_line);
+			info->command_line = get_command_line();
+			break;
 		}
 	}
 
@@ -122,6 +126,10 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		case OPT_APPEND:
 			if (command_line_add(info, optarg))
 				return -1;
+			break;
+		case OPT_REUSE_CMDLINE:
+			free(info->command_line);
+			info->command_line = get_command_line();
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -223,5 +231,6 @@ image_s390_usage(void)
 	printf("--command-line=STRING Set the kernel command line to STRING.\n"
 	       "--append=STRING       Set the kernel command line to STRING.\n"
 	       "--initrd=FILENAME     Use the file FILENAME as a ramdisk.\n"
+	       "--reuse-cmdline       Use kernel command line from running system.\n"
 		);
 }

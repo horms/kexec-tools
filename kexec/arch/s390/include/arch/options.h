@@ -1,9 +1,10 @@
 #ifndef KEXEC_ARCH_S390_OPTIONS_H
 #define KEXEC_ARCH_S390_OPTIONS_H
 
-#define OPT_ARCH_MAX	(OPT_MAX+0)
-#define OPT_APPEND	OPT_MAX+0
-#define OPT_RAMDISK	OPT_MAX+1
+#define OPT_ARCH_MAX		(OPT_MAX+0)
+#define OPT_APPEND		(OPT_MAX+0)
+#define OPT_RAMDISK		(OPT_MAX+1)
+#define OPT_REUSE_CMDLINE	(OPT_MAX+2)
 
 /* Options relevant to the architecture (excluding loader-specific ones),
  * in this case none:
@@ -31,7 +32,8 @@
 	KEXEC_ARCH_OPTIONS				\
 	{"command-line",     1, 0, OPT_APPEND},		\
 	{"append",           1, 0, OPT_APPEND},		\
-	{"initrd",	     1, 0, OPT_RAMDISK},
+	{"initrd",	     1, 0, OPT_RAMDISK},	\
+	{"reuse-cmdline",    0, 0, OPT_REUSE_CMDLINE },
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR
 
