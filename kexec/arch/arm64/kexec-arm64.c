@@ -942,13 +942,25 @@ out:
 
 int get_page_offset(unsigned long *page_offset)
 {
+	unsigned long long text_sym_addr, kernel_va_mid;
 	int ret;
+
+	text_sym_addr = get_kernel_sym("_text");
+	if (text_sym_addr == 0) {
+		fprintf(stderr, "Can't get the symbol of _text to calculate page_offset.\n");
+		return -1;
+	}
 
 	ret = get_va_bits();
 	if (ret < 0)
 		return ret;
 
-	if (va_bits < 52)
+	/* Since kernel 5.4, kernel image is put above
+	 * UINT64_MAX << (va_bits - 1)
+	 */
+	kernel_va_mid = UINT64_MAX << (va_bits - 1);
+	/* older kernel */
+	if (text_sym_addr < kernel_va_mid)
 		*page_offset = UINT64_MAX << (va_bits - 1);
 	else
 		*page_offset = UINT64_MAX << va_bits;
