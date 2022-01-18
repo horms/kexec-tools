@@ -28,7 +28,7 @@ int get_pt_load(int idx,
 	unsigned long long *phys_end,
 	unsigned long long *virt_start,
 	unsigned long long *virt_end);
-int read_phys_offset_elf_kcore(int fd, unsigned long *phys_off);
+int read_phys_offset_elf_kcore(int fd, long *phys_off);
 int read_elf(int fd);
 void dump_dmesg(int fd, void (*handler)(char*, unsigned int));
 

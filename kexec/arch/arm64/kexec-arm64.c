@@ -878,7 +878,7 @@ void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
 	add_segment_phys_virt(info, buf, bufsz, base, memsz, 1);
 }
 
-static inline void set_phys_offset(uint64_t v, char *set_method)
+static inline void set_phys_offset(int64_t v, char *set_method)
 {
 	if (arm64_mem.phys_offset == arm64_mem_ngv
 		|| v < arm64_mem.phys_offset) {
@@ -947,7 +947,7 @@ static int get_page_offset(void)
  * from VMCOREINFO note inside 'kcore'.
  */
 
-static int get_phys_offset_from_vmcoreinfo_pt_note(unsigned long *phys_offset)
+static int get_phys_offset_from_vmcoreinfo_pt_note(long *phys_offset)
 {
 	int fd, ret = 0;
 
@@ -967,7 +967,7 @@ static int get_phys_offset_from_vmcoreinfo_pt_note(unsigned long *phys_offset)
  * from PT_LOADs inside 'kcore'.
  */
 
-int get_phys_base_from_pt_load(unsigned long *phys_offset)
+int get_phys_base_from_pt_load(long *phys_offset)
 {
 	int i, fd, ret;
 	unsigned long long phys_start;
@@ -1025,7 +1025,7 @@ static bool to_be_excluded(char *str, unsigned long long start, unsigned long lo
 int get_memory_ranges(struct memory_range **range, int *ranges,
 	unsigned long kexec_flags)
 {
-	unsigned long phys_offset = UINT64_MAX;
+	long phys_offset = -1;
 	FILE *fp;
 	const char *iomem = proc_iomem();
 	char line[MAX_LINE], *str;
@@ -1047,7 +1047,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 		 */
 		ret = get_phys_offset_from_vmcoreinfo_pt_note(&phys_offset);
 		if (!ret) {
-			if (phys_offset != UINT64_MAX)
+			if (phys_offset != -1)
 				set_phys_offset(phys_offset,
 						"vmcoreinfo pt_note");
 		} else {
@@ -1059,7 +1059,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 			 */
 			ret = get_phys_base_from_pt_load(&phys_offset);
 			if (!ret)
-				if (phys_offset != UINT64_MAX)
+				if (phys_offset != -1)
 					set_phys_offset(phys_offset,
 							"pt_load");
 		}

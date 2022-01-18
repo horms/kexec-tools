@@ -1236,7 +1236,7 @@ int read_elf(int fd)
 	return 0;
 }
 
-int read_phys_offset_elf_kcore(int fd, unsigned long *phys_off)
+int read_phys_offset_elf_kcore(int fd, long *phys_off)
 {
 	int ret;
 

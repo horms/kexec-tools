@@ -58,7 +58,7 @@ extern off_t initrd_size;
  */
 
 struct arm64_mem {
-	uint64_t phys_offset;
+	int64_t phys_offset;
 	uint64_t text_offset;
 	uint64_t image_size;
 	uint64_t vp_offset;
