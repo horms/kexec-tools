@@ -310,6 +310,8 @@ int get_pt_load(int idx,
 
 #define NOT_FOUND_LONG_VALUE		(-1)
 
+void (*arch_scan_vmcoreinfo)(char *pos);
+
 void scan_vmcoreinfo(char *start, size_t size)
 {
 	char *last = start + size - 1;
@@ -550,6 +552,9 @@ void scan_vmcoreinfo(char *start, size_t size)
 				break;
 			}
 		}
+
+		if (arch_scan_vmcoreinfo != NULL)
+			(*arch_scan_vmcoreinfo)(pos);
 
 		if (last_line)
 			break;

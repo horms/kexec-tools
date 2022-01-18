@@ -54,7 +54,7 @@
 static bool try_read_phys_offset_from_kcore = false;
 
 /* Machine specific details. */
-static int va_bits;
+static int va_bits = -1;
 static unsigned long page_offset;
 
 /* Global varables the core kexec routines expect. */
@@ -895,7 +895,18 @@ static inline void set_phys_offset(int64_t v, char *set_method)
 
 static int get_va_bits(void)
 {
-	unsigned long long stext_sym_addr = get_kernel_sym("_stext");
+	unsigned long long stext_sym_addr;
+
+	/*
+	 * if already got from kcore
+	 */
+	if (va_bits != -1)
+		goto out;
+
+
+	/* For kernel older than v4.19 */
+	fprintf(stderr, "Warning, can't get the VA_BITS from kcore\n");
+	stext_sym_addr = get_kernel_sym("_stext");
 
 	if (stext_sym_addr == 0) {
 		fprintf(stderr, "Can't get the symbol of _stext.\n");
@@ -919,6 +930,7 @@ static int get_va_bits(void)
 		return -1;
 	}
 
+out:
 	dbgprintf("va_bits : %d\n", va_bits);
 
 	return 0;
@@ -936,14 +948,27 @@ int get_page_offset(unsigned long *page_offset)
 	if (ret < 0)
 		return ret;
 
-	*page_offset = UINT64_MAX << (va_bits - 1);
+	if (va_bits < 52)
+		*page_offset = UINT64_MAX << (va_bits - 1);
+	else
+		*page_offset = UINT64_MAX << va_bits;
+
 	dbgprintf("page_offset : %lx\n", *page_offset);
 
 	return 0;
 }
 
+static void arm64_scan_vmcoreinfo(char *pos)
+{
+	const char *str;
+
+	str = "NUMBER(VA_BITS)=";
+	if (memcmp(str, pos, strlen(str)) == 0)
+		va_bits = strtoul(pos + strlen(str), NULL, 10);
+}
+
 /**
- * get_phys_offset_from_vmcoreinfo_pt_note - Helper for getting PHYS_OFFSET
+ * get_phys_offset_from_vmcoreinfo_pt_note - Helper for getting PHYS_OFFSET (and va_bits)
  * from VMCOREINFO note inside 'kcore'.
  */
 
@@ -956,6 +981,7 @@ static int get_phys_offset_from_vmcoreinfo_pt_note(long *phys_offset)
 		return EFAILED;
 	}
 
+	arch_scan_vmcoreinfo = arm64_scan_vmcoreinfo;
 	ret = read_phys_offset_elf_kcore(fd, phys_offset);
 
 	close(fd);

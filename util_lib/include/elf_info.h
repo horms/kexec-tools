@@ -31,5 +31,6 @@ int get_pt_load(int idx,
 int read_phys_offset_elf_kcore(int fd, long *phys_off);
 int read_elf(int fd);
 void dump_dmesg(int fd, void (*handler)(char*, unsigned int));
+extern void (*arch_scan_vmcoreinfo)(char *pos);
 
 #endif /* ELF_INFO_H */
