@@ -69,6 +69,7 @@ extern struct arm64_mem arm64_mem;
 
 uint64_t get_phys_offset(void);
 uint64_t get_vp_offset(void);
+int get_page_offset(unsigned long *offset);
 
 static inline void reset_vp_offset(void)
 {

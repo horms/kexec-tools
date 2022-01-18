@@ -928,7 +928,7 @@ static int get_va_bits(void)
  * get_page_offset - Helper for getting PAGE_OFFSET
  */
 
-static int get_page_offset(void)
+int get_page_offset(unsigned long *page_offset)
 {
 	int ret;
 
@@ -936,8 +936,8 @@ static int get_page_offset(void)
 	if (ret < 0)
 		return ret;
 
-	page_offset = (0xffffffffffffffffUL) << (va_bits - 1);
-	dbgprintf("page_offset : %lx\n", page_offset);
+	*page_offset = UINT64_MAX << (va_bits - 1);
+	dbgprintf("page_offset : %lx\n", *page_offset);
 
 	return 0;
 }
@@ -973,7 +973,7 @@ int get_phys_base_from_pt_load(long *phys_offset)
 	unsigned long long phys_start;
 	unsigned long long virt_start;
 
-	ret = get_page_offset();
+	ret = get_page_offset(&page_offset);
 	if (ret < 0)
 		return ret;
 

@@ -47,27 +47,6 @@ static struct crash_elf_info elf_info = {
 };
 
 /*
- * Note: The returned value is correct only if !CONFIG_RANDOMIZE_BASE.
- */
-static uint64_t get_kernel_page_offset(void)
-{
-	int i;
-
-	if (elf_info.kern_vaddr_start == UINT64_MAX)
-		return UINT64_MAX;
-
-	/* Current max virtual memory range is 48-bits. */
-	for (i = 48; i > 0; i--)
-		if (!(elf_info.kern_vaddr_start & (1UL << i)))
-			break;
-
-	if (i <= 0)
-		return UINT64_MAX;
-	else
-		return UINT64_MAX << i;
-}
-
-/*
  * iomem_range_callback() - callback called for each iomem region
  * @data: not used
  * @nr: not used
@@ -203,7 +182,7 @@ int load_crashdump_segments(struct kexec_info *info)
 	if (err)
 		return EFAILED;
 
-	elf_info.page_offset = get_kernel_page_offset();
+	get_page_offset(&elf_info.page_offset);
 	dbgprintf("%s: page_offset:   %016llx\n", __func__,
 			elf_info.page_offset);
 
