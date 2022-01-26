@@ -109,15 +109,17 @@ int arch_process_options(int argc, char **argv)
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR;
 	int opt;
+	char *cmdline = NULL;
+	const char *append = NULL;
 
 	while ((opt = getopt_long(argc, argv, short_options,
 				  options, 0)) != -1) {
 		switch (opt) {
 		case OPT_APPEND:
-			arch_options.command_line = optarg;
+			append = optarg;
 			break;
 		case OPT_REUSE_CMDLINE:
-			arch_options.command_line = get_command_line();
+			cmdline = get_command_line();
 			break;
 		case OPT_DTB:
 			arch_options.dtb_file = optarg;
@@ -129,6 +131,8 @@ int arch_process_options(int argc, char **argv)
 			break;
 		}
 	}
+
+	arch_options.command_line = concat_cmdline(cmdline, append);
 
 	dbgprintf("%s:%d: command_line: %s\n", __func__, __LINE__,
 		arch_options.command_line);
