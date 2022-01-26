@@ -130,6 +130,13 @@ int arch_process_options(int argc, char **argv)
 		}
 	}
 
+	dbgprintf("%s:%d: command_line: %s\n", __func__, __LINE__,
+		arch_options.command_line);
+	dbgprintf("%s:%d: initrd: %s\n", __func__, __LINE__,
+		arch_options.initrd_file);
+	dbgprintf("%s:%d: dtb: %s\n", __func__, __LINE__,
+		arch_options.dtb_file);
+
 	return 0;
 }
 
