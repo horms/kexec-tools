@@ -1339,6 +1339,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 		case EMSGSIZE:
 			/* Reject by default. */
 		default:
+			fprintf(stderr, "kexec_file_load failed: %s\n", strerror(errno));
 			ret = EFAILED;
 			break;
 
