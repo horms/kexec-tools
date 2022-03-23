@@ -247,21 +247,24 @@ int xen_kexec_status(uint64_t kexec_flags)
 	return ret;
 }
 
-void xen_kexec_exec(uint64_t kexec_flags)
+int xen_kexec_exec(uint64_t kexec_flags)
 {
 	xc_interface *xch;
 	uint8_t type = KEXEC_TYPE_DEFAULT;
+	int ret;
 
 	xch = xc_interface_open(NULL, NULL, 0);
 	if (!xch)
-		return;
+		return -1;
 
 	if (kexec_flags & KEXEC_LIVE_UPDATE)
 		type = KEXEC_TYPE_LIVE_UPDATE;
 
-	xc_kexec_exec(xch, type);
+	ret = xc_kexec_exec(xch, type);
 
 	xc_interface_close(xch);
+
+	return ret;
 }
 
 #else /* ! HAVE_LIBXENCTRL */
@@ -286,8 +289,9 @@ int xen_kexec_status(uint64_t kexec_flags)
 	return -1;
 }
 
-void xen_kexec_exec(uint64_t kexec_flags)
+int xen_kexec_exec(uint64_t kexec_flags)
 {
+	return -1;
 }
 
 #endif

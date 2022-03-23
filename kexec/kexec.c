@@ -902,13 +902,28 @@ static int my_shutdown(void)
 }
 
 /*
- *	Exec the new kernel (reboot)
+ *	Exec the new kernel. If successful, this triggers an immediate reboot
+ *	and does not return, but Xen Live Update is an exception (more on this
+ *	below).
  */
 static int my_exec(void)
 {
-	if (xen_present())
-		xen_kexec_exec(kexec_flags);
-	else
+	if (xen_present()) {
+		int ret;
+
+		/*
+		 * There are two cases in which the Xen hypercall may return:
+		 * 1) An error occurred, e.g. the kexec image was not loaded.
+		 *    The exact error is indicated by errno.
+		 * 2) Live Update was successfully scheduled. Note that unlike
+		 *    a normal kexec, Live Update happens asynchronously, i.e.
+		 *    the hypercall merely schedules the kexec operation and
+		 *    returns immediately.
+		 */
+		ret = xen_kexec_exec(kexec_flags);
+		if ((kexec_flags & KEXEC_LIVE_UPDATE) && !ret)
+			return 0;
+	} else
 		reboot(LINUX_REBOOT_CMD_KEXEC);
 	/* I have failed if I make it here */
 	fprintf(stderr, "kexec failed: %s\n", 
