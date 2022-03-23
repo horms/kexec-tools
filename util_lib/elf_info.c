@@ -763,8 +763,9 @@ static void dump_dmesg_structured(int fd, void (*handler)(char*, unsigned int))
 {
 #define OUT_BUF_SIZE	4096
 	uint64_t log_buf, log_buf_offset, ts_nsec;
-	uint32_t log_first_idx, log_next_idx, current_idx, len = 0, i;
+	uint32_t log_buf_len, log_first_idx, log_next_idx, current_idx, len = 0, i;
 	char *buf, out_buf[OUT_BUF_SIZE];
+	bool has_wrapped_around = false;
 	ssize_t ret;
 	char *msg;
 	uint16_t text_len;
@@ -811,6 +812,7 @@ static void dump_dmesg_structured(int fd, void (*handler)(char*, unsigned int))
 	}
 
 	log_buf = read_file_pointer(fd, vaddr_to_offset(log_buf_vaddr));
+	log_buf_len = read_file_s32(fd, vaddr_to_offset(log_buf_len_vaddr));
 
 	log_first_idx = read_file_u32(fd, vaddr_to_offset(log_first_idx_vaddr));
 	log_next_idx = read_file_u32(fd, vaddr_to_offset(log_next_idx_vaddr));
@@ -882,11 +884,31 @@ static void dump_dmesg_structured(int fd, void (*handler)(char*, unsigned int))
 		 * and read the message at the start of the buffer.
 		 */
 		loglen = struct_val_u16(buf, log_offset_len);
-		if (!loglen)
+		if (!loglen) {
+			if (has_wrapped_around) {
+				if (len && handler)
+					handler(out_buf, len);
+				fprintf(stderr, "Cycle when parsing dmesg detected.\n");
+				fprintf(stderr, "The prink log_buf is most likely corrupted.\n");
+				fprintf(stderr, "log_buf = 0x%lx, idx = 0x%x\n",
+					log_buf, current_idx);
+				exit(68);
+			}
 			current_idx = 0;
-		else
+			has_wrapped_around = true;
+		} else {
 			/* Move to next record */
 			current_idx += loglen;
+			if(current_idx > log_buf_len - log_sz) {
+				if (len && handler)
+					handler(out_buf, len);
+				fprintf(stderr, "Index outside log_buf detected.\n");
+				fprintf(stderr, "The prink log_buf is most likely corrupted.\n");
+				fprintf(stderr, "log_buf = 0x%lx, idx = 0x%x\n",
+					log_buf, current_idx);
+				exit(69);
+			}
+		}
 	}
 	free(buf);
 	if (len && handler)
