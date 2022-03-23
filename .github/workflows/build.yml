@@ -61,7 +61,9 @@ jobs:
 
     - name: Install Dependencies
       if: env.EXTRA_PKGS != ''
-      run: sudo apt-get -q=2 install ${{ env.EXTRA_PKGS }}
+      run: |
+        sudo apt-get update
+        sudo apt-get -q=2 install ${{ env.EXTRA_PKGS }}
 
     - name: Build
       run: |
