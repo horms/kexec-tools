@@ -155,6 +155,39 @@ ssize_t lzread(LZFILE *lzfile, void *buf, size_t len)
 	}
 }
 
+int is_lzma_file(const char *filename)
+{
+	FILE *fp;
+	int ret = 0;
+	uint8_t buf[13];
+
+	if (!filename)
+		return 0;
+
+	fp = fopen(filename, "r");
+	if (fp == NULL)
+		return 0;
+
+	const size_t size = fread(buf, 1, sizeof(buf), fp);
+
+	if (size != 13)
+		return 0;
+
+	lzma_filter filter = { .id = LZMA_FILTER_LZMA1 };
+
+	switch (lzma_properties_decode(&filter, NULL, buf, 5)) {
+	case LZMA_OK:
+		ret = 1;
+		break;
+	default:
+		/* It's not a lzma file */
+		ret = 0;
+	}
+
+	fclose(fp);
+	return ret;
+}
+
 char *lzma_decompress_file(const char *filename, off_t *r_size)
 {
 	LZFILE *fp;
@@ -166,6 +199,9 @@ char *lzma_decompress_file(const char *filename, off_t *r_size)
 
 	*r_size = 0;
 	if (!filename)
+		return NULL;
+
+	if (!is_lzma_file(filename))
 		return NULL;
 
 	fp = lzopen(filename, "rb");
