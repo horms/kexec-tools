@@ -170,8 +170,11 @@ int is_lzma_file(const char *filename)
 
 	const size_t size = fread(buf, 1, sizeof(buf), fp);
 
-	if (size != 13)
+	if (size != 13) {
+		/* file is too small to be a lzma file. */
+		fclose(fp);
 		return 0;
+	}
 
 	lzma_filter filter = { .id = LZMA_FILTER_LZMA1 };
 
