@@ -1210,50 +1210,24 @@ int machine_verify_elf_rel(struct mem_ehdr *ehdr)
 	return (ehdr->e_machine == EM_AARCH64);
 }
 
+enum aarch64_rel_type {
+	R_AARCH64_NONE = 0,
+	R_AARCH64_ABS64 = 257,
+	R_AARCH64_PREL32 = 261,
+	R_AARCH64_LD_PREL_LO19 = 273,
+	R_AARCH64_ADR_PREL_LO21 = 274,
+	R_AARCH64_ADR_PREL_PG_HI21 = 275,
+	R_AARCH64_ADD_ABS_LO12_NC = 277,
+	R_AARCH64_JUMP26 = 282,
+	R_AARCH64_CALL26 = 283,
+	R_AARCH64_LDST64_ABS_LO12_NC = 286,
+	R_AARCH64_LDST128_ABS_LO12_NC = 299
+};
+
 void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 	unsigned long r_type, void *ptr, unsigned long address,
 	unsigned long value)
 {
-#if !defined(R_AARCH64_ABS64)
-# define R_AARCH64_ABS64 257
-#endif
-
-#if !defined(R_AARCH64_PREL32)
-# define R_AARCH64_PREL32 261
-#endif
-
-#if !defined(R_AARCH64_LD_PREL_LO19)
-# define R_AARCH64_LD_PREL_LO19 273
-#endif
-
-#if !defined(R_AARCH64_ADR_PREL_LO21)
-# define R_AARCH64_ADR_PREL_LO21 274
-#endif
-
-#if !defined(R_AARCH64_ADR_PREL_PG_HI21)
-# define R_AARCH64_ADR_PREL_PG_HI21 275
-#endif
-
-#if !defined(R_AARCH64_ADD_ABS_LO12_NC)
-# define R_AARCH64_ADD_ABS_LO12_NC 277
-#endif
-
-#if !defined(R_AARCH64_JUMP26)
-# define R_AARCH64_JUMP26 282
-#endif
-
-#if !defined(R_AARCH64_CALL26)
-# define R_AARCH64_CALL26 283
-#endif
-
-#if !defined(R_AARCH64_LDST64_ABS_LO12_NC)
-# define R_AARCH64_LDST64_ABS_LO12_NC 286
-#endif
-
-#if !defined(R_AARCH64_LDST128_ABS_LO12_NC)
-# define R_AARCH64_LDST128_ABS_LO12_NC 299
-#endif
-
 	uint64_t *loc64;
 	uint32_t *loc32;
 	uint64_t *location = (uint64_t *)ptr;
@@ -1261,7 +1235,7 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 	uint64_t imm;
 	const char *type = NULL;
 
-	switch(r_type) {
+	switch((enum aarch64_rel_type)r_type) {
 	case R_AARCH64_ABS64:
 		type = "ABS64";
 		loc64 = ptr;
