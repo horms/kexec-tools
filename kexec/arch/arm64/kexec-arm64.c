@@ -1214,6 +1214,10 @@ enum aarch64_rel_type {
 	R_AARCH64_NONE = 0,
 	R_AARCH64_ABS64 = 257,
 	R_AARCH64_PREL32 = 261,
+	R_AARCH64_MOVW_UABS_G0_NC = 264,
+	R_AARCH64_MOVW_UABS_G1_NC = 266,
+	R_AARCH64_MOVW_UABS_G2_NC = 268,
+	R_AARCH64_MOVW_UABS_G3 =269,
 	R_AARCH64_LD_PREL_LO19 = 273,
 	R_AARCH64_ADR_PREL_LO21 = 274,
 	R_AARCH64_ADR_PREL_PG_HI21 = 275,
@@ -1223,6 +1227,12 @@ enum aarch64_rel_type {
 	R_AARCH64_LDST64_ABS_LO12_NC = 286,
 	R_AARCH64_LDST128_ABS_LO12_NC = 299
 };
+
+static uint32_t get_bits(uint32_t value, int start, int end)
+{
+	uint32_t mask = ((uint32_t)1 << (end + 1 - start)) - 1;
+	return (value >> start) & mask;
+}
 
 void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 	unsigned long r_type, void *ptr, unsigned long address,
@@ -1247,6 +1257,36 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 		*loc32 = cpu_to_elf32(ehdr,
 			elf32_to_cpu(ehdr, *loc32) + value - address);
 		break;
+
+	/* Set a MOV[KZ] immediate field to bits [15:0] of X. No overflow check */
+	case R_AARCH64_MOVW_UABS_G0_NC:
+		type = "MOVW_UABS_G0_NC";
+		loc32 = ptr;
+		imm = get_bits(value, 0, 15);
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32) + (imm << 5));
+		break;
+	/* Set a MOV[KZ] immediate field to bits [31:16] of X. No overflow check */
+	case R_AARCH64_MOVW_UABS_G1_NC:
+		type = "MOVW_UABS_G1_NC";
+		loc32 = ptr;
+		imm = get_bits(value, 16, 31);
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32) + (imm << 5));
+		break;
+	/* Set a MOV[KZ] immediate field to bits [47:32] of X. No overflow check */
+	case R_AARCH64_MOVW_UABS_G2_NC:
+		type = "MOVW_UABS_G2_NC";
+		loc32 = ptr;
+		imm = get_bits(value, 32, 47);
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32) + (imm << 5));
+		break;
+	/* Set a MOV[KZ] immediate field to bits [63:48] of X */
+	case R_AARCH64_MOVW_UABS_G3:
+		type = "MOVW_UABS_G3";
+		loc32 = ptr;
+		imm = get_bits(value, 48, 63);
+		*loc32 = cpu_to_le32(le32_to_cpu(*loc32) + (imm << 5));
+		break;
+
 	case R_AARCH64_LD_PREL_LO19:
 		type = "LD_PREL_LO19";
 		loc32 = ptr;
