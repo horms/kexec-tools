@@ -168,6 +168,10 @@ int build_elf_rel_info(const char *buf, off_t len, struct mem_ehdr *ehdr,
 	return 0;
 }
 
+static unsigned long get_section_addralign(struct mem_shdr *shdr)
+{
+	return (shdr->sh_addralign == 0) ? 1 : shdr->sh_addralign;
+}
 
 int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 	unsigned long min, unsigned long max, int end)
@@ -219,7 +223,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 		}
 		if (shdr->sh_type != SHT_NOBITS) {
 			unsigned long align;
-			align = shdr->sh_addralign;
+			align = get_section_addralign(shdr);
 			/* See if I need more alignment */
 			if (buf_align < align) {
 				buf_align = align;
@@ -231,7 +235,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 		}
 		else {
 			unsigned long align;
-			align = shdr->sh_addralign;
+			align = get_section_addralign(shdr);
 			/* See if I need more alignment */
 			if (bss_align < align) {
 				bss_align = align;
@@ -265,7 +269,7 @@ int elf_rel_load(struct mem_ehdr *ehdr, struct kexec_info *info,
 		if (!(shdr->sh_flags & SHF_ALLOC)) {
 			continue;
 		}
-		align = shdr->sh_addralign;
+		align = get_section_addralign(shdr);
 		if (shdr->sh_type != SHT_NOBITS) {
 			unsigned long off;
 			/* Adjust the address */
