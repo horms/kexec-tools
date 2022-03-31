@@ -1249,13 +1249,12 @@ void machine_apply_elf_rel(struct mem_ehdr *ehdr, struct mem_sym *UNUSED(sym),
 	case R_AARCH64_ABS64:
 		type = "ABS64";
 		loc64 = ptr;
-		*loc64 = cpu_to_elf64(ehdr, elf64_to_cpu(ehdr, *loc64) + value);
+		*loc64 = cpu_to_elf64(ehdr, value);
 		break;
 	case R_AARCH64_PREL32:
 		type = "PREL32";
 		loc32 = ptr;
-		*loc32 = cpu_to_elf32(ehdr,
-			elf32_to_cpu(ehdr, *loc32) + value - address);
+		*loc32 = cpu_to_elf32(ehdr, value - address);
 		break;
 
 	/* Set a MOV[KZ] immediate field to bits [15:0] of X. No overflow check */
