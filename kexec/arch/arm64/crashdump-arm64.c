@@ -182,7 +182,7 @@ int load_crashdump_segments(struct kexec_info *info)
 	if (err)
 		return EFAILED;
 
-	get_page_offset(&elf_info.page_offset);
+	get_page_offset((unsigned long *)&elf_info.page_offset);
 	dbgprintf("%s: page_offset:   %016llx\n", __func__,
 			elf_info.page_offset);
 
