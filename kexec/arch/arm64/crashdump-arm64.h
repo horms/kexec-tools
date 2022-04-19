@@ -14,7 +14,7 @@
 
 #include "kexec.h"
 
-#define CRASH_MAX_MEMORY_RANGES	32
+#define CRASH_MAX_MEMORY_RANGES	32768
 
 /* crash dump kernel support at most two regions, low_region and high region. */
 #define CRASH_MAX_RESERVED_RANGES	2
