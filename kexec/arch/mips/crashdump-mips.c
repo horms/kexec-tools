@@ -334,7 +334,10 @@ static int patch_elf_info(void)
 		if (strncmp(line, "cpu model", 9) == 0) {
 			/* OCTEON uses a different page_offset. */
 			if (strstr(line, "Octeon"))
-				elf_info64.page_offset = 0x8000000000000000ULL;
+				elf_info64.page_offset = OCTEON_PAGE_OFFSET;
+			/* LOONGSON uses a different page_offset. */
+			else if (strstr(line, "Loongson"))
+				elf_info64.page_offset = LOONGSON_PAGE_OFFSET;
 			break;
 		}
 	}
