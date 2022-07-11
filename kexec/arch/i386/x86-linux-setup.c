@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/random.h>
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/fb.h>
@@ -544,6 +545,7 @@ struct setup_data {
 #define SETUP_DTB	2
 #define SETUP_PCI	3
 #define SETUP_EFI	4
+#define SETUP_RNG_SEED	9
 	uint32_t len;
 	uint8_t data[0];
 } __attribute__((packed));
@@ -824,6 +826,26 @@ static void setup_e820(struct kexec_info *info, struct x86_linux_param_header *r
 	}
 }
 
+static void setup_rng_seed(struct kexec_info *info,
+			   struct x86_linux_param_header *real_mode)
+{
+	struct {
+		struct setup_data header;
+		uint8_t rng_seed[32];
+	} *sd;
+
+	sd = xmalloc(sizeof(*sd));
+	sd->header.next = 0;
+	sd->header.len = sizeof(sd->rng_seed);
+	sd->header.type = SETUP_RNG_SEED;
+
+	if (getrandom(sd->rng_seed, sizeof(sd->rng_seed), GRND_NONBLOCK) !=
+	    sizeof(sd->rng_seed))
+		return; /* Not initialized, so don't pass a seed. */
+
+	add_setup_data(info, real_mode, &sd->header);
+}
+
 static int
 get_efi_mem_desc_version(struct x86_linux_param_header *real_mode)
 {
@@ -922,6 +944,9 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	real_mode->aux_device_info = 0;
 
 	setup_e820(info, real_mode);
+
+	/* pass RNG seed */
+	setup_rng_seed(info, real_mode);
 
 	/* fill the EDD information */
 	setup_edd_info(real_mode);
