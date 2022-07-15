@@ -224,25 +224,6 @@ static int get_crash_memory_ranges(struct memory_range **range, int *ranges)
 	return 0;
 }
 
-/* Converts unsigned long to ascii string. */
-static void ultoa(unsigned long i, char *str)
-{
-	int j = 0, k;
-	char tmp;
-
-	do {
-		str[j++] = i % 10 + '0';
-	} while ((i /= 10) > 0);
-	str[j] = '\0';
-
-	/* Reverse the string. */
-	for (j = 0, k = strlen(str) - 1; j < k; j++, k--) {
-		tmp = str[k];
-		str[k] = str[j];
-		str[j] = tmp;
-	}
-}
-
 /* Adds the appropriate mem= options to command line, indicating the
  * memory region the new kernel can use to boot into. */
 static int cmdline_add_mem(char *cmdline, unsigned long addr,

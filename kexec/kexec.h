@@ -329,4 +329,20 @@ int xen_kexec_status(uint64_t kexec_flags);
 
 extern unsigned long long get_kernel_sym(const char *text);
 
+/* Converts unsigned long to ascii string. */
+static inline void ultoa(unsigned long val, char *str)
+{
+	char buf[36];
+	int len = 0, pos = 0;
+
+	do {
+		buf[len++] = val % 10;
+		val /= 10;
+	} while (val);
+
+	while (len)
+		str[pos++] = buf[--len] + '0';
+	str[pos] = 0;
+}
+
 #endif /* KEXEC_H */

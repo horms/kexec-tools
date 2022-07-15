@@ -436,25 +436,6 @@ err:
 	return -1;
 }
 
-/* Converts unsigned long to ascii string. */
-static void ultoa(uint64_t i, char *str)
-{
-	int j = 0, k;
-	char tmp;
-
-	do {
-		str[j++] = i % 10 + '0';
-	} while ((i /=10) > 0);
-	str[j] = '\0';
-
-	/* Reverse the string. */
-	for (j = 0, k = strlen(str) - 1; j < k; j++, k--) {
-		tmp = str[k];
-		str[k] = str[j];
-		str[j] = tmp;
-	}
-}
-
 static int add_cmdline_param(char *cmdline, uint64_t addr, char *cmdstr,
 				char *byte)
 {

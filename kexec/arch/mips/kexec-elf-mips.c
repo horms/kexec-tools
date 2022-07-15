@@ -40,25 +40,6 @@ static const int probe_debug = 0;
 #define CMDLINE_PREFIX "kexec "
 static char cmdline_buf[COMMAND_LINE_SIZE] = CMDLINE_PREFIX;
 
-/* Converts unsigned long to ascii string. */
-static void ultoa(unsigned long i, char *str)
-{
-	int j = 0, k;
-	char tmp;
-
-	do {
-		str[j++] = i % 10 + '0';
-	} while ((i /= 10) > 0);
-	str[j] = '\0';
-
-	/* Reverse the string. */
-	for (j = 0, k = strlen(str) - 1; j < k; j++, k--) {
-		tmp = str[k];
-		str[k] = str[j];
-		str[j] = tmp;
-	}
-}
-
 /* Adds initrd parameters to command line. */
 static int cmdline_add_initrd(char *cmdline, unsigned long addr, char *new_para)
 {

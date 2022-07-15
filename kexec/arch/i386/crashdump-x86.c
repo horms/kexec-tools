@@ -601,25 +601,6 @@ static int delete_memmap(struct memory_range *memmap_p, int *nr_memmap,
 	return 0;
 }
 
-/* Converts unsigned long to ascii string. */
-static void ultoa(unsigned long i, char *str)
-{
-	int j = 0, k;
-	char tmp;
-
-	do {
-		str[j++] = i % 10 + '0';
-	} while ((i /=10) > 0);
-	str[j] = '\0';
-
-	/* Reverse the string. */
-	for (j = 0, k = strlen(str) - 1; j < k; j++, k--) {
-		tmp = str[k];
-		str[k] = str[j];
-		str[j] = tmp;
-	}
-}
-
 static void cmdline_add_memmap_internal(char *cmdline, unsigned long startk,
 					unsigned long endk, int type)
 {
