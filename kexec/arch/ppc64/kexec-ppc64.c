@@ -717,8 +717,6 @@ static int get_devtree_details(unsigned long kexec_flags)
 			if (base < rma_base) {
 				rma_base = base;
 				rma_top = base + be64_to_cpu(((uint64_t *)buf)[1]);
-				if (rma_top > 0x30000000UL)
-					rma_top = 0x30000000UL;
 			}
 
 			fclose(file);
