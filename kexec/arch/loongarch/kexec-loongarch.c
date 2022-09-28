@@ -165,12 +165,31 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 
 struct file_type file_type[] = {
 	{"elf-loongarch", elf_loongarch_probe, elf_loongarch_load, elf_loongarch_usage},
+	{"pei-loongarch", pei_loongarch_probe, pei_loongarch_load, pei_loongarch_usage},
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 /* loongarch global varables. */
 
 struct loongarch_mem loongarch_mem;
+
+/**
+ * loongarch_process_image_header - Process the loongarch image header.
+ */
+
+int loongarch_process_image_header(const struct loongarch_image_header *h)
+{
+
+	if (!loongarch_header_check_pe_sig(h))
+		return EFAILED;
+
+	if (h->image_size) {
+		loongarch_mem.text_offset = loongarch_header_text_offset(h);
+		loongarch_mem.image_size = loongarch_header_image_size(h);
+	}
+
+	return 0;
+}
 
 void arch_usage(void)
 {

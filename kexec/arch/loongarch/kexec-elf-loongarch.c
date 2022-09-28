@@ -50,6 +50,7 @@ out:
 int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info)
 {
+	const struct loongarch_image_header *header = NULL;
 	unsigned long kernel_segment;
 	struct mem_ehdr ehdr;
 	int result;
@@ -76,6 +77,8 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 		loongarch_mem.text_offset);
 	dbgprintf("%s: phys_offset:    %016lx\n", __func__,
 		loongarch_mem.phys_offset);
+	dbgprintf("%s: PE format:      %s\n", __func__,
+		(loongarch_header_check_pe_sig(header) ? "yes" : "no"));
 
 	/* create and initialize elf core header segment */
 	if (info->kexec_flags & KEXEC_ON_CRASH) {

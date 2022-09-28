@@ -3,6 +3,8 @@
 
 #include <sys/types.h>
 
+#include "image-header.h"
+
 #define BOOT_BLOCK_VERSION 17
 #define BOOT_BLOCK_LAST_COMP_VERSION 16
 
@@ -20,6 +22,13 @@ int elf_loongarch_probe(const char *kernel_buf, off_t kernel_size);
 int elf_loongarch_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_loongarch_usage(void);
+
+int pei_loongarch_probe(const char *buf, off_t len);
+int pei_loongarch_load(int argc, char **argv, const char *buf, off_t len,
+	struct kexec_info *info);
+void pei_loongarch_usage(void);
+
+int loongarch_process_image_header(const struct loongarch_image_header *h);
 
 unsigned long loongarch_locate_kernel_segment(struct kexec_info *info);
 int loongarch_load_other_segments(struct kexec_info *info,

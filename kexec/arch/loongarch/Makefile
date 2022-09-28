@@ -3,6 +3,7 @@
 #
 loongarch_KEXEC_SRCS =  kexec/arch/loongarch/kexec-loongarch.c
 loongarch_KEXEC_SRCS += kexec/arch/loongarch/kexec-elf-loongarch.c
+loongarch_KEXEC_SRCS += kexec/arch/loongarch/kexec-pei-loongarch.c
 loongarch_KEXEC_SRCS += kexec/arch/loongarch/kexec-elf-rel-loongarch.c
 loongarch_KEXEC_SRCS += kexec/arch/loongarch/crashdump-loongarch.c
 
@@ -16,5 +17,6 @@ loongarch_VIRT_TO_PHYS =
 
 dist += kexec/arch/loongarch/Makefile $(loongarch_KEXEC_SRCS)			\
 	kexec/arch/loongarch/kexec-loongarch.h					\
+	kexec/arch/loongarch/image-header.h					\
 	kexec/arch/loongarch/crashdump-loongarch.h				\
 	kexec/arch/loongarch/include/arch/options.h
