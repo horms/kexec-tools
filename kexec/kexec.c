@@ -1095,7 +1095,7 @@ static int k_status(unsigned long kexec_flags)
 /*
  * Remove parameter from a kernel command line. Helper function by get_command_line().
  */
-static void remove_parameter(char *line, const char *param_name)
+void remove_parameter(char *line, const char *param_name)
 {
 	char *start, *end;
 

@@ -219,6 +219,8 @@ int arch_process_options(int argc, char **argv)
 			break;
 		case OPT_REUSE_CMDLINE:
 			cmdline = get_command_line();
+			remove_parameter(cmdline, "kexec");
+			remove_parameter(cmdline, "initrd");
 			break;
 		case OPT_INITRD:
 			arch_options.initrd_file = optarg;
