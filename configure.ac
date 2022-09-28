@@ -58,6 +58,9 @@ case $target_cpu in
 	hppa*)
 		ARCH="hppa"
 		;;
+	loongarch*)
+		ARCH="loongarch"
+		;;
 	* )
 		AC_MSG_ERROR([unsupported architecture $target_cpu])
 		;;

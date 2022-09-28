@@ -86,6 +86,7 @@
 #define IH_ARCH_ARC		23	/* Synopsys DesignWare ARC */
 #define IH_ARCH_X86_64		24	/* AMD x86_64, Intel and Via */
 #define IH_ARCH_XTENSA		25	/* Xtensa       */
+#define IH_ARCH_LOONGARCH	26	/* LoongArch Loongson */
 
 /*
  * Image Types
