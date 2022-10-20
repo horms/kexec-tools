@@ -11,4 +11,11 @@ int dtb_set_property(char **dtb, off_t *dtb_size, const char *node,
 
 int dtb_delete_property(char *dtb, const char *node, const char *prop);
 
+void dtb_extract_int_property(uint64_t *val, const void *buf, uint32_t cells);
+void dtb_fill_int_property(void *buf, uint64_t val, uint32_t cells);
+int dtb_add_range_property(char **dtb, off_t *dtb_size, uint64_t start, uint64_t end,
+                           const char *node, const char* parent);
+int dtb_get_memory_ranges(char *dtb, struct memory_ranges *mem_ranges,
+			  struct memory_ranges *extra_ranges);
+
 #endif
