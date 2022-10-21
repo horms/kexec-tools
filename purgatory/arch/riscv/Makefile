@@ -4,4 +4,4 @@
 
 riscv_PURGATORY_SRCS =
 
-dist += purgatory/arch/sh/Makefile $(riscv_PURGATORY_SRCS)
+dist += purgatory/arch/riscv/Makefile $(riscv_PURGATORY_SRCS)
