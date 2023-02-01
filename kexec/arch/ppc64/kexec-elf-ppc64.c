@@ -95,6 +95,8 @@ static int elf_ppc64_load_file(int argc, char **argv, struct kexec_info *info)
 {
 	int ret = 0;
 	char *cmdline, *dtb;
+	char *append_cmdline = NULL;
+	char *reuse_cmdline = NULL;
 	int opt, cmdline_len = 0;
 
 	/* See options.h -- add any more there, too. */
@@ -107,6 +109,7 @@ static int elf_ppc64_load_file(int argc, char **argv, struct kexec_info *info)
 		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
 		{ "dtb",                1, NULL, OPT_DEVICETREEBLOB },
 		{ "args-linux",		0, NULL, OPT_ARGS_IGNORE },
+		{ "reuse-cmdline",	0, NULL, OPT_REUSE_CMDLINE},
 		{ 0,                    0, NULL, 0 },
 	};
 
@@ -125,7 +128,7 @@ static int elf_ppc64_load_file(int argc, char **argv, struct kexec_info *info)
 			if (opt < OPT_ARCH_MAX)
 				break;
 		case OPT_APPEND:
-			cmdline = optarg;
+			append_cmdline = optarg;
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -135,6 +138,9 @@ static int elf_ppc64_load_file(int argc, char **argv, struct kexec_info *info)
 			break;
 		case OPT_ARGS_IGNORE:
 			break;
+		case OPT_REUSE_CMDLINE:
+			reuse_cmdline = get_command_line();
+			break;
 		}
 	}
 
@@ -143,6 +149,10 @@ static int elf_ppc64_load_file(int argc, char **argv, struct kexec_info *info)
 
 	if (reuse_initrd)
 		die("--reuseinitrd not supported with --kexec-file-syscall.\n");
+
+	cmdline = concat_cmdline(reuse_cmdline, append_cmdline);
+	if (!reuse_cmdline)
+		free(reuse_cmdline);
 
 	if (cmdline) {
 		cmdline_len = strlen(cmdline) + 1;
@@ -175,6 +185,8 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 {
 	struct mem_ehdr ehdr;
 	char *cmdline, *modified_cmdline = NULL;
+	char *reuse_cmdline = NULL;
+	char *append_cmdline = NULL;
 	const char *devicetreeblob;
 	uint64_t max_addr, hole_addr;
 	char *seg_buf = NULL;
@@ -204,6 +216,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },
 		{ "dtb",                1, NULL, OPT_DEVICETREEBLOB },
 		{ "args-linux",		0, NULL, OPT_ARGS_IGNORE },
+		{ "reuse-cmdline",	0, NULL, OPT_REUSE_CMDLINE},
 		{ 0,                    0, NULL, 0 },
 	};
 
@@ -229,7 +242,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			if (opt < OPT_ARCH_MAX)
 				break;
 		case OPT_APPEND:
-			cmdline = optarg;
+			append_cmdline = optarg;
 			break;
 		case OPT_RAMDISK:
 			ramdisk = optarg;
@@ -239,8 +252,15 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 			break;
 		case OPT_ARGS_IGNORE:
 			break;
+		case OPT_REUSE_CMDLINE:
+			reuse_cmdline = get_command_line();
+			break;
 		}
 	}
+
+	cmdline = concat_cmdline(reuse_cmdline, append_cmdline);
+	if (!reuse_cmdline)
+		free(reuse_cmdline);
 
 	if (!cmdline)
 		fprintf(stdout, "Warning: append= option is not passed. Using the first kernel root partition\n");
@@ -469,6 +489,7 @@ void elf_ppc64_usage(void)
 	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
 	fprintf(stderr, "                                 ");
 	fprintf(stderr, "Not applicable while using --kexec-file-syscall.\n");
+	fprintf(stderr, "     --reuse-cmdline Use kernel command line from running system.\n");
 	fprintf(stderr, "     --dtb=<filename> same as --devicetreeblob.\n");
 
 	fprintf(stderr, "elf support is still broken\n");

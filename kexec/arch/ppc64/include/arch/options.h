@@ -10,6 +10,7 @@
 #define OPT_RAMDISK		(OPT_ARCH_MAX+1)
 #define OPT_DEVICETREEBLOB	(OPT_ARCH_MAX+2)
 #define OPT_ARGS_IGNORE		(OPT_ARCH_MAX+3)
+#define OPT_REUSE_CMDLINE	(OPT_ARCH_MAX+4)
 
 /* Options relevant to the architecture (excluding loader-specific ones): */
 #define KEXEC_ARCH_OPTIONS \
@@ -41,7 +42,8 @@
 	{ "initrd",             1, NULL, OPT_RAMDISK },		\
 	{ "devicetreeblob",     1, NULL, OPT_DEVICETREEBLOB },	\
 	{ "dtb",                1, NULL, OPT_DEVICETREEBLOB },	\
-	{ "args-linux",         0, NULL, OPT_ARGS_IGNORE },
+	{ "args-linux",         0, NULL, OPT_ARGS_IGNORE },	\
+	{ "reuse-cmdline",      0, NULL, OPT_REUSE_CMDLINE },
 
 #define KEXEC_ALL_OPT_STR KEXEC_OPT_STR
 
