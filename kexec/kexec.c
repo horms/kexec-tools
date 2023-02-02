@@ -1049,11 +1049,11 @@ void usage(void)
 	       "                      to original kernel.\n"
 	       " -s, --kexec-file-syscall Use file based syscall for kexec operation\n"
 	       " -c, --kexec-syscall  Use the kexec_load syscall for for compatibility\n"
-	       "                      with systems that don't support -s (default)\n"
+	       "                      with systems that don't support -s\n"
 	       " -a, --kexec-syscall-auto  Use file based syscall for kexec and fall\n"
 	       "                      back to the compatibility syscall when file based\n"
 	       "                      syscall is not supported or the kernel did not\n"
-	       "                      understand the image\n"
+	       "                      understand the image (default)\n"
 	       " -d, --debug          Enable debugging to help spot a failure.\n"
 	       " -S, --status         Return 1 if the type (by default crash) is loaded,\n"
 	       "                      0 if not.\n"
@@ -1407,8 +1407,8 @@ int main(int argc, char *argv[])
 	int do_ifdown = 0, skip_ifdown = 0;
 	int do_unload = 0;
 	int do_reuse_initrd = 0;
-	int do_kexec_file_syscall = 0;
-	int do_kexec_fallback = 0;
+	int do_kexec_file_syscall = 1;
+	int do_kexec_fallback = 1;
 	int skip_checks = 0;
 	int do_status = 0;
 	void *entry = 0;
