@@ -21,6 +21,8 @@ static inline void setup_linux_bootloader_parameters(
 }
 void setup_linux_system_parameters(struct kexec_info *info,
 	struct x86_linux_param_header *real_mode);
+void setup_linux_dtb(struct kexec_info *info, struct x86_linux_param_header *real_mode,
+				   const char *dtb_buf, int dtb_len);
 int get_bootparam(void *buf, off_t offset, size_t size);
 
 

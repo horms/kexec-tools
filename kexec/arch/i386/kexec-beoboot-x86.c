@@ -125,7 +125,7 @@ int beoboot_load(int argc, char **argv, const char *buf, off_t UNUSED(len),
 		kernel,        bb_header.kernel_size,
 		command_line,  bb_header.cmdline_size,
 		initrd,        bb_header.initrd_size,
-		real_mode_entry);
+		0, 0, real_mode_entry);
 
 	return result;
 }

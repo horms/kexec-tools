@@ -79,6 +79,7 @@ int do_bzImage_load(struct kexec_info *info,
 	const char *kernel, off_t kernel_len,
 	const char *command_line, off_t command_line_len,
 	const char *initrd, off_t initrd_len,
+	const char *dtb, off_t dtb_len,
 	int real_mode_entry);
 
 int beoboot_probe(const char *buf, off_t len);

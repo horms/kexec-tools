@@ -954,3 +954,18 @@ void setup_linux_system_parameters(struct kexec_info *info,
 	/* Always try to fill acpi_rsdp_addr */
 	real_mode->acpi_rsdp_addr = get_acpi_rsdp();
 }
+
+void setup_linux_dtb(struct kexec_info *info, struct x86_linux_param_header *real_mode,
+				   const char *dtb_buf, int dtb_len)
+{
+	struct setup_data *sd;
+
+	sd = xmalloc(sizeof(struct setup_data) + dtb_len);
+	sd->next = 0;
+	sd->len = dtb_len;
+	sd->type = SETUP_DTB;
+	memcpy(sd->data, dtb_buf, dtb_len);
+
+
+	add_setup_data(info, real_mode, sd);
+}

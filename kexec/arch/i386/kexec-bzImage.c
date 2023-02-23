@@ -95,6 +95,7 @@ void bzImage_usage(void)
 		"    --reuse-cmdline       Use kernel command line from running system.\n"
 		"    --initrd=FILE         Use FILE as the kernel's initial ramdisk.\n"
 		"    --ramdisk=FILE        Use FILE as the kernel's initial ramdisk.\n"
+		"    --dtb=FILE            Use FILE as devicetree.\n"
 		);
        
 }
@@ -103,6 +104,7 @@ int do_bzImage_load(struct kexec_info *info,
 	const char *kernel, off_t kernel_len,
 	const char *command_line, off_t command_line_len,
 	const char *initrd, off_t initrd_len,
+	const char *dtb, off_t dtb_len,
 	int real_mode_entry)
 {
 	struct x86_linux_header setup_header;
@@ -373,6 +375,10 @@ int do_bzImage_load(struct kexec_info *info,
 		setup_linux_system_parameters(info, real_mode);
 	}
 
+	if (dtb) {
+		setup_linux_dtb(info, real_mode, dtb, dtb_len);
+	}
+
 	return 0;
 }
 	
@@ -381,13 +387,15 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 {
 	char *command_line = NULL;
 	char *tmp_cmdline = NULL;
-	const char *ramdisk, *append = NULL;
+	const char *ramdisk, *append = NULL, *dtb;
 	char *ramdisk_buf;
 	off_t ramdisk_length;
 	int command_line_len;
 	int real_mode_entry;
 	int opt;
 	int result;
+	char *dtb_buf;
+	off_t dtb_length;
 
 	/* See options.h -- add any more there, too. */
 	static const struct option options[] = {
@@ -398,6 +406,7 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 		{ "initrd",		1, 0, OPT_RAMDISK },
 		{ "ramdisk",		1, 0, OPT_RAMDISK },
 		{ "real-mode",		0, 0, OPT_REAL_MODE },
+		{ "dtb",		1, 0, OPT_DTB },
 		{ 0, 			0, 0, 0 },
 	};
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "d";
@@ -405,6 +414,8 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	real_mode_entry = 0;
 	ramdisk = 0;
 	ramdisk_length = 0;
+	dtb = 0;
+	dtb_length = 0;
 	while((opt = getopt_long(argc, argv, short_options, options, 0)) != -1) {
 		switch(opt) {
 		default:
@@ -424,6 +435,9 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 		case OPT_REAL_MODE:
 			real_mode_entry = 1;
 			break;
+		case OPT_DTB:
+			dtb = optarg;
+			break;
 		}
 	}
 	command_line = concat_cmdline(tmp_cmdline, append);
@@ -441,10 +455,15 @@ int bzImage_load(int argc, char **argv, const char *buf, off_t len,
 	if (ramdisk) {
 		ramdisk_buf = slurp_file(ramdisk, &ramdisk_length);
 	}
+	dtb_buf = 0;
+	if (dtb) {
+		dtb_buf = slurp_file(dtb, &dtb_length);
+	}
 	result = do_bzImage_load(info,
 		buf, len,
 		command_line, command_line_len,
 		ramdisk_buf, ramdisk_length,
+		dtb_buf, dtb_length,
 		real_mode_entry);
 
 	free(command_line);

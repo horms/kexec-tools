@@ -33,6 +33,7 @@
 #define OPT_PASS_MEMMAP_CMDLINE	(OPT_ARCH_MAX+11)
 #define OPT_NOEFI		(OPT_ARCH_MAX+12)
 #define OPT_REUSE_VIDEO_TYPE	(OPT_ARCH_MAX+13)
+#define OPT_DTB			(OPT_ARCH_MAX+14)
 
 /* Options relevant to the architecture (excluding loader-specific ones): */
 #define KEXEC_ARCH_OPTIONS \
@@ -76,7 +77,8 @@
 	{ "args-none",		0, NULL, OPT_ARGS_NONE },	\
 	{ "module",		1, 0, OPT_MOD },		\
 	{ "real-mode",		0, NULL, OPT_REAL_MODE },	\
-	{ "entry-32bit",	0, NULL, OPT_ENTRY_32BIT },
+	{ "entry-32bit",	0, NULL, OPT_ENTRY_32BIT },	\
+	{ "dtb",		1, NULL, OPT_DTB },
 
 #define KEXEC_ALL_OPT_STR KEXEC_ARCH_OPT_STR
 

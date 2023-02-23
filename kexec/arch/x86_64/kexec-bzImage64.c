@@ -386,7 +386,7 @@ int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 	if (entry_16bit || entry_32bit)
 		result = do_bzImage_load(info, buf, len, command_line,
 					command_line_len, ramdisk_buf,
-					ramdisk_length, entry_16bit);
+					ramdisk_length, 0, 0, entry_16bit);
 	else
 		result = do_bzImage64_load(info, buf, len, command_line,
 					command_line_len, ramdisk_buf,
