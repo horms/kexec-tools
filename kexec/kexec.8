@@ -335,6 +335,37 @@ with command-line arguments
 .I "arg1 arg2 ..."
 This parameter can be specified multiple times.
 .RE
+.PP
+.B elf-ppc64
+.RS
+.TP
+.BI \-\-reuse-cmdline
+Use the kernel command line from the running system.
+.TP
+.BI \-\-command\-line= string
+Set the kernel command line to
+.IR string.
+.TP
+.BI \-\-append= string
+Set the kernel command line to
+.IR string.
+.TP
+.BI \-\-ramdisk= file
+Use
+.IR file
+as the initial RAM disk.
+.TP
+.BI \-\-initrd= file
+Use
+.IR file
+as the initial RAM disk.
+.TP
+.BI \-\-devicetreeblob= file
+Specify device tree blob file. Not applicable while using --kexec-file-syscall.
+.TP
+.BI \-\-dtb= file
+Specify device tree blob file. Not applicable while using --kexec-file-syscall.
+.RE
 
 .SH ARCHITECTURE OPTIONS
 .TP
@@ -362,3 +393,7 @@ for debug output.
 Specify the
 .I baud rate
 of the serial port.
+.TP
+.BI \-\-dt\-no\-old\-root
+Do not reuse old kernel root=<device>
+param while creating flatten device tree.
