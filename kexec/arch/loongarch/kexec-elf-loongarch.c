@@ -90,6 +90,14 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 		}
 	}
 
+	/* load the kernel */
+	if (info->kexec_flags & KEXEC_ON_CRASH)
+		/*
+		 * offset addresses in elf header in order to load
+		 * vmlinux (elf_exec) into crash kernel's memory.
+		 */
+		fixup_elf_addrs(&ehdr);
+
 	info->entry = (void *)virt_to_phys(ehdr.e_entry);
 
 	result = elf_exec_load(&ehdr, info);

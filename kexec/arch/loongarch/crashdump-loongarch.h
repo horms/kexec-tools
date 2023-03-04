@@ -8,6 +8,7 @@ extern struct memory_range elfcorehdr_mem;
 
 int load_crashdump_segments(struct kexec_info *info);
 int is_crashkernel_mem_reserved(void);
+void fixup_elf_addrs(struct mem_ehdr *ehdr);
 int get_crash_kernel_load_range(uint64_t *start, uint64_t *end);
 
 #define PAGE_OFFSET	0x9000000000000000ULL

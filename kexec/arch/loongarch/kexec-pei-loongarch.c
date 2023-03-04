@@ -66,6 +66,13 @@ int pei_loongarch_load(int argc, char **argv, const char *buf,
 
 	kernel_entry = virt_to_phys(loongarch_header_kernel_entry(header));
 
+	if (info->kexec_flags & KEXEC_ON_CRASH)
+		/*
+		 * offset addresses in order to load vmlinux.efi into
+		 * crash kernel's memory.
+		 */
+		kernel_entry += crash_reserved_mem[usablemem_rgns.size - 1].start;
+
 	dbgprintf("%s: kernel_segment: %016lx\n", __func__, kernel_segment);
 	dbgprintf("%s: kernel_entry:   %016lx\n", __func__, kernel_entry);
 	dbgprintf("%s: image_size:     %016lx\n", __func__,

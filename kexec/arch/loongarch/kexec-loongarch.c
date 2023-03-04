@@ -253,7 +253,8 @@ unsigned long loongarch_locate_kernel_segment(struct kexec_info *info)
 		unsigned long hole_end;
 
 		hole = (crash_reserved_mem[usablemem_rgns.size - 1].start < mem_min ?
-				mem_min : crash_reserved_mem[usablemem_rgns.size - 1].start);
+				mem_min : crash_reserved_mem[usablemem_rgns.size - 1].start) +
+				loongarch_mem.text_offset;
 		hole = _ALIGN_UP(hole, MiB(1));
 		hole_end = hole + loongarch_mem.text_offset + loongarch_mem.image_size;
 
