@@ -59,7 +59,7 @@
 #endif
 #endif /*ifndef __NR_kexec_load*/
 
-#ifdef __arm__
+#if defined(__arm__) || defined(__loongarch__)
 #undef __NR_kexec_file_load
 #endif
 
