@@ -3,26 +3,35 @@
  */
 #include <stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <image.h>
 #include <kexec-uImage.h>
 #include "../../kexec.h"
 #include "kexec-arm64.h"
 
-int uImage_arm64_probe(const char *buf, off_t len, struct kexec_info *info)
+int uImage_arm64_probe(const char *kern_fname, off_t len, struct kexec_info *info)
 {
 	int ret;
+	char *kernel_buf;
 
-	ret = uImage_probe_kernel(buf, len, IH_ARCH_ARM64);
+	kernel_buf = slurp_file(kern_fname, &len);
+	ret = uImage_probe_kernel(kernel_buf, len, IH_ARCH_ARM64);
 
 	/*  0 - valid uImage.
 	 * -1 - uImage is corrupted.
 	 *  1 - image is not a uImage.
 	 */
-	if (!ret)
+	if (!ret) {
+		info->kernel_fd = open(kern_fname, O_RDONLY);
+		info->kernel_buf = kernel_buf;
 		return 0;
-	else
+	}
+	else {
+		free(kernel_buf);
 		return -1;
+	}
 }
 
 int uImage_arm64_load(int argc, char **argv, const char *buf, off_t len,

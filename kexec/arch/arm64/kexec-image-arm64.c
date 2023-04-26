@@ -14,11 +14,13 @@
 #include "kexec-syscall.h"
 #include "arch/options.h"
 
-int image_arm64_probe(const char *kernel_buf, off_t kernel_size,
+int image_arm64_probe(const char *kern_fname, off_t kernel_size,
 		      struct kexec_info *info)
 {
 	const struct arm64_image_header *h;
+	char *kernel_buf;
 
+	kernel_buf = slurp_file(kern_fname, &kernel_size);
 	if (kernel_size < sizeof(struct arm64_image_header)) {
 		dbgprintf("%s: No arm64 image header.\n", __func__);
 		return -1;
@@ -30,6 +32,8 @@ int image_arm64_probe(const char *kernel_buf, off_t kernel_size,
 		dbgprintf("%s: Bad arm64 image header.\n", __func__);
 		return -1;
 	}
+	info->kernel_fd = open(kern_fname, O_RDONLY);
+	info->kernel_buf = kernel_buf;
 
 	return 0;
 }

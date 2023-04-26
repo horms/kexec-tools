@@ -37,10 +37,8 @@
 
 /* Returns:
  * -1 : in case of error/invalid format (not a valid Image.gz format.
- * fd : File descriptor of the temp file containing the decompressed
- *      Image.
  */
-int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
+int zImage_arm64_probe(const char *kern_fname, off_t kernel_size,
 		       struct kexec_info *info)
 {
 	int ret = -1;
@@ -49,11 +47,6 @@ int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
 	char *fname = NULL;
 	char *kernel_uncompressed_buf = NULL;
 	const struct arm64_image_header *h;
-
-	if (!is_zlib_file(kernel_buf, &kernel_size)) {
-		dbgprintf("%s: Not an zImage file (Image.gz).\n", __func__);
-		return -1;
-	}
 
 	if (!(fname = strdup(FILENAME_IMAGE))) {
 		dbgprintf("%s: Can't duplicate strings\n", __func__);
@@ -69,7 +62,7 @@ int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
 
 	/* slurp in the input kernel */
 	dbgprintf("%s: ", __func__);
-	kernel_uncompressed_buf = slurp_decompress_file(kernel_buf,
+	kernel_uncompressed_buf = slurp_decompress_file(kern_fname,
 							&kernel_size);
 
 	/* check for correct header magic */
@@ -108,13 +101,12 @@ int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
 		ret = -1;
 		goto fail_bad_header;
 	}
-
+	info->kernel_fd = kernel_fd;
+	info->kernel_buf = kernel_uncompressed_buf;
 	unlink(fname);
-
-	free(kernel_uncompressed_buf);
 	free(fname);
 
-	return kernel_fd;
+	return 0;
 
 fail_bad_header:
 	free(kernel_uncompressed_buf);

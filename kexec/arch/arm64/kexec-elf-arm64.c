@@ -16,12 +16,14 @@
 #include "kexec-elf.h"
 #include "kexec-syscall.h"
 
-int elf_arm64_probe(const char *kernel_buf, off_t kernel_size,
+int elf_arm64_probe(const char *kern_fname, off_t kernel_size,
 		    struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
+	char *kernel_buf;
 	int result;
 
+	kernel_buf = slurp_file(kern_fname, &kernel_size);
 	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
 
 	if (result < 0) {
@@ -35,8 +37,11 @@ int elf_arm64_probe(const char *kernel_buf, off_t kernel_size,
 		goto on_exit;
 	}
 
+	info->kernel_fd = open(kern_fname, O_RDONLY);
+	info->kernel_buf = kernel_buf;
 	result = 0;
 on_exit:
+	free(kernel_buf);
 	free_elf_info(&ehdr);
 	return result;
 }

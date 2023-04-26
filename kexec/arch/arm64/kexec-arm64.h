@@ -29,14 +29,14 @@
 #define NOT_KV_ADDR	(0x0)
 #define NOT_PADDR	(ULONGLONG_MAX)
 
-int elf_arm64_probe(const char *kernel_buf, off_t kernel_size,
+int elf_arm64_probe(const char *kern_fname, off_t kernel_size,
 		    struct kexec_info *info);
 
 int elf_arm64_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info);
 void elf_arm64_usage(void);
 
-int image_arm64_probe(const char *kernel_buf, off_t kernel_size,
+int image_arm64_probe(const char *kern_fname, off_t kernel_size,
 		      struct kexec_info *info);
 
 int image_arm64_load(int argc, char **argv, const char *kernel_buf,
@@ -49,7 +49,7 @@ int uImage_arm64_load(int argc, char **argv, const char *buf, off_t len,
 		      struct kexec_info *info);
 void uImage_arm64_usage(void);
 
-int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
+int zImage_arm64_probe(const char *kern_fname, off_t kernel_size,
 		       struct kexec_info *info);
 
 int zImage_arm64_load(int argc, char **argv, const char *kernel_buf,

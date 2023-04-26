@@ -701,7 +701,7 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		   unsigned long kexec_flags, int skip_checks, void *entry)
 {
 	char *kernel;
-	char *kernel_buf;
+	char *kernel_buf, *probe_buf;
 	off_t kernel_size;
 	int i = 0;
 	int result;
@@ -720,11 +720,15 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 		return -1;
 	}
 	kernel = argv[fileind];
+#ifndef __aarch64__
 	/* slurp in the input kernel */
-	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
+	probe_buf = kernel_buf = slurp_decompress_file(kernel, &kernel_size);
 
 	dbgprintf("kernel: %p kernel_size: %#llx\n",
 		  kernel_buf, (unsigned long long)kernel_size);
+#else
+	probe_buf = kernel;
+#endif
 
 	if (get_memory_ranges(&info.memory_range, &info.memory_ranges,
 		info.kexec_flags) < 0 || info.memory_ranges == 0) {
@@ -742,14 +746,21 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 			return -1;
 		} else {
 			/* make sure our file is really of that type */
-			if (file_type[i].probe(kernel_buf, kernel_size, NULL) < 0)
+			if (file_type[i].probe(probe_buf, kernel_size, &info) < 0) {
 				guess_only = 1;
+			} else {
+				if (info.kernel_buf != NULL)
+					kernel_buf = info.kernel_buf;
+			}
 		}
 	}
 	if (!type || guess_only) {
 		for (i = 0; i < file_types; i++) {
-			if (file_type[i].probe(kernel_buf, kernel_size, NULL) == 0)
+			if (file_type[i].probe(probe_buf, kernel_size, &info) == 0) {
+				if (info.kernel_buf != NULL)
+					kernel_buf = info.kernel_buf;
 				break;
+			}
 		}
 		if (i == file_types) {
 			fprintf(stderr, "Cannot determine the file type "
@@ -1266,7 +1277,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	int kernel_fd, i;
 	struct kexec_info info;
 	int ret = 0;
-	char *kernel_buf;
+	char *kernel_buf, *probe_buf;
 	off_t kernel_size;
 
 	memset(&info, 0, sizeof(info));
@@ -1278,6 +1289,8 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 
 	info.file_mode = 1;
 	info.initrd_fd = -1;
+	info.kernel_fd = -1;
+	info.kernel_buf = NULL;
 
 	if (!is_kexec_file_load_implemented())
 		return EFALLBACK;
@@ -1290,6 +1303,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 
 	kernel = argv[fileind];
 
+#ifndef __aarch64__
 	kernel_fd = open(kernel, O_RDONLY);
 	if (kernel_fd == -1) {
 		fprintf(stderr, "Failed to open file %s:%s\n", kernel,
@@ -1298,23 +1312,23 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	}
 
 	/* slurp in the input kernel */
-	kernel_buf = slurp_decompress_file(kernel, &kernel_size);
+	probe_buf = kernel_buf = slurp_decompress_file(kernel, &kernel_size);
+#else
+	probe_buf = kernel;
+#endif
 
 	for (i = 0; i < file_types; i++) {
-#ifdef __aarch64__
-		/* handle Image.gz like cases */
-		if (is_zlib_file(kernel, &kernel_size)) {
-			if ((ret = file_type[i].probe(kernel, kernel_size, NULL)) >= 0) {
-				kernel_fd = ret;
-				break;
+		if (file_type[i].probe(probe_buf, kernel_size, &info) >= 0) {
+			if (info.kernel_fd != -1) {
+				close(kernel_fd);
+				kernel_fd = info.kernel_fd;
 			}
-		} else
-			if (file_type[i].probe(kernel_buf, kernel_size, NULL) >= 0)
-				break;
-#else
-		if (file_type[i].probe(kernel_buf, kernel_size, NULL) >= 0)
+			if (info.kernel_buf != NULL) {
+				free(kernel_buf);
+				kernel_buf = info.kernel_buf;
+			}
 			break;
-#endif
+		}
 	}
 
 	if (i == file_types) {
