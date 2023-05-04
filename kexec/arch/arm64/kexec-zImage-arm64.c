@@ -56,8 +56,7 @@ int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
 	}
 
 	if (!(fname = strdup(FILENAME_IMAGE))) {
-		dbgprintf("%s: Can't duplicate strings %s\n", __func__,
-				fname);
+		dbgprintf("%s: Can't duplicate strings\n", __func__);
 		return -1;
 	}
 
@@ -66,15 +65,6 @@ int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
 				fname);
 		ret = -1;
 		goto fail_mkstemp;
-	}
-
-	kernel_uncompressed_buf =
-		(char *) calloc(kernel_size, sizeof(off_t));
-	if (!kernel_uncompressed_buf) {
-		dbgprintf("%s: Can't calloc %ld bytes\n",
-				__func__, kernel_size);
-		ret= -ENOMEM;
-		goto fail_calloc;
 	}
 
 	/* slurp in the input kernel */
@@ -129,7 +119,6 @@ int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
 fail_bad_header:
 	free(kernel_uncompressed_buf);
 
-fail_calloc:
 	if (fd >= 0)
 		close(fd);
 
