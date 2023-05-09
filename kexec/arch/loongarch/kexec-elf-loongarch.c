@@ -23,7 +23,8 @@
 
 off_t initrd_base, initrd_size;
 
-int elf_loongarch_probe(const char *kernel_buf, off_t kernel_size)
+int elf_loongarch_probe(const char *kernel_buf, off_t kernel_size,
+			struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

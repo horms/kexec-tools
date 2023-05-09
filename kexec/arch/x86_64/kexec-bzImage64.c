@@ -43,7 +43,7 @@
 
 static const int probe_debug = 0;
 
-int bzImage64_probe(const char *buf, off_t len)
+int bzImage64_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	const struct x86_linux_header *header;
 

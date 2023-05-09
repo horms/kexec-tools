@@ -72,7 +72,8 @@ struct multiboot2_header_info {
 #define ALIGN_UP(addr, align) \
 	((addr + (typeof (addr)) align - 1) & ~((typeof (addr)) align - 1))
 
-int multiboot2_x86_probe(const char *buf, off_t buf_len)
+int multiboot2_x86_probe(const char *buf, off_t buf_len,
+			 struct kexec_info *info)
 /* Is it a good idea to try booting this file? */
 {
 	int i, len;
@@ -438,7 +439,7 @@ int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 	uint64_t rel_min, rel_max;
 
 	/* Probe for the MB header if it's not already found */
-	if (mbh == NULL && multiboot_x86_probe(buf, len) != 1)
+	if (mbh == NULL && multiboot_x86_probe(buf, len, NULL) != 1)
 	{
 		fprintf(stderr, "Cannot find a loadable multiboot2 header.\n");
 		return -1;

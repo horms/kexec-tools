@@ -12,7 +12,8 @@
 #define CORE_TYPE_ELF32 1
 #define CORE_TYPE_ELF64 2
 
-int elf_mips_probe(const char *buf, off_t len);
+int elf_mips_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int elf_mips_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_mips_usage(void);

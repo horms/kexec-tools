@@ -38,7 +38,7 @@
 #include "kexec-x86.h"
 #include <arch/options.h>
 
-int beoboot_probe(const char *buf, off_t len)
+int beoboot_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct beoboot_header bb_header;
 	const char *cmdline, *kernel;
@@ -57,7 +57,7 @@ int beoboot_probe(const char *buf, off_t len)
 	 */
 	cmdline = buf + sizeof(bb_header);
 	kernel  = cmdline + bb_header.cmdline_size;
-	result = bzImage_probe(kernel, bb_header.kernel_size);
+	result = bzImage_probe(kernel, bb_header.kernel_size, NULL);
 	
 	return result;
 }

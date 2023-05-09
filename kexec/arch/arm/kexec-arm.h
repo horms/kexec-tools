@@ -9,12 +9,14 @@
 
 extern off_t initrd_base, initrd_size;
 
-int zImage_arm_probe(const char *buf, off_t len);
+int zImage_arm_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		        struct kexec_info *info);
 void zImage_arm_usage(void);
 
-int uImage_arm_probe(const char *buf, off_t len);
+int uImage_arm_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int uImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		        struct kexec_info *info);
 extern int have_sysfs_fdt(void);

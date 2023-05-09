@@ -25,17 +25,20 @@ extern struct {
 
 #define SIZE_16M	(16*1024*1024UL)
 
-int elf_ppc_probe(const char *buf, off_t len);
+int elf_ppc_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int elf_ppc_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_ppc_usage(void);
 
-int uImage_ppc_probe(const char *buf, off_t len);
+int uImage_ppc_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int uImage_ppc_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void uImage_ppc_usage(void);
 
-int dol_ppc_probe(const char *buf, off_t len);
+int dol_ppc_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int dol_ppc_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void dol_ppc_usage(void);

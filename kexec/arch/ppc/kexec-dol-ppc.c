@@ -234,7 +234,7 @@ void fix_dol_segments_overlaps(dol_segment * seg, int max_segs)
 	}
 }
 
-int dol_ppc_probe(const char *buf, off_t dol_length)
+int dol_ppc_probe(const char *buf, off_t dol_length, struct kexec_info *info)
 {
 	dol_header header, *h;
 	int i, valid = 0;

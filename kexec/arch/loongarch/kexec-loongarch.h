@@ -18,12 +18,15 @@
 #define KiB(x) ((x) * 1024UL)
 #define MiB(x) (KiB(x) * 1024UL)
 
-int elf_loongarch_probe(const char *kernel_buf, off_t kernel_size);
+int elf_loongarch_probe(const char *kernel_buf, off_t kernel_size,
+			struct kexec_info *info);
+
 int elf_loongarch_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_loongarch_usage(void);
 
-int pei_loongarch_probe(const char *buf, off_t len);
+int pei_loongarch_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int pei_loongarch_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void pei_loongarch_usage(void);

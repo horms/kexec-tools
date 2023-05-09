@@ -40,7 +40,7 @@
 #include <arch/options.h>
 #include "kexec-cris.h"
 
-int elf_cris_probe(const char *buf, off_t len)
+int elf_cris_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

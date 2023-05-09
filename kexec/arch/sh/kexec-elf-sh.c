@@ -40,7 +40,7 @@
 #include "crashdump-sh.h"
 #include "kexec-sh.h"
 
-int elf_sh_probe(const char *buf, off_t len)
+int elf_sh_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

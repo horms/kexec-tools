@@ -24,7 +24,8 @@
 #include "kexec-loongarch.h"
 #include "arch/options.h"
 
-int pei_loongarch_probe(const char *kernel_buf, off_t kernel_size)
+int pei_loongarch_probe(const char *kernel_buf, off_t kernel_size,
+			struct kexec_info *info)
 {
 	const struct loongarch_image_header *h;
 

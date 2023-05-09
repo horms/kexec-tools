@@ -92,7 +92,7 @@ static int patch_initrd_info(char *cmdline, unsigned long base,
 	return 0;
 }
 
-int elf_mips_probe(const char *buf, off_t len)
+int elf_mips_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

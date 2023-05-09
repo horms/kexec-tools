@@ -68,7 +68,7 @@ struct imgheader
 
 static const int probe_debug = 0;
 
-int nbi_probe(const char *buf, off_t len)
+int nbi_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct imgheader hdr;
 	struct segheader seg;

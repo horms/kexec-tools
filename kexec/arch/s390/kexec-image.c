@@ -216,7 +216,7 @@ out:
 }
 
 int 
-image_s390_probe(const char *UNUSED(kernel_buf), off_t UNUSED(kernel_size))
+image_s390_probe(const char *UNUSED(kernel_buf), off_t UNUSED(kernel_size), struct kexec_info *UNUSED(info))
 {
 	/*
 	 * Can't reliably tell if an image is valid,

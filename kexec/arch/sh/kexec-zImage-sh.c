@@ -51,7 +51,7 @@ static unsigned long zImage_head32(const char *buf, int offs)
  *
  * Make sure that the file image has a reasonable chance of working.
  */
-int zImage_sh_probe(const char *buf, off_t UNUSED(len))
+int zImage_sh_probe(const char *buf, off_t UNUSED(len), struct kexec_info *UNUSED(info))
 {
 	if (memcmp(&buf[0x202], "HdrS", 4) != 0)
 	        return -1;

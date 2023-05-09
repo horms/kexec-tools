@@ -55,7 +55,8 @@ struct arch_options_t {
 	uint8_t		reuse_video_type;
 };
 
-int multiboot_x86_probe(const char *buf, off_t len);
+int multiboot_x86_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void multiboot_x86_usage(void);
@@ -63,15 +64,19 @@ void multiboot_x86_usage(void);
 int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info);
 void multiboot2_x86_usage(void);
-int multiboot2_x86_probe(const char *buf, off_t buf_len);
+int multiboot2_x86_probe(const char *buf, off_t buf_len,
+			 struct kexec_info *info);
 
-int elf_x86_probe(const char *buf, off_t len);
+
+int elf_x86_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int elf_x86_any_probe(const char *buf, off_t len, enum coretype arch);
 int elf_x86_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_x86_usage(void);
 
-int bzImage_probe(const char *buf, off_t len);
+int bzImage_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int bzImage_load(int argc, char **argv, const char *buf, off_t len, 
 	struct kexec_info *info);
 void bzImage_usage(void);
@@ -82,12 +87,14 @@ int do_bzImage_load(struct kexec_info *info,
 	const char *dtb, off_t dtb_len,
 	int real_mode_entry);
 
-int beoboot_probe(const char *buf, off_t len);
+int beoboot_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int beoboot_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void beoboot_usage(void);
 
-int nbi_probe(const char *buf, off_t len);
+int nbi_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int nbi_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void nbi_usage(void);

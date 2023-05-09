@@ -73,7 +73,7 @@ static struct boot_notes {
 };
 #endif
 
-int elf_ppc_probe(const char *buf, off_t len)
+int elf_ppc_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 
 	struct mem_ehdr ehdr;

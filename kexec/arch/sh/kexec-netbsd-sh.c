@@ -33,7 +33,7 @@ extern const unsigned char netbsd_booter[];
  *
  * Make sure that the file image has a reasonable chance of working.
  */
-int netbsd_sh_probe(const char *buf, off_t UNUSED(len))
+int netbsd_sh_probe(const char *buf, off_t UNUSED(len), struct kexec_info *UNUSED(info))
 {
 	Elf32_Ehdr *ehdr;
 

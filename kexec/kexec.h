@@ -191,7 +191,7 @@ unsigned long locate_hole(struct kexec_info *info,
 	unsigned long hole_min, unsigned long hole_max,
 	int hole_end);
 
-typedef int (probe_t)(const char *kernel_buf, off_t kernel_size);
+typedef int (probe_t)(const char *kernel, off_t kernel_size, struct kexec_info *info);
 typedef int (load_t )(int argc, char **argv,
 	const char *kernel_buf, off_t kernel_size, 
 	struct kexec_info *info);

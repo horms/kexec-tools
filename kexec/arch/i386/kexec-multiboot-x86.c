@@ -69,7 +69,8 @@ static off_t mbh_offset = 0;
 #define MIN(_x,_y) (((_x)<=(_y))?(_x):(_y))
 
 
-int multiboot_x86_probe(const char *buf, off_t buf_len)
+int multiboot_x86_probe(const char *buf, off_t buf_len,
+			struct kexec_info *info)
 /* Is it a good idea to try booting this file? */
 {
 	int i, len;
@@ -119,7 +120,7 @@ int multiboot_x86_probe(const char *buf, off_t buf_len)
 				return -1;
 			}
 		} else {
-			if ((i=elf_x86_probe(buf, buf_len)) < 0)
+			if ((i=elf_x86_probe(buf, buf_len, NULL)) < 0)
 				return i;
 		}
 		if (mbh->flags & MULTIBOOT_UNSUPPORTED) {
@@ -252,7 +253,7 @@ int multiboot_x86_load(int argc, char **argv, const char *buf, off_t len,
 	static const char short_options[] = KEXEC_ARCH_OPT_STR "";
 	
 	/* Probe for the MB header if it's not already found */
-	if (mbh == NULL && multiboot_x86_probe(buf, len) != 1) {
+	if (mbh == NULL && multiboot_x86_probe(buf, len, NULL) != 1) {
 		fprintf(stderr, "Cannot find a loadable multiboot header.\n");
 		return -1;
 	}

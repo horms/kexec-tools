@@ -19,7 +19,8 @@ extern int get_devtree_value(const char *fname, unsigned long long *pvalue);
 
 int setup_memory_ranges(unsigned long kexec_flags);
 
-int elf_ppc64_probe(const char *buf, off_t len);
+int elf_ppc64_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_ppc64_usage(void);

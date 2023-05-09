@@ -53,7 +53,7 @@ extern unsigned long saved_efi_memmap_size;
  *
  * Make sure that the file image has a reasonable chance of working.
  */
-int elf_ia64_probe(const char *buf, off_t len)
+int elf_ia64_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

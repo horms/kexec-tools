@@ -45,7 +45,7 @@ uint64_t initrd_base, initrd_size;
 unsigned char reuse_initrd = 0;
 const char *ramdisk;
 
-int elf_ppc64_probe(const char *buf, off_t len)
+int elf_ppc64_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

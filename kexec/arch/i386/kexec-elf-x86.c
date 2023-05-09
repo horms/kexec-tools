@@ -96,7 +96,7 @@ int elf_x86_any_probe(const char *buf, off_t len, enum coretype arch)
 	return result;
 }
 
-int elf_x86_probe(const char *buf, off_t len) {
+int elf_x86_probe(const char *buf, off_t len, struct kexec_info *info) {
 	return elf_x86_any_probe(buf, len, CORE_TYPE_ELF32);
 }
 

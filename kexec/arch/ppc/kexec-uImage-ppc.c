@@ -76,7 +76,7 @@ char *slurp_ramdisk_ppc(const char *filename, off_t *r_size)
 	return buf;
 }
 	
-int uImage_ppc_probe(const char *buf, off_t len)
+int uImage_ppc_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	return uImage_probe_kernel(buf, len, IH_ARCH_PPC);
 }

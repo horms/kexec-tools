@@ -742,13 +742,13 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 			return -1;
 		} else {
 			/* make sure our file is really of that type */
-			if (file_type[i].probe(kernel_buf, kernel_size) < 0)
+			if (file_type[i].probe(kernel_buf, kernel_size, NULL) < 0)
 				guess_only = 1;
 		}
 	}
 	if (!type || guess_only) {
 		for (i = 0; i < file_types; i++) {
-			if (file_type[i].probe(kernel_buf, kernel_size) == 0)
+			if (file_type[i].probe(kernel_buf, kernel_size, NULL) == 0)
 				break;
 		}
 		if (i == file_types) {
@@ -1304,15 +1304,15 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 #ifdef __aarch64__
 		/* handle Image.gz like cases */
 		if (is_zlib_file(kernel, &kernel_size)) {
-			if ((ret = file_type[i].probe(kernel, kernel_size)) >= 0) {
+			if ((ret = file_type[i].probe(kernel, kernel_size, NULL)) >= 0) {
 				kernel_fd = ret;
 				break;
 			}
 		} else
-			if (file_type[i].probe(kernel_buf, kernel_size) >= 0)
+			if (file_type[i].probe(kernel_buf, kernel_size, NULL) >= 0)
 				break;
 #else
-		if (file_type[i].probe(kernel_buf, kernel_size) >= 0)
+		if (file_type[i].probe(kernel_buf, kernel_size, NULL) >= 0)
 			break;
 #endif
 	}

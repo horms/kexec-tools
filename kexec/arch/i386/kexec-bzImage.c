@@ -42,7 +42,7 @@
 static const int probe_debug = 0;
 int bzImage_support_efi_boot = 0;
 
-int bzImage_probe(const char *buf, off_t len)
+int bzImage_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	const struct x86_linux_header *header;
 	if ((uintmax_t)len < (uintmax_t)(2 * 512)) {

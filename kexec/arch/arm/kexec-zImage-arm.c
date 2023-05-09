@@ -135,7 +135,7 @@ struct zimage_tag {
 	} u;
 };
 
-int zImage_arm_probe(const char *UNUSED(buf), off_t UNUSED(len))
+int zImage_arm_probe(const char *UNUSED(buf), off_t UNUSED(len), struct kexec_info *UNUSED(info))
 {
 	/* 
 	 * Only zImage loading is supported. Do not check if

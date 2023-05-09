@@ -41,7 +41,7 @@
 #include "../i386/crashdump-x86.h"
 #include <arch/options.h>
 
-int elf_x86_64_probe(const char *buf, off_t len)
+int elf_x86_64_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	return elf_x86_any_probe(buf, len, CORE_TYPE_ELF64);
 }

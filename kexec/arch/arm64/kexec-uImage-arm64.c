@@ -9,7 +9,7 @@
 #include "../../kexec.h"
 #include "kexec-arm64.h"
 
-int uImage_arm64_probe(const char *buf, off_t len)
+int uImage_arm64_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	int ret;
 

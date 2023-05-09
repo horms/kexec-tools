@@ -23,12 +23,14 @@ struct entry64_regs {
 	uint64_t rip;
 };
 
-int elf_x86_64_probe(const char *buf, off_t len);
+int elf_x86_64_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int elf_x86_64_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void elf_x86_64_usage(void);
 
-int bzImage64_probe(const char *buf, off_t len);
+int bzImage64_probe(const char *buf, off_t len, struct kexec_info *info);
+
 int bzImage64_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info);
 void bzImage64_usage(void);
@@ -36,6 +38,8 @@ void bzImage64_usage(void);
 int multiboot2_x86_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info);
 void multiboot2_x86_usage(void);
-int multiboot2_x86_probe(const char *buf, off_t buf_len);
+int multiboot2_x86_probe(const char *buf, off_t buf_len,
+			 struct kexec_info *info);
+
 
 #endif /* KEXEC_X86_64_H */

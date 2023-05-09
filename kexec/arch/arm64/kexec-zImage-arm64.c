@@ -40,7 +40,8 @@
  * fd : File descriptor of the temp file containing the decompressed
  *      Image.
  */
-int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size)
+int zImage_arm64_probe(const char *kernel_buf, off_t kernel_size,
+		       struct kexec_info *info)
 {
 	int ret = -1;
 	int fd = 0;

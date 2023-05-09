@@ -11,7 +11,7 @@
 #include "../../kexec.h"
 #include "kexec-sh.h"
 
-int uImage_sh_probe(const char *buf, off_t len)
+int uImage_sh_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	return uImage_probe_kernel(buf, len, IH_ARCH_SH);
 }

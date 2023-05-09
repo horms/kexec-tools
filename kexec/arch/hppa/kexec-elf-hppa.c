@@ -30,7 +30,7 @@
 
 extern unsigned long phys_offset;
 
-int elf_hppa_probe(const char *buf, off_t len)
+int elf_hppa_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;

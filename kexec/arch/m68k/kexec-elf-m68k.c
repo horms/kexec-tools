@@ -33,7 +33,7 @@
 #define PAGE_SIZE	4 KiB
 
 
-int elf_m68k_probe(const char *buf, off_t len)
+int elf_m68k_probe(const char *buf, off_t len, struct kexec_info *info)
 {
 	struct mem_ehdr ehdr;
 	int result;
