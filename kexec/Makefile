@@ -17,6 +17,7 @@ KEXEC_SRCS_base += kexec/kexec-elf-exec.c
 KEXEC_SRCS_base += kexec/kexec-elf-core.c
 KEXEC_SRCS_base += kexec/kexec-elf-rel.c
 KEXEC_SRCS_base += kexec/kexec-elf-boot.c
+KEXEC_SRCS_base += kexec/kexec-pe-zboot.c
 KEXEC_SRCS_base += kexec/kexec-iomem.c
 KEXEC_SRCS_base += kexec/firmware_memmap.c
 KEXEC_SRCS_base += kexec/crashdump.c
