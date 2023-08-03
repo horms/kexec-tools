@@ -164,6 +164,7 @@ struct kexec_info {
 	unsigned long file_mode :1;
 
 	/* Filled by kernel image processing code */
+	int kernel_fd;
 	int initrd_fd;
 	char *command_line;
 	int command_line_len;

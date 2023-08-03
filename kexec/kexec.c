@@ -1292,6 +1292,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	info.kexec_flags = flags;
 
 	info.file_mode = 1;
+	info.kernel_fd = -1;
 	info.initrd_fd = -1;
 
 	if (!is_kexec_file_load_implemented())
@@ -1336,6 +1337,13 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 		close(kernel_fd);
 		return ret;
 	}
+
+       /*
+	* image type specific load functioin detect the capsule kernel type
+	* and create another fd for file load. For example the zboot kernel.
+	*/
+	if (info.kernel_fd != -1)
+		kernel_fd = info.kernel_fd;
 
 	/*
 	 * If there is no initramfs, set KEXEC_FILE_NO_INITRAMFS flag so that
