@@ -114,6 +114,6 @@ exit:
 void image_arm64_usage(void)
 {
 	printf(
-"     An ARM64 binary image, uncompressed, big or little endian.\n"
+"     An ARM64 binary image, compressed or not, big or little endian.\n"
 "     Typically an Image file.\n\n");
 }
