@@ -4,7 +4,7 @@ dnl
 dnl 
 
 dnl ---Required
-AC_INIT(kexec-tools, 2.0.27)
+AC_INIT(kexec-tools, 2.0.27.git)
 AC_CONFIG_AUX_DIR(./config)
 AC_CONFIG_HEADERS([include/config.h])
 AC_LANG(C)
