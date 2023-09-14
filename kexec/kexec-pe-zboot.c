@@ -37,7 +37,8 @@
  *
  * crude_buf: the content, which is read from the kernel file without any processing
  */
-int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd)
+int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
+		off_t *kernel_size)
 {
 	int ret = -1;
 	int fd = 0;
@@ -110,6 +111,7 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd)
 		goto fail_bad_header;
 	}
 
+	*kernel_size = decompressed_size;
 	dbgprintf("%s: done\n", __func__);
 
 	ret = 0;

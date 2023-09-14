@@ -267,6 +267,7 @@ extern void die(const char *fmt, ...)
 	__attribute__ ((format (printf, 1, 2)));
 extern void *xmalloc(size_t size);
 extern void *xrealloc(void *ptr, size_t size);
+extern char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread);
 extern char *slurp_file(const char *filename, off_t *r_size);
 extern char *slurp_file_mmap(const char *filename, off_t *r_size);
 extern char *slurp_file_len(const char *filename, off_t size, off_t *nread);

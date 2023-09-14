@@ -34,6 +34,7 @@
 #include "arch/options.h"
 
 static int kernel_fd = -1;
+static off_t decompressed_size;
 
 /* Returns:
  * -1 : in case of error/invalid format (not a valid PE+compressed ZBOOT format.
@@ -72,7 +73,7 @@ int pez_arm64_probe(const char *kernel_buf, off_t kernel_size)
 		return -1;
 	}
 
-	ret = pez_prepare(buf, buf_sz, &kernel_fd);
+	ret = pez_prepare(buf, buf_sz, &kernel_fd, &decompressed_size);
 
 	if (!ret) {
 	    /* validate the arm64 specific header */
@@ -98,8 +99,27 @@ bad_header:
 int pez_arm64_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info)
 {
-	info->kernel_fd = kernel_fd;
-	return image_arm64_load(argc, argv, buf, len, info);
+	if (kernel_fd > 0 && decompressed_size > 0) {
+		char *kbuf;
+		off_t nread;
+		int fd;
+
+		info->kernel_fd = kernel_fd;
+		fd = dup(kernel_fd);
+		if (fd < 0) {
+			dbgprintf("%s: dup fd failed.\n", __func__);
+			return -1;
+		}
+		kbuf = slurp_fd(fd, NULL, decompressed_size, &nread);
+		if (!kbuf || nread != decompressed_size) {
+			dbgprintf("%s: slurp_fd failed.\n", __func__);
+			return -1;
+		}
+		return image_arm64_load(argc, argv, kbuf, decompressed_size, info);
+	}
+
+	dbgprintf("%s: wrong kernel file descriptor.\n", __func__);
+	return -1;
 }
 
 void pez_arm64_usage(void)

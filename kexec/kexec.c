@@ -489,7 +489,7 @@ static int add_backup_segments(struct kexec_info *info,
 	return 0;
 }
 
-static char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread)
+char *slurp_fd(int fd, const char *filename, off_t size, off_t *nread)
 {
 	char *buf;
 	off_t progress;

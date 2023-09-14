@@ -11,5 +11,6 @@ struct linux_pe_zboot_header {
 	uint32_t compress_type;
 };
 
-int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd);
+int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
+		off_t *kernel_size);
 #endif
