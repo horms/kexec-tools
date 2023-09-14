@@ -27,6 +27,10 @@ int pei_loongarch_probe(const char *buf, off_t len);
 int pei_loongarch_load(int argc, char **argv, const char *buf, off_t len,
 	struct kexec_info *info);
 void pei_loongarch_usage(void);
+int pez_loongarch_probe(const char *kernel_buf, off_t kernel_size);
+int pez_loongarch_load(int argc, char **argv, const char *buf, off_t len,
+		       struct kexec_info *info);
+void pez_loongarch_usage(void);
 
 int loongarch_process_image_header(const struct loongarch_image_header *h);
 

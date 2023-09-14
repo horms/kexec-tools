@@ -165,6 +165,7 @@ int get_memory_ranges(struct memory_range **range, int *ranges,
 
 struct file_type file_type[] = {
 	{"elf-loongarch", elf_loongarch_probe, elf_loongarch_load, elf_loongarch_usage},
+	{"pez-loongarch", pez_loongarch_probe, pez_loongarch_load, pez_loongarch_usage},
 	{"pei-loongarch", pei_loongarch_probe, pei_loongarch_load, pei_loongarch_usage},
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
