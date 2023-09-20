@@ -95,8 +95,15 @@ then you would use the following command to load the kernel:
 .RB "\-\-append=" "root=/dev/hda1" "\ \-\-initrd=" /boot/initrd
 .RE
 .PP
-After this kernel is loaded, it can be booted to at any time using the
-command:
+After this kernel is loaded, assuming the user-space supports kexec-based
+rebooting, it can be booted to, with a clean shutdown, using the command:
+
+.RS
+.BR reboot
+.RE
+.PP
+Alternatively, it can also be booted to, without calling shutdown(8), with
+the command:
 
 .RS
 .BR kexec \ \-e
