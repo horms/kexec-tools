@@ -208,6 +208,9 @@ if test "$ac_cv_lib_xenctrl_xc_kexec_load" = yes ; then
 		AC_MSG_NOTICE([The kexec_status call is not available]))
 fi
 
+dnl Check if libc has the memfd_create() syscall wrapper
+AC_CHECK_FUNCS([memfd_create])
+
 dnl ---Sanity checks
 if test "$CC"      = "no"; then AC_MSG_ERROR([cc not found]); fi
 if test "$CPP"     = "no"; then AC_MSG_ERROR([cpp not found]); fi

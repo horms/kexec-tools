@@ -31,6 +31,10 @@
 #include <sys/mount.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#ifndef HAVE_MEMFD_CREATE
+#include <linux/memfd.h>
+#include <sys/syscall.h>
+#endif
 #include <sys/reboot.h>
 #include <sys/mman.h>
 #include <unistd.h>
@@ -639,6 +643,13 @@ char *slurp_decompress_file(const char *filename, off_t *r_size)
 	}
 	return kernel_buf;
 }
+
+#ifndef HAVE_MEMFD_CREATE
+static int memfd_create(const char *name, unsigned int flags)
+{
+	return syscall(SYS_memfd_create, name, flags);
+}
+#endif
 
 static int copybuf_memfd(const char *kernel_buf, size_t size)
 {
