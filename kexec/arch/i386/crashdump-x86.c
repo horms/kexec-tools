@@ -957,6 +957,14 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		memsz = bufsz;
 	}
 
+	/* For hotplug support, override the minimum necessary size just
+	 * computed with the value from /sys/kernel/crash_elfcorehdr_size.
+	 * Properly align the size as well.
+	 */
+	if (do_hotplug) {
+		memsz = _ALIGN(elfcorehdrsz, align);
+	}
+
 	/* Record the location of the elfcorehdr for hotplug handling */
 	info->elfcorehdr =
 	elfcorehdr = add_buffer(info, tmp, bufsz, memsz, align, min_base,
