@@ -170,6 +170,7 @@ struct kexec_info {
 	int command_line_len;
 
 	int skip_checks;
+	unsigned long elfcorehdr;
 };
 
 struct arch_map_entry {

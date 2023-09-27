@@ -689,6 +689,14 @@ static void update_purgatory(struct kexec_info *info)
 		if (info->segment[i].mem == (void *)info->rhdr.rel_addr) {
 			continue;
 		}
+
+		/* Don't include elfcorehdr in the checksum, if hotplug
+		 * support enabled.
+		 */
+		if (do_hotplug && (info->segment[i].mem == (void *)info->elfcorehdr)) {
+			continue;
+		}
+
 		sha256_update(&ctx, info->segment[i].buf,
 			      info->segment[i].bufsz);
 		nullsz = info->segment[i].memsz - info->segment[i].bufsz;
