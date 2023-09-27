@@ -1631,6 +1631,24 @@ int main(int argc, char *argv[])
 		die("--load-live-update can only be used with xen\n");
 	}
 
+	/* NOTE: Xen KEXEC_LIVE_UPDATE and KEXEC_UPDATE_ELFCOREHDR collide */
+	if (do_hotplug) {
+		const char *ces = "/sys/kernel/crash_elfcorehdr_size";
+		char *buf, *endptr = NULL;
+		off_t nread = 0;
+		buf = slurp_file_len(ces, sizeof(buf)-1, &nread);
+		if (buf) {
+			if (buf[nread-1] == '\n')
+				buf[nread-1] = '\0';
+			elfcorehdrsz = strtoul(buf, &endptr, 0);
+		}
+		if (!elfcorehdrsz || (endptr && *endptr != '\0'))
+			die("Path %s does not exist, the kernel needs CONFIG_CRASH_HOTPLUG\n", ces);
+		dbgprintf("ELFCOREHDR_SIZE %lu\n", elfcorehdrsz);
+		/* Indicate to the kernel it is ok to modify the elfcorehdr */
+		kexec_flags |= KEXEC_UPDATE_ELFCOREHDR;
+	}
+
 	fileind = optind;
 	/* Reset getopt for the next pass; called in other source modules */
 	opterr = 1;
