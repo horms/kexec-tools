@@ -956,6 +956,9 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	} else {
 		memsz = bufsz;
 	}
+
+	/* Record the location of the elfcorehdr for hotplug handling */
+	info->elfcorehdr =
 	elfcorehdr = add_buffer(info, tmp, bufsz, memsz, align, min_base,
 							max_addr, -1);
 	dbgprintf("Created elf header segment at 0x%lx\n", elfcorehdr);
