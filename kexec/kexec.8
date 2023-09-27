@@ -139,6 +139,12 @@ in one call.
 Open a help file for
 .BR kexec .
 .TP
+.B \-\-hotplug
+Setup for kernel modification of the elfcorehdr. This option performs
+the steps needed to support kernel updates to the elfcorehdr in the
+presence of hot un/plug and/or on/offline events. This option only
+useful for KEXEC_LOAD syscall.
+.TP
 .B \-i\ (\-\-no-checks)
 Fast reboot, no memory integrity checks.
 .TP

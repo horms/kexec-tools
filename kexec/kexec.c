@@ -58,6 +58,8 @@
 
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
+unsigned long elfcorehdrsz = 0;
+int do_hotplug = 0;
 static unsigned long kexec_flags = 0;
 /* Flags for kexec file (fd) based syscall */
 static unsigned long kexec_file_flags = 0;
@@ -1069,6 +1071,7 @@ void usage(void)
 	       "                      back to the compatibility syscall when file based\n"
 	       "                      syscall is not supported or the kernel did not\n"
 	       "                      understand the image (default)\n"
+	       " --hotplug            Setup for kernel modification of elfcorehdr.\n"
 	       " -d, --debug          Enable debugging to help spot a failure.\n"
 	       " -S, --status         Return 1 if the type (by default crash) is loaded,\n"
 	       "                      0 if not.\n"
@@ -1579,6 +1582,9 @@ int main(int argc, char *argv[])
 		case OPT_PRINT_CKR_SIZE:
 			print_crashkernel_region_size();
 			return 0;
+		case OPT_HOTPLUG:
+			do_hotplug = 1;
+			break;
 		default:
 			break;
 		}

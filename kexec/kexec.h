@@ -232,7 +232,8 @@ extern int file_types;
 #define OPT_PRINT_CKR_SIZE	262
 #define OPT_LOAD_LIVE_UPDATE	263
 #define OPT_EXEC_LIVE_UPDATE	264
-#define OPT_MAX			265
+#define OPT_HOTPLUG		        265
+#define OPT_MAX		266
 #define KEXEC_OPTIONS \
 	{ "help",		0, 0, OPT_HELP }, \
 	{ "version",		0, 0, OPT_VERSION }, \
@@ -259,6 +260,7 @@ extern int file_types;
 	{ "debug",		0, 0, OPT_DEBUG }, \
 	{ "status",		0, 0, OPT_STATUS }, \
 	{ "print-ckr-size",     0, 0, OPT_PRINT_CKR_SIZE }, \
+	{ "hotplug",		    0, 0, OPT_HOTPLUG }, \
 
 #define KEXEC_OPT_STR "h?vdfixyluet:pscaS"
 
@@ -296,6 +298,9 @@ extern int ifdown(void);
 
 extern char purgatory[];
 extern size_t purgatory_size;
+
+extern unsigned long elfcorehdrsz;
+extern int do_hotplug;
 
 #define BOOTLOADER "kexec"
 #define BOOTLOADER_VERSION PACKAGE_VERSION
