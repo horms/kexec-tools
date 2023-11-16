@@ -482,15 +482,15 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 
 void elf_ppc64_usage(void)
 {
-	fprintf(stderr, "     --command-line=<Command line> command line to append.\n");
-	fprintf(stderr, "     --append=<Command line> same as --command-line.\n");
-	fprintf(stderr, "     --ramdisk=<filename> Initial RAM disk.\n");
-	fprintf(stderr, "     --initrd=<filename> same as --ramdisk.\n");
-	fprintf(stderr, "     --devicetreeblob=<filename> Specify device tree blob file.\n");
-	fprintf(stderr, "                                 ");
-	fprintf(stderr, "Not applicable while using --kexec-file-syscall.\n");
-	fprintf(stderr, "     --reuse-cmdline Use kernel command line from running system.\n");
-	fprintf(stderr, "     --dtb=<filename> same as --devicetreeblob.\n");
+	printf("     --command-line=<Command line> command line to append.\n");
+	printf("     --append=<Command line> same as --command-line.\n");
+	printf("     --ramdisk=<filename> Initial RAM disk.\n");
+	printf("     --initrd=<filename> same as --ramdisk.\n");
+	printf("     --devicetreeblob=<filename> Specify device tree blob file.\n");
+	printf("                                 ");
+	printf("Not applicable while using --kexec-file-syscall.\n");
+	printf("     --reuse-cmdline Use kernel command line from running system.\n");
+	printf("     --dtb=<filename> same as --devicetreeblob.\n");
 
-	fprintf(stderr, "elf support is still broken\n");
+	printf("elf support is still broken\n");
 }

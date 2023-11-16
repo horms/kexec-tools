@@ -180,5 +180,5 @@ int zImage_ppc64_load(FILE *file, int UNUSED(argc), char **UNUSED(argv),
 
 void zImage_ppc64_usage(void)
 {
-	fprintf(stderr, "zImage support is still broken\n");
+	printf("zImage support is still broken\n");
 }

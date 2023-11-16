@@ -910,9 +910,9 @@ int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
 void arch_usage(void)
 {
-	fprintf(stderr, "     --elf64-core-headers Prepare core headers in ELF64 format\n");
-	fprintf(stderr, "     --dt-no-old-root Do not reuse old kernel root= param.\n" \
-	                "                      while creating flatten device tree.\n");
+	printf("     --elf64-core-headers Prepare core headers in ELF64 format\n");
+	printf("     --dt-no-old-root Do not reuse old kernel root= param.\n"
+	       "                      while creating flatten device tree.\n");
 }
 
 struct arch_options_t arch_options = {
