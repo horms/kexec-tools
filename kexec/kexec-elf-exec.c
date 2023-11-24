@@ -39,12 +39,13 @@ static int get_elf_exec_load_base(struct mem_ehdr *ehdr, struct kexec_info *info
 	unsigned long first, last;
 	size_t i;
 
-	/* Note on arm64:
+	/* Note on arm64 and loongarch64:
 	 * arm64's vmlinux has virtual address in physical address
 	 * field of PT_LOAD segments. So the following validity check
 	 * and relocation makes no sense on arm64.
+	 * This is also applies to LoongArch.
 	 */
-	if (ehdr->e_machine == EM_AARCH64)
+	if (ehdr->e_machine == EM_AARCH64 || ehdr->e_machine == EM_LOONGARCH)
 		return 0;
 
 	first = ULONG_MAX;
