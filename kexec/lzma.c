@@ -73,7 +73,7 @@ static LZFILE *lzopen_internal(const char *path, const char *mode, int fd)
 		ret = lzma_alone_encoder(&lzfile->strm, &opt_lzma);
 	} else {
 		ret = lzma_auto_decoder(&lzfile->strm,
-					UINT64_C(64) * 1024 * 1024, 0);
+					UINT64_C(128) * 1024 * 1024, 0);
 	}
 	if (ret != LZMA_OK) {
 		fclose(fp);
