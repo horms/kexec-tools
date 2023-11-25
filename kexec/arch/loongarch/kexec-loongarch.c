@@ -265,9 +265,13 @@ unsigned long loongarch_locate_kernel_segment(struct kexec_info *info)
 			hole = ULONG_MAX;
 		}
 	} else {
-		hole = locate_hole(info,
-			loongarch_mem.text_offset + loongarch_mem.image_size,
-			MiB(1), 0, ULONG_MAX, 1);
+		unsigned long hole_min;
+		unsigned long hole_max;
+
+		hole_min = loongarch_mem.text_offset;
+		hole_max = hole_min + loongarch_mem.image_size;
+		hole = locate_hole(info, loongarch_mem.image_size,
+			MiB(1), hole_min, hole_max, 1);
 
 		if (hole == ULONG_MAX)
 			dbgprintf("%s: locate_hole failed\n", __func__);
