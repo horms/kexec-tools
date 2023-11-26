@@ -1137,7 +1137,13 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
 	m.desc_ring_count = 1 << struct_val_u32(m.desc_ring,
 					prb_desc_ring_count_bits_offset);
 	kaddr = get_ulong(m.desc_ring + prb_desc_ring_descs_offset);
-	m.descs = calloc(1, prb_desc_sz * m.desc_ring_count);
+	size_t size;
+	if (__builtin_mul_overflow(m.desc_ring_count, prb_desc_sz, &size)) {
+		fprintf(stderr, "Failed to calculate size of descs: %s\n",
+			strerror(errno));
+		exit(66);
+	}
+	m.descs = calloc(1, size);
 	if (!m.descs) {
 		fprintf(stderr, "Failed to malloc %lu bytes for descs: %s\n",
 			prb_desc_sz * m.desc_ring_count, strerror(errno));
@@ -1154,7 +1160,12 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
 
 	/* setup info ring */
 	kaddr = get_ulong(m.prb + prb_desc_ring_infos_offset);
-	m.infos = calloc(1, printk_info_sz * m.desc_ring_count);
+	if (__builtin_mul_overflow(m.desc_ring_count, printk_info_sz, &size)) {
+		fprintf(stderr, "Failed to calculate size of descs: %s\n",
+			strerror(errno));
+		exit(66);
+	}
+	m.infos = calloc(1, size);
 	if (!m.infos) {
 		fprintf(stderr, "Failed to malloc %lu bytes for infos: %s\n",
 			printk_info_sz * m.desc_ring_count, strerror(errno));
