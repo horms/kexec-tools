@@ -1685,6 +1685,10 @@ int main(int argc, char *argv[])
 			}
 		}
 	}
+	if (xen_present()) {
+		do_kexec_file_syscall = 0;
+		do_kexec_fallback = 0;
+	}
 	if (do_kexec_file_syscall) {
 		if (do_load_jump_back_helper && !do_kexec_fallback)
 			die("--load-jump-back-helper not supported with kexec_file_load\n");
