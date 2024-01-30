@@ -21,10 +21,10 @@
 #undef i386
 
 	.text
-	.arch	i386
 	.globl purgatory_start
 purgatory_start:
 	.code32
+	.arch	i386
 
 	/* Load a gdt so I know what the segment registers are */
 	lgdt	%cs:gdt

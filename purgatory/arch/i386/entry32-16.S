@@ -20,10 +20,10 @@
 #undef i386	
 	.text
 	.globl entry16, entry16_regs
-	.arch i386
 	.balign 16
 entry16:
 	.code32
+	.arch i386
 	/* Compute where I am running at (assumes esp valid) */
 	call	1f
 1:	popl	%ebx

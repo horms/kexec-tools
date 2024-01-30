@@ -20,10 +20,10 @@
 #undef i386
 
 	.text
-	.arch	i386
 	.globl entry32, entry32_regs
 entry32:
 	.code32
+	.arch	i386
 
 	/* Setup a gdt that should that is generally usefully */
 	lgdt	%cs:gdt

@@ -25,10 +25,10 @@
 	.globl entry16_debug_pre32
 	.globl entry16_debug_first32
 	.globl entry16_debug_old_first32
-	.arch i386
 	.balign 16
 entry16_debug:
 	.code32
+	.arch i386
 	/* Compute where I am running at (assumes esp valid) */
 	call	1f
 1:	popl	%ebx
