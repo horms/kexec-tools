@@ -357,7 +357,7 @@ void scan_vmcoreinfo(char *start, size_t size)
 			if (len >= sizeof(temp_buf))
 				len = sizeof(temp_buf) - 1;
 			strncpy(temp_buf, pos, len);
-			temp_buf[len + 1] = '\0';
+			temp_buf[len] = '\0';
 
 			pos = temp_buf;
 			len = len + 1;
