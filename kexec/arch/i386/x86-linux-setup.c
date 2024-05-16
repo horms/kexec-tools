@@ -14,6 +14,7 @@
  *
  */
 #define _GNU_SOURCE
+#include <libgen.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
@@ -329,12 +330,14 @@ static int add_edd_entry(struct x86_linux_param_header *real_mode,
 	memset(edd_info, 0, sizeof(struct edd_info));
 
 	/* extract the device number */
-	if (sscanf(basename(sysfs_name), "int13_dev%hhx", &devnum) != 1) {
+	char* sysfs_name_copy = strdup(sysfs_name);
+	if (sscanf(basename(sysfs_name_copy), "int13_dev%hhx", &devnum) != 1) {
 		fprintf(stderr, "Invalid format of int13_dev dir "
-				"entry: %s\n", basename(sysfs_name));
+				"entry: %s\n", basename(sysfs_name_copy));
+		free(sysfs_name_copy);
 		return -1;
 	}
-
+	free(sysfs_name_copy);
 	/* if there's a MBR signature, then add it */
 	if (file_scanf(sysfs_name, "mbr_signature", "0x%x", &mbr_sig) == 1) {
 		real_mode->edd_mbr_sig_buffer[*current_mbr] = mbr_sig;
