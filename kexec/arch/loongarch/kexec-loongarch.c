@@ -289,6 +289,7 @@ int loongarch_load_other_segments(struct kexec_info *info, unsigned long hole_mi
 	unsigned long initrd_min, hole_max;
 	char *initrd_buf = NULL;
 	unsigned long pagesize = getpagesize();
+	int i;
 
 	if (arch_options.command_line) {
 		if (strlen(arch_options.command_line) >
@@ -326,9 +327,11 @@ int loongarch_load_other_segments(struct kexec_info *info, unsigned long hole_mi
 		cmdline_add_elfcorehdr(cmdline, elfcorehdr_mem.start,
 				elfcorehdr_mem.end - elfcorehdr_mem.start + 1);
 
-		cmdline_add_mem(cmdline, crash_reserved_mem[usablemem_rgns.size - 1].start,
-			crash_reserved_mem[usablemem_rgns.size - 1].end -
-			crash_reserved_mem[usablemem_rgns.size - 1].start + 1);
+		for(i = 0;i < usablemem_rgns.size; i++) {
+			cmdline_add_mem(cmdline, crash_reserved_mem[i].start,
+			crash_reserved_mem[i].end -
+			crash_reserved_mem[i].start + 1);
+		}
 	}
 
 	cmdline[sizeof(cmdline) - 1] = 0;
