@@ -54,11 +54,32 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	unsigned long kernel_segment;
 	struct mem_ehdr ehdr;
 	int result;
+	int i;
 
 	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
 
 	if (result < 0) {
 		dbgprintf("%s: build_elf_exec_info failed\n", __func__);
+		goto exit;
+	}
+
+	/* Find and process the loongarch image header. */
+	for (i = 0; i < ehdr.e_phnum; i++) {
+		struct mem_phdr *phdr = &ehdr.e_phdr[i];
+
+		if (phdr->p_type != PT_LOAD)
+			continue;
+
+		header = (const struct loongarch_image_header *)(
+			kernel_buf + phdr->p_offset);
+
+		if (!loongarch_process_image_header(header))
+			break;
+	}
+
+	if (i == ehdr.e_phnum) {
+		dbgprintf("%s: Valid loongarch image header not found\n", __func__);
+		result = EFAILED;
 		goto exit;
 	}
 
@@ -72,13 +93,12 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 
 	dbgprintf("%s: kernel_segment: %016lx\n", __func__, kernel_segment);
 	dbgprintf("%s: image_size:     %016lx\n", __func__,
-		kernel_size);
+		 loongarch_mem.image_size);
 	dbgprintf("%s: text_offset:    %016lx\n", __func__,
 		loongarch_mem.text_offset);
 	dbgprintf("%s: phys_offset:    %016lx\n", __func__,
 		loongarch_mem.phys_offset);
-	dbgprintf("%s: PE format:      %s\n", __func__,
-		(loongarch_header_check_pe_sig(header) ? "yes" : "no"));
+	dbgprintf("%s: PE format:      no\n", __func__);
 
 	/* create and initialize elf core header segment */
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
@@ -108,7 +128,7 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	}
 
 	/* load additional data */
-	result = loongarch_load_other_segments(info, kernel_segment + kernel_size);
+	result = loongarch_load_other_segments(info, kernel_segment + loongarch_mem.image_size);
 
 exit:
 	free_elf_info(&ehdr);
