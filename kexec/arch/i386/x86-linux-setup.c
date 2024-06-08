@@ -318,6 +318,7 @@ static int add_edd_entry(struct x86_linux_param_header *real_mode,
 	uint8_t devnum, version;
 	uint32_t mbr_sig;
 	struct edd_info *edd_info;
+	char *basename = strrchr(sysfs_name,'/') + 1;
 
 	if (!current_mbr || !current_edd) {
 		fprintf(stderr, "%s: current_edd and current_edd "
@@ -329,9 +330,9 @@ static int add_edd_entry(struct x86_linux_param_header *real_mode,
 	memset(edd_info, 0, sizeof(struct edd_info));
 
 	/* extract the device number */
-	if (sscanf(basename(sysfs_name), "int13_dev%hhx", &devnum) != 1) {
+	if (sscanf(basename, "int13_dev%hhx", &devnum) != 1) {
 		fprintf(stderr, "Invalid format of int13_dev dir "
-				"entry: %s\n", basename(sysfs_name));
+				"entry: %s\n", basename);
 		return -1;
 	}
 
