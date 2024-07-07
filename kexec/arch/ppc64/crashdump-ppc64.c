@@ -476,7 +476,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 				uint64_t max_addr, unsigned long min_base)
 {
 	void *tmp;
-	unsigned long sz;
+	unsigned long sz, memsz;
 	uint64_t elfcorehdr;
 	int nr_ranges, align = 1024, i;
 	unsigned long long end;
@@ -531,8 +531,18 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 		}
 	}
 
-	elfcorehdr = add_buffer(info, tmp, sz, sz, align, min_base,
-				max_addr, 1);
+	memsz = sz;
+	/* To support --hotplug, replace the calculated memsz with the value
+	 * from /sys/kernel/crash_elfcorehdr_size and align it correctly.
+	 */
+	if (do_hotplug) {
+		if (elfcorehdrsz > sz)
+			memsz = _ALIGN(elfcorehdrsz, align);
+	}
+
+	/* Record the location of the elfcorehdr for hotplug handling */
+	info->elfcorehdr = elfcorehdr = add_buffer(info, tmp, sz, memsz, align,
+						   min_base, max_addr, 1);
 	reserve(elfcorehdr, sz);
 	/* modify and store the cmdline in a global array. This is later
 	 * read by flatten_device_tree and modified if required

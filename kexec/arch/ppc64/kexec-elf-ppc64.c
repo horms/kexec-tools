@@ -345,7 +345,7 @@ int elf_ppc64_load(int argc, char **argv, const char *buf, off_t len,
 		create_flatten_tree(&seg_buf, &seg_size, cmdline);
 	}
 
-	result = fixup_dt(&seg_buf, &seg_size);
+	result = fixup_dt(&seg_buf, &seg_size, info->kexec_flags);
 	if (result < 0)
 		return result;
 

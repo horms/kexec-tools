@@ -3,6 +3,6 @@
 
 #include <sys/types.h>
 
-int fixup_dt(char **fdt, off_t *size);
+int fixup_dt(char **fdt, off_t *size, unsigned long kexec_flags);
 
 #endif
