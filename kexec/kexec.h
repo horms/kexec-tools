@@ -307,6 +307,8 @@ extern int do_hotplug;
 #define BOOTLOADER_VERSION PACKAGE_VERSION
 
 void arch_usage(void);
+/* Return non-zero if segment needs to be excluded from SHA calculation, else 0. */
+int arch_do_exclude_segment(struct kexec_info *info, struct kexec_segment *segment);
 int arch_process_options(int argc, char **argv);
 int arch_compat_trampoline(struct kexec_info *info);
 void arch_update_purgatory(struct kexec_info *info);

@@ -148,3 +148,8 @@ int have_sysfs_fdt(void)
 {
 	return !access(SYSFS_FDT, F_OK);
 }
+
+int arch_do_exclude_segment(struct kexec_info *UNUSED(info), struct kexec_segment *UNUSED(segment))
+{
+	return 0;
+}

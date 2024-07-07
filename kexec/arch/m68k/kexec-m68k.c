@@ -108,3 +108,8 @@ void add_segment(struct kexec_info *info, const void *buf, size_t bufsz,
 {
 	add_segment_phys_virt(info, buf, bufsz, base, memsz, 1);
 }
+
+int arch_do_exclude_segment(struct kexec_info *UNUSED(info), struct kexec_segment *UNUSED(segment))
+{
+	return 0;
+}

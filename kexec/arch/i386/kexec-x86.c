@@ -208,3 +208,11 @@ void arch_update_purgatory(struct kexec_info *info)
 	elf_rel_set_symbol(&info->rhdr, "panic_kernel",
 		&panic_kernel, sizeof(panic_kernel));
 }
+
+int arch_do_exclude_segment(struct kexec_info *info, struct kexec_segment *segment)
+{
+	if (info->elfcorehdr == (unsigned long) segment->mem)
+		return 1;
+
+	return 0;
+}

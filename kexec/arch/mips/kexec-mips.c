@@ -189,3 +189,7 @@ unsigned long add_buffer(struct kexec_info *info, const void *buf,
 				    buf_min, buf_max, buf_end, 1);
 }
 
+int arch_do_exclude_segment(struct kexec_info *UNUSED(info), struct kexec_segment *UNUSED(segment))
+{
+	return 0;
+}
