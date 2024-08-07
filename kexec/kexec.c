@@ -60,6 +60,10 @@
 #define KEXEC_LOADED_PATH "/sys/kernel/kexec_loaded"
 #define KEXEC_CRASH_LOADED_PATH "/sys/kernel/kexec_crash_loaded"
 
+#ifndef MFD_NOEXEC_SEAL
+#define MFD_NOEXEC_SEAL 0
+#endif
+
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
 unsigned long elfcorehdrsz = 0;
@@ -655,7 +659,7 @@ static int copybuf_memfd(const char *kernel_buf, size_t size)
 {
 	int fd, count;
 
-	fd = memfd_create("kernel", MFD_ALLOW_SEALING);
+	fd = memfd_create("kernel", MFD_ALLOW_SEALING | MFD_NOEXEC_SEAL);
 	if (fd == -1)
 		return fd;
 
