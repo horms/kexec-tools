@@ -4,7 +4,7 @@ dnl
 dnl 
 
 dnl ---Required
-AC_INIT(kexec-tools, 2.0.29.git)
+AC_INIT([kexec-tools],[2.0.29.git])
 AC_CONFIG_AUX_DIR(./config)
 AC_CONFIG_HEADERS([include/config.h])
 AC_LANG(C)
@@ -92,25 +92,25 @@ if test "x$TARGET_CFLAGS" = "x" ; then
 	TARGET_CFLAGS='-O2 -Wall'
 fi
 
-AC_ARG_WITH([objdir], AC_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
+AC_ARG_WITH([objdir], AS_HELP_STRING([--with-objdir=<dir>],[select directory for object files]),
 	[ OBJDIR="$withval" ], [ OBJDIR="$OBJDIR" ])
 
 AC_ARG_WITH([gamecube],
-		AC_HELP_STRING([--with-gamecube],[enable gamecube support]),
+		AS_HELP_STRING([--with-gamecube],[enable gamecube support]),
 		AC_DEFINE(WITH_GAMECUBE, 1,
 			[Define to include gamecube support]))
 
-AC_ARG_WITH([zlib], AC_HELP_STRING([--without-zlib],[disable zlib support]),
+AC_ARG_WITH([zlib], AS_HELP_STRING([--without-zlib],[disable zlib support]),
 	[ with_zlib="$withval"], [ with_zlib=yes ] )
 
-AC_ARG_WITH([lzma], AC_HELP_STRING([--without-lzma],[disable lzma support]),
+AC_ARG_WITH([lzma], AS_HELP_STRING([--without-lzma],[disable lzma support]),
 	[ with_lzma="$withval"], [ with_lzma=yes ] )
 
-AC_ARG_WITH([xen], AC_HELP_STRING([--without-xen],
+AC_ARG_WITH([xen], AS_HELP_STRING([--without-xen],
 	[disable extended xen support]), [ with_xen="$withval"], [ with_xen=yes ] )
 
 AC_ARG_WITH([booke],
-		AC_HELP_STRING([--with-booke],[build for booke]),
+		AS_HELP_STRING([--with-booke],[build for booke]),
 		AC_DEFINE(CONFIG_BOOKE,1,
 			[Define to build for BookE]))
 
@@ -245,4 +245,5 @@ AC_SUBST([OBJDIR])
 AC_SUBST([INSTALL])
 
 dnl ---Output
-AC_OUTPUT([Makefile])
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
