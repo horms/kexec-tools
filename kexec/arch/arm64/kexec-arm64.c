@@ -75,6 +75,7 @@ struct file_type file_type[] = {
 	{"Image", image_arm64_probe, image_arm64_load, image_arm64_usage},
 	{"uImage", uImage_arm64_probe, uImage_arm64_load, uImage_arm64_usage},
 	{"vmlinuz", pez_arm64_probe, pez_arm64_load, pez_arm64_usage},
+	{"uki", uki_image_probe, uki_image_load, uki_image_usage},
 };
 
 int file_types = sizeof(file_type) / sizeof(file_type[0]);

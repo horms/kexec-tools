@@ -8,6 +8,7 @@ dist += include/Makefile		\
 	include/x86/mb_header.h		\
 	include/x86/multiboot2.h	\
 	include/elf.h			\
+	include/pe.h			\
 	include/image.h			\
 	include/unused.h		\
 	include/boot/linuxbios_tables.h	\

@@ -114,6 +114,7 @@ do { \
 #define _ALIGN(addr, size)     _ALIGN_UP(addr, size)
 
 extern unsigned long long mem_min, mem_max;
+extern int implicit_initrd_fd;
 extern int kexec_debug;
 
 #define dbgprintf(...) \
@@ -356,4 +357,8 @@ static inline void ultoa(unsigned long val, char *str)
 	str[pos] = 0;
 }
 
+extern int uki_image_probe(const char *file_buf, off_t buf_sz);
+extern int uki_image_load(int argc, char **argv, const char *buf, off_t len,
+		struct kexec_info *info);
+extern void uki_image_usage(void);
 #endif /* KEXEC_H */
