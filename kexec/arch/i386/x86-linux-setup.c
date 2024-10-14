@@ -99,11 +99,11 @@ void setup_linux_bootloader_parameters_high(
 
 	if (real_mode->protocol_version >= 0x020c &&
 	    (initrd_base & 0xffffffffUL) != initrd_base)
-		real_mode->ext_ramdisk_image = initrd_base >> 32;
+		real_mode->ext_ramdisk_image = (initrd_base >> 16) >> 16;
 
 	if (real_mode->protocol_version >= 0x020c &&
 	    (initrd_size & 0xffffffffUL) != initrd_size)
-		real_mode->ext_ramdisk_size = initrd_size >> 32;
+		real_mode->ext_ramdisk_size = (initrd_size >> 16) >> 16;
 
 	/* The location of the command line */
 	/* if (real_mode_base == 0x90000) { */
@@ -117,7 +117,7 @@ void setup_linux_bootloader_parameters_high(
 		real_mode->cmd_line_ptr = cmd_line_ptr & 0xffffffffUL;
 		if ((real_mode->protocol_version >= 0x020c) &&
 		    ((cmd_line_ptr & 0xffffffffUL) != cmd_line_ptr))
-			real_mode->ext_cmd_line_ptr = cmd_line_ptr >> 32;
+			real_mode->ext_cmd_line_ptr = (cmd_line_ptr >> 16) >> 16;
 	}
 
 	/* Fill in the command line */
@@ -172,7 +172,7 @@ static int setup_linux_vesafb(struct x86_linux_param_header *real_mode)
 	real_mode->vesapm_seg     = 0;
 
 	if (fix.smem_start > 0xffffffffUL) {
-		real_mode->ext_lfb_base = fix.smem_start >> 32;
+		real_mode->ext_lfb_base = (fix.smem_start >> 16) >> 16;
 		real_mode->capabilities |= VIDEO_CAPABILITY_64BIT_BASE;
 	}
 
