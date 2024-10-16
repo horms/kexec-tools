@@ -307,7 +307,8 @@ int bzImage64_load_file(int argc, char **argv, struct kexec_info *info)
 			ret = -1;
 			goto out;
 		}
-	}
+	} else if (implicit_initrd_fd != -1)
+		info->initrd_fd = implicit_initrd_fd;
 
 	info->command_line = command_line;
 	info->command_line_len = command_line_len;

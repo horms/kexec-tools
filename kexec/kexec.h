@@ -114,6 +114,7 @@ do { \
 #define _ALIGN(addr, size)     _ALIGN_UP(addr, size)
 
 extern unsigned long long mem_min, mem_max;
+extern int implicit_initrd_fd;
 extern int kexec_debug;
 
 #define dbgprintf(...) \
