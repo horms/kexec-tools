@@ -77,6 +77,7 @@ int uki_image_probe(const char *file_buf, off_t buf_sz)
 					sect_hdr->raw_data_size) != sect_hdr->raw_data_size) {
 				dbgprintf("%s: Can't write the compressed file %s\n",
 						__func__, initrd_fname);
+				close(initrd_fd);
 				goto next;
 			} else {
 				implicit_initrd_fd = open(initrd_fname, O_RDONLY);
