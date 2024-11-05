@@ -104,6 +104,8 @@ int pez_arm64_load(int argc, char **argv, const char *buf, off_t len,
 		off_t nread;
 		int fd;
 
+		if (info->kernel_fd > 0)
+			close(info->kernel_fd);
 		info->kernel_fd = kernel_fd;
 		fd = dup(kernel_fd);
 		if (fd < 0) {
