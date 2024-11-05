@@ -35,6 +35,34 @@ static int get_pehdr_offset(const char *buf)
 	return pe_hdr_offset;
 }
 
+static int create_tmpfd(const char *template, char *buf, int buf_sz, int *tmpfd)
+{
+	char *fname;
+	int fd = -1;
+
+	if (!(fname = strdup(template))) {
+		dbgprintf("%s: Can't duplicate strings\n", __func__);
+		return -1;
+	}
+
+	if ((fd = mkstemp(fname)) < 0) {
+		dbgprintf("%s: Can't open file %s\n", __func__,	fname);
+		return -1;
+	}
+
+	if (write(fd, buf, buf_sz) != buf_sz) {
+		dbgprintf("%s: Can't write the compressed file %s\n",
+				__func__, fname);
+		close(fd);
+		return -1;
+	} else {
+		*tmpfd = open(fname, O_RDONLY);
+		close(fd);
+	}
+
+	return 0;
+}
+
 int uki_image_probe(const char *file_buf, off_t buf_sz)
 {
 	struct pe_hdr *pe_hdr;
@@ -42,8 +70,6 @@ int uki_image_probe(const char *file_buf, off_t buf_sz)
 	struct section_header *sect_hdr;
 	int pe_hdr_offset, section_nr, linux_sz = -1;
 	char *pe_part_buf, *linux_src;
-	char *initrd_fname = NULL;
-	int initrd_fd = -1;
 
 	pe_hdr_offset = get_pehdr_offset(file_buf);
 	pe_part_buf = (char *)file_buf + pe_hdr_offset;
@@ -63,28 +89,9 @@ int uki_image_probe(const char *file_buf, off_t buf_sz)
 			linux_sz = sect_hdr->raw_data_size;
 
 		} else if (!strcmp(sect_hdr->name, UKI_INITRD_SECTION)) {
-			if (!(initrd_fname = strdup(FILENAME_UKI_INITRD))) {
-				dbgprintf("%s: Can't duplicate strings\n", __func__);
-				goto next;
-			}
-
-			if ((initrd_fd = mkstemp(initrd_fname)) < 0) {
-				dbgprintf("%s: Can't open file %s\n", __func__,	initrd_fname);
-				goto next;
-			}
-
-			if (write(initrd_fd, (char *)file_buf + sect_hdr->data_addr,
-					sect_hdr->raw_data_size) != sect_hdr->raw_data_size) {
-				dbgprintf("%s: Can't write the compressed file %s\n",
-						__func__, initrd_fname);
-				close(initrd_fd);
-				goto next;
-			} else {
-				implicit_initrd_fd = open(initrd_fname, O_RDONLY);
-				close(initrd_fd);
-			}
+			create_tmpfd(FILENAME_UKI_INITRD, (char *)file_buf + sect_hdr->data_addr,
+					sect_hdr->raw_data_size, &implicit_initrd_fd);
 		}
-next:
 		sect_hdr++;
 	}
 
