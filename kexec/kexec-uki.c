@@ -15,8 +15,10 @@
 #define UKI_DTB_SECTION ".dtb"
 
 #define FILENAME_UKI_INITRD          "/tmp/InitrdXXXXXX"
+#define FILENAME_UKI_KERNEL          "/tmp/KernelXXXXXX"
 
 static int embeded_linux_format_index = -1;
+static int kernel_fd = -1;
 
 /*
  * Return -1 if not PE, else offset of the PE header
@@ -98,6 +100,15 @@ int uki_image_probe(const char *file_buf, off_t buf_sz)
 	if (linux_sz == -1) {
 		printf("ERR: can not find .linux section\n");
 		return -1;
+	} else {
+		int res;
+
+		res = create_tmpfd(FILENAME_UKI_KERNEL, linux_src, linux_sz,
+					&kernel_fd);
+		if (res < 0) {
+			printf("ERR: can not create tmp file to hold .linux section\n");
+			return -1;
+		}
 	}
 	/*
 	 * After stripping the UKI coat, the real kernel format can be handled now.
@@ -120,6 +131,9 @@ int uki_image_probe(const char *file_buf, off_t buf_sz)
 int uki_image_load(int argc, char **argv, const char *buf, off_t len,
 			struct kexec_info *info)
 {
+	/* In probe() chain, if nobody sets info->kernel_fd, set it now */
+	if (info->kernel_fd == -1)
+		info->kernel_fd = kernel_fd;
 	return file_type[embeded_linux_format_index].load(argc, argv, buf, len, info);
 }
 
