@@ -116,9 +116,9 @@ int do_bzImage_load(struct kexec_info *info,
 	struct entry32_regs regs32;
 	struct entry16_regs regs16;
 	unsigned int relocatable_kernel = 0;
-	unsigned long kernel32_load_addr;
 	char *modified_cmdline;
 	unsigned long cmdline_end;
+	unsigned long kernel32_load_addr, k_size;
 	unsigned long kern16_size_needed;
 	unsigned long heap_size = 0;
 
@@ -274,8 +274,10 @@ int do_bzImage_load(struct kexec_info *info,
 	}
 	
 	/* The main kernel segment */
-	size = kernel_len - kern16_size;
-
+	k_size = kernel_len - kern16_size;
+	/* need to use run-time size for buffer searching */
+	dbgprintf("kernel init_size 0x%x\n", real_mode->init_size);
+	size = _ALIGN(real_mode->init_size, 4096);
 	if (real_mode->protocol_version >=0x0205 && relocatable_kernel) {
 		/* Relocatable bzImage */
 		unsigned long kern_align = real_mode->kernel_alignment;
@@ -285,14 +287,13 @@ int do_bzImage_load(struct kexec_info *info,
 			kernel32_max_addr = real_mode->initrd_addr_max;
 
 		kernel32_load_addr = add_buffer(info, kernel + kern16_size,
-						size, size, kern_align,
+						k_size, size, kern_align,
 						0x100000, kernel32_max_addr,
 						1);
-	}
-	else {
+	} else {
 		kernel32_load_addr = KERN32_BASE;
-		add_segment(info, kernel + kern16_size, size,
-				kernel32_load_addr, size);
+		add_segment(info, kernel + kern16_size, k_size,
+				kernel32_load_addr, k_size);
 	}
 		
 	dbgprintf("Loaded 32bit kernel at 0x%lx\n", kernel32_load_addr);
