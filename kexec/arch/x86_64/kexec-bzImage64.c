@@ -120,6 +120,8 @@ static int do_bzImage64_load(struct kexec_info *info,
 	char *modified_cmdline;
 	unsigned long cmdline_end;
 	unsigned long align, addr, k_size;
+	unsigned long kernel64_min_addr = KERN32_BASE;
+	unsigned long kernel64_max_addr = -1;
 	unsigned kern16_size_needed;
 
 	/*
@@ -204,8 +206,14 @@ static int do_bzImage64_load(struct kexec_info *info,
 	dbgprintf("kernel init_size 0x%x\n", real_mode->init_size);
 	size = _ALIGN(real_mode->init_size, 4096);
 	align = real_mode->kernel_alignment;
+
+	if (kernel64_min_addr < real_mode->pref_address)
+		kernel64_min_addr = real_mode->pref_address;
+
 	addr = add_buffer(info, kernel + kern16_size, k_size,
-			  size, align, 0x100000, -1, -1);
+			  size, align,
+			  kernel64_min_addr, kernel64_max_addr,
+			  -1);
 	if (addr == ULONG_MAX)
 		die("can not load bzImage64");
 	dbgprintf("Loaded 64bit kernel at 0x%lx\n", addr);

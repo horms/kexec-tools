@@ -281,14 +281,18 @@ int do_bzImage_load(struct kexec_info *info,
 	if (real_mode->protocol_version >=0x0205 && relocatable_kernel) {
 		/* Relocatable bzImage */
 		unsigned long kern_align = real_mode->kernel_alignment;
+		unsigned long kernel32_min_addr = KERN32_BASE;
 		unsigned long kernel32_max_addr = DEFAULT_BZIMAGE_ADDR_MAX;
+
+		if (kernel32_min_addr < real_mode->pref_address)
+			kernel32_min_addr = real_mode->pref_address;
 
 		if (kernel32_max_addr > real_mode->initrd_addr_max)
 			kernel32_max_addr = real_mode->initrd_addr_max;
 
 		kernel32_load_addr = add_buffer(info, kernel + kern16_size,
 						k_size, size, kern_align,
-						0x100000, kernel32_max_addr,
+						kernel32_min_addr, kernel32_max_addr,
 						1);
 	} else {
 		kernel32_load_addr = KERN32_BASE;
