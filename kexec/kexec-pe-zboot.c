@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include "kexec.h"
+#include <pe.h>
 #include <kexec-pe-zboot.h>
 
 #define FILENAME_IMAGE		"/tmp/ImageXXXXXX"
@@ -44,8 +45,11 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
 	int fd = 0;
 	char *fname = NULL;
 	char *kernel_uncompressed_buf = NULL;
-	off_t decompressed_size = 0;
+	char *parse;
+	off_t original_file_sz, decompressed_size = 0;
 	const struct linux_pe_zboot_header *z;
+	struct pe32plus_opt_hdr *opt_hdr;
+	struct data_directory *dir;
 
 	z = (const struct linux_pe_zboot_header *)(crude_buf);
 
@@ -91,12 +95,27 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
 	kernel_uncompressed_buf = slurp_decompress_file(fname,
 							&decompressed_size);
 
+	original_file_sz = decompressed_size;
 	dbgprintf("%s: decompressed size %ld\n", __func__, decompressed_size);
+
+	/* Makefile.zboot pads Image with zero, but the trailing zero is not part of PE file */
+	parse = kernel_uncompressed_buf + get_pehdr_offset(kernel_uncompressed_buf);
+	parse += sizeof(struct pe_hdr);
+	opt_hdr = (struct pe32plus_opt_hdr*)parse;
+	parse += sizeof(struct pe32plus_opt_hdr);
+	dir = (struct data_directory *)parse;
+	if (opt_hdr->data_dirs > ((char *)&dir->certs - (char *)dir)/sizeof(struct data_dirent)) {
+		/* If signed, the Attribute Certificate Table is always at the end of the PE file */
+		if (dir->certs.virtual_address != 0 && dir->certs.size != 0) {
+			original_file_sz = dir->certs.virtual_address + dir->certs.size;
+			ftruncate(fd, 0);
+		}
+	}
 
 	lseek(fd, 0, SEEK_SET);
 
 	if (write(fd,  kernel_uncompressed_buf,
-		  decompressed_size) != decompressed_size) {
+		  original_file_sz) != original_file_sz) {
 		dbgprintf("%s: Can't write the decompressed file %s\n",
 				__func__, fname);
 		ret = -1;
@@ -111,7 +130,7 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
 		goto fail_bad_header;
 	}
 
-	*kernel_size = decompressed_size;
+	*kernel_size = original_file_sz;
 	dbgprintf("%s: done\n", __func__);
 
 	ret = 0;

@@ -88,6 +88,30 @@ struct pe32plus_opt_hdr {
 	uint32_t data_dirs;	/* number of data dir entries */
 };
 
+struct data_dirent {
+	uint32_t virtual_address;	/* relative to load address */
+	uint32_t size;
+};
+
+struct data_directory {
+	struct data_dirent exports;		/* .edata */
+	struct data_dirent imports;		/* .idata */
+	struct data_dirent resources;		/* .rsrc */
+	struct data_dirent exceptions;		/* .pdata */
+	struct data_dirent certs;		/* certs */
+	struct data_dirent base_relocations;	/* .reloc */
+	struct data_dirent debug;		/* .debug */
+	struct data_dirent arch;		/* reservered */
+	struct data_dirent global_ptr;		/* global pointer reg. Size=0 */
+	struct data_dirent tls;			/* .tls */
+	struct data_dirent load_config;		/* load configuration structure */
+	struct data_dirent bound_imports;	/* no idea */
+	struct data_dirent import_addrs;	/* import address table */
+	struct data_dirent delay_imports;	/* delay-load import table */
+	struct data_dirent clr_runtime_hdr;	/* .cor (object only) */
+	struct data_dirent reserved;
+};
+
 struct section_header {
 	char name[8];			/* name or "/12\0" string tbl offset */
 	uint32_t virtual_size;		/* size of loaded section in ram */
@@ -99,6 +123,12 @@ struct section_header {
 	uint16_t num_relocs;		/* number of relocations */
 	uint16_t num_lin_numbers;	/* srsly. */
 	uint32_t flags;
+};
+
+struct win_certificate {
+	uint32_t length;
+	uint16_t revision;
+	uint16_t cert_type;
 };
 
 /*
