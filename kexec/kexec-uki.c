@@ -20,23 +20,6 @@
 static int embeded_linux_format_index = -1;
 static int kernel_fd = -1;
 
-/*
- * Return -1 if not PE, else offset of the PE header
- */
-static int get_pehdr_offset(const char *buf)
-{
-	int pe_hdr_offset;
-
-	pe_hdr_offset = *((int *)(buf + 0x3c));
-	buf += pe_hdr_offset;
-	if (!!memcmp(buf, "PE\0\0", 4)) {
-		printf("Not a PE file\n");
-		return -1;
-	}
-
-	return pe_hdr_offset;
-}
-
 static int create_tmpfd(const char *template, char *buf, int buf_sz, int *tmpfd)
 {
 	char *fname;
