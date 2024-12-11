@@ -422,7 +422,7 @@ static uint64_t efi_get_acpi_rsdp(void) {
 		/* ACPI20= always goes before ACPI= */
 		if ((strstr(line, "ACPI20=")) || (strstr(line, "ACPI="))) {
 			s = strchr(line, '=') + 1;
-			sscanf(s, "0x%llx", &acpi_rsdp);
+			sscanf(s, "0x%lux", &acpi_rsdp);
 			break;
 		}
 	}
