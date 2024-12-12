@@ -55,6 +55,7 @@
 #include "kexec-sha256.h"
 #include "kexec-zlib.h"
 #include "kexec-lzma.h"
+#include "kexec-zstd.h"
 #include <arch/options.h>
 
 #define KEXEC_LOADED_PATH "/sys/kernel/kexec_loaded"
@@ -639,9 +640,12 @@ char *slurp_decompress_file(const char *filename, off_t *r_size)
 
 	kernel_buf = zlib_decompress_file(filename, r_size);
 	if (!kernel_buf) {
-		kernel_buf = lzma_decompress_file(filename, r_size);
-		if (!kernel_buf)
-			return slurp_file(filename, r_size);
+	        kernel_buf = zstd_decompress_file(filename, r_size);
+		if (!kernel_buf) {
+                        kernel_buf = lzma_decompress_file(filename, r_size);
+			if (!kernel_buf)
+				return slurp_file(filename, r_size);
+		}
 	}
 	return kernel_buf;
 }

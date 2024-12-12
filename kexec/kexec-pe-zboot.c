@@ -63,8 +63,9 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
 	 * algorithms than are supported here, error out if we detect that.
 	 */
 	if (memcmp(&z->compress_type, "gzip", 4) &&
+	    memcmp(&z->compress_type, "zstd", 4) &&
 	    memcmp(&z->compress_type, "lzma", 4)) {
-		dbgprintf("%s: kexec can only decompress gziped and lzma images.\n", __func__);
+		dbgprintf("%s: kexec can only decompress gziped, lzma and zstd images\n", __func__);
 		return -1;
 	}
 
