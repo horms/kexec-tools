@@ -106,6 +106,9 @@ AC_ARG_WITH([zlib], AS_HELP_STRING([--without-zlib],[disable zlib support]),
 AC_ARG_WITH([lzma], AS_HELP_STRING([--without-lzma],[disable lzma support]),
 	[ with_lzma="$withval"], [ with_lzma=yes ] )
 
+AC_ARG_WITH([zstd], AS_HELP_STRING([--without-zstd],[disable zstd support]),
+	[ with_zstd="$withval"], [ with_zstd=yes ] )
+
 AC_ARG_WITH([xen], AS_HELP_STRING([--without-xen],
 	[disable extended xen support]), [ with_xen="$withval"], [ with_xen=yes ] )
 
@@ -178,6 +181,13 @@ if test "$with_lzma" = yes ; then
 	AC_CHECK_HEADER(lzma.h,
 		[AC_CHECK_LIB(lzma, lzma_code, ,
 		AC_MSG_NOTICE([lzma support disabled]))])
+fi
+
+dnl See if I have a usable copy of zstd available
+if test "$with_zstd" = yes ; then
+	AC_CHECK_HEADER(zstd.h,
+		[AC_CHECK_LIB(zstd, ZSTD_decompress, ,
+		AC_MSG_NOTICE([zstd support disabled]))])
 fi
 
 dnl find Xen control stack libraries
