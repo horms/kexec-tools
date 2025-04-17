@@ -24,5 +24,5 @@ x86_64_PURGATORY_SRCS += purgatory/arch/i386/vga.c
 x86_64_PURGATORY_SRCS += purgatory/arch/i386/pic.c
 
 ifneq ($(SUBARCH),x32)
-x86_64_PURGATORY_EXTRA_CFLAGS = -mcmodel=large
+x86_64_PURGATORY_EXTRA_CFLAGS = -mcmodel=large -march=x86-64 -mno-mmx -mno-sse -mno-sse2 -mno-avx
 endif
