@@ -40,7 +40,14 @@ int load_extra_segments(struct kexec_info *info, uint64_t kernel_base,
 int riscv_find_pbase(struct kexec_info *info, off_t *addr,
 				off_t size, off_t align);
 
+/* kexec-elf-riscv.c */
 int elf_riscv_probe(const char *buf, off_t len);
 void elf_riscv_usage(void);
 int elf_riscv_load(int argc, char **argv, const char *buf, off_t len,
+		   struct kexec_info *info);
+
+/* kexec-image-riscv.c */
+int image_riscv_probe(const char *buf, off_t len);
+void image_riscv_usage(void);
+int image_riscv_load(int argc, char **argv, const char *buf, off_t len,
 		   struct kexec_info *info);
