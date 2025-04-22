@@ -23,6 +23,7 @@ extern struct memory_range elfcorehdr_mem;
 int load_elfcorehdr(struct kexec_info *info);
 
 /* kexec-riscv.c */
+int prepare_kexec_file_options(struct kexec_info *info);
 int load_extra_segments(struct kexec_info *info, uint64_t kernel_base,
 			uint64_t kernel_size, uint64_t max_addr);
 

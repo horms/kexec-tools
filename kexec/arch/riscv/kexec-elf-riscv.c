@@ -112,6 +112,7 @@ void elf_riscv_usage(void)
 {
 }
 
+
 int elf_riscv_load(int argc, char **argv, const char *buf, off_t len,
 		   struct kexec_info *info)
 {
@@ -127,9 +128,7 @@ int elf_riscv_load(int argc, char **argv, const char *buf, off_t len,
 	int ret = 0;
 
 	if (info->file_mode) {
-		fprintf(stderr, "kexec_file not supported on this "
-				"architecture\n");
-		return -EINVAL;
+		return prepare_kexec_file_options(info);
 	}
 
 	/* Parse the ELF file */

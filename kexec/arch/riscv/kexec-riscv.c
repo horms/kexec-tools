@@ -17,6 +17,12 @@
 #include "kexec-riscv.h"
 #include "iomem.h"
 #include <stdbool.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#ifndef _O_BINARY
+#define _O_BINARY 0
+#endif
 
 const struct arch_map_entry arches[] = {
 	{ "riscv32", KEXEC_ARCH_RISCV },
@@ -139,6 +145,39 @@ int load_extra_segments(struct kexec_info *info, uint64_t kernel_base,
 void arch_usage(void)
 {
 	printf(riscv_opts_usage);
+}
+
+int prepare_kexec_file_options(struct kexec_info *info)
+{
+	int fd;
+	ssize_t result;
+	struct stat stats;
+
+	if (arch_options.cmdline) {
+		info->command_line = (char *)arch_options.cmdline;
+		info->command_line_len = strlen(info->command_line) + 1;
+	}
+
+	if (!arch_options.initrd_path) {
+		info->initrd_fd = -1;
+		return 0;
+	}
+
+	fd = open(arch_options.initrd_path, O_RDONLY | _O_BINARY);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open `%s': %s\n", arch_options.initrd_path,
+				strerror(errno));
+		return -EINVAL;
+	}
+	result = fstat(fd, &stats);
+	if (result < 0) {
+		close(fd);
+		fprintf(stderr, "Cannot stat: %s: %s\n", arch_options.initrd_path,
+				strerror(errno));
+		return -EINVAL;
+	}
+	info->initrd_fd = fd;
+	return 0;
 }
 
 int arch_process_options(int argc, char **argv)

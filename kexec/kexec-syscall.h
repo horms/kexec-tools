@@ -80,6 +80,9 @@
 #ifdef __hppa__
 #define __NR_kexec_file_load	355
 #endif
+#if defined(__riscv__) || defined(__riscv)
+#define __NR_kexec_file_load	294
+#endif
 
 #ifndef __NR_kexec_file_load
 /* system call not available for the arch */
