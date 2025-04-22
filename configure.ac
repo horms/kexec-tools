@@ -61,6 +61,9 @@ case $target_cpu in
 	loongarch*)
 		ARCH="loongarch"
 		;;
+	riscv32|riscv64)
+		ARCH="riscv"
+		;;
 	* )
 		AC_MSG_ERROR([unsupported architecture $target_cpu])
 		;;

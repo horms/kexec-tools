@@ -259,6 +259,7 @@ typedef struct
 #define EM_ARC_A5	93		/* ARC Cores Tangent-A5 */
 #define EM_XTENSA	94		/* Tensilica Xtensa Architecture */
 #define EM_AARCH64	183		/* ARM AARCH64 */
+#define EM_RISCV	243		/* RISC-V */
 #define EM_LOONGARCH	258		/* Loongson Loongarch*/
 #define EM_NUM		184
 

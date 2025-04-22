@@ -19,6 +19,7 @@ jobs:
         - powerpc
         - powerpc64
         - powerpc64le
+        - riscv64
         - sh4
         - s390x
         - x86_64-x32

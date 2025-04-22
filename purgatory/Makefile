@@ -25,6 +25,7 @@ include $(srcdir)/purgatory/arch/ia64/Makefile
 include $(srcdir)/purgatory/arch/mips/Makefile
 include $(srcdir)/purgatory/arch/ppc/Makefile
 include $(srcdir)/purgatory/arch/ppc64/Makefile
+include $(srcdir)/purgatory/arch/riscv/Makefile
 include $(srcdir)/purgatory/arch/s390/Makefile
 include $(srcdir)/purgatory/arch/sh/Makefile
 include $(srcdir)/purgatory/arch/x86_64/Makefile

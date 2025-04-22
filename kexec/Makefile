@@ -92,6 +92,7 @@ include $(srcdir)/kexec/arch/mips/Makefile
 include $(srcdir)/kexec/arch/cris/Makefile
 include $(srcdir)/kexec/arch/ppc/Makefile
 include $(srcdir)/kexec/arch/ppc64/Makefile
+include $(srcdir)/kexec/arch/riscv/Makefile
 include $(srcdir)/kexec/arch/s390/Makefile
 include $(srcdir)/kexec/arch/sh/Makefile
 include $(srcdir)/kexec/arch/x86_64/Makefile

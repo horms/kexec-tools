@@ -13,6 +13,8 @@ mips_FS2DT_INCLUDE = \
 
 mips_DT_OPS += kexec/dt-ops.c
 
+mips_MEM_REGIONS = kexec/mem_regions.c
+
 include $(srcdir)/kexec/libfdt/Makefile.libfdt
 
 libfdt_SRCS += $(LIBFDT_SRCS:%=kexec/libfdt/%)
