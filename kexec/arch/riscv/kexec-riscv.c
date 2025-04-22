@@ -50,6 +50,61 @@ static struct fdt_image provided_fdt = {0};
 * COMMON HELPERS *
 \****************/
 
+/*
+ * Go through the available physical memory regions and
+ * find one that can hold an image of the specified size
+ * and start address should be aligned up with `align`.
+ * Note: This is called after get_memory_ranges so
+ * info->memory_range[] should be populated. Also note that
+ * memory ranges are sorted, so we'll return the first region
+ * that's big enough for holding the image.
+ */
+int riscv_find_pbase(struct kexec_info *info, off_t *addr,
+				off_t size, off_t align)
+{
+	int i = 0;
+	off_t start = 0;
+	off_t end = 0;
+	int ret = 0;
+
+	/*
+	 * If this image is for a crash kernel, use the region
+	 * the primary kernel has already reserved for us.
+	 */
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		ret = get_crash_kernel_load_range((uint64_t *) &start,
+						  (uint64_t *) &end);
+		if (!ret) {
+			start = _ALIGN_UP(start, align);
+
+			if (end > start && ((end - start) >= size)) {
+				*addr = start;
+				return 0;
+			}
+
+			return -EFBIG;
+		} else
+			return ENOCRASHKERNEL;
+	}
+
+	for (i = 0; i < info->memory_ranges; i++) {
+		if (info->memory_range[i].type != RANGE_RAM)
+			continue;
+
+		start = info->memory_range[i].start;
+		end = info->memory_range[i].end;
+
+		start = _ALIGN_UP(start, align);
+
+		if (end > start && ((end - start) >= size)) {
+			*addr = start;
+			return 0;
+		}
+	}
+
+	return -EFBIG;
+}
+
 int load_extra_segments(struct kexec_info *info, uint64_t kernel_base,
 			uint64_t kernel_size, uint64_t max_addr)
 {
