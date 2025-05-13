@@ -100,7 +100,10 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
 	dbgprintf("%s: decompressed size %ld\n", __func__, decompressed_size);
 
 	/* Makefile.zboot pads Image with zero, but the trailing zero is not part of PE file */
-	parse = kernel_uncompressed_buf + get_pehdr_offset(kernel_uncompressed_buf);
+	ret = get_pehdr_offset(kernel_uncompressed_buf);
+	if (ret < 0)
+		goto fail_bad_header;
+	parse = kernel_uncompressed_buf + ret;
 	parse += sizeof(struct pe_hdr);
 	opt_hdr = (struct pe32plus_opt_hdr*)parse;
 	parse += sizeof(struct pe32plus_opt_hdr);

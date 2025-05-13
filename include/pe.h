@@ -139,6 +139,10 @@ static int get_pehdr_offset(const char *buf)
 	int pe_hdr_offset;
 
 	pe_hdr_offset = *((int *)(buf + 0x3c));
+	if (pe_hdr_offset < 0 || pe_hdr_offset > 4096) {
+		printf("PE header offset is not a reasonable value\n");
+		return -1;
+	}
 	buf += pe_hdr_offset;
 	if (!!memcmp(buf, "PE\0\0", 4)) {
 		printf("Not a PE file\n");
