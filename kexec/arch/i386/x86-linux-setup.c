@@ -25,7 +25,11 @@
 #include <limits.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#if defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 25)
 #include <sys/random.h>
+#else
+#include <linux/random.h>  // For SETUP_RNG_SEED and other constants
+#endif
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <linux/fb.h>
@@ -829,6 +833,25 @@ static void setup_e820(struct kexec_info *info, struct x86_linux_param_header *r
 	}
 }
 
+/* Fallback function to use /dev/urandom */
+static int get_random_bytes(uint8_t *buf, size_t buflen) {
+    int fd = open("/dev/urandom", O_RDONLY);
+    if (fd == -1) {
+        perror("open /dev/urandom");
+        return -1;
+    }
+
+    ssize_t read_bytes = read(fd, buf, buflen);
+    close(fd);
+
+    if (read_bytes != (ssize_t)buflen) {
+        perror("read /dev/urandom");
+        return -1;
+    }
+
+    return 0;
+}
+
 static void setup_rng_seed(struct kexec_info *info,
 			   struct x86_linux_param_header *real_mode)
 {
@@ -842,9 +865,26 @@ static void setup_rng_seed(struct kexec_info *info,
 	sd->header.len = sizeof(sd->rng_seed);
 	sd->header.type = SETUP_RNG_SEED;
 
+#if defined(__GLIBC__) && (__GLIBC__ >= 2) && (__GLIBC_MINOR__ >= 25)
 	if (getrandom(sd->rng_seed, sizeof(sd->rng_seed), GRND_NONBLOCK) !=
-	    sizeof(sd->rng_seed))
+	    sizeof(sd->rng_seed)) {
+		free(sd); /* Free memory if getrandom() fails */
 		return; /* Not initialized, so don't pass a seed. */
+	}
+#else
+    /* Use syscall directly to support older glibc or fallback to /dev/urandom */
+    ssize_t result = syscall(SYS_getrandom, sd->rng_seed, sizeof(sd->rng_seed), GRND_NONBLOCK);
+    if (result == -1 && (errno == ENOSYS || errno == EINVAL)) {
+        /* If getrandom() is not supported, fall back to /dev/urandom */
+        if (get_random_bytes(sd->rng_seed, sizeof(sd->rng_seed)) != 0) {
+            free(sd); /* Free memory on failure */
+            return;   /* Not initialized, so don't pass a seed. */
+        }
+    } else if (result != sizeof(sd->rng_seed)) {
+        free(sd); /* Free memory on failure */
+        return;   /* Not initialized, so don't pass a seed. */
+    }
+#endif
 
 	add_setup_data(info, real_mode, &sd->header);
 }
