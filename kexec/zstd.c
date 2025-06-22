@@ -21,6 +21,7 @@
  * Reimplementation of private function available if zstd is
  * statically linked. Remove when it becomes public.
  */
+__attribute__((weak))
 unsigned ZSTD_isFrame(const void* buffer, size_t size)
 {
 	uint8_t *buf = (uint8_t *)buffer;
