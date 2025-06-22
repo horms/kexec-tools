@@ -317,7 +317,8 @@ int efi_map_added( void ) {
 	char buf[512];
 	FILE *fp = fopen( "/proc/cmdline", "r" );
 	if( fp ) {
-		fgets( buf, 512, fp );
+		if (fgets( buf, 512, fp ) == NULL)
+			return 0;
 		fclose( fp );
 		return strstr( buf, "add_efi_memmap" ) != NULL;
 	} else {

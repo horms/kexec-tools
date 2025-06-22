@@ -510,7 +510,8 @@ int get_bootparam(void *buf, off_t offset, size_t size)
 		return 1;
 	if (lseek(data_file, offset, SEEK_SET) < 0)
 		goto close;
-	read(data_file, buf, size);
+	if (read(data_file, buf, size) == -1)
+		return 1;
 close:
 	close(data_file);
 	return 0;

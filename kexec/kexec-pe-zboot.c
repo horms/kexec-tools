@@ -112,7 +112,10 @@ int pez_prepare(const char *crude_buf, off_t buf_sz, int *kernel_fd,
 		/* If signed, the Attribute Certificate Table is always at the end of the PE file */
 		if (dir->certs.virtual_address != 0 && dir->certs.size != 0) {
 			original_file_sz = dir->certs.virtual_address + dir->certs.size;
-			ftruncate(fd, 0);
+			if (ftruncate(fd, 0)) {
+				dbgprintf("%s: Can't truncate file %s\n", __func__, fname);
+				goto fail_bad_header;
+			}
 		}
 	}
 
