@@ -761,7 +761,7 @@ static void add_e820_map_from_mr(struct x86_linux_param_header *real_mode,
 				e820[i].type = E820_RESERVED;
 				break;
 		}
-		dbgprintf("%016" PRIx64 "-%016" PRIx64 " (%d)\n",
+		dbgprintf("%016" PRIx64 "-%016" PRIx64 " (%u)\n",
 				e820[i].addr,
 				e820[i].addr + e820[i].size - 1,
 				e820[i].type);
