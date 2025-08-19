@@ -29,7 +29,6 @@
 #include <string.h>
 #include <limits.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <inttypes.h>
 #include <sys/ioctl.h>
 #include <sys/mman.h>
