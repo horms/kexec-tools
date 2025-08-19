@@ -1,6 +1,6 @@
 /*
  * ARM64 crashdump.
- *     partly derived from                                    arm implementation
+ *     partly derived from arm implementation
  *
  * Copyright (c) 2014-2017 Linaro Limited
  * Author: AKASHI Takahiro <takahiro.akashi@linaro.org>
