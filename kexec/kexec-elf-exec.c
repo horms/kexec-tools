@@ -167,7 +167,7 @@ int elf_exec_load_relocatable(struct mem_ehdr *ehdr, struct kexec_info *info,
 	int result;
 
 	if (reloc_min > reloc_max) {
-		fprintf(stderr, "Bad relocation range, start=%lux > end=%lux.\n", reloc_min, reloc_max);
+		fprintf(stderr, "Bad relocation range, start=%lx > end=%lx.\n", reloc_min, reloc_max);
 		result = -1;
 		goto out;
 	}
