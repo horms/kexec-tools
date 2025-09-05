@@ -5,7 +5,7 @@ RELOC:=0x10000
 KEXEC_TEST_SRCS:= kexec_test/kexec_test16.S kexec_test/kexec_test.S
 
 dist += kexec_test/Makefile $(KEXEC_TEST_SRCS)				\
-	kexec_test/x86-setup-legacy-pic.S
+	kexec_test/x86-setup-legacy-pic.S kexec_test/kexec_test.ld
 
 BUILD_KEXEC_TEST = no
 ifeq ($(ARCH),i386)
@@ -31,7 +31,7 @@ $(KEXEC_TEST): CPPFLAGS+=-DRELOC=$(RELOC)
 $(KEXEC_TEST): ASFLAGS+=-m32
 #$(KEXEC_TEST): LDFLAGS=-m32 -Wl,-e -Wl,_start -Wl,-Ttext -Wl,$(RELOC) \
 #		       -nostartfiles
-$(KEXEC_TEST): LDFLAGS=-melf_i386 -e _start -Ttext $(RELOC)
+$(KEXEC_TEST): LDFLAGS=-melf_i386 -e _start -T $(srcdir)/kexec_test/kexec_test.ld
 
 $(KEXEC_TEST): $(KEXEC_TEST_OBJS)
 	mkdir -p $(@D)
