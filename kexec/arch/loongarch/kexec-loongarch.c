@@ -317,7 +317,7 @@ int loongarch_load_other_segments(struct kexec_info *info, unsigned long hole_mi
 		initrd_base = add_buffer(info, initrd_buf, initrd_size,
 					initrd_size, sizeof(void *),
 					_ALIGN_UP(initrd_min,
-						pagesize), hole_max, 1);
+						pagesize), hole_max, -1);
 		dbgprintf("initrd_base: %lx, initrd_size: %lx\n", initrd_base, initrd_size);
 
 		cmdline_add_initrd(cmdline, initrd_base, initrd_size);
