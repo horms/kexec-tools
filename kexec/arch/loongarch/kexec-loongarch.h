@@ -37,6 +37,7 @@ int loongarch_process_image_header(const struct loongarch_image_header *h);
 unsigned long loongarch_locate_kernel_segment(struct kexec_info *info);
 int loongarch_load_other_segments(struct kexec_info *info,
 	unsigned long hole_min);
+int prepare_kexec_file_options(struct kexec_info *info);
 
 struct arch_options_t {
 	char *command_line;

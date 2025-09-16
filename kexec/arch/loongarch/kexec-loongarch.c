@@ -10,12 +10,14 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <getopt.h>
 #include <inttypes.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sys/types.h>
 #include <sys/stat.h>
 #include <linux/elf-em.h>
 #include <elf.h>
@@ -28,6 +30,10 @@
 #include "kexec-syscall.h"
 #include "mem_regions.h"
 #include "arch/options.h"
+
+#ifndef _O_BINARY
+#define _O_BINARY 0
+#endif
 
 #define CMDLINE_PREFIX "kexec "
 static char cmdline[COMMAND_LINE_SIZE] = CMDLINE_PREFIX;
@@ -200,6 +206,39 @@ void arch_usage(void)
 struct arch_options_t arch_options = {
 	.core_header_type = CORE_TYPE_ELF64,
 };
+
+int prepare_kexec_file_options(struct kexec_info *info)
+{
+	int fd;
+	ssize_t result;
+	struct stat stats;
+
+	if (arch_options.command_line) {
+		info->command_line = (char *)arch_options.command_line;
+		info->command_line_len = strlen(info->command_line) + 1;
+	}
+
+	if (!arch_options.initrd_file) {
+		info->initrd_fd = -1;
+		return 0;
+	}
+
+	fd = open(arch_options.initrd_file, O_RDONLY | _O_BINARY);
+	if (fd < 0) {
+		fprintf(stderr, "Cannot open `%s': %s\n", arch_options.initrd_file,
+				strerror(errno));
+		return -EINVAL;
+	}
+	result = fstat(fd, &stats);
+	if (result < 0) {
+		close(fd);
+		fprintf(stderr, "Cannot stat: %s: %s\n", arch_options.initrd_file,
+				strerror(errno));
+		return -EINVAL;
+	}
+	info->initrd_fd = fd;
+	return 0;
+}
 
 int arch_process_options(int argc, char **argv)
 {

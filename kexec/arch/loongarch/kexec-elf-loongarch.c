@@ -77,6 +77,9 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	int result;
 	int i;
 
+	if (info->file_mode)
+		return prepare_kexec_file_options(info);
+
 	result = build_elf_exec_info(kernel_buf, kernel_size, &ehdr, 0);
 
 	if (result < 0) {

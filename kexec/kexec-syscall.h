@@ -59,7 +59,7 @@
 #endif
 #endif /*ifndef __NR_kexec_load*/
 
-#if defined(__arm__) || defined(__loongarch__)
+#if defined(__arm__)
 #undef __NR_kexec_file_load
 #endif
 
@@ -81,6 +81,9 @@
 #define __NR_kexec_file_load	355
 #endif
 #if defined(__riscv__) || defined(__riscv)
+#define __NR_kexec_file_load	294
+#endif
+#ifdef __loongarch__
 #define __NR_kexec_file_load	294
 #endif
 

@@ -70,6 +70,9 @@ int pei_loongarch_load(int argc, char **argv, const char *buf,
 
 	header = (const struct loongarch_image_header *)(buf);
 
+	if (info->file_mode)
+		return prepare_kexec_file_options(info);
+
 	if (loongarch_process_image_header(header))
 		return EFAILED;
 
