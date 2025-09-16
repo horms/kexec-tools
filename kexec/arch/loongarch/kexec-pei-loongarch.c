@@ -102,10 +102,10 @@ int pei_loongarch_load(int argc, char **argv, const char *buf,
 	/* Load the kernel */
 	add_segment(info, buf, len, kernel_segment, loongarch_mem.image_size);
 
-	/* Prepare and load dtb and initrd data */
+	/* Prepare and load initrd and cmdline data */
 	result = loongarch_load_other_segments(info, hole_min);
 	if (result) {
-		fprintf(stderr, "kexec: Load dtb and initrd segments failed.\n");
+		fprintf(stderr, "kexec: Load initrd and cmdline segments failed.\n");
 		goto exit;
 	}
 
