@@ -72,7 +72,6 @@ static bool laabs_section(const struct mem_ehdr *ehdr)
 int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info)
 {
-	const struct loongarch_image_header *header = NULL;
 	unsigned long kernel_segment;
 	struct mem_ehdr ehdr;
 	int result;
@@ -95,22 +94,19 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 		}
 	}
 
-	/* Find and process the loongarch image header. */
 	for (i = 0; i < ehdr.e_phnum; i++) {
 		struct mem_phdr *phdr = &ehdr.e_phdr[i];
 
 		if (phdr->p_type != PT_LOAD)
 			continue;
 
-		header = (const struct loongarch_image_header *)(
-			kernel_buf + phdr->p_offset);
-
-		if (!loongarch_process_image_header(header))
-			break;
+		loongarch_mem.text_offset = virt_to_phys(phdr->p_paddr);
+		loongarch_mem.image_size = _ALIGN_UP(phdr->p_memsz, KiB(64));
+		break;
 	}
 
 	if (i == ehdr.e_phnum) {
-		dbgprintf("%s: Valid loongarch image header not found\n", __func__);
+		dbgprintf("%s: Valid loongarch phdr not found\n", __func__);
 		result = EFAILED;
 		goto exit;
 	}

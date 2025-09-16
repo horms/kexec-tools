@@ -1,5 +1,5 @@
 /*
- * LoongArch binary image header.
+ * LoongArch binary image header. (for pei/pez format)
  */
 
 #if !defined(__LOONGARCH_IMAGE_HEADER_H)
