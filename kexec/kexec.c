@@ -1153,6 +1153,7 @@ void remove_parameter(char *line, const char *param_name)
 	if (!start)
 		return;
 
+again:
 	/*
 	 * check if that's really the start of a parameter and not in
 	 * the middle of the word
@@ -1167,6 +1168,11 @@ void remove_parameter(char *line, const char *param_name)
 		memmove(start, end+1, strlen(end));
 		*(end + strlen(end)) = 0;
 	}
+
+	/* There may be multiple 'crashkernel' parameters, such as low and high */
+	start = strstr(line, param_name);
+	if (start)
+		goto again;
 }
 
 static ssize_t _read(int fd, void *buf, size_t count)
