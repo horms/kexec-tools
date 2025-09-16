@@ -99,6 +99,9 @@ int pei_loongarch_load(int argc, char **argv, const char *buf,
 		}
 	}
 
+	/* Fixme: Loading a non-relocation kernel will cause the second kernel to fail
+	   to start in KEXEC_ON_CRASH */
+
 	/* Load the kernel */
 	add_segment(info, buf, len, kernel_segment, loongarch_mem.image_size);
 

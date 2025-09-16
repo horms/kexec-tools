@@ -13,6 +13,7 @@
 #include <limits.h>
 #include <errno.h>
 #include <elf.h>
+#include <stdbool.h>
 
 #include "kexec.h"
 #include "kexec-elf.h"
@@ -47,6 +48,27 @@ out:
 	return result;
 }
 
+/*
+ * To determine whether it is a relocatable kernel based on the ".la_abs "section,
+ * the CRASH_DUMP feature depends on CONFIG_RELOCATABLE in LoongArch.
+ */
+static bool laabs_section(const struct mem_ehdr *ehdr)
+{
+	struct mem_shdr *shdr, *shdr_end;
+	unsigned char *strtab;
+
+	strtab = (unsigned char *)ehdr->e_shdr[ehdr->e_shstrndx].sh_data;
+	shdr_end = &ehdr->e_shdr[ehdr->e_shnum];
+	for (shdr = ehdr->e_shdr; shdr != shdr_end; shdr++) {
+		if (shdr->sh_size &&
+			strcmp((char *)&strtab[shdr->sh_name], ".la_abs") == 0) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	off_t kernel_size, struct kexec_info *info)
 {
@@ -61,6 +83,16 @@ int elf_loongarch_load(int argc, char **argv, const char *kernel_buf,
 	if (result < 0) {
 		dbgprintf("%s: build_elf_exec_info failed\n", __func__);
 		goto exit;
+	}
+
+	if (info->kexec_flags & KEXEC_ON_CRASH) {
+		bool is_relocatable_kernel = laabs_section(&ehdr);
+		if (!is_relocatable_kernel) {
+			dbgprintf("%s: The non-relocation kernel cannot be loaded, "
+				   "CONFIG_RELOCATABLE needs to be enabled\n", __func__);
+			result = EFAILED;
+			goto exit;
+		}
 	}
 
 	/* Find and process the loongarch image header. */
