@@ -64,13 +64,17 @@ int pez_loongarch_load(int argc, char **argv, const char *buf, off_t len,
 	if (kernel_fd > 0 && decompressed_size > 0) {
 		char *kbuf;
 		off_t nread;
+		int fd;
 
+		if (info->kernel_fd > 0)
+			close(info->kernel_fd);
 		info->kernel_fd = kernel_fd;
-		/*
-		 * slurp_fd will close kernel_fd, but it is safe here
-		 * due to no kexec_file_load support.
-		 */
-		kbuf = slurp_fd(kernel_fd, NULL, decompressed_size, &nread);
+		fd = dup(kernel_fd);
+		if (fd < 0) {
+			dbgprintf("%s: dup fd failed.\n", __func__);
+			return -1;
+		}
+		kbuf = slurp_fd(fd, NULL, decompressed_size, &nread);
 		if (!kbuf || nread != decompressed_size) {
 			dbgprintf("%s: slurp_fd failed.\n", __func__);
 			return -1;
