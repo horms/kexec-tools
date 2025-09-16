@@ -24,9 +24,20 @@
 #include "kexec-loongarch.h"
 #include "arch/options.h"
 
+#include <pe.h>
+
+static inline int loongarch_pe_check_machine(const struct pe_hdr *pe_hdr)
+{
+	if (!pe_hdr)
+		return 0;
+
+	return (pe_hdr->machine == IMAGE_FILE_MACHINE_LOONGARCH64);
+}
+
 int pei_loongarch_probe(const char *kernel_buf, off_t kernel_size)
 {
 	const struct loongarch_image_header *h;
+	const struct pe_hdr *pe_hdr;
 
 	if (kernel_size < sizeof(struct loongarch_image_header)) {
 		dbgprintf("%s: No loongarch image header.\n", __func__);
@@ -37,6 +48,12 @@ int pei_loongarch_probe(const char *kernel_buf, off_t kernel_size)
 
 	if (!loongarch_header_check_pe_sig(h)) {
 		dbgprintf("%s: Bad loongarch PE image header.\n", __func__);
+		return -1;
+	}
+
+	pe_hdr = (const struct pe_hdr *)(kernel_buf + get_pehdr_offset(kernel_buf));
+	if (!loongarch_pe_check_machine(pe_hdr)) {
+		dbgprintf("%s: Bad loongarch pe_hdr machine.\n", __func__);
 		return -1;
 	}
 

@@ -35,6 +35,9 @@ struct loongarch_image_header {
 static const uint8_t loongarch_image_pe_sig[2] = {'M', 'Z'};
 static const uint8_t loongarch_pe_machtype[6] = {'P','E', 0x0, 0x0, 0x64, 0x62};
 
+#define IMAGE_FILE_MACHINE_LOONGARCH64  0x6264 /* LoongArch 64-bit processor family */
+
+
 /**
  * loongarch_header_check_pe_sig - Helper to check the loongarch image header.
  *
