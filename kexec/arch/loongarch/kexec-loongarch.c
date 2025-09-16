@@ -334,7 +334,7 @@ int loongarch_load_other_segments(struct kexec_info *info, unsigned long hole_mi
 		}
 	}
 
-	cmdline[sizeof(cmdline) - 1] = 0;
+	cmdline[sizeof(cmdline) - 1] = '\0';
 	add_buffer(info, cmdline, sizeof(cmdline), sizeof(cmdline),
 		sizeof(void *), _ALIGN_UP(hole_min, getpagesize()),
 		hole_max, 1);
