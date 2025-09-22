@@ -20,7 +20,5 @@ int get_crash_kernel_load_range(uint64_t *start, uint64_t *end);
 /* crash dump kernel support at most two regions, low_region and high region. */
 #define CRASH_MAX_RESERVED_RANGES      2
 
-#define COMMAND_LINE_SIZE	512
-
 extern struct arch_options_t arch_options;
 #endif /* CRASHDUMP_LOONGARCH_H */

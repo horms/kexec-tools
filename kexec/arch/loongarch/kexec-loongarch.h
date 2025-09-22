@@ -13,7 +13,7 @@
 
 #define CORE_TYPE_ELF64 1
 
-#define COMMAND_LINE_SIZE 512
+#define COMMAND_LINE_SIZE 4096
 
 #define KiB(x) ((x) * 1024UL)
 #define MiB(x) (KiB(x) * 1024UL)
