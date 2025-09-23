@@ -13,6 +13,7 @@ jobs:
         - arm64
         - hppa
         - i686
+        - loongarch64
         - m68k
         - mips
         - mipsel
@@ -46,6 +47,8 @@ jobs:
           x86_64)      ;;
           x86_64-x32)  GNU_ARCH="x86_64-linux-gnux32"
                        CROSS_COMPILER_PKG="gcc-x86-64-linux-gnux32" ;;
+          loongarch64) CROSS_COMPILER_PKG="gcc-14-loongarch64-linux-gnu"
+                       ;& # Fallthrough
           *)           GNU_ARCH="$ARCH-linux-gnu" ;;
         esac
 
@@ -65,6 +68,11 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -q=2 install ${{ env.EXTRA_PKGS }}
+
+    - name: Add GCC Link
+      if: matrix.arch == 'loongarch64'
+      run: |
+        ( cd /usr/bin && sudo ln -s loongarch64-linux-gnu-gcc-14 loongarch64-linux-gnu-gcc; )
 
     - name: Build
       run: |
