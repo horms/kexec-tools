@@ -91,7 +91,7 @@ int read_memory_region_limits(int fd, unsigned long long *start,
 				unsigned long long *end)
 {
 	char buf[MAXBYTES];
-	unsigned long *p;
+	unsigned long long *p;
 	unsigned long nbytes = dt_address_cells + dt_size_cells;
 
 	if (lseek(fd, 0, SEEK_SET) == -1) {
@@ -103,7 +103,7 @@ int read_memory_region_limits(int fd, unsigned long long *start,
 		return -1;
 	}
 
-	p = (unsigned long*)buf;
+	p = (unsigned long long*)buf;
 	if (dt_address_cells == sizeof(unsigned long)) {
 		*start = p[0];
 		p++;
