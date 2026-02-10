@@ -543,7 +543,7 @@ int load_crashdump_segments(struct kexec_info *info, char* mod_cmdline,
 	/* Record the location of the elfcorehdr for hotplug handling */
 	info->elfcorehdr = elfcorehdr = add_buffer(info, tmp, sz, memsz, align,
 						   min_base, max_addr, 1);
-	reserve(elfcorehdr, sz);
+	reserve(elfcorehdr, memsz);
 	/* modify and store the cmdline in a global array. This is later
 	 * read by flatten_device_tree and modified if required
 	 */
