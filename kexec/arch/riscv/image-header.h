@@ -85,4 +85,16 @@ static inline uint64_t riscv_header_image_size(const struct riscv_image_header *
 	return le64toh(h->image_size);
 }
 
+static const uint8_t riscv_image_pe_sig[2] = {'M', 'Z'};
+static const uint8_t riscv_pe_machtype[6] = {'P','E', 0x0, 0x0, 0x64, 0x50};
+
+static inline int riscv_header_check_pe_sig(const struct riscv_image_header *h)
+{
+	if (!h)
+		return 0;
+
+	return (*((char *)&(h->code0)) == riscv_image_pe_sig[0] &&
+		*((char *)&(h->code0) + 1) == riscv_image_pe_sig[1]);
+}
+
 #endif

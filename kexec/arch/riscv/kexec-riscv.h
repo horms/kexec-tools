@@ -51,3 +51,9 @@ int image_riscv_probe(const char *buf, off_t len);
 void image_riscv_usage(void);
 int image_riscv_load(int argc, char **argv, const char *buf, off_t len,
 		   struct kexec_info *info);
+
+/* kexec-vmlinuz-riscv.c */
+int pez_riscv_probe(const char *buf, off_t len);
+void pez_riscv_usage(void);
+int pez_riscv_load(int argc, char **argv, const char *buf, off_t len,
+		   struct kexec_info *info);

@@ -34,6 +34,7 @@ const struct arch_map_entry arches[] = {
 struct file_type file_type[] = {
 	{"elf-riscv", elf_riscv_probe, elf_riscv_load, elf_riscv_usage},
 	{"image-riscv", image_riscv_probe, image_riscv_load, image_riscv_usage},
+	{"vmlinuz-riscv", pez_riscv_probe, pez_riscv_load, pez_riscv_usage},
 };
 int file_types = sizeof(file_type) / sizeof(file_type[0]);
 
