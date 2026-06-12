@@ -1102,6 +1102,7 @@ void usage(void)
 	       " --hotplug            Do in-kernel update of kexec segments on CPU/Memory\n"
 	       "                      hot add/remove events, avoiding the need to reload\n"
 	       "                      kdump kernel on online/offline events.\n"
+	       " --no-cma             Don't use CMA for placing kexec payloads.\n"
 	       " -d, --debug          Enable debugging to help spot a failure.\n"
 	       " -S, --status         Return 1 if the type (by default crash) is loaded,\n"
 	       "                      0 if not.\n"
@@ -1674,6 +1675,9 @@ int main(int argc, char *argv[])
 			return 0;
 		case OPT_HOTPLUG:
 			do_hotplug = 1;
+			break;
+		case OPT_NO_CMA:
+			kexec_file_flags |= KEXEC_FILE_NO_CMA;
 			break;
 		default:
 			break;
