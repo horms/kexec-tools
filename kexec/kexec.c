@@ -1422,6 +1422,7 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	if (info.initrd_fd == -1)
 		info.kexec_flags |= KEXEC_FILE_NO_INITRAMFS;
 
+	dbgprintf("kexec_file_load: flags = 0x%lx\n", info.kexec_flags);
 	ret = kexec_file_load(kernel_fd, info.initrd_fd, info.command_line_len,
 			info.command_line, info.kexec_flags);
 	if (ret != 0) {
