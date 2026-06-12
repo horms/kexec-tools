@@ -1103,6 +1103,8 @@ void usage(void)
 	       "                      hot add/remove events, avoiding the need to reload\n"
 	       "                      kdump kernel on online/offline events.\n"
 	       " --no-cma             Don't use CMA for placing kexec payloads.\n"
+	       " --force-dtb          Carry over the current boot's device tree blob (x86\n"
+	       "                      only, this is forced on ARM64 and PPC).\n"
 	       " -d, --debug          Enable debugging to help spot a failure.\n"
 	       " -S, --status         Return 1 if the type (by default crash) is loaded,\n"
 	       "                      0 if not.\n"
@@ -1678,6 +1680,9 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_NO_CMA:
 			kexec_file_flags |= KEXEC_FILE_NO_CMA;
+			break;
+		case OPT_FORCE_DTB:
+			kexec_file_flags |= KEXEC_FILE_FORCE_DTB;
 			break;
 		default:
 			break;

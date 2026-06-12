@@ -129,6 +129,7 @@ static inline long kexec_file_load(int kernel_fd, int initrd_fd,
 #define KEXEC_FILE_NO_INITRAMFS	0x00000004
 #define KEXEC_FILE_DEBUG	0x00000008
 #define KEXEC_FILE_NO_CMA	0x00000010
+#define KEXEC_FILE_FORCE_DTB	0x00000020
 
 /* These values match the ELF architecture values. 
  * Unless there is a good reason that should continue to be the case.
