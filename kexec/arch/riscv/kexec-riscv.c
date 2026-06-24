@@ -418,12 +418,10 @@ static bool to_be_excluded(char *str, unsigned long long start, unsigned long lo
 		return true;
 	}
 
-	if (!strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) ||
-	    !strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) ||
-	    !strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)))
-		return false;
-	else
+	if (!strncmp(str, IOMEM_RESERVED, strlen(IOMEM_RESERVED)))
 		return true;
+
+	return false;
 }
 
 int get_memory_ranges(struct memory_range **range, int *num_ranges,
