@@ -80,16 +80,16 @@ static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
 				char *str, unsigned long long base,
 				unsigned long long length)
 {
-	if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0)
+	if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0) {
 		return mem_regions_alloc_and_add(&crash_mem_ranges,
 						base, length, RANGE_RAM);
-	else if (strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) == 0)
+	} else if (strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) == 0) {
 		return mem_regions_alloc_and_add(&system_mem_ranges,
 						base, length, RANGE_RAM);
-	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0)
+	} else if (strncmp(str, KERNEL_IMAGE, strlen(KERNEL_IMAGE)) == 0) {
 		elf_info.kern_paddr_start = base;
-	else if (strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) == 0)
-		elf_info.kern_size = base + length - elf_info.kern_paddr_start;
+		elf_info.kern_size = length;
+	}
 
 	return 0;
 }
