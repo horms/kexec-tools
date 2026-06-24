@@ -6,6 +6,7 @@
 #include "crashdump.h"
 #include "kexec-elf.h"
 #include "mem_regions.h"
+#include "iomem.h"
 
 static struct crash_elf_info elf_info = {
 #if __riscv_xlen == 64
@@ -18,6 +19,7 @@ static struct crash_elf_info elf_info = {
 };
 
 static struct memory_ranges crash_mem_ranges = {0};
+static struct memory_ranges system_mem_ranges = {0};
 struct memory_range elfcorehdr_mem = {0};
 
 static unsigned long long get_page_offset(struct kexec_info *info)
@@ -34,86 +36,114 @@ static unsigned long long get_page_offset(struct kexec_info *info)
 	return vaddr_off;
 }
 
+/*
+ * iomem_range_callback() - callback called for each iomem region
+ * @data: not used
+ * @nr: not used
+ * @str: name of the memory region
+ * @base: start address of the memory region
+ * @length: size of the memory region
+ *
+ * This function is called once for each memory region found in /proc/iomem.
+ * It locates system RAM and crashkernel reserved memory and places these to
+ * variables, respectively, system_memory_rgns and crash_mem_ranges.
+ */
+static int iomem_range_callback(void *UNUSED(data), int UNUSED(nr),
+				char *str, unsigned long long base,
+				unsigned long long length)
+{
+	if (strncmp(str, CRASH_KERNEL, strlen(CRASH_KERNEL)) == 0)
+		return mem_regions_alloc_and_add(&crash_mem_ranges,
+						base, length, RANGE_RAM);
+	else if (strncmp(str, SYSTEM_RAM, strlen(SYSTEM_RAM)) == 0)
+		return mem_regions_alloc_and_add(&system_mem_ranges,
+						base, length, RANGE_RAM);
+	else if (strncmp(str, KERNEL_CODE, strlen(KERNEL_CODE)) == 0)
+		elf_info.kern_paddr_start = base;
+	else if (strncmp(str, KERNEL_DATA, strlen(KERNEL_DATA)) == 0)
+		elf_info.kern_size = base + length - elf_info.kern_paddr_start;
+
+	return 0;
+}
+
+/*
+ * crash_get_memory_ranges() - read system physical memory
+ *
+ * Function reads through system physical memory and stores found memory
+ * regions in system_memory_ranges.
+ * Regions are sorted in ascending order.
+ *
+ * Returns 0 in case of success and a negative value otherwise.
+ */
+static int crash_get_memory_ranges(void)
+{
+	int i;
+
+	if (!crash_mem_ranges.size)
+		kexec_iomem_for_each_line(NULL, iomem_range_callback, NULL);
+
+	if (!crash_mem_ranges.size)
+		return -EINVAL;
+
+	dbgprint_mem_range("Reserved memory range",
+			crash_mem_ranges.ranges, crash_mem_ranges.size);
+
+	for (i = 0; i < crash_mem_ranges.size; i++) {
+		if (mem_regions_alloc_and_exclude(&system_mem_ranges,
+					&crash_mem_ranges.ranges[i])) {
+			fprintf(stderr, "Cannot allocate memory for ranges\n");
+			return -ENOMEM;
+		}
+	}
+
+	/*
+	 * Make sure that the memory regions are sorted.
+	 */
+	mem_regions_sort(&system_mem_ranges);
+
+	dbgprint_mem_range("Coredump memory ranges",
+			   system_mem_ranges.ranges, system_mem_ranges.size);
+
+	/*
+	 * For additional kernel code/data segment.
+	 * kern_paddr_start/kern_size are determined in iomem_range_callback
+	 */
+	elf_info.kern_vaddr_start = get_kernel_sym("_text");
+	if (!elf_info.kern_vaddr_start)
+		elf_info.kern_vaddr_start = UINT64_MAX;
+
+	return 0;
+}
+
 int load_elfcorehdr(struct kexec_info *info)
 {
-	struct memory_range crashkern_range = {0};
-	struct memory_range *ranges = NULL;
-	unsigned long start = 0;
-	unsigned long end = 0;
 	unsigned long buf_size = 0;
 	unsigned long elfcorehdr_addr = 0;
 	void* buf = NULL;
-	int i = 0;
-	int ret = 0;
 
-	ret = parse_iomem_single("Kernel code\n", &start, NULL);
-	if (ret) {
-		fprintf(stderr, "Cannot determine kernel physical base addr\n");
-		return -EINVAL;
-	}
-	elf_info.kern_paddr_start = start;
-
-	ret = parse_iomem_single("Kernel bss\n", NULL, &end);
-	if (ret) {
-		fprintf(stderr, "Cannot determine kernel physical bss addr\n");
-		return -EINVAL;
-	}
-	elf_info.kern_paddr_start = start;
-	elf_info.kern_size = end - start;
-
-	elf_info.kern_vaddr_start = get_kernel_sym("_text");
-	if (!elf_info.kern_vaddr_start) {
-		elf_info.kern_vaddr_start = UINT64_MAX;
-	}
+	if (crash_get_memory_ranges())
+		return EFAILED;
 
 	elf_info.page_offset = get_page_offset(info);
 	dbgprintf("page_offset:   %016llx\n", elf_info.page_offset);
 
-	ret = parse_iomem_single("Crash kernel\n", &start, &end);
-	if (ret) {
-		fprintf(stderr, "Cannot determine kernel physical bss addr\n");
-		return -EINVAL;
-	}
-	crashkern_range.start = start;
-	crashkern_range.end = end;
-	crashkern_range.type = RANGE_RESERVED;
-
-	ranges = info->memory_range;
-	for (i = 0; i < info->memory_ranges; i++) {
-		ret = mem_regions_alloc_and_add(&crash_mem_ranges,
-						ranges[i].start,
-						ranges[i].end - ranges[i].start + 1,
-						ranges[i].type);
-		if (ret ) {
-			fprintf(stderr, "Could not create crash_mem_ranges\n");
-			return ret;
-		}
-	}
-
-	ret = mem_regions_alloc_and_exclude(&crash_mem_ranges,
-					    &crashkern_range);
-	if (ret) {
-		fprintf(stderr, "Could not exclude crashkern_range\n");
-		return ret;
-	}
-
 #if __riscv_xlen == 64
-	crash_create_elf64_headers(info, &elf_info, crash_mem_ranges.ranges,
-				   crash_mem_ranges.size, &buf, &buf_size,
+	crash_create_elf64_headers(info, &elf_info, system_mem_ranges.ranges,
+				   system_mem_ranges.size, &buf, &buf_size,
 				   ELF_CORE_HEADER_ALIGN);
 
 #else
-	crash_create_elf32_headers(info, &elf_info, crash_mem_ranges.ranges,
-				   crash_mem_ranges.size, &buf, &buf_size,
+	crash_create_elf32_headers(info, &elf_info, system_mem_ranges.ranges,
+				   system_mem_ranges.size, &buf, &buf_size,
 				   ELF_CORE_HEADER_ALIGN);
 #endif
 
 
 	elfcorehdr_addr = add_buffer_phys_virt(info, buf, buf_size,
-					       buf_size, 0,
-					       crashkern_range.start,
-					       crashkern_range.end,
-					       -1, 0);
+					    buf_size, 0,
+					    crash_mem_ranges.ranges[crash_mem_ranges.size - 1].start,
+					    crash_mem_ranges.ranges[crash_mem_ranges.size - 1].end,
+					    -1, 0);
 
 	elfcorehdr_mem.start = elfcorehdr_addr;
 	elfcorehdr_mem.end = elfcorehdr_addr + buf_size - 1;
@@ -126,15 +156,22 @@ int load_elfcorehdr(struct kexec_info *info)
 
 int is_crashkernel_mem_reserved(void)
 {
-	uint64_t start = 0;
-	uint64_t end = 0;
+	if (!crash_mem_ranges.size)
+		kexec_iomem_for_each_line(NULL, iomem_range_callback, NULL);
 
-	return parse_iomem_single("Crash kernel\n", &start, &end) == 0 ?
-	       (start != end) : 0;
+	return crash_mem_ranges.size;
 }
 
 int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
 {
-	return parse_iomem_single("Crash kernel\n", start, end);
-}
+	if (!crash_mem_ranges.size)
+		kexec_iomem_for_each_line(NULL, iomem_range_callback, NULL);
 
+	if (!crash_mem_ranges.size)
+		return -1;
+
+	*start = crash_mem_ranges.ranges[crash_mem_ranges.size - 1].start;
+	*end = crash_mem_ranges.ranges[crash_mem_ranges.size - 1].end;
+
+	return 0;
+}
