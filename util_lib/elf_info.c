@@ -1308,16 +1308,39 @@ int read_phys_offset_elf_kcore(int fd, long *phys_off)
 
 	*phys_off = ULONG_MAX;
 
-	ret = read_elf(fd);
-	if (!ret) {
-		/* If we have a valid 'PHYS_OFFSET' by now,
-		 * return it to the caller now.
-		 */
-		if (phys_offset != UINT64_MAX) {
-			*phys_off = phys_offset;
-			return ret;
-		}
+	if (phys_offset != UINT64_MAX) {
+		*phys_off = phys_offset;
+		return 0;
 	}
 
-	return 2;
+	/* If we have a valid 'PHYS_OFFSET' by now,
+	 * return it to the caller now.
+	 */
+	ret = read_elf(fd);
+	if (!ret && phys_offset != UINT64_MAX) {
+		*phys_off = phys_offset;
+		return 0;
+	}
+
+	return -EFAULT;
+}
+
+int read_page_offset_elf_kcore(int fd, long *page_off)
+{
+	int ret;
+
+	*page_off = ULONG_MAX;
+
+	if (page_offset != UINT64_MAX) {
+		*page_off = page_offset;
+		return 0;
+	}
+
+	ret = read_elf(fd);
+	if (!ret && page_offset != UINT64_MAX) {
+		*page_off = page_offset;
+		return 0;
+	}
+
+	return -EFAULT;
 }

@@ -1,5 +1,6 @@
 #include <errno.h>
 #include <elf.h>
+#include <elf_info.h>
 #include <unistd.h>
 
 #include "kexec.h"
@@ -22,18 +23,45 @@ static struct memory_ranges crash_mem_ranges = {0};
 static struct memory_ranges system_mem_ranges = {0};
 struct memory_range elfcorehdr_mem = {0};
 
-static unsigned long long get_page_offset(struct kexec_info *info)
+static unsigned long long phys_offset;
+
+static int get_page_offset(unsigned long long *page_offset)
 {
-	unsigned long long vaddr_off = 0;
-	unsigned long long page_size = sysconf(_SC_PAGESIZE);
-	unsigned long long init_start = get_kernel_sym("_sinittext");
+	int fd, ret = 0;
 
-	/*
-	 * Begining of init section is aligned to page size
-	 */
-	vaddr_off = init_start - page_size;
+	if ((fd = open("/proc/kcore", O_RDONLY)) < 0) {
+		fprintf(stderr, "Can't open (%s).\n", "/proc/kcore");
+		return EFAILED;
+	}
 
-	return vaddr_off;
+	ret = read_page_offset_elf_kcore(fd, (long *)page_offset);
+	if (ret)
+		fprintf(stderr, "Can't get page_offset from /proc/kcore\n");
+
+	close(fd);
+	return ret;
+}
+
+static int get_phys_offset(unsigned long long *phys_offset)
+{
+	int fd, ret = 0;
+
+	if ((fd = open("/proc/kcore", O_RDONLY)) < 0) {
+		fprintf(stderr, "Can't open (%s).\n", "/proc/kcore");
+		return EFAILED;
+	}
+
+	ret = read_phys_offset_elf_kcore(fd, (long *)phys_offset);
+	if (ret)
+		fprintf(stderr, "Can't get phys_offset from /proc/kcore\n");
+
+	close(fd);
+	return ret;
+}
+
+unsigned long phys_to_virt(struct crash_elf_info *elf_info, unsigned long long p)
+{
+	return elf_info->page_offset - phys_offset + p;
 }
 
 /*
@@ -124,7 +152,14 @@ int load_elfcorehdr(struct kexec_info *info)
 	if (crash_get_memory_ranges())
 		return EFAILED;
 
-	elf_info.page_offset = get_page_offset(info);
+	if (get_phys_offset(&phys_offset))
+		return EFAILED;
+
+	dbgprintf("phys_offset:   %016llx\n", phys_offset);
+
+	if (get_page_offset(&elf_info.page_offset))
+		return EFAILED;
+
 	dbgprintf("page_offset:   %016llx\n", elf_info.page_offset);
 
 #if __riscv_xlen == 64

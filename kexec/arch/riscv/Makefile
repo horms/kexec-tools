@@ -15,6 +15,8 @@ riscv_ARCH_REUSE_INITRD =
 
 riscv_CPPFLAGS += -I $(srcdir)/kexec/
 
+riscv_PHYS_TO_VIRT =
+
 dist += $(riscv_KEXEC_SRCS)				\
 	kexec/arch/riscv/image-header.h			\
 	kexec/arch/riscv/include/arch/options.h		\
