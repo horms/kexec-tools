@@ -68,6 +68,8 @@ int do_hotplug = 0;
 static unsigned long kexec_flags = 0;
 /* Flags for kexec file (fd) based syscall */
 static unsigned long kexec_file_flags = 0;
+/* errno from kexec_file_load when it returned EFALLBACK */
+static int kexec_file_load_errno;
 /* initrd detected in probe phase */
 int implicit_initrd_fd = -1;
 int kexec_debug = 0;
@@ -869,12 +871,16 @@ static int my_load(const char *type, int fileind, int argc, char **argv,
 				    info.nr_segments, info.segment,
 				    info.kexec_flags);
 	if (result != 0) {
-		/* The load failed, print some debugging information */
-		fprintf(stderr, "kexec_load failed: %s\n", 
-			strerror(errno));
-		fprintf(stderr, "entry       = %p flags = 0x%lx\n", 
-			info.entry, info.kexec_flags);
-		print_segments(stderr, &info);
+		if (errno == ENOSYS) {
+			fprintf(stderr,
+				"syscall kexec_load is not available on this system.\n");
+		} else {
+			fprintf(stderr, "kexec_load failed: %s\n",
+				strerror(errno));
+			fprintf(stderr, "entry       = %p flags = 0x%lx\n",
+				info.entry, info.kexec_flags);
+			print_segments(stderr, &info);
+		}
 	}
 	return result;
 }
@@ -883,12 +889,15 @@ static int kexec_file_unload(unsigned long kexec_file_flags)
 {
 	int ret = 0;
 
-	if (!is_kexec_file_load_implemented())
+	if (!is_kexec_file_load_implemented()) {
+		kexec_file_load_errno = ENOSYS;
 		return EFALLBACK;
+	}
 
 	ret = kexec_file_load(-1, -1, 0, NULL, kexec_file_flags);
 	if (ret != 0) {
 		if (errno == ENOSYS) {
+			kexec_file_load_errno = ENOSYS;
 			ret = EFALLBACK;
 		} else {
 			/*
@@ -919,9 +928,12 @@ static int k_unload (unsigned long kexec_flags)
 	else
 		result = kexec_load(NULL, 0, NULL, kexec_flags);
 	if (result != 0) {
-		/* The unload failed, print some debugging information */
-		fprintf(stderr, "kexec unload failed: %s\n",
-			strerror(errno));
+		if (errno == ENOSYS)
+			fprintf(stderr,
+				"syscall kexec_load is not available on this system.\n");
+		else
+			fprintf(stderr, "kexec unload failed: %s\n",
+				strerror(errno));
 	}
 	return result;
 }
@@ -1339,8 +1351,10 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 	info.kernel_fd = -1;
 	info.initrd_fd = -1;
 
-	if (!is_kexec_file_load_implemented())
+	if (!is_kexec_file_load_implemented()) {
+		kexec_file_load_errno = ENOSYS;
 		return EFALLBACK;
+	}
 
 	if (argc - fileind <= 0) {
 		fprintf(stderr, "No kernel specified\n");
@@ -1445,13 +1459,14 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 
 			/* Not implemented. */
 		case ENOSYS:
+			kexec_file_load_errno = ENOSYS;
+			ret = EFALLBACK;
+			break;
+
 			/*
-			 * Parsing image or other options failed
-			 * The image may be invalid or image
-			 * type may not supported by kernel so
-			 * retry parsing in kexec-tools.
+			 * The kernel does not have a loader for this
+			 * image format, retry parsing in kexec-tools.
 			 */
-		case EINVAL:
 		case ENOEXEC:
 			/*
 			 * ENOTSUP can be unsupported image
@@ -1459,6 +1474,9 @@ static int do_kexec_file_load(int fileind, int argc, char **argv,
 			 * wrapper type, duh.
 			 */
 		case ENOTSUP:
+			kexec_file_load_errno = errno;
+			fprintf(stderr, "kexec_file_load failed: %s\n",
+				strerror(errno));
 			ret = EFALLBACK;
 			break;
 		}
@@ -1833,8 +1851,17 @@ int main(int argc, char *argv[])
 	if ((result == 0) && do_load_jump_back_helper) {
 		result = my_load_jump_back_helper(kexec_flags, entry);
 	}
-	if (result == EFALLBACK)
-		fputs("syscall kexec_file_load not available.\n", stderr);
+	/*
+	 * When fallback to kexec_load was attempted, my_load()
+	 * already reported the kexec_load error and overwrote
+	 * result with its own return value, so this condition
+	 * is only true when no fallback was attempted and
+	 * kexec_file_load does not exist.
+	 */
+	if (result == EFALLBACK && kexec_file_load_errno == ENOSYS) {
+		fputs("syscall kexec_file_load is not available on this system.\n",
+		      stderr);
+	}
 
 	fflush(stdout);
 	fflush(stderr);
