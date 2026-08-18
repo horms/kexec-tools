@@ -210,3 +210,17 @@ int get_crash_kernel_load_range(uint64_t *start, uint64_t *end)
 
 	return 0;
 }
+
+int get_crash_kernel_ranges(struct memory_range **ranges, int *nr_ranges)
+{
+	if (!crash_mem_ranges.size)
+		kexec_iomem_for_each_line(NULL, iomem_range_callback, NULL);
+
+	if (!crash_mem_ranges.size)
+		return -1;
+
+	*ranges = crash_mem_ranges.ranges;
+	*nr_ranges = crash_mem_ranges.size;
+
+	return 0;
+}

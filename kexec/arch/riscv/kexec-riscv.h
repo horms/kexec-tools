@@ -32,6 +32,7 @@ struct riscv_opts {
 /* crashdump-riscv.c */
 extern struct memory_range elfcorehdr_mem;
 int load_elfcorehdr(struct kexec_info *info);
+int get_crash_kernel_ranges(struct memory_range **ranges, int *nr_ranges);
 
 /* kexec-riscv.c */
 int prepare_kexec_file_options(struct kexec_info *info);

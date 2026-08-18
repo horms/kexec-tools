@@ -251,13 +251,31 @@ void dtb_fill_int_property(void *buf, uint64_t val, uint32_t cells)
 int dtb_add_range_property(char **dtb, off_t *dtb_size, uint64_t start, uint64_t end,
 			   const char *parent, const char *name)
 {
+	struct memory_range range;
+
+	range.start = start;
+	range.end = end;
+	range.type = RANGE_RAM;
+
+	return dtb_add_range_properties(dtb, dtb_size, &range, 1, parent, name);
+}
+
+int dtb_add_range_properties(char **dtb, off_t *dtb_size,
+			     const struct memory_range *ranges, int nr_ranges,
+			     const char *parent, const char *name)
+{
 	uint32_t addr_cells = 0;
 	uint32_t size_cells = 0;
 	char *nodepath = NULL;
 	void *prop = NULL;
+	uint32_t *range_prop = NULL;
 	int nodeoffset = 0;
 	int prop_size = 0;
 	int ret = 0;
+	int i;
+
+	if (nr_ranges <= 0)
+		return -EINVAL;
 
 	nodepath = malloc(strlen("/") + strlen(parent) + 1);
 	if (!nodepath) {
@@ -281,22 +299,37 @@ int dtb_add_range_property(char **dtb, off_t *dtb_size, uint64_t start, uint64_t
 	if (ret < 0)
 		return ret;
 
-	/* Can the range fit with the given address/size cells ? */
-	if ((addr_cells == 1) && (start >= (1ULL << 32)))
-		return -EINVAL;
+	for (i = 0; i < nr_ranges; i++) {
+		uint64_t start = ranges[i].start;
+		uint64_t size = ranges[i].end - ranges[i].start + 1;
 
-	if ((size_cells == 1) && ((end - start + 1) >= (1ULL << 32)))
-		return -EINVAL;
+		/* Can the range fit with the given address/size cells ? */
+		if ((addr_cells == 1) && (start >= (1ULL << 32)))
+			return -EINVAL;
 
-	prop_size = sizeof(uint32_t) * (addr_cells + size_cells);
-	prop = malloc(prop_size);
+		if ((size_cells == 1) && (size >= (1ULL << 32)))
+			return -EINVAL;
+	}
 
-	dtb_fill_int_property(prop, start, addr_cells);
-	dtb_fill_int_property((void *)((uint32_t *)prop + addr_cells),
-			      end - start + 1, size_cells);
+	prop_size = sizeof(uint32_t) * (addr_cells + size_cells) * nr_ranges;
+	prop = xmalloc(prop_size);
+	memset(prop, 0, prop_size);
+	range_prop = prop;
+
+	for (i = 0; i < nr_ranges; i++) {
+		dtb_fill_int_property(range_prop, ranges[i].start, addr_cells);
+		range_prop += addr_cells;
+		dtb_fill_int_property(range_prop,
+				      ranges[i].end - ranges[i].start + 1,
+				      size_cells);
+		range_prop += size_cells;
+	}
 
 	/* Add by node path name */
-	return dtb_set_property(dtb, dtb_size, parent, name, prop, prop_size);
+	ret = dtb_set_property(dtb, dtb_size, parent, name, prop, prop_size);
+	free(prop);
+
+	return ret;
 }
 
 /************************\
