@@ -960,12 +960,15 @@ struct prb_map {
 
 	char		*desc_ring;
 	unsigned long	desc_ring_count;
-	char		*descs;
+	uint64_t	desc_offset;
+	char		*desc;
 
-	char		*infos;
+	uint64_t	info_offset;
+	char		*info;
 
 	char		*text_data_ring;
 	unsigned long	text_data_ring_size;
+	uint64_t	text_data_offset;
 	char		*text_data;
 };
 
@@ -1061,7 +1064,7 @@ static uint64_t sizeof_ulong(void)
 	return (machine_pointer_bits() >> 3);
 }
 
-static void dump_record(struct prb_map *m, unsigned long id,
+static void dump_record(int fd, struct prb_map *m, unsigned long id,
 			void (*handler)(char*, unsigned int))
 {
 #define OUT_BUF_SIZE	4096
@@ -1078,15 +1081,31 @@ static void dump_record(struct prb_map *m, unsigned long id,
 	char *text;
 	char *desc;
 	int i;
+	int ret;
 
-	desc = m->descs + ((id % m->desc_ring_count) * prb_desc_sz);
-	info = m->infos + ((id % m->desc_ring_count) * printk_info_sz);
+	ret = pread(fd, m->desc, prb_desc_sz, m->desc_offset +
+		    ((id % m->desc_ring_count) * prb_desc_sz));
+	if (ret != prb_desc_sz) {
+		fprintf(stderr, "Failed to read desc of size %zu bytes: %s\n",
+			prb_desc_sz, strerror(errno));
+		exit(65);
+	}
+	desc = m->desc;
 
 	/* skip non-committed record */
 	state_var = get_ulong(desc + prb_desc_state_var_offset +
 					atomic_long_t_counter_offset);
 	if (!record_committed(id, state_var))
 		return;
+
+	ret = pread(fd, m->info, printk_info_sz, m->info_offset +
+		    ((id % m->desc_ring_count) * printk_info_sz));
+	if (ret != printk_info_sz) {
+		fprintf(stderr, "Failed to read info of size %zu bytes: %s\n",
+			printk_info_sz, strerror(errno));
+		exit(65);
+	}
+	info = m->info;
 
 	begin = get_ulong(desc + prb_desc_text_blk_lpos_offset +
 			  prb_data_blk_lpos_begin_offset) %
@@ -1120,7 +1139,13 @@ static void dump_record(struct prb_map *m, unsigned long id,
 	if (next - begin < len)
 		len = next - begin;
 
-	text = m->text_data + begin;
+	ret = pread(fd, m->text_data, len, m->text_data_offset + begin);
+	if (ret != len) {
+		fprintf(stderr, "Failed to read text of size %hu bytes: %s\n",
+			len, strerror(errno));
+		exit(65);
+	}
+	text = m->text_data;
 
 	/* escape non-printable characters */
 	for (i = 0; i < len; i++) {
@@ -1176,36 +1201,22 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
 	m.desc_ring_count = 1 << struct_val_u32(m.desc_ring,
 					prb_desc_ring_count_bits_offset);
 	kaddr = get_ulong(m.desc_ring + prb_desc_ring_descs_offset);
-	m.descs = calloc(1, prb_desc_sz * m.desc_ring_count);
-	if (!m.descs) {
-		fprintf(stderr, "Failed to malloc %lu bytes for descs: %s\n",
-			prb_desc_sz * m.desc_ring_count, strerror(errno));
+	m.desc_offset = vaddr_to_offset(kaddr);
+	m.desc = calloc(1, prb_desc_sz);
+	if (!m.desc) {
+		fprintf(stderr, "Failed to malloc %zu bytes for desc: %s\n",
+			prb_desc_sz, strerror(errno));
 		exit(64);
-	}
-	ret = pread(fd, m.descs, prb_desc_sz * m.desc_ring_count,
-		    vaddr_to_offset(kaddr));
-	if (ret != prb_desc_sz * m.desc_ring_count) {
-		fprintf(stderr,
-			"Failed to read descs of size %lu bytes: %s\n",
-			prb_desc_sz * m.desc_ring_count, strerror(errno));
-		exit(65);
 	}
 
 	/* setup info ring */
 	kaddr = get_ulong(m.prb + prb_desc_ring_infos_offset);
-	m.infos = calloc(1, printk_info_sz * m.desc_ring_count);
-	if (!m.infos) {
-		fprintf(stderr, "Failed to malloc %lu bytes for infos: %s\n",
-			printk_info_sz * m.desc_ring_count, strerror(errno));
+	m.info_offset = vaddr_to_offset(kaddr);
+	m.info = calloc(1, printk_info_sz);
+	if (!m.info) {
+		fprintf(stderr, "Failed to malloc %zu bytes for info: %s\n",
+			printk_info_sz, strerror(errno));
 		exit(64);
-	}
-	ret = pread(fd, m.infos, printk_info_sz * m.desc_ring_count,
-		    vaddr_to_offset(kaddr));
-	if (ret != printk_info_sz * m.desc_ring_count) {
-		fprintf(stderr,
-			"Failed to read infos of size %lu bytes: %s\n",
-			printk_info_sz * m.desc_ring_count, strerror(errno));
-		exit(65);
 	}
 
 	/* setup text data ring */
@@ -1213,20 +1224,13 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
 	m.text_data_ring_size = 1 << struct_val_u32(m.text_data_ring,
 					prb_data_ring_size_bits_offset);
 	kaddr = get_ulong(m.text_data_ring + prb_data_ring_data_offset);
-	m.text_data = calloc(1, m.text_data_ring_size);
+	m.text_data_offset = vaddr_to_offset(kaddr);
+	m.text_data = calloc(1, UINT16_MAX);
 	if (!m.text_data) {
 		fprintf(stderr,
-			"Failed to malloc %lu bytes for text_data: %s\n",
-			m.text_data_ring_size, strerror(errno));
+			"Failed to malloc %u bytes for text_data: %s\n",
+			UINT16_MAX, strerror(errno));
 		exit(64);
-	}
-	ret = pread(fd, m.text_data, m.text_data_ring_size,
-		    vaddr_to_offset(kaddr));
-	if (ret != m.text_data_ring_size) {
-		fprintf(stderr,
-			"Failed to read text_data of size %lu bytes: %s\n",
-			m.text_data_ring_size, strerror(errno));
-		exit(65);
 	}
 
 	/* ready to go */
@@ -1237,14 +1241,14 @@ static void dump_dmesg_lockless(int fd, void (*handler)(char*, unsigned int))
 						atomic_long_t_counter_offset);
 
 	for (id = tail_id; id != head_id; id = id_inc(id))
-		dump_record(&m, id, handler);
+		dump_record(fd, &m, id, handler);
 
 	/* dump head record */
-	dump_record(&m, id, handler);
+	dump_record(fd, &m, id, handler);
 
 	free(m.text_data);
-	free(m.infos);
-	free(m.descs);
+	free(m.info);
+	free(m.desc);
 	free(m.prb);
 }
 
