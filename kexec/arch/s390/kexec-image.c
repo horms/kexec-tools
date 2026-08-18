@@ -78,6 +78,9 @@ int image_s390_load_file(int argc, char **argv, struct kexec_info *info)
 		}
 	}
 
+	if (reuse_initrd)
+		die("--reuseinitrd not supported with --kexec-file-syscall. Please use --kexec-syscall\n");
+
 	if (ramdisk) {
 		info->initrd_fd = open(ramdisk, O_RDONLY);
 		if (info->initrd_fd == -1) {
@@ -104,7 +107,7 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 	char *rd_buffer;
 	const char *ramdisk;
 	off_t ramdisk_len;
-	unsigned int ramdisk_origin;
+	unsigned long long ramdisk_origin;
 	int opt, ret = -1;
 
 	if (info->file_mode)
@@ -137,6 +140,9 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		}
 	}
 
+	if (ramdisk && reuse_initrd)
+		die("Can't specify --ramdisk or --initrd with --reuseinitrd\n");
+
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		if (parse_iomem_single("Crash kernel\n", &crash_base,
 				       &crash_end))
@@ -165,6 +171,9 @@ image_s390_load(int argc, char **argv, const char *kernel_buf,
 		ramdisk_origin = _ALIGN_UP(ramdisk_origin, 0x100000);
 		add_segment_check(info, rd_buffer, ramdisk_len,
 				  ramdisk_origin, ramdisk_len);
+	} else if (reuse_initrd) {
+		ramdisk_origin = retained_initrd_base;
+		ramdisk_len = retained_initrd_size;
 	}
 	if (info->kexec_flags & KEXEC_ON_CRASH) {
 		if (load_crashdump_segments(info, crash_base, crash_end))

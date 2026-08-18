@@ -34,5 +34,7 @@ extern int load_crashdump_segments(struct kexec_info *info,
 extern int get_memory_ranges_s390(struct memory_range range[], int *ranges,
 				  int with_crashk);
 extern int command_line_add(struct kexec_info *info, const char *str);
+extern unsigned long long retained_initrd_base, retained_initrd_size;
+extern unsigned int reuse_initrd;
 
 #endif /* KEXEC_S390_H */

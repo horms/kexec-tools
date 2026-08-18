@@ -25,6 +25,13 @@
 #include <arch/options.h>
 
 static struct memory_range memory_range[MAX_MEMORY_RANGES];
+unsigned long long retained_initrd_base, retained_initrd_size;
+unsigned int reuse_initrd = 0;
+
+void arch_reuse_initrd(void)
+{
+	reuse_initrd = 1;
+}
 
 /*
  * Read string from file
@@ -151,6 +158,7 @@ int get_memory_ranges_s390(struct memory_range memory_range[], int *ranges,
 {
 	char crash_kernel[] = "Crash kernel\n";
 	char sys_ram[] = "System RAM\n";
+	char kernel_initrd[] = "initrd\n";
 	const char *iomem = proc_iomem();
 	FILE *fp;
 	char line[80];
@@ -174,11 +182,16 @@ int get_memory_ranges_s390(struct memory_range memory_range[], int *ranges,
 		sscanf(line,"%llx-%llx : %n", &start, &end, &cons);
 		str = line+cons;
 		if ((memcmp(str, sys_ram, strlen(sys_ram)) == 0) ||
-		    ((memcmp(str, crash_kernel, strlen(crash_kernel)) == 0) &&
-		     with_crashk)) {
+			((memcmp(str, kernel_initrd, strlen(kernel_initrd)) == 0) && reuse_initrd) ||
+			((memcmp(str, crash_kernel, strlen(crash_kernel)) == 0) && with_crashk)) {
 			memory_range[current_range].start = start;
 			memory_range[current_range].end = end;
 			memory_range[current_range].type = RANGE_RAM;
+			if (memcmp(str, kernel_initrd, strlen(kernel_initrd)) == 0) {
+				retained_initrd_base = start;
+				retained_initrd_size = end - start + 1;
+			}
+
 			current_range++;
 		}
 		else {
