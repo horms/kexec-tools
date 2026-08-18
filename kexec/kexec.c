@@ -60,6 +60,7 @@
 
 #define KEXEC_LOADED_PATH "/sys/kernel/kexec_loaded"
 #define KEXEC_CRASH_LOADED_PATH "/sys/kernel/kexec_crash_loaded"
+#define KEXEC_CRASH_SIZE_PATH "/sys/kernel/kexec_crash_size"
 
 unsigned long long mem_min = 0;
 unsigned long long mem_max = ULONG_MAX;
@@ -1495,14 +1496,30 @@ static inline unsigned long get_hotplug_kexec_flag(void)
 static void print_crashkernel_region_size(void)
 {
 	uint64_t start = 0, end = 0;
+	uint64_t size = 0;
+	FILE *fp;
 
-	if (is_crashkernel_mem_reserved() &&
-	    get_crash_kernel_load_range(&start, &end)) {
-		fprintf(stderr, "get_crash_kernel_load_range() failed.\n");
-		return;
+	fp = fopen(KEXEC_CRASH_SIZE_PATH, "r");
+	if (fp) {
+		if (fscanf(fp, "%" SCNu64, &size) == 1) {
+			fclose(fp);
+			printf("%" PRIu64 "\n", size);
+			return;
+		}
+		fclose(fp);
 	}
 
-	printf("%" PRIu64 "\n", (start != end) ? (end - start + 1) : 0UL);
+	if (is_crashkernel_mem_reserved()) {
+		if (get_crash_kernel_load_range(&start, &end)) {
+			fprintf(stderr, "get_crash_kernel_load_range() failed.\n");
+			return;
+		}
+
+		if (start != end)
+			size = end - start + 1;
+	}
+
+	printf("%" PRIu64 "\n", size);
 }
 
 int main(int argc, char *argv[])
