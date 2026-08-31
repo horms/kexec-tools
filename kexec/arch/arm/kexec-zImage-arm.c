@@ -131,6 +131,7 @@ struct zimage_tag {
 		struct zimage_krnl_size {
 			uint32_t size_ptr;
 			uint32_t bss_size;
+			uint32_t text_offset;
 		} krnl_size;
 	} u;
 };
@@ -478,7 +479,7 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	unsigned long page_size = getpagesize();
 	unsigned long base, kernel_base;
 	unsigned int atag_offset = 0x1000; /* 4k offset from memory start */
-	unsigned int extra_size = 0x8000; /* TEXT_OFFSET */
+	unsigned int text_offset;
 	uint32_t address_cells, size_cells;
 	const struct zimage_tag *tag;
 	size_t kernel_buf_size;
@@ -662,6 +663,21 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 	tag = find_extension_tag(buf, len, ZIMAGE_TAG_KRNL_SIZE);
 
 	/*
+	 * The decompressor places the inflated kernel at
+	 * (zImage address & 0xf8000000) + TEXT_OFFSET, so load the
+	 * zImage at a 128 MiB-aligned base + TEXT_OFFSET.  The tag
+	 * table records the real value since v5.10 (commit
+	 * 83dfeedb6663, "ARM: add TEXT_OFFSET to decompressor kexec
+	 * image structure"); TEXT_OFFSET is the third payload word,
+	 * so a tag size of at least 5 means it is present.  Older
+	 * kernels keep the historical 0x8000 default.
+	 */
+	if (tag && le32_to_cpu(tag->hdr.size) >= 5)
+		text_offset = le32_to_cpu(tag->u.krnl_size.text_offset);
+	else
+		text_offset = 0x8000;
+
+	/*
 	 * The zImage length does not include its stack (4k) or its
 	 * malloc space (64k).  Include this.
 	 */
@@ -748,14 +764,14 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 		}
 		base = start;
 	} else {
-		base = locate_hole(info, len + extra_size, 0, 0,
+		base = locate_hole(info, len + text_offset, 0, 0,
 				   ULONG_MAX, INT_MAX);
 	}
 
 	if (base == ULONG_MAX)
 		return -1;
 
-	kernel_base = base + extra_size;
+	kernel_base = base + text_offset;
 
 	/*
 	 * Calculate the minimum address of the initrd, which must be
