@@ -976,7 +976,7 @@ static void arm64_scan_vmcoreinfo(char *pos)
 	const char *str;
 
 	str = "NUMBER(VA_BITS)=";
-	if (memcmp(str, pos, strlen(str)) == 0)
+	if (strncmp(str, pos, strlen(str)) == 0)
 		va_bits = strtoul(pos + strlen(str), NULL, 10);
 }
 
