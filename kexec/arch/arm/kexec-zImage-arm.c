@@ -132,6 +132,7 @@ struct zimage_tag {
 			uint32_t size_ptr;
 			uint32_t bss_size;
 			uint32_t text_offset;
+			uint32_t malloc_size;
 		} krnl_size;
 	} u;
 };
@@ -679,9 +680,15 @@ int zImage_arm_load(int argc, char **argv, const char *buf, off_t len,
 
 	/*
 	 * The zImage length does not include its stack (4k) or its
-	 * malloc space (64k).  Include this.
+	 * malloc space.
 	 */
-	len += 0x11000;
+	len += 0x1000;
+
+	/* include malloc space */
+	if (tag && le32_to_cpu(tag->hdr.size) >= 6)
+		len += le32_to_cpu(tag->u.krnl_size.malloc_size);
+	else
+		len += 0x10000;
 
 	dbgprintf("zImage requires 0x%08llx bytes\n", (unsigned long long)len);
 
