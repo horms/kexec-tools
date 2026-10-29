@@ -729,6 +729,11 @@ static void update_purgatory(struct kexec_info *info)
 			sha256_update(&ctx, null_buf, bytes);
 			nullsz -= bytes;
 		}
+		if (j >= SHA256_REGIONS) {
+			fprintf(stderr, "Warning: SHA256 region limit reached. "
+				"Skipping remaining segments from checksum region list\n");
+			break;
+		}
 		region[j].start = (unsigned long) info->segment[i].mem;
 		region[j].len   = info->segment[i].memsz;
 		j++;
